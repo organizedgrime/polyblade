@@ -14,9 +14,22 @@ pub async fn start() -> Result<(), JsValue> {
     main::run().await;
     Ok(())
 }
+use paper_blade::prelude::*;
 
 #[cfg(not(target_arch = "wasm32"))]
 pub fn main() {
-    println!("hey there!");
+    let poly = Poly {
+        edges: vec![
+            vec![1, 2, 7], // 0
+            vec![0, 3, 6], // 1
+            vec![0, 3, 5], // 2
+            vec![1, 2, 4], // 3
+            vec![3, 5, 6], // 4
+            vec![2, 4, 7], // 5
+            vec![1, 4, 7], // 6
+            vec![0, 5, 6], // 7
+        ],
+        faces: vec![],
+    };
+    println!("hey there! {:?}", poly);
 }
-

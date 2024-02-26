@@ -1,5 +1,6 @@
 // Representation of an undirected graph
 // Uses adjacency lists
+#[derive(Debug)]
 pub struct Poly {
     // Adjacency list
     pub edges: Vec<Vec<i32>>,
