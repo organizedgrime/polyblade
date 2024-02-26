@@ -1,7 +1,5 @@
-mod graph;
+mod polyhedra;
 
 pub mod prelude {
-   pub use crate::graph::*; 
-
+    pub use crate::polyhedra::*;
 }
-
