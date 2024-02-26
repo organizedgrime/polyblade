@@ -18,10 +18,7 @@ use paper_blade::prelude::*;
 
 #[cfg(not(target_arch = "wasm32"))]
 pub fn main() {
-    use three_d::{
-        degrees, radians, vec3, Camera, ClearState, Context, FrameOutput, Mat4, Program,
-        RenderStates, Srgba, VertexBuffer, Window, WindowSettings,
-    };
+    use three_d::*;
 
     // Create a window (a canvas on web)
     let window = Window::new(WindowSettings {
@@ -43,11 +40,6 @@ pub fn main() {
         &[
             Srgba::RED.to_linear_srgb(),   // bottom right
             Srgba::GREEN.to_linear_srgb(), // bottom left
-            Srgba::BLUE.to_linear_srgb(),  // top
-            Srgba::GREEN.to_linear_srgb(), // bottom left
-            Srgba::GREEN.to_linear_srgb(), // bottom left
-            Srgba::BLUE.to_linear_srgb(),  // top
-            Srgba::RED.to_linear_srgb(),   // bottom right
             Srgba::BLUE.to_linear_srgb(),  // top
         ],
     );

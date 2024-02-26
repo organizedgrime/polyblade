@@ -19,7 +19,7 @@ pub struct Polyhedron {
     pub faces: Vec<Vec<i32>>,
 
     // Vertices
-    pub vertices: Vec<Vec<f32>>,
+    pub vertices: Vec<Vector3<f32>>,
 }
 
 // Platonic Solids
@@ -59,11 +59,11 @@ impl Polyhedron {
 
         for i in 0..n {
             let i = i as f32;
-            vertices.push(vec![(i * theta).cos(), (i * theta).sin(), h]);
+            vertices.push(vec3((i * theta).cos(), (i * theta).sin(), h));
         }
         for i in 0..n {
             let i = i as f32;
-            vertices.push(vec![(i * theta).cos(), (i * theta).sin(), -h]);
+            vertices.push(vec3((i * theta).cos(), (i * theta).sin(), -h));
         }
 
         // Top face
@@ -98,13 +98,7 @@ impl Polyhedron {
 
 impl Polyhedron {
     pub fn render(&self, context: &Context) -> VertexBuffer {
-        let vecs: Vec<Vector3<f32>> = self
-            .vertices
-            .iter()
-            .map(|v| vec3(v[0], v[1], v[2]))
-            .collect();
-
-        VertexBuffer::new_with_data(context, &vecs)
+        VertexBuffer::new_with_data(context, &self.vertices)
     }
 }
 /*
