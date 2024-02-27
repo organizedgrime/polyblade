@@ -6,6 +6,5 @@ out vec4 v_color;
 
 void main() {
     gl_Position = viewProjection * model * vec4(position, 1.0);
-
     v_color = color;
 }

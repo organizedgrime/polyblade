@@ -15,4 +15,5 @@ vec3 srgb_from_linear_srgb(vec3 rgb) {
 void main() {
     fragColor = v_color;
     fragColor.rgb = srgb_from_linear_srgb(fragColor.rgb);
+	fragColor.a = 1;
 }

@@ -1,4 +1,7 @@
-use std::iter::Chain;
+use std::{
+    iter::Chain,
+    ops::{Add, Mul},
+};
 
 use rand::random;
 use serde::{Deserialize, Serialize};
@@ -102,24 +105,46 @@ impl Polyhedron {
 }
 
 impl Polyhedron {
+    fn face_vertices(&self, face_index: usize) -> Vec<Vector3<f32>> {
+        self.faces[face_index]
+            .iter()
+            .map(|f| self.vertices[*f as usize].clone())
+            .collect()
+    }
+
+    fn face_normal(&self, face_index: usize) -> Vector3<f32> {
+        let face = &self.faces[face_index];
+        let mut normal = Vector3::<f32>::new(0.0, 0.0, 0.0);
+        for i in 0..face.len() {
+            let v1 = self.vertices[face[i] as usize];
+            let v2 = self.vertices[face[(i + 1) % face.len()] as usize];
+            normal = normal.add(v1.cross(v2));
+        }
+        normal
+    }
+
+    fn face_centroid(&self, face_index: usize) -> Vector3<f32> {
+        // All vertices associated with this face
+        let vertices: Vec<_> = self.face_vertices(face_index);
+
+        // Find the center of the polygon
+        let mut center = vertices[0];
+        for v in vertices[1..].iter() {
+            center = center.lerp(*v, 0.5);
+        }
+
+        center
+    }
     fn triangle_buffers(&self, context: &Context) -> (VertexBuffer, VertexBuffer) {
         let mut polyhedron_vertices = Vec::new();
         let mut polyhedron_colors = Vec::new();
-        for (idx, face) in self.faces.iter().enumerate() {
-            // All vertices associated with this face
-            let vertices: Vec<_> = face
-                .iter()
-                .map(|f| self.vertices[*f as usize].clone())
-                .collect();
-
-            // Find the center of the polygon
-            let mut center = vertices[0];
-            for v in vertices[1..].iter() {
-                center = center.lerp(*v, 0.5);
-            }
-
+        for face_index in 0..self.faces.len() {
             // Create triangles from the center to each corner
             let mut face_vertices = Vec::new();
+            let vertices = self.face_vertices(face_index);
+            let center = self.face_centroid(face_index);
+
+            // Construct a triangle
             for i in 0..vertices.len() {
                 face_vertices.extend(vec![
                     vertices[i],
@@ -128,8 +153,15 @@ impl Polyhedron {
                 ]);
             }
 
-            let color = HSL::new((360.0 / (self.faces.len() as f64)) * idx as f64, 1.0, 0.5)
-                .to_linear_srgb();
+            let mut color = HSL::new(
+                (360.0 / (self.faces.len() as f64)) * face_index as f64,
+                1.0,
+                0.5,
+            )
+            .to_linear_srgb();
+            if face_index == 0 {
+                color = Srgba::WHITE.to_linear_srgb();
+            }
             polyhedron_colors.extend(vec![color; face_vertices.len()]);
             polyhedron_vertices.extend(face_vertices);
         }
@@ -158,14 +190,15 @@ impl Polyhedron {
         )
         .unwrap();
 
+        let position = self.face_normal(0).mul(1.001);
         let mut camera = Camera::new_perspective(
             window.viewport(),
-            vec3(0.0, 0.0, 0.7), // position
+            position,
             vec3(0.0, 0.0, 0.0), // target
-            vec3(0.0, 1.0, 0.0), // up
-            degrees(179.0),
+            vec3(0.0, 5.0, 0.0), // up
+            degrees(45.0),
             0.01,
-            204.0,
+            10.0,
         );
 
         let (positions, colors) = self.triangle_buffers(&context);
@@ -178,7 +211,7 @@ impl Polyhedron {
                 .clear(ClearState::color_and_depth(0.8, 0.8, 0.8, 1.0, 1.0))
                 .write(|| {
                     let time = frame_input.accumulated_time as f32;
-                    program.use_uniform("model", Mat4::from_angle_y(degrees(72.0 / 2.0)));
+                    program.use_uniform("model", Mat4::from_angle_x(degrees(0.0)));
                     program.use_uniform("viewProjection", camera.projection() * camera.view());
                     program.use_vertex_attribute("position", &positions);
                     program.use_vertex_attribute("color", &colors);
@@ -210,10 +243,12 @@ impl Polyhedron {
             include_str!("../shaders/basic.frag"),
         )
         .unwrap();
+        //let mut position = self.face_centroid(0);
+        let position = self.face_normal(0).mul(4.0);
 
         let mut camera = Camera::new_perspective(
             window.viewport(),
-            vec3(0.0, 0.0, 8.0),
+            position,
             vec3(0.0, 0.0, 0.0),
             vec3(0.0, 5.0, 0.0),
             degrees(45.0),
@@ -231,7 +266,7 @@ impl Polyhedron {
                 .clear(ClearState::color_and_depth(0.8, 0.8, 0.8, 1.0, 1.0))
                 .write(|| {
                     let time = frame_input.accumulated_time as f32;
-                    program.use_uniform("model", Mat4::from_angle_y(degrees(72.0 / 2.0)));
+                    program.use_uniform("model", Mat4::from_angle_x(degrees(0.0)));
                     program.use_uniform("viewProjection", camera.projection() * camera.view());
                     program.use_vertex_attribute("position", &positions);
                     program.use_vertex_attribute("color", &colors);
