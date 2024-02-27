@@ -110,64 +110,43 @@ use paper_blade::prelude::*;
 #[cfg(not(target_arch = "wasm32"))]
 pub fn main() {
     use three_d::*;
+    Polyhedron::dodecahedron().render_form();
 
-    // Create a window (a canvas on web)
-    let window = Window::new(WindowSettings {
-        title: "Core Triangle!".to_string(),
-        #[cfg(not(target_arch = "wasm32"))]
-        max_size: Some((1280, 720)),
-        ..Default::default()
-    })
-    .unwrap();
+    /*
+        let mut camera = Camera::new_perspective(
+            window.viewport(),
+            vec3(0.0, 0.0, 0.7), // position
+            vec3(0.0, 0.0, 0.0), // target
+            vec3(0.0, 1.0, 0.0), // up
+            degrees(179.0),
+            0.01,
+            204.0,
+        );
 
-    // Get the graphics context from the window
-    let context: Context = window.gl();
+        window.render_loop(move |frame_input| {
+            camera.set_viewport(frame_input.viewport);
+            /*
+            frame_input
+                .screen()
+                .clear(ClearState::color_and_depth(0.8, 0.8, 0.8, 1.0, 1.0))
+                .render(
+                    &Camera::new_2d(frame_input.viewport),
+                    shape.render_schlegel(&context).into_iter(),
+                    &[],
+                );
 
-    let program = Program::from_source(
-        &context,
-        include_str!("triangle.vert"),
-        include_str!("triangle.frag"),
-    )
-    .unwrap();
-
-    // Define triangle vertices and colors
-    let shape = Polyhedron::dodecahedron();
-
-    let mut camera = Camera::new_perspective(
-        window.viewport(),
-        vec3(0.0, 0.0, 8.0),
-        vec3(0.0, 0.0, 0.0),
-        vec3(0.0, 5.0, 0.0),
-        degrees(45.0),
-        0.1,
-        10.0,
-    );
-
-    window.render_loop(move |frame_input| {
-        camera.set_viewport(frame_input.viewport);
-        frame_input
-            .screen()
-            .clear(ClearState::color_and_depth(0.8, 0.8, 0.8, 1.0, 1.0))
-            .render(
-                &Camera::new_2d(frame_input.viewport),
-                shape.render_schlegel(&context).into_iter(),
-                &[],
-            );
-
-        /*
-        frame_input
-            .screen()
-            // Clear the color and depth of the screen render target
-            .clear(ClearState::color_and_depth(0.8, 0.8, 0.8, 1.0, 1.0))
-            .write(|| {
-                let time = frame_input.accumulated_time as f32;
-                program.use_uniform("model", Mat4::from_angle_y(radians(time * 0.001)));
-                program.use_uniform("viewProjection", camera.projection() * camera.view());
-                //shape.render_form(&program, &context, frame_input.viewport);
-                shape.render_schlegel(&camera, &program, &context, frame_input.viewport);
-            });
-
-            */
-        FrameOutput::default()
-    });
+                */
+            frame_input
+                .screen()
+                // Clear the color and depth of the screen render target
+                .clear(ClearState::color_and_depth(0.8, 0.8, 0.8, 1.0, 1.0))
+                .write(|| {
+                    let time = frame_input.accumulated_time as f32;
+                    program.use_uniform("model", Mat4::from_angle_y(degrees(72.0 / 2.0)));
+                    program.use_uniform("viewProjection", camera.projection() * camera.view());
+                    shape.render_form(&program, &context, frame_input.viewport);
+                });
+            FrameOutput::default()
+        });
+    */
 }
