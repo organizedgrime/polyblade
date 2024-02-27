@@ -1,3 +1,5 @@
+use std::iter::Chain;
+
 use rand::random;
 use serde::{Deserialize, Serialize};
 use three_d::*;
@@ -100,7 +102,37 @@ impl Polyhedron {
 }
 
 impl Polyhedron {
-    pub fn render(&self, program: &Program, context: &Context, viewport: Viewport) {
+    pub fn render_schlegel(&self, context: &Context) -> Vec<Gm<Line, ColorMaterial>> {
+        let scale = 500.0;
+        let mut lines = Vec::new();
+        for face in self.faces.iter() {
+            for i in 0..face.len() {
+                let v1 = self.vertices[face[i] as usize];
+                let v2 = self.vertices[face[(i + 1) % face.len()] as usize];
+
+                let v1 = PhysicalPoint {
+                    x: v1[0] * scale,
+                    y: v1[1] * scale,
+                };
+                let v2 = PhysicalPoint {
+                    x: v2[0] * scale,
+                    y: v2[1] * scale,
+                };
+                let line = Line::new(&context, v1, v2, 50.0);
+                lines.push(Gm::new(
+                    line,
+                    ColorMaterial {
+                        color: Srgba::GREEN,
+                        ..Default::default()
+                    },
+                ));
+            }
+        }
+
+        lines
+    }
+
+    pub fn render_form(&self, program: &Program, context: &Context, viewport: Viewport) {
         let mut polyhedron_vertices = Vec::new();
         let mut polyhedron_colors = Vec::new();
         for (idx, face) in self.faces.iter().enumerate() {
