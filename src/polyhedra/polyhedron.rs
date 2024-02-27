@@ -102,70 +102,7 @@ impl Polyhedron {
 }
 
 impl Polyhedron {
-    /*
-    fn buffers(&self) -> {
-
-    } */
-
-    pub fn render_schlegel(&self, context: &Context) -> Vec<Gm<Line, ColorMaterial>> {
-        let scale = 500.0;
-        let mut lines = Vec::new();
-        for face in self.faces.iter() {
-            for i in 0..face.len() {
-                let v1 = self.vertices[face[i] as usize];
-                let v2 = self.vertices[face[(i + 1) % face.len()] as usize];
-
-                let v1 = PhysicalPoint {
-                    x: v1[0] * scale,
-                    y: v1[1] * scale,
-                };
-                let v2 = PhysicalPoint {
-                    x: v2[0] * scale,
-                    y: v2[1] * scale,
-                };
-                let line = Line::new(&context, v1, v2, 50.0);
-                lines.push(Gm::new(
-                    line,
-                    ColorMaterial {
-                        color: Srgba::GREEN,
-                        ..Default::default()
-                    },
-                ));
-            }
-        }
-
-        lines
-    }
-
-    pub fn render_form(&self) {
-        // Create a window (a canvas on web)
-        let window = Window::new(WindowSettings {
-            title: "Core Triangle!".to_string(),
-            #[cfg(not(target_arch = "wasm32"))]
-            max_size: Some((1280, 720)),
-            ..Default::default()
-        })
-        .unwrap();
-        // Get the graphics context from the window
-        let context: Context = window.gl();
-
-        let program = Program::from_source(
-            &context,
-            include_str!("../shaders/basic.vert"),
-            include_str!("../shaders/basic.frag"),
-        )
-        .unwrap();
-
-        let mut camera = Camera::new_perspective(
-            window.viewport(),
-            vec3(0.0, 0.0, 8.0),
-            vec3(0.0, 0.0, 0.0),
-            vec3(0.0, 5.0, 0.0),
-            degrees(45.0),
-            0.1,
-            10.0,
-        );
-
+    fn triangle_buffers(&self, context: &Context) -> (VertexBuffer, VertexBuffer) {
         let mut polyhedron_vertices = Vec::new();
         let mut polyhedron_colors = Vec::new();
         for (idx, face) in self.faces.iter().enumerate() {
@@ -197,8 +134,94 @@ impl Polyhedron {
             polyhedron_vertices.extend(face_vertices);
         }
 
-        let positions = VertexBuffer::new_with_data(&context, &polyhedron_vertices);
-        let colors = VertexBuffer::new_with_data(&context, &polyhedron_colors);
+        let positions = VertexBuffer::new_with_data(context, &polyhedron_vertices);
+        let colors = VertexBuffer::new_with_data(context, &polyhedron_colors);
+        (positions, colors)
+    }
+
+    pub fn render_schlegel(&self) {
+        // Create a window (a canvas on web)
+        let window = Window::new(WindowSettings {
+            title: "Core Triangle!".to_string(),
+            #[cfg(not(target_arch = "wasm32"))]
+            max_size: Some((1280, 720)),
+            ..Default::default()
+        })
+        .unwrap();
+        // Get the graphics context from the window
+        let context: Context = window.gl();
+
+        let program = Program::from_source(
+            &context,
+            include_str!("../shaders/basic.vert"),
+            include_str!("../shaders/basic.frag"),
+        )
+        .unwrap();
+
+        let mut camera = Camera::new_perspective(
+            window.viewport(),
+            vec3(0.0, 0.0, 0.7), // position
+            vec3(0.0, 0.0, 0.0), // target
+            vec3(0.0, 1.0, 0.0), // up
+            degrees(179.0),
+            0.01,
+            204.0,
+        );
+
+        let (positions, colors) = self.triangle_buffers(&context);
+
+        window.render_loop(move |frame_input| {
+            camera.set_viewport(frame_input.viewport);
+            frame_input
+                .screen()
+                // Clear the color and depth of the screen render target
+                .clear(ClearState::color_and_depth(0.8, 0.8, 0.8, 1.0, 1.0))
+                .write(|| {
+                    let time = frame_input.accumulated_time as f32;
+                    program.use_uniform("model", Mat4::from_angle_y(degrees(72.0 / 2.0)));
+                    program.use_uniform("viewProjection", camera.projection() * camera.view());
+                    program.use_vertex_attribute("position", &positions);
+                    program.use_vertex_attribute("color", &colors);
+                    program.draw_arrays(
+                        RenderStates::default(),
+                        frame_input.viewport,
+                        positions.vertex_count(),
+                    );
+                });
+            FrameOutput::default()
+        });
+    }
+
+    pub fn render_form(&self) {
+        // Create a window (a canvas on web)
+        let window = Window::new(WindowSettings {
+            title: "Core Triangle!".to_string(),
+            #[cfg(not(target_arch = "wasm32"))]
+            max_size: Some((1280, 720)),
+            ..Default::default()
+        })
+        .unwrap();
+        // Get the graphics context from the window
+        let context: Context = window.gl();
+
+        let program = Program::from_source(
+            &context,
+            include_str!("../shaders/basic.vert"),
+            include_str!("../shaders/basic.frag"),
+        )
+        .unwrap();
+
+        let mut camera = Camera::new_perspective(
+            window.viewport(),
+            vec3(0.0, 0.0, 8.0),
+            vec3(0.0, 0.0, 0.0),
+            vec3(0.0, 5.0, 0.0),
+            degrees(45.0),
+            0.1,
+            10.0,
+        );
+
+        let (positions, colors) = self.triangle_buffers(&context);
 
         window.render_loop(move |frame_input| {
             camera.set_viewport(frame_input.viewport);

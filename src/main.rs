@@ -110,18 +110,10 @@ use paper_blade::prelude::*;
 #[cfg(not(target_arch = "wasm32"))]
 pub fn main() {
     use three_d::*;
-    Polyhedron::dodecahedron().render_form();
-
+    let shape = Polyhedron::dodecahedron();
+    //shape.render_form();
+    shape.render_schlegel();
     /*
-        let mut camera = Camera::new_perspective(
-            window.viewport(),
-            vec3(0.0, 0.0, 0.7), // position
-            vec3(0.0, 0.0, 0.0), // target
-            vec3(0.0, 1.0, 0.0), // up
-            degrees(179.0),
-            0.01,
-            204.0,
-        );
 
         window.render_loop(move |frame_input| {
             camera.set_viewport(frame_input.viewport);
