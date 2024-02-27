@@ -1,3 +1,4 @@
+use hsl::HSL;
 use rand::random;
 use serde::{Deserialize, Serialize};
 use three_d::*;
@@ -101,18 +102,20 @@ impl Polyhedron {
     pub fn render(&self, program: &Program, context: &Context, viewport: Viewport) {
         let mut polyhedron_vertices = Vec::new();
         let mut polyhedron_colors = Vec::new();
-        for face in self.faces.iter() {
+        for (idx, face) in self.faces.iter().enumerate() {
             // All vertices associated with this face
             let vertices: Vec<_> = face
                 .iter()
                 .map(|f| self.vertices[*f as usize].clone())
                 .collect();
 
+            // Find the center of the polygon
             let mut center = vertices[0];
             for v in vertices[1..].iter() {
                 center = center.lerp(*v, 0.5);
             }
 
+            // Create triangles from the center to each corner
             let mut face_vertices = Vec::new();
             for i in 0..vertices.len() {
                 face_vertices.extend(vec![
@@ -122,7 +125,14 @@ impl Polyhedron {
                 ]);
             }
 
-            let color = Srgba::new_opaque(random(), random(), random()).to_linear_srgb();
+            let color = HSL {
+                h: (360.0 / (self.faces.len() as f64)) * idx as f64,
+                s: 1.0,
+                l: 0.5,
+            }
+            .to_rgb();
+            println!("color: {:?}", color);
+            let color = Srgba::new_opaque(color.0, color.1, color.2).to_linear_srgb();
             polyhedron_colors.extend(vec![color; face_vertices.len()]);
             polyhedron_vertices.extend(face_vertices);
         }
