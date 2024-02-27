@@ -1,7 +1,8 @@
-use hsl::HSL;
 use rand::random;
 use serde::{Deserialize, Serialize};
 use three_d::*;
+
+use crate::prelude::HSL;
 
 // Include the raw data in these platonic solid JSONs
 const TETRAHEDRON_DATA: &[u8] = include_bytes!("../platonic_solids/tetrahedron.json");
@@ -125,14 +126,8 @@ impl Polyhedron {
                 ]);
             }
 
-            let color = HSL {
-                h: (360.0 / (self.faces.len() as f64)) * idx as f64,
-                s: 1.0,
-                l: 0.5,
-            }
-            .to_rgb();
-            println!("color: {:?}", color);
-            let color = Srgba::new_opaque(color.0, color.1, color.2).to_linear_srgb();
+            let color = HSL::new((360.0 / (self.faces.len() as f64)) * idx as f64, 1.0, 0.5)
+                .to_linear_srgb();
             polyhedron_colors.extend(vec![color; face_vertices.len()]);
             polyhedron_vertices.extend(face_vertices);
         }
