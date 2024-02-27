@@ -32,24 +32,15 @@ pub fn main() {
     // Get the graphics context from the window
     let context: Context = window.gl();
 
-    // Define triangle vertices and colors
-    let positions = Polyhedron::dodecahedron().render(&context);
-
-    let colors = VertexBuffer::new_with_data(
-        &context,
-        &[
-            Srgba::RED.to_linear_srgb(),   // bottom right
-            Srgba::GREEN.to_linear_srgb(), // bottom left
-            Srgba::BLUE.to_linear_srgb(),  // top
-        ],
-    );
-
     let program = Program::from_source(
         &context,
         include_str!("triangle.vert"),
         include_str!("triangle.frag"),
     )
     .unwrap();
+
+    // Define triangle vertices and colors
+    let shape = Polyhedron::dodecahedron();
 
     let mut camera = Camera::new_perspective(
         window.viewport(),
@@ -72,13 +63,7 @@ pub fn main() {
                 let time = frame_input.accumulated_time as f32;
                 program.use_uniform("model", Mat4::from_angle_y(radians(time * 0.001)));
                 program.use_uniform("viewProjection", camera.projection() * camera.view());
-                program.use_vertex_attribute("position", &positions);
-                //program.use_vertex_attribute("color", &colors);
-                program.draw_arrays(
-                    RenderStates::default(),
-                    frame_input.viewport,
-                    positions.vertex_count(),
-                );
+                shape.render(&program, &context, frame_input.viewport);
             });
 
         FrameOutput::default()

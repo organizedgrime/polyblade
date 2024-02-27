@@ -1,5 +1,6 @@
+use rand::random;
 use serde::{Deserialize, Serialize};
-use three_d::{vec3, Context, Vector3, VectorSpace, VertexBuffer};
+use three_d::*;
 
 // Include the raw data in these platonic solid JSONs
 const TETRAHEDRON_DATA: &[u8] = include_bytes!("../platonic_solids/tetrahedron.json");
@@ -97,8 +98,9 @@ impl Polyhedron {
 }
 
 impl Polyhedron {
-    pub fn render(&self, context: &Context) -> VertexBuffer {
+    pub fn render(&self, program: &Program, context: &Context, viewport: Viewport) {
         let mut polyhedron_vertices = Vec::new();
+        let mut polyhedron_colors = Vec::new();
         for face in self.faces.iter() {
             // All vertices associated with this face
             let vertices: Vec<_> = face
@@ -120,9 +122,18 @@ impl Polyhedron {
                 ]);
             }
 
+            let color = Srgba::new_opaque(random(), random(), random()).to_linear_srgb();
+            polyhedron_colors.extend(vec![color; face_vertices.len()]);
             polyhedron_vertices.extend(face_vertices);
         }
-        VertexBuffer::new_with_data(context, &polyhedron_vertices)
+
+        let positions = VertexBuffer::new_with_data(context, &polyhedron_vertices);
+        let colors = VertexBuffer::new_with_data(context, &polyhedron_colors);
+
+        program.use_vertex_attribute("position", &positions);
+        program.use_vertex_attribute("color", &colors);
+
+        program.draw_arrays(RenderStates::default(), viewport, positions.vertex_count());
     }
 }
 /*
