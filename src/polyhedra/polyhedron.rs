@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use three_d::{vec3, Context, Vector3, VertexBuffer};
+use three_d::{vec3, Context, Vector3, VectorSpace, VertexBuffer};
 
 // Include the raw data in these platonic solid JSONs
 const TETRAHEDRON_DATA: &[u8] = include_bytes!("../platonic_solids/tetrahedron.json");
@@ -98,7 +98,31 @@ impl Polyhedron {
 
 impl Polyhedron {
     pub fn render(&self, context: &Context) -> VertexBuffer {
-        VertexBuffer::new_with_data(context, &self.vertices)
+        let mut polyhedron_vertices = Vec::new();
+        for face in self.faces.iter() {
+            // All vertices associated with this face
+            let vertices: Vec<_> = face
+                .iter()
+                .map(|f| self.vertices[*f as usize].clone())
+                .collect();
+
+            let mut center = vertices[0];
+            for v in vertices[1..].iter() {
+                center = center.lerp(*v, 0.5);
+            }
+
+            let mut face_vertices = Vec::new();
+            for i in 0..vertices.len() {
+                face_vertices.extend(vec![
+                    vertices[i],
+                    center,
+                    vertices[(i + 1) % vertices.len()],
+                ]);
+            }
+
+            polyhedron_vertices.extend(face_vertices);
+        }
+        VertexBuffer::new_with_data(context, &polyhedron_vertices)
     }
 }
 /*

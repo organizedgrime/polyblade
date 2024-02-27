@@ -33,7 +33,7 @@ pub fn main() {
     let context: Context = window.gl();
 
     // Define triangle vertices and colors
-    let positions = Polyhedron::cube().render(&context);
+    let positions = Polyhedron::dodecahedron().render(&context);
 
     let colors = VertexBuffer::new_with_data(
         &context,
@@ -53,9 +53,9 @@ pub fn main() {
 
     let mut camera = Camera::new_perspective(
         window.viewport(),
-        vec3(0.0, 0.0, 2.0),
+        vec3(0.0, 0.0, 8.0),
         vec3(0.0, 0.0, 0.0),
-        vec3(0.0, 1.0, 0.0),
+        vec3(0.0, 5.0, 0.0),
         degrees(45.0),
         0.1,
         10.0,
@@ -70,10 +70,10 @@ pub fn main() {
             .clear(ClearState::color_and_depth(0.8, 0.8, 0.8, 1.0, 1.0))
             .write(|| {
                 let time = frame_input.accumulated_time as f32;
-                program.use_uniform("model", Mat4::from_angle_y(radians(time * 0.005)));
+                program.use_uniform("model", Mat4::from_angle_y(radians(time * 0.001)));
                 program.use_uniform("viewProjection", camera.projection() * camera.view());
                 program.use_vertex_attribute("position", &positions);
-                program.use_vertex_attribute("color", &colors);
+                //program.use_vertex_attribute("color", &colors);
                 program.draw_arrays(
                     RenderStates::default(),
                     frame_input.viewport,
