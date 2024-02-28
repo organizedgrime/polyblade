@@ -191,7 +191,7 @@ impl Polyhedron {
     }
 
     */
-    fn triangle_buffers(&self, context: &Context) -> (VertexBuffer, VertexBuffer) {
+    pub fn triangle_buffers(&self, context: &Context) -> (VertexBuffer, VertexBuffer) {
         let mut polyhedron_vertices = Vec::new();
         let mut polyhedron_colors = Vec::new();
         for face_index in 0..self.faces.len() {

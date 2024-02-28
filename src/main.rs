@@ -61,7 +61,7 @@ pub fn main() {
                 ));
 
                 // Render
-                scene.render();
+                scene.render(frame_input);
 
                 //frame_input.screen()
 

@@ -1,10 +1,12 @@
 use std::{fs::File, io::Read, sync::Arc};
 
-use three_d::{renderer::*, FrameInputGenerator, WindowedContext};
+use three_d::{renderer::*, FrameInput, FrameInputGenerator, WindowedContext};
 use winit::{
     event_loop::EventLoop,
     window::{Window, WindowId},
 };
+
+use crate::prelude::Polyhedron;
 
 pub struct WindowScene {
     // Window stuff
@@ -96,7 +98,28 @@ impl WindowScene {
         }
     }
 
-    pub fn render(&self) {}
+    pub fn render(&self, frame_input: FrameInput) {
+        let shape = Polyhedron::dodecahedron();
+        let (positions, colors) = shape.triangle_buffers(&self.context);
+        if let Some(program) = &self.program {
+            frame_input
+                .screen()
+                // Clear the color and depth of the screen render target
+                .clear(ClearState::color_and_depth(0.8, 0.8, 0.8, 1.0, 1.0))
+                .write(|| {
+                    let time = frame_input.accumulated_time as f32;
+                    program.use_uniform("model", Mat4::from_angle_x(radians(0.001 * time)));
+                    program.use_uniform("viewProjection", self.camera.projection() * self.camera.view());
+                    program.use_vertex_attribute("position", &positions);
+                    program.use_vertex_attribute("color", &colors);
+                    program.draw_arrays(
+                        RenderStates::default(),
+                        frame_input.viewport,
+                        positions.vertex_count(),
+                    );
+                });
+        }
+    }
 }
 
 /*
