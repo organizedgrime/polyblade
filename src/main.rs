@@ -18,9 +18,9 @@ pub async fn start() -> Result<(), JsValue> {
 #[cfg(not(target_arch = "wasm32"))]
 pub fn main() {
     use crate::*;
-    use paper_blade::prelude::WindowScene;
+    use paper_blade::prelude::{Polyhedron, Renderable, WindowScene};
     use std::{collections::HashMap, sync::Arc};
-    use three_d::{renderer::*, WindowedContext};
+    use three_d::{renderer::*, FrameInput, WindowedContext};
 
     //let shape = Polyhedron::dodecahedron();
     // shape.render_form();
@@ -38,9 +38,10 @@ pub fn main() {
         0.1,
         10.0,
     );
-    let scene1 = WindowScene::new(&event_loop, camera.clone(), Srgba::WHITE, Some("basic"));
+
+    let scene1 = WindowScene::new(&event_loop, camera.clone(), Srgba::WHITE, "basic");
     scenes.insert(scene1.window.id(), scene1);
-    let scene2 = WindowScene::new(&event_loop, camera, Srgba::RED, None);
+    let scene2 = WindowScene::new(&event_loop, camera, Srgba::RED, "basic");
     scenes.insert(scene2.window.id(), scene2);
 
     event_loop.run(move |event, _, control_flow| match &event {
@@ -60,10 +61,7 @@ pub fn main() {
                     color.x, color.y, color.z, 1.0, 1.0,
                 ));
 
-                // Render
-                scene.render(frame_input);
-
-                //frame_input.screen()
+                Polyhedron::dodecahedron().render(scene, &frame_input);
 
                 // Close
                 scene.context.swap_buffers().unwrap();

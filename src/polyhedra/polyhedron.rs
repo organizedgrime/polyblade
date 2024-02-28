@@ -7,7 +7,7 @@ use rand::random;
 use serde::{Deserialize, Serialize};
 use three_d::*;
 
-use crate::prelude::HSL;
+use crate::prelude::{Renderable, WindowScene, HSL};
 
 // Include the raw data in these platonic solid JSONs
 const TETRAHEDRON_DATA: &[u8] = include_bytes!("../platonic_solids/tetrahedron.json");
@@ -405,3 +405,26 @@ impl Polyhedron {
  * state of rest. this should be a cute and simple way to solve for these diagrams no matter the
  * polyhedra we're solving for.
  */
+
+impl Renderable for Polyhedron {
+    fn render(&self, scene: &mut WindowScene, frame_input: &FrameInput) {
+        let (positions, colors) = self.triangle_buffers(&scene.context);
+        //let program = scene.program.unwrap();
+
+        let time = frame_input.accumulated_time as f32;
+        scene
+            .program
+            .use_uniform("model", Mat4::from_angle_y(radians(0.001 * time)));
+        scene.program.use_uniform(
+            "viewProjection",
+            scene.camera.projection() * scene.camera.view(),
+        );
+        scene.program.use_vertex_attribute("position", &positions);
+        scene.program.use_vertex_attribute("color", &colors);
+        scene.program.draw_arrays(
+            RenderStates::default(),
+            frame_input.viewport,
+            positions.vertex_count(),
+        );
+    }
+}

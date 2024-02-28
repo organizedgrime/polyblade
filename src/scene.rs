@@ -20,7 +20,8 @@ pub struct WindowScene {
     pub camera: Camera,
     pub background: Srgba,
     // Optionally, vertex and fragment shaders
-    pub program: Option<Program>,
+    pub program_name: String,
+    pub program: Program,
 }
 
 impl WindowScene {
@@ -28,7 +29,7 @@ impl WindowScene {
         event_loop: &EventLoop<()>,
         camera: Camera,
         background: Srgba,
-        program_name: Option<&str>,
+        program_name: &str,
     ) -> Self {
         #[cfg(not(target_arch = "wasm32"))]
         let window_builder = winit::window::WindowBuilder::new()
@@ -70,7 +71,7 @@ impl WindowScene {
 
         let frame_input_generator = three_d::FrameInputGenerator::from_winit_window(&window);
 
-        let program: Option<Program> = if let Some(program_name) = program_name {
+        let program: Program = {
             let mut vertex_shader = String::new();
             let mut fragment_shader = String::new();
             File::open(&format!("src/shaders/{}.vert", program_name))
@@ -82,9 +83,7 @@ impl WindowScene {
                 .read_to_string(&mut fragment_shader)
                 .unwrap();
 
-            Some(Program::from_source(&context, &vertex_shader, &fragment_shader).unwrap())
-        } else {
-            None
+            Program::from_source(&context, &vertex_shader, &fragment_shader).unwrap()
         };
 
         Self {
@@ -94,53 +93,8 @@ impl WindowScene {
             frame_input_generator,
             camera,
             background,
+            program_name: String::from(program_name),
             program,
         }
     }
-
-    pub fn render(&self, frame_input: FrameInput) {
-        let shape = Polyhedron::dodecahedron();
-        let (positions, colors) = shape.triangle_buffers(&self.context);
-        if let Some(program) = &self.program {
-            frame_input
-                .screen()
-                // Clear the color and depth of the screen render target
-                .clear(ClearState::color_and_depth(0.8, 0.8, 0.8, 1.0, 1.0))
-                .write(|| {
-                    let time = frame_input.accumulated_time as f32;
-                    program.use_uniform("model", Mat4::from_angle_x(radians(0.001 * time)));
-                    program.use_uniform("viewProjection", self.camera.projection() * self.camera.view());
-                    program.use_vertex_attribute("position", &positions);
-                    program.use_vertex_attribute("color", &colors);
-                    program.draw_arrays(
-                        RenderStates::default(),
-                        frame_input.viewport,
-                        positions.vertex_count(),
-                    );
-                });
-        }
-    }
 }
-
-/*
-impl Renderable for Scene {
-    type SceneData = ();
-
-    // Render things
-    fn render(&self, data: Self::SceneData) {
-        self.context.make_current().unwrap();
-        let frame_input = self.frame_input_generator.generate(&self.context);
-        self.camera.set_viewport(frame_input.viewport);
-
-        //        self.model.animate(frame_input.accumulated_time as f32);
-        frame_input
-            .screen()
-            .clear(ClearState::color_and_depth(0.8, 0.8, 0.8, 1.0, 1.0))
-            .render(&self.camera, &self.model, &[]);
-
-        self.context.swap_buffers().unwrap();
-        control_flow.set_poll();
-        window.request_redraw();
-    }
-}
-*/
