@@ -111,7 +111,7 @@ use paper_blade::prelude::*;
 pub fn main() {
     use three_d::*;
     let shape = Polyhedron::dodecahedron();
-    //shape.render_form();
+    // shape.render_form();
     shape.render_schlegel();
     /*
 

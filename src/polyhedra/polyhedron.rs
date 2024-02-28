@@ -120,7 +120,7 @@ impl Polyhedron {
             let v2 = self.vertices[face[(i + 1) % face.len()] as usize];
             normal = normal.add(v1.cross(v2));
         }
-        normal
+        normal.normalize()
     }
 
     fn face_centroid(&self, face_index: usize) -> Vector3<f32> {
@@ -183,25 +183,64 @@ impl Polyhedron {
         // Get the graphics context from the window
         let context: Context = window.gl();
 
+        /*
         let program = Program::from_source(
             &context,
             include_str!("../shaders/basic.vert"),
             include_str!("../shaders/basic.frag"),
         )
         .unwrap();
+        */
 
-        let position = self.face_normal(0).mul(1.001);
         let mut camera = Camera::new_perspective(
             window.viewport(),
-            position,
+            self.face_normal(0) * 1.01,
+            vec3(0.0, 0.0, 0.0), // target
+            vec3(0.0, 1.0, 0.0), // up
+            degrees(45.0),
+            0.01,
+            5.0,
+        );
+
+        //let (positions, colors) = self.triangle_buffers(&context);
+
+        let projection = camera.view(); //* camera.view();
+        let mut lines = Vec::new();
+        // For each
+        for face in self.faces.iter() {
+            for i in 0..face.len() {
+                let p1 = self.vertices[face[i] as usize];
+                let p2 = self.vertices[face[(i + 1) % face.len()] as usize];
+                //let norm = self.face_normal(0) * 1.001; //* 2.0;
+                //let r1 = norm.distance(p1);
+                //let r2 = norm.distance(p2);
+
+                let p1 = ((projection * vec4(p1.x, p1.y, p1.z, 1.0)) / 3.0).xy();
+                let p2 = ((projection * vec4(p2.x, p2.y, p2.z, 1.0)) / 3.0).xy();
+
+                let line = Line::new(&context, p1, p2, 0.009);
+
+                lines.push(Gm::new(
+                    line,
+                    ColorMaterial {
+                        color: Srgba::RED,
+                        ..Default::default()
+                    },
+                ))
+            }
+        }
+
+        /*
+        let mut camera = Camera::new_perspective(
+            window.viewport(),
+            self.face_normal(0) * 1.2,
             vec3(0.0, 0.0, 0.0), // target
             vec3(0.0, 5.0, 0.0), // up
             degrees(45.0),
             0.01,
             10.0,
         );
-
-        let (positions, colors) = self.triangle_buffers(&context);
+        */
 
         window.render_loop(move |frame_input| {
             camera.set_viewport(frame_input.viewport);
@@ -209,18 +248,26 @@ impl Polyhedron {
                 .screen()
                 // Clear the color and depth of the screen render target
                 .clear(ClearState::color_and_depth(0.8, 0.8, 0.8, 1.0, 1.0))
-                .write(|| {
-                    let time = frame_input.accumulated_time as f32;
-                    program.use_uniform("model", Mat4::from_angle_x(degrees(0.0)));
-                    program.use_uniform("viewProjection", camera.projection() * camera.view());
-                    program.use_vertex_attribute("position", &positions);
-                    program.use_vertex_attribute("color", &colors);
-                    program.draw_arrays(
-                        RenderStates::default(),
-                        frame_input.viewport,
-                        positions.vertex_count(),
-                    );
-                });
+                .render(&camera, &lines, &[]);
+            /*
+            .write(|| {
+                let time = frame_input.accumulated_time as f32;
+                program.use_uniform("projection", camera.projection() * camera.view());
+                program.use_vertex_attribute("position", &positions);
+                program.use_vertex_attribute(
+                    "barycentric",
+                    &VertexBuffer::new_with_data(
+                        &context,
+                        &vec![vec2(0.0, 0.0); positions.vertex_count() as usize],
+                    ),
+                );
+                program.draw_arrays(
+                    RenderStates::default(),
+                    frame_input.viewport,
+                    positions.vertex_count(),
+                );
+            });
+            */
             FrameOutput::default()
         });
     }
@@ -266,7 +313,7 @@ impl Polyhedron {
                 .clear(ClearState::color_and_depth(0.8, 0.8, 0.8, 1.0, 1.0))
                 .write(|| {
                     let time = frame_input.accumulated_time as f32;
-                    program.use_uniform("model", Mat4::from_angle_x(degrees(0.0)));
+                    program.use_uniform("model", Mat4::from_angle_x(radians(0.001 * time)));
                     program.use_uniform("viewProjection", camera.projection() * camera.view());
                     program.use_vertex_attribute("position", &positions);
                     program.use_vertex_attribute("color", &colors);
