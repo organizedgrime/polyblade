@@ -38,7 +38,7 @@ pub fn main() {
         0.1,
         10.0,
     );
-    let scene1 = WindowScene::new(&event_loop, camera.clone(), Srgba::WHITE, None);
+    let scene1 = WindowScene::new(&event_loop, camera.clone(), Srgba::WHITE, Some("basic"));
     scenes.insert(scene1.window.id(), scene1);
     let scene2 = WindowScene::new(&event_loop, camera, Srgba::RED, None);
     scenes.insert(scene2.window.id(), scene2);
@@ -62,6 +62,8 @@ pub fn main() {
 
                 // Render
                 scene.render();
+
+                //frame_input.screen()
 
                 // Close
                 scene.context.swap_buffers().unwrap();

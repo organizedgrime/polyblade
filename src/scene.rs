@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{fs::File, io::Read, sync::Arc};
 
 use three_d::{renderer::*, FrameInputGenerator, WindowedContext};
 use winit::{
@@ -26,7 +26,7 @@ impl WindowScene {
         event_loop: &EventLoop<()>,
         camera: Camera,
         background: Srgba,
-        program: Option<Program>,
+        program_name: Option<&str>,
     ) -> Self {
         #[cfg(not(target_arch = "wasm32"))]
         let window_builder = winit::window::WindowBuilder::new()
@@ -67,6 +67,23 @@ impl WindowScene {
         .unwrap();
 
         let frame_input_generator = three_d::FrameInputGenerator::from_winit_window(&window);
+
+        let program: Option<Program> = if let Some(program_name) = program_name {
+            let mut vertex_shader = String::new();
+            let mut fragment_shader = String::new();
+            File::open(&format!("src/shaders/{}.vert", program_name))
+                .unwrap()
+                .read_to_string(&mut vertex_shader)
+                .unwrap();
+            File::open(&format!("src/shaders/{}.frag", program_name))
+                .unwrap()
+                .read_to_string(&mut fragment_shader)
+                .unwrap();
+
+            Some(Program::from_source(&context, &vertex_shader, &fragment_shader).unwrap())
+        } else {
+            None
+        };
 
         Self {
             //            event_loop,
