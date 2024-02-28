@@ -101,6 +101,11 @@ impl HSL {
         )
     }
 
+    pub fn to_srgba(&self) -> Srgba {
+        let color = self.to_rgb();
+        Srgba::new_opaque(color.0, color.1, color.2)
+    }
+
     pub fn to_linear_srgb(&self) -> Vec4 {
         let color = self.to_rgb();
         Srgba::new_opaque(color.0, color.1, color.2).to_linear_srgb()

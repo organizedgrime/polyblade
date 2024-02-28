@@ -140,6 +140,57 @@ impl Polyhedron {
 
         center
     }
+    /*
+    pub fn polygons(&self, context: &Context) -> Vec<Gm<Mesh, PhysicalMaterial>> {
+        let mut polygons = Vec::new();
+
+        for face_index in 0..self.faces.len() {
+            // Create triangles from the center to each corner
+            let mut face_vertices = Vec::new();
+            let vertices = self.face_vertices(face_index);
+            let center = self.face_centroid(face_index);
+
+            // Construct a triangle
+            for i in 0..vertices.len() {
+                face_vertices.extend(vec![
+                    vertices[i],
+                    center,
+                    vertices[(i + 1) % vertices.len()],
+                ]);
+            }
+
+            let mut color = HSL::new(
+                (360.0 / (self.faces.len() as f64)) * face_index as f64,
+                1.0,
+                0.5,
+            )
+            .to_srgba();
+
+            if face_index == 0 {
+                color = Srgba::WHITE; //.to_linear_srgb();
+            }
+
+            CpuMesh::new();
+
+            polygons.push(Gm::new(
+                Mesh::new(
+                    context,
+                    &VertexBuffer::new_with_data(context, &face_vertices),
+                ),
+                PhysicalMaterial::new_transparent(
+                    &context,
+                    &CpuMaterial {
+                        albedo: color,
+                        ..Default::default()
+                    },
+                ),
+            ));
+        }
+
+        polygons
+    }
+
+    */
     fn triangle_buffers(&self, context: &Context) -> (VertexBuffer, VertexBuffer) {
         let mut polyhedron_vertices = Vec::new();
         let mut polyhedron_colors = Vec::new();
@@ -277,7 +328,9 @@ impl Polyhedron {
         });
     }
 
-    pub fn render_form(&self) {
+    // Compute model
+    /*
+    pub fn model(&self) -> Gm {
         // Create a window (a canvas on web)
         let window = Window::new(WindowSettings {
             title: "Core Triangle!".to_string(),
@@ -310,6 +363,8 @@ impl Polyhedron {
 
         let (positions, colors) = self.triangle_buffers(&context);
 
+        //let model = Gm::new(Mesh::new(&context), ColorMaterial { })
+
         window.render_loop(move |frame_input| {
             camera.set_viewport(frame_input.viewport);
             frame_input
@@ -331,6 +386,7 @@ impl Polyhedron {
             FrameOutput::default()
         });
     }
+    */
 }
 /*
  *

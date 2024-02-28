@@ -1,94 +1,3 @@
-/*
-use three_d::*;
-
-
-pub fn main() {
-    let window = Window::new(WindowSettings {
-        title: "Shapes 2D!".to_string(),
-        max_size: Some((1280, 720)),
-        ..Default::default()
-    })
-    .unwrap();
-    let context = window.gl();
-    let scale_factor = window.device_pixel_ratio();
-    let (width, height) = window.size();
-
-    let mut rectangle = Gm::new(
-        Rectangle::new(
-            &context,
-            vec2(200.0, 200.0) * scale_factor,
-            degrees(45.0),
-            100.0 * scale_factor,
-            200.0 * scale_factor,
-        ),
-        ColorMaterial {
-            color: Srgba::RED,
-            ..Default::default()
-        },
-    );
-    let mut circle = Gm::new(
-        Circle::new(
-            &context,
-            vec2(500.0, 500.0) * scale_factor,
-            200.0 * scale_factor,
-        ),
-        ColorMaterial {
-            color: Srgba::BLUE,
-            ..Default::default()
-        },
-    );
-    let mut line = Gm::new(
-        Line::new(
-            &context,
-            vec2(0.0, 0.0) * scale_factor,
-            vec2(width as f32, height as f32) * scale_factor,
-            5.0 * scale_factor,
-        ),
-        ColorMaterial {
-            color: Srgba::GREEN,
-            ..Default::default()
-        },
-    );
-
-    window.render_loop(move |frame_input| {
-        for event in frame_input.events.iter() {
-            if let Event::MousePress {
-                button,
-                position,
-                modifiers,
-                ..
-            } = *event
-            {
-                if button == MouseButton::Left && !modifiers.ctrl {
-                    rectangle.set_center(position);
-                }
-                if button == MouseButton::Right && !modifiers.ctrl {
-                    circle.set_center(position);
-                }
-                if button == MouseButton::Left && modifiers.ctrl {
-                    let ep = line.end_point1();
-                    line.set_endpoints(position, ep);
-                }
-                if button == MouseButton::Right && modifiers.ctrl {
-                    let ep = line.end_point0();
-                    line.set_endpoints(ep, position);
-                }
-            }
-        }
-        frame_input
-            .screen()
-            .clear(ClearState::color_and_depth(0.8, 0.8, 0.8, 1.0, 1.0))
-            .render(
-                &Camera::new_2d(frame_input.viewport),
-                line.into_iter().chain(&rectangle).chain(&circle),
-                &[],
-            );
-
-        FrameOutput::default()
-    });
-}
-*/
-
 // Entry point for wasm
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::prelude::*;
@@ -105,16 +14,90 @@ pub async fn start() -> Result<(), JsValue> {
     main::run().await;
     Ok(())
 }
-use paper_blade::prelude::*;
 
 #[cfg(not(target_arch = "wasm32"))]
 pub fn main() {
-    use three_d::*;
-    let shape = Polyhedron::dodecahedron();
-    // shape.render_form();
-    shape.render_schlegel();
-    /*
+    use crate::*;
+    use paper_blade::prelude::WindowScene;
+    use std::{collections::HashMap, sync::Arc};
+    use three_d::{renderer::*, WindowedContext};
 
+    //let shape = Polyhedron::dodecahedron();
+    // shape.render_form();
+    //shape.render_schlegel();
+    let mut scenes = HashMap::new();
+
+    let event_loop = winit::event_loop::EventLoop::new();
+
+    let camera = Camera::new_perspective(
+        Viewport::new_at_origo(1, 1),
+        vec3(0.0, 0.0, 2.0 + 1 as f32 * 4.0),
+        vec3(0.0, 0.0, 0.0),
+        vec3(0.0, 1.0, 0.0),
+        degrees(45.0),
+        0.1,
+        10.0,
+    );
+    let scene1 = WindowScene::new(&event_loop, camera.clone(), Srgba::WHITE, None);
+    scenes.insert(scene1.window.id(), scene1);
+    let scene2 = WindowScene::new(&event_loop, camera, Srgba::RED, None);
+    scenes.insert(scene2.window.id(), scene2);
+
+    event_loop.run(move |event, _, control_flow| match &event {
+        winit::event::Event::MainEventsCleared => {
+            for (_, scene) in scenes.iter() {
+                scene.window.request_redraw();
+            }
+        }
+        winit::event::Event::RedrawRequested(window_id) => {
+            if let Some(scene) = scenes.get_mut(window_id) {
+                // Open
+                scene.context.make_current().unwrap();
+                let frame_input = scene.frame_input_generator.generate(&scene.context);
+                scene.camera.set_viewport(frame_input.viewport);
+                let color = scene.background.to_linear_srgb();
+                frame_input.screen().clear(ClearState::color_and_depth(
+                    color.x, color.y, color.z, 1.0, 1.0,
+                ));
+
+                // Render
+                scene.render();
+
+                // Close
+                scene.context.swap_buffers().unwrap();
+                control_flow.set_poll();
+                scene.window.request_redraw();
+            }
+        }
+        winit::event::Event::WindowEvent { event, window_id } => {
+            if let Some(scene) = scenes.get_mut(window_id) {
+                scene.frame_input_generator.handle_winit_window_event(event);
+                match event {
+                    winit::event::WindowEvent::Resized(physical_size) => {
+                        scene.context.resize(*physical_size);
+                    }
+                    winit::event::WindowEvent::ScaleFactorChanged { new_inner_size, .. } => {
+                        scene.context.resize(**new_inner_size);
+                    }
+                    winit::event::WindowEvent::CloseRequested => {
+                        if let Some(scene) = scenes.get_mut(window_id) {
+                            scene.context.make_current().unwrap();
+                        }
+
+                        scenes.remove(window_id);
+
+                        if scenes.is_empty() {
+                            control_flow.set_exit();
+                        }
+                    }
+                    _ => (),
+                }
+            }
+        }
+        _ => {}
+    });
+
+    /*
         window.render_loop(move |frame_input| {
             camera.set_viewport(frame_input.viewport);
             /*
