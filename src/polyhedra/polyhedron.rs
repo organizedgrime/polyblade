@@ -24,7 +24,7 @@ pub struct Polyhedron {
     pub name: String,
 
     // Faces
-    pub faces: Vec<Vec<i32>>,
+    pub faces: Vec<Vec<usize>>,
 
     // Vertices
     pub vertices: Vec<Vector3<f32>>,
@@ -57,7 +57,7 @@ impl Polyhedron {
     pub fn prism(n: i32) -> Self {
         // Starting vars
         let name = format!("P{}", n);
-        let mut faces = Vec::new();
+        let mut faces = Vec::<Vec<usize>>::new();
         let mut vertices = Vec::new();
 
         // Pie angle
@@ -75,12 +75,17 @@ impl Polyhedron {
         }
 
         // Top face
-        faces.push((0..=n - 1).rev().collect());
+        faces.push((0..=(n - 1)).map(|v| v as usize).rev().collect());
         // Bottom face
-        faces.push((n..=2 * n - 1).collect());
+        faces.push((n..=2 * n - 1).map(|v| v as usize).collect());
         // n square faces
         for i in 0..n {
-            faces.push(vec![i, (i + 1) % n, (i + 1) % n + n, i + n]);
+            faces.push(
+                vec![i, (i + 1) % n, (i + 1) % n + n, i + n]
+                    .into_iter()
+                    .map(|v| v as usize)
+                    .collect(),
+            );
         }
 
         // TODO adjust xyz
@@ -108,7 +113,7 @@ impl Polyhedron {
     fn face_vertices(&self, face_index: usize) -> Vec<Vector3<f32>> {
         self.faces[face_index]
             .iter()
-            .map(|f| self.vertices[*f as usize].clone())
+            .map(|f| self.vertices[*f].clone())
             .collect()
     }
 
@@ -116,8 +121,8 @@ impl Polyhedron {
         let face = &self.faces[face_index];
         let mut normal = Vector3::<f32>::new(0.0, 0.0, 0.0);
         for i in 0..face.len() {
-            let v1 = self.vertices[face[i] as usize];
-            let v2 = self.vertices[face[(i + 1) % face.len()] as usize];
+            let v1 = self.vertices[face[i]];
+            let v2 = self.vertices[face[(i + 1) % face.len()]];
             normal = normal.add(v1.cross(v2));
         }
         normal.normalize()
@@ -209,8 +214,8 @@ impl Polyhedron {
         // For each
         for face in self.faces.iter() {
             for i in 0..face.len() {
-                let p1 = self.vertices[face[i] as usize];
-                let p2 = self.vertices[face[(i + 1) % face.len()] as usize];
+                let p1 = self.vertices[face[i]];
+                let p2 = self.vertices[face[(i + 1) % face.len()]];
                 //let norm = self.face_normal(0) * 1.001; //* 2.0;
                 //let r1 = norm.distance(p1);
                 //let r2 = norm.distance(p2);
@@ -258,7 +263,7 @@ impl Polyhedron {
                     "barycentric",
                     &VertexBuffer::new_with_data(
                         &context,
-                        &vec![vec2(0.0, 0.0); positions.vertex_count() as usize],
+                        &vec![vec2(0.0, 0.0); positions.vertex_count()],
                     ),
                 );
                 program.draw_arrays(

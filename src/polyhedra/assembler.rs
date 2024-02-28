@@ -12,8 +12,7 @@ pub struct Assembler {
 }
 
 impl Assembler {
-    pub fn flag(&mut self, face: i32, v1: f64, v2: f64) {
-        let face = face as usize;
+    pub fn flag(&mut self, face: usize, v1: f64, v2: f64) {
         // Make sure there is a flag array for this face
         while self.flags.len() - 1 < face {
             self.flags.push(vec![]);
