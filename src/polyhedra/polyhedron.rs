@@ -140,60 +140,11 @@ impl Polyhedron {
 
         center
     }
-    /*
-    pub fn polygons(&self, context: &Context) -> Vec<Gm<Mesh, PhysicalMaterial>> {
-        let mut polygons = Vec::new();
 
-        for face_index in 0..self.faces.len() {
-            // Create triangles from the center to each corner
-            let mut face_vertices = Vec::new();
-            let vertices = self.face_vertices(face_index);
-            let center = self.face_centroid(face_index);
-
-            // Construct a triangle
-            for i in 0..vertices.len() {
-                face_vertices.extend(vec![
-                    vertices[i],
-                    center,
-                    vertices[(i + 1) % vertices.len()],
-                ]);
-            }
-
-            let mut color = HSL::new(
-                (360.0 / (self.faces.len() as f64)) * face_index as f64,
-                1.0,
-                0.5,
-            )
-            .to_srgba();
-
-            if face_index == 0 {
-                color = Srgba::WHITE; //.to_linear_srgb();
-            }
-
-            CpuMesh::new();
-
-            polygons.push(Gm::new(
-                Mesh::new(
-                    context,
-                    &VertexBuffer::new_with_data(context, &face_vertices),
-                ),
-                PhysicalMaterial::new_transparent(
-                    &context,
-                    &CpuMaterial {
-                        albedo: color,
-                        ..Default::default()
-                    },
-                ),
-            ));
-        }
-
-        polygons
-    }
-
-    */
-    pub fn triangle_buffers(&self, context: &Context) -> (VertexBuffer, VertexBuffer) {
+    pub fn triangle_buffers(&self, context: &Context) -> (VertexBuffer, VertexBuffer, VertexBuffer) {
         let mut polyhedron_vertices = Vec::new();
         let mut polyhedron_colors = Vec::new();
+        let mut polyhedron_barycentric = Vec::new();
         for face_index in 0..self.faces.len() {
             // Create triangles from the center to each corner
             let mut face_vertices = Vec::new();
@@ -207,6 +158,12 @@ impl Polyhedron {
                     center,
                     vertices[(i + 1) % vertices.len()],
                 ]);
+                polyhedron_barycentric.extend(
+                    vec![
+                        vec3(1.0, 0.0, 0.0), 
+                        vec3(0.0, 1.0, 0.0), 
+                        vec3(0.0, 0.0, 1.0)
+                    ])
             }
 
             let mut color = HSL::new(
@@ -218,172 +175,12 @@ impl Polyhedron {
             polyhedron_colors.extend(vec![color; face_vertices.len()]);
             polyhedron_vertices.extend(face_vertices);
         }
-
+        
         let positions = VertexBuffer::new_with_data(context, &polyhedron_vertices);
         let colors = VertexBuffer::new_with_data(context, &polyhedron_colors);
-        (positions, colors)
+        let barycentric = VertexBuffer::new_with_data(context, &polyhedron_barycentric);
+        (positions, colors, barycentric)
     }
-
-    pub fn rrrrrender_schlegel(&self) {
-        // Create a window (a canvas on web)
-        let window = Window::new(WindowSettings {
-            title: "Core Triangle!".to_string(),
-            #[cfg(not(target_arch = "wasm32"))]
-            max_size: Some((1280, 720)),
-            ..Default::default()
-        })
-        .unwrap();
-        // Get the graphics context from the window
-        let context: Context = window.gl();
-
-        /*
-        let program = Program::from_source(
-            &context,
-            include_str!("../shaders/basic.vert"),
-            include_str!("../shaders/basic.frag"),
-        )
-        .unwrap();
-        */
-
-        let mut camera = Camera::new_perspective(
-            window.viewport(),
-            self.face_normal(0) * 1.01,
-            vec3(0.0, 0.0, 0.0), // target
-            vec3(0.0, 1.0, 0.0), // up
-            degrees(45.0),
-            0.01,
-            5.0,
-        );
-
-        //let (positions, colors) = self.triangle_buffers(&context);
-
-        let projection = camera.view(); //* camera.view();
-        let mut lines = Vec::new();
-        // For each
-        for face in self.faces.iter() {
-            for i in 0..face.len() {
-                let p1 = self.vertices[face[i]];
-                let p2 = self.vertices[face[(i + 1) % face.len()]];
-                //let norm = self.face_normal(0) * 1.001; //* 2.0;
-                //let r1 = norm.distance(p1);
-                //let r2 = norm.distance(p2);
-
-                let p1 = ((projection * vec4(p1.x, p1.y, p1.z, 1.0)) / 3.0).xy();
-                let p2 = ((projection * vec4(p2.x, p2.y, p2.z, 1.0)) / 3.0).xy();
-
-                let line = Line::new(&context, p1, p2, 0.009);
-
-                lines.push(Gm::new(
-                    line,
-                    ColorMaterial {
-                        color: Srgba::RED,
-                        ..Default::default()
-                    },
-                ))
-            }
-        }
-
-        /*
-        let mut camera = Camera::new_perspective(
-            window.viewport(),
-            self.face_normal(0) * 1.2,
-            vec3(0.0, 0.0, 0.0), // target
-            vec3(0.0, 5.0, 0.0), // up
-            degrees(45.0),
-            0.01,
-            10.0,
-        );
-        */
-
-        window.render_loop(move |frame_input| {
-            camera.set_viewport(frame_input.viewport);
-            frame_input
-                .screen()
-                // Clear the color and depth of the screen render target
-                .clear(ClearState::color_and_depth(0.8, 0.8, 0.8, 1.0, 1.0))
-                .render(&camera, &lines, &[]);
-            /*
-            .write(|| {
-                let time = frame_input.accumulated_time as f32;
-                program.use_uniform("projection", camera.projection() * camera.view());
-                program.use_vertex_attribute("position", &positions);
-                program.use_vertex_attribute(
-                    "barycentric",
-                    &VertexBuffer::new_with_data(
-                        &context,
-                        &vec![vec2(0.0, 0.0); positions.vertex_count()],
-                    ),
-                );
-                program.draw_arrays(
-                    RenderStates::default(),
-                    frame_input.viewport,
-                    positions.vertex_count(),
-                );
-            });
-            */
-            FrameOutput::default()
-        });
-    }
-
-    // Compute model
-    /*
-    pub fn model(&self) -> Gm {
-        // Create a window (a canvas on web)
-        let window = Window::new(WindowSettings {
-            title: "Core Triangle!".to_string(),
-            #[cfg(not(target_arch = "wasm32"))]
-            max_size: Some((1280, 720)),
-            ..Default::default()
-        })
-        .unwrap();
-        // Get the graphics context from the window
-        let context: Context = window.gl();
-
-        let program = Program::from_source(
-            &context,
-            include_str!("../shaders/basic.vert"),
-            include_str!("../shaders/basic.frag"),
-        )
-        .unwrap();
-        //let mut position = self.face_centroid(0);
-        let position = self.face_normal(0).mul(4.0);
-
-        let mut camera = Camera::new_perspective(
-            window.viewport(),
-            position,
-            vec3(0.0, 0.0, 0.0),
-            vec3(0.0, 5.0, 0.0),
-            degrees(45.0),
-            0.1,
-            10.0,
-        );
-
-        let (positions, colors) = self.triangle_buffers(&context);
-
-        //let model = Gm::new(Mesh::new(&context), ColorMaterial { })
-
-        window.render_loop(move |frame_input| {
-            camera.set_viewport(frame_input.viewport);
-            frame_input
-                .screen()
-                // Clear the color and depth of the screen render target
-                .clear(ClearState::color_and_depth(0.8, 0.8, 0.8, 1.0, 1.0))
-                .write(|| {
-                    let time = frame_input.accumulated_time as f32;
-                    program.use_uniform("model", Mat4::from_angle_x(radians(0.001 * time)));
-                    program.use_uniform("viewProjection", camera.projection() * camera.view());
-                    program.use_vertex_attribute("position", &positions);
-                    program.use_vertex_attribute("color", &colors);
-                    program.draw_arrays(
-                        RenderStates::default(),
-                        frame_input.viewport,
-                        positions.vertex_count(),
-                    );
-                });
-            FrameOutput::default()
-        });
-    }
-    */
 }
 /*
  *
@@ -411,7 +208,7 @@ impl Polyhedron {
             vec3(0.0, 1.0, 0.0),
         );
 
-        let (positions, colors) = self.triangle_buffers(&scene.context);
+        let (positions, colors, barycentric) = self.triangle_buffers(&scene.context);
         let model = Mat4::from_angle_x(radians(0.0));
 
         scene.program.use_uniform("model", model);
@@ -421,6 +218,7 @@ impl Polyhedron {
         );
         scene.program.use_vertex_attribute("position", &positions);
         scene.program.use_vertex_attribute("color", &colors);
+        scene.program.use_vertex_attribute("barycentric", &barycentric);
         scene.program.draw_arrays(
             RenderStates::default(),
             frame_input.viewport,
@@ -428,7 +226,7 @@ impl Polyhedron {
         );
     }
     pub fn render_model(&self, scene: &mut WindowScene, frame_input: &FrameInput) {
-        let (positions, colors) = self.triangle_buffers(&scene.context);
+        let (positions, colors, barycentric) = self.triangle_buffers(&scene.context);
         //let program = scene.program.unwrap();
 
         let time = frame_input.accumulated_time as f32;
@@ -442,6 +240,7 @@ impl Polyhedron {
         );
         scene.program.use_vertex_attribute("position", &positions);
         scene.program.use_vertex_attribute("color", &colors);
+        scene.program.use_vertex_attribute("barycentric", &barycentric);
         scene.program.draw_arrays(
             RenderStates::default(),
             frame_input.viewport,
