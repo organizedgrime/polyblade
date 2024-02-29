@@ -11,6 +11,7 @@ use crate::prelude::Polyhedron;
 pub struct WindowScene {
     // Window stuff
     //event_loop: Arc<EventLoop<()>>,
+    pub title: String,
     pub window: Window,
     pub context: WindowedContext,
     pub frame_input_generator: FrameInputGenerator,
@@ -26,6 +27,7 @@ pub struct WindowScene {
 
 impl WindowScene {
     pub fn new(
+        title: &str,
         event_loop: &EventLoop<()>,
         camera: Camera,
         background: Srgba,
@@ -33,7 +35,7 @@ impl WindowScene {
     ) -> Self {
         #[cfg(not(target_arch = "wasm32"))]
         let window_builder = winit::window::WindowBuilder::new()
-            .with_title("winit window")
+            .with_title(title)
             .with_min_inner_size(winit::dpi::LogicalSize::new(720, 720))
             .with_inner_size(winit::dpi::LogicalSize::new(720, 720))
             .with_position(winit::dpi::LogicalPosition::new(300, 100));
@@ -88,6 +90,7 @@ impl WindowScene {
 
         Self {
             //            event_loop,
+            title: String::from(title),
             window,
             context,
             frame_input_generator,

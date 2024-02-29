@@ -19,7 +19,7 @@ pub async fn start() -> Result<(), JsValue> {
 pub fn main() {
     use crate::*;
     use paper_blade::prelude::{Polyhedron, Renderable, WindowScene};
-    use std::{collections::HashMap, sync::Arc};
+    use std::{collections::HashMap, ops::Index, sync::Arc};
     use three_d::{renderer::*, FrameInput, WindowedContext};
 
     //let shape = Polyhedron::dodecahedron();
@@ -29,19 +29,28 @@ pub fn main() {
 
     let event_loop = winit::event_loop::EventLoop::new();
 
-    let camera = Camera::new_perspective(
+    let camera1 = Camera::new_perspective(
         Viewport::new_at_origo(1, 1),
-        vec3(0.0, 0.0, 2.0 + 1 as f32 * 4.0),
+        vec3(0.0, 0.0, 6.0),
         vec3(0.0, 0.0, 0.0),
         vec3(0.0, 1.0, 0.0),
         degrees(45.0),
         0.1,
         10.0,
     );
-
-    let scene1 = WindowScene::new(&event_loop, camera.clone(), Srgba::WHITE, "basic");
+    let scene1 = WindowScene::new("model", &event_loop, camera1, Srgba::WHITE, "basic");
     scenes.insert(scene1.window.id(), scene1);
-    let scene2 = WindowScene::new(&event_loop, camera, Srgba::RED, "basic");
+
+    let camera2 = Camera::new_perspective(
+        Viewport::new_at_origo(1, 1),
+        vec3(0.0, 0.0, 6.0),
+        vec3(0.0, 0.0, 0.0),
+        vec3(0.0, 1.0, 0.0),
+        degrees(170.0),
+        0.1,
+        10.0,
+    );
+    let scene2 = WindowScene::new("schlegel", &event_loop, camera2, Srgba::WHITE, "basic");
     scenes.insert(scene2.window.id(), scene2);
 
     event_loop.run(move |event, _, control_flow| match &event {
@@ -61,7 +70,12 @@ pub fn main() {
                     color.x, color.y, color.z, 1.0, 1.0,
                 ));
 
-                Polyhedron::dodecahedron().render(scene, &frame_input);
+                if &scene.title == "model" {
+                    Polyhedron::dodecahedron().render_model(scene, &frame_input);
+                } else {
+                    Polyhedron::dodecahedron().render_schlegel(scene, &frame_input);
+                    //Polyhedron::dodecahedron().render_model(scene, &frame_input);
+                }
 
                 // Close
                 scene.context.swap_buffers().unwrap();
@@ -96,32 +110,4 @@ pub fn main() {
         }
         _ => {}
     });
-
-    /*
-        window.render_loop(move |frame_input| {
-            camera.set_viewport(frame_input.viewport);
-            /*
-            frame_input
-                .screen()
-                .clear(ClearState::color_and_depth(0.8, 0.8, 0.8, 1.0, 1.0))
-                .render(
-                    &Camera::new_2d(frame_input.viewport),
-                    shape.render_schlegel(&context).into_iter(),
-                    &[],
-                );
-
-                */
-            frame_input
-                .screen()
-                // Clear the color and depth of the screen render target
-                .clear(ClearState::color_and_depth(0.8, 0.8, 0.8, 1.0, 1.0))
-                .write(|| {
-                    let time = frame_input.accumulated_time as f32;
-                    program.use_uniform("model", Mat4::from_angle_y(degrees(72.0 / 2.0)));
-                    program.use_uniform("viewProjection", camera.projection() * camera.view());
-                    shape.render_form(&program, &context, frame_input.viewport);
-                });
-            FrameOutput::default()
-        });
-    */
 }

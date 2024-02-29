@@ -215,9 +215,6 @@ impl Polyhedron {
                 0.5,
             )
             .to_linear_srgb();
-            if face_index == 0 {
-                color = Srgba::WHITE.to_linear_srgb();
-            }
             polyhedron_colors.extend(vec![color; face_vertices.len()]);
             polyhedron_vertices.extend(face_vertices);
         }
@@ -227,7 +224,7 @@ impl Polyhedron {
         (positions, colors)
     }
 
-    pub fn render_schlegel(&self) {
+    pub fn rrrrrender_schlegel(&self) {
         // Create a window (a canvas on web)
         let window = Window::new(WindowSettings {
             title: "Core Triangle!".to_string(),
@@ -406,17 +403,41 @@ impl Polyhedron {
  * polyhedra we're solving for.
  */
 
-impl Renderable for Polyhedron {
-    fn render(&self, scene: &mut WindowScene, frame_input: &FrameInput) {
+impl Polyhedron {
+    pub fn render_schlegel(&self, scene: &mut WindowScene, frame_input: &FrameInput) {
+        scene.camera.set_view(
+            self.face_normal(0) * 0.75,
+            vec3(0.0, 0.0, 0.0),
+            vec3(0.0, 1.0, 0.0),
+        );
+
+        let (positions, colors) = self.triangle_buffers(&scene.context);
+        let model = Mat4::from_angle_x(radians(0.0));
+
+        scene.program.use_uniform("model", model);
+        scene.program.use_uniform(
+            "projection",
+            scene.camera.projection() * scene.camera.view(),
+        );
+        scene.program.use_vertex_attribute("position", &positions);
+        scene.program.use_vertex_attribute("color", &colors);
+        scene.program.draw_arrays(
+            RenderStates::default(),
+            frame_input.viewport,
+            positions.vertex_count(),
+        );
+    }
+    pub fn render_model(&self, scene: &mut WindowScene, frame_input: &FrameInput) {
         let (positions, colors) = self.triangle_buffers(&scene.context);
         //let program = scene.program.unwrap();
 
         let time = frame_input.accumulated_time as f32;
-        scene
-            .program
-            .use_uniform("model", Mat4::from_angle_y(radians(0.001 * time)));
+        let model =
+            Mat4::from_angle_y(radians(0.001 * time)) * Mat4::from_angle_x(radians(0.001 * time));
+
+        scene.program.use_uniform("model", model);
         scene.program.use_uniform(
-            "viewProjection",
+            "projection",
             scene.camera.projection() * scene.camera.view(),
         );
         scene.program.use_vertex_attribute("position", &positions);
