@@ -23,23 +23,47 @@ pub struct Polyhedron {
     // Conway Polyhedron Notation
     pub name: String,
 
-    // Faces
-    pub faces: Vec<Vec<usize>>,
+    // List of faces
+    pub faces: Vec<Vec<usize>>, 
 
-    // Vertices
-    pub vertices: Vec<Vector3<f32>>,
+    // Vertices in adjacency list
+    pub vertices: Vec<Vec<usize>>,
 }
 
 // Platonic Solids
 impl Polyhedron {
+    /*
     pub fn tetrahedron() -> Polyhedron {
         serde_json::from_slice(TETRAHEDRON_DATA).unwrap()
     }
+    */
 
     pub fn cube() -> Polyhedron {
-        serde_json::from_slice(CUBE_DATA).unwrap()
+        Polyhedron {
+            name: String::from("C"),
+            faces: vec![
+                vec![0, 1, 6, 7],
+                vec![1, 3, 4, 6],
+                vec![3, 2, 5, 4],
+                vec![2, 0, 7, 5],
+                vec![7, 6, 4, 5],
+                vec![2, 3, 1, 0],
+            ],
+            vertices: vec![
+                vec![1, 2, 7],
+                vec![0, 3, 6],
+                vec![0, 3, 5],
+                vec![1, 2, 4],
+                vec![3, 5, 6],
+                vec![2, 4, 7],
+                vec![1, 4, 7],
+                vec![0, 5, 6],
+            ],
+        }
+        //serde_json::from_slice(CUBE_DATA).unwrap()
     }
 
+    /*
     pub fn octahedron() -> Polyhedron {
         serde_json::from_slice(OCTAHEDRON_DATA).unwrap()
     }
@@ -51,64 +75,38 @@ impl Polyhedron {
     pub fn icosahedron() -> Polyhedron {
         serde_json::from_slice(ICOSAHEDRON_DATA).unwrap()
     }
-}
-
-impl Polyhedron {
-    pub fn prism(n: i32) -> Self {
-        // Starting vars
-        let name = format!("P{}", n);
-        let mut faces = Vec::<Vec<usize>>::new();
-        let mut vertices = Vec::new();
-
-        // Pie angle
-        let theta = std::f32::consts::PI / (n as f32);
-        // Half edge
-        let h = (theta / 2.0).sin();
-
-        for i in 0..n {
-            let i = i as f32;
-            vertices.push(vec3((i * theta).cos(), (i * theta).sin(), h));
-        }
-        for i in 0..n {
-            let i = i as f32;
-            vertices.push(vec3((i * theta).cos(), (i * theta).sin(), -h));
-        }
-
-        // Top face
-        faces.push((0..=(n - 1)).map(|v| v as usize).rev().collect());
-        // Bottom face
-        faces.push((n..=2 * n - 1).map(|v| v as usize).collect());
-        // n square faces
-        for i in 0..n {
-            faces.push(
-                vec![i, (i + 1) % n, (i + 1) % n + n, i + n]
-                    .into_iter()
-                    .map(|v| v as usize)
-                    .collect(),
-            );
-        }
-
-        // TODO adjust xyz
-
-        Self {
-            name,
-            faces,
-            vertices,
-        }
-    }
+    */
 }
 
 // Operations
 impl Polyhedron {
-    // k: kisN(self, n)
-    // a: ambo(self)
-    // g: gyro(self)
-    // p: propellor(self)
-    // d: dual(self)
-    // r: reflect(self)
-    // c: canonicalize xyz
+    pub fn elastic(&self) {
+        // a = adjacent (length of an edge in 3D space)
+        // n = neighbor (length of a path between two vertices is 2)
+        // d = diameter (circumsphere / face of projection)
+
+        // For each vertex in the face of projection
+        let projection_face = self.faces[0];
+        let Ed = 0.0;
+        for i in 0..=projection_face.len() {
+            let edge = (projection_face[i], projection_face[(i+1) % projection_face.len()]);
+            Ed += 
+        }
+        let Ed = Kd / 2.0 * self.faces[projection_face].iter().fold(0, |acc, vertex| {
+            acc + ()
+        });
+            
+
+
+
+        // Natural lengths of virtual springs
+        let La = 0.5;
+
+        let Ea = Ka / 2.0 * 
+    }
 }
 
+/*
 impl Polyhedron {
     fn face_vertices(&self, face_index: usize) -> Vec<Vector3<f32>> {
         self.faces[face_index]
@@ -263,3 +261,4 @@ impl Polyhedron {
         );
     }
 }
+*/
