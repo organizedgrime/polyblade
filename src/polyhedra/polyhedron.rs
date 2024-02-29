@@ -143,26 +143,15 @@ impl Polyhedron {
         center / n
     }
 
-    fn barycentric(p: Vector3<f32>, a: Vector3<f32>, b: Vector3<f32>, c: Vector3<f32>) -> Vector3<f32> {
-    let v0 = b - a;
-    let v1 = c - a;
-    let v2 = p - a;
-    let d00 = v0.dot(v0);
-    let d01 = v0.dot(v1);
-    let d11 = v1.dot(v1);
-    let d20 = v2.dot(v0);
-    let d21 = v2.dot(v1);
-    let denom = d00 * d11 - d01 * d01;
-    let v = (d11 * d20 - d01 * d21) / denom;
-    let w = (d00 * d21 - d01 * d20) / denom;
-    let u = 1.0 - v - w;
-
-    vec3(v, w, u)
-}
-    pub fn triangle_buffers(&self, context: &Context) -> (VertexBuffer, VertexBuffer, VertexBuffer) {
+    pub fn triangle_buffers(
+        &self,
+        context: &Context,
+    ) -> (VertexBuffer, VertexBuffer, VertexBuffer, VertexBuffer) {
         let mut polyhedron_vertices = Vec::new();
         let mut polyhedron_colors = Vec::new();
         let mut polyhedron_barycentric = Vec::new();
+        let mut polyhedron_edges = Vec::new();
+
         for face_index in 0..self.faces.len() {
             // Create triangles from the center to each corner
             let mut face_vertices = Vec::new();
@@ -176,12 +165,12 @@ impl Polyhedron {
                     center,
                     vertices[(i + 1) % vertices.len()],
                 ]);
-                polyhedron_barycentric.extend(
-                    vec![
-                        vec3(1.0, 0.0, 0.0), 
-                        vec3(0.0, 1.0, 0.0), 
-                        vec3(0.0, 0.0, 1.0)
-                    ])
+                polyhedron_barycentric.extend(vec![
+                    vec3(1.0, 0.0, 0.0),
+                    vec3(0.0, 1.0, 0.0),
+                    vec3(0.0, 0.0, 1.0),
+                ]);
+                polyhedron_edges.extend(vec![vec3(0.0, 1.0, 0.0); 3])
             }
 
             let mut color = HSL::new(
@@ -193,12 +182,13 @@ impl Polyhedron {
             polyhedron_colors.extend(vec![color; face_vertices.len()]);
             polyhedron_vertices.extend(face_vertices);
         }
-        
+
         let positions = VertexBuffer::new_with_data(context, &polyhedron_vertices);
         let colors = VertexBuffer::new_with_data(context, &polyhedron_colors);
         let barycentric = VertexBuffer::new_with_data(context, &polyhedron_barycentric);
+        let edges = VertexBuffer::new_with_data(context, &polyhedron_edges);
 
-        (positions, colors, barycentric)
+        (positions, colors, barycentric, edges)
     }
 }
 /*
@@ -227,7 +217,7 @@ impl Polyhedron {
             vec3(0.0, 1.0, 0.0),
         );
 
-        let (positions, colors, barycentric) = self.triangle_buffers(&scene.context);
+        let (positions, colors, barycentric, edges) = self.triangle_buffers(&scene.context);
         let model = Mat4::from_angle_x(radians(0.0));
 
         scene.program.use_uniform("model", model);
@@ -237,7 +227,10 @@ impl Polyhedron {
         );
         scene.program.use_vertex_attribute("position", &positions);
         scene.program.use_vertex_attribute("color", &colors);
-        scene.program.use_vertex_attribute("barycentric", &barycentric);
+        scene
+            .program
+            .use_vertex_attribute("barycentric", &barycentric);
+        scene.program.use_vertex_attribute("edge", &edges);
         scene.program.draw_arrays(
             RenderStates::default(),
             frame_input.viewport,
@@ -245,7 +238,7 @@ impl Polyhedron {
         );
     }
     pub fn render_model(&self, scene: &mut WindowScene, frame_input: &FrameInput) {
-        let (positions, colors, barycentric) = self.triangle_buffers(&scene.context);
+        let (positions, colors, barycentric, edges) = self.triangle_buffers(&scene.context);
         //let program = scene.program.unwrap();
 
         let time = frame_input.accumulated_time as f32;
@@ -259,7 +252,10 @@ impl Polyhedron {
         );
         scene.program.use_vertex_attribute("position", &positions);
         scene.program.use_vertex_attribute("color", &colors);
-        scene.program.use_vertex_attribute("barycentric", &barycentric);
+        scene
+            .program
+            .use_vertex_attribute("barycentric", &barycentric);
+        scene.program.use_vertex_attribute("edge", &edges);
         scene.program.draw_arrays(
             RenderStates::default(),
             frame_input.viewport,
