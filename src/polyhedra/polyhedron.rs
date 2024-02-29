@@ -230,7 +230,7 @@ impl Polyhedron {
         scene
             .program
             .use_vertex_attribute("barycentric", &barycentric);
-        scene.program.use_vertex_attribute("edge", &edges);
+        //scene.program.use_vertex_attribute("edge", &edges);
         scene.program.draw_arrays(
             RenderStates::default(),
             frame_input.viewport,
@@ -255,7 +255,7 @@ impl Polyhedron {
         scene
             .program
             .use_vertex_attribute("barycentric", &barycentric);
-        scene.program.use_vertex_attribute("edge", &edges);
+        //scene.program.use_vertex_attribute("edge", &edges);
         scene.program.draw_arrays(
             RenderStates::default(),
             frame_input.viewport,
