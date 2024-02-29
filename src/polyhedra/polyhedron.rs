@@ -131,16 +131,34 @@ impl Polyhedron {
     fn face_centroid(&self, face_index: usize) -> Vector3<f32> {
         // All vertices associated with this face
         let vertices: Vec<_> = self.face_vertices(face_index);
+        let n = vertices.len() as f32;
 
         // Find the center of the polygon
-        let mut center = vertices[0];
-        for v in vertices[1..].iter() {
-            center = center.lerp(*v, 0.5);
+
+        let mut center = vec3(0.0, 0.0, 0.0);
+        for v in vertices.into_iter() {
+            center += v;
         }
 
-        center
+        center / n
     }
 
+    fn barycentric(p: Vector3<f32>, a: Vector3<f32>, b: Vector3<f32>, c: Vector3<f32>) -> Vector3<f32> {
+    let v0 = b - a;
+    let v1 = c - a;
+    let v2 = p - a;
+    let d00 = v0.dot(v0);
+    let d01 = v0.dot(v1);
+    let d11 = v1.dot(v1);
+    let d20 = v2.dot(v0);
+    let d21 = v2.dot(v1);
+    let denom = d00 * d11 - d01 * d01;
+    let v = (d11 * d20 - d01 * d21) / denom;
+    let w = (d00 * d21 - d01 * d20) / denom;
+    let u = 1.0 - v - w;
+
+    vec3(v, w, u)
+}
     pub fn triangle_buffers(&self, context: &Context) -> (VertexBuffer, VertexBuffer, VertexBuffer) {
         let mut polyhedron_vertices = Vec::new();
         let mut polyhedron_colors = Vec::new();
@@ -179,6 +197,7 @@ impl Polyhedron {
         let positions = VertexBuffer::new_with_data(context, &polyhedron_vertices);
         let colors = VertexBuffer::new_with_data(context, &polyhedron_colors);
         let barycentric = VertexBuffer::new_with_data(context, &polyhedron_barycentric);
+
         (positions, colors, barycentric)
     }
 }

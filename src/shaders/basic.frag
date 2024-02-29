@@ -2,7 +2,7 @@ in vec4 v_color;
 out vec4 fragColor;
 varying vec3 vbc;
 
-const float lineWidth = 2.0;
+const float lineWidth = 1.5;
 
 vec3 srgb_from_linear_srgb(vec3 rgb) {
     vec3 a = vec3(0.055, 0.055, 0.055);

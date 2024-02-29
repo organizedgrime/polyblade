@@ -53,6 +53,7 @@ pub fn main() {
     let scene2 = WindowScene::new("schlegel", &event_loop, camera2, Srgba::WHITE, "basic");
     scenes.insert(scene2.window.id(), scene2);
 
+    let shape = Polyhedron::octahedron();
     event_loop.run(move |event, _, control_flow| match &event {
         winit::event::Event::MainEventsCleared => {
             for (_, scene) in scenes.iter() {
@@ -70,7 +71,6 @@ pub fn main() {
                     color.x, color.y, color.z, 1.0, 1.0,
                 ));
 
-                let shape = Polyhedron::icosahedron();
                 if &scene.title == "model" {
                     shape.render_model(scene, &frame_input);
                 } else {
