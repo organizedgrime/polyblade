@@ -70,10 +70,11 @@ pub fn main() {
                     color.x, color.y, color.z, 1.0, 1.0,
                 ));
 
+                let shape = Polyhedron::icosahedron();
                 if &scene.title == "model" {
-                    Polyhedron::dodecahedron().render_model(scene, &frame_input);
+                    shape.render_model(scene, &frame_input);
                 } else {
-                    Polyhedron::dodecahedron().render_schlegel(scene, &frame_input);
+                    shape.render_schlegel(scene, &frame_input);
                     //Polyhedron::dodecahedron().render_model(scene, &frame_input);
                 }
 
