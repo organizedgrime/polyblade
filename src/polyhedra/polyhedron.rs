@@ -37,12 +37,12 @@ impl Polyhedron {
                 Point::new(vec![0, 5, 6]),
             ],
             faces: vec![
-                vec![3, 0, 1, 2],
-                vec![3, 4, 5, 0],
-                vec![0, 5, 6, 1],
-                vec![1, 6, 7, 2],
-                vec![2, 7, 4, 3],
-                vec![5, 4, 7, 6],
+                vec![0, 1, 6, 7],
+                vec![1, 3, 4, 6],
+                vec![3, 2, 5, 4],
+                vec![2, 0, 7, 5],
+                vec![2, 3, 1, 0],
+                vec![6, 7, 5, 4],
             ],
         }
     }
@@ -52,14 +52,10 @@ impl Polyhedron {
 impl Polyhedron {
     pub fn adjacents(&self) -> HashSet<(usize, usize)> {
         let mut edges = HashSet::new();
-        // For every
         for (v1, point) in self.points.iter().enumerate() {
             for v2 in point.adjacents.clone().into_iter() {
-                if v1 <= v2 {
-                    edges.insert((v1, v2));
-                } else {
-                    edges.insert((v2, v1));
-                }
+                let pair = if v1 < v2 { (v1, v2) } else { (v2, v1) };
+                edges.insert(pair);
             }
         }
         edges
@@ -71,15 +67,11 @@ impl Polyhedron {
         // For each point
         for v1 in 0..self.points.len() {
             // Grab its adjacents
-            let my_adjacents = self.points[v1].adjacents.clone();
-            for v2 in my_adjacents.into_iter() {
+            for v2 in self.points[v1].adjacents.clone() {
                 for v3 in self.points[v2].adjacents.clone() {
+                    let pair = if v1 < v3 { (v1, v3) } else { (v3, v1) };
                     if v1 != v3 {
-                        if v1 < v3 {
-                            neighbors.insert((v1, v3));
-                        } else {
-                            neighbors.insert((v3, v1));
-                        }
+                        neighbors.insert(pair);
                     }
                 }
             }
@@ -87,21 +79,19 @@ impl Polyhedron {
         neighbors
     }
 
-    pub fn foreigners(&self) -> HashSet<(usize, usize)> {
-        // Track all neighbors
-        let mut foreigners = HashSet::new();
+    pub fn strangers(&self) -> HashSet<(usize, usize)> {
+        let mut strangers = HashSet::new();
         let mut known = self.adjacents();
         known.extend(self.neighbors());
-        // For each point
         for v1 in 0..self.points.len() {
             for v2 in 0..self.points.len() {
                 let pair = if v1 < v2 { (v1, v2) } else { (v2, v1) };
                 if v1 != v2 && known.get(&pair).is_none() {
-                    foreigners.insert(pair);
+                    strangers.insert(pair);
                 }
             }
         }
-        foreigners
+        strangers
     }
 
     pub fn apply_forces(&mut self, edges: HashSet<(usize, usize)>, l: f32, k: f32) {
@@ -140,7 +130,7 @@ impl Polyhedron {
         self.apply_forces(self.adjacents(), l_a, k_a);
         //self.apply_forces(edges.into_iter().filter(|b| b.0 == 0).collect(), l_a, k_a);
         self.apply_forces(self.neighbors(), l_n, k_n);
-        self.apply_forces(self.foreigners(), l_d, k_d);
+        self.apply_forces(self.strangers(), l_d, k_d);
     }
 }
 

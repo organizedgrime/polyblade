@@ -16,14 +16,9 @@ pub struct Point {
 
 impl Point {
     pub fn new(neighbors: Vec<usize>) -> Self {
-        let sign = if rand::random::<u8>() > 128 {
-            1.0
-        } else {
-            -1.0
-        };
         Self {
             adjacents: neighbors,
-            xyz: vec3(random(), random(), random()).normalize() * sign * 3.0,
+            xyz: vec3(random(), random(), random()).normalize(),
             dxyz: vec3(0.0, 0.0, 0.0),
         }
     }
