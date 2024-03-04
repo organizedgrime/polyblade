@@ -17,10 +17,9 @@ pub async fn start() -> Result<(), JsValue> {
 
 #[cfg(not(target_arch = "wasm32"))]
 pub fn main() {
-    use crate::*;
-    use paper_blade::prelude::{Polyhedron, Renderable, WindowScene};
-    use std::{collections::HashMap, ops::Index, sync::Arc};
-    use three_d::{renderer::*, FrameInput, WindowedContext};
+    use paper_blade::prelude::{Polyhedron, WindowScene};
+    use std::collections::HashMap;
+    use three_d::renderer::*;
 
     //let shape = Polyhedron::dodecahedron();
     // shape.render_form();
@@ -50,10 +49,10 @@ pub fn main() {
         0.1,
         10.0,
     );
-    let scene2 = WindowScene::new("schlegel", &event_loop, camera2, Srgba::WHITE, "basic");
-    scenes.insert(scene2.window.id(), scene2);
+    let _scene2 = WindowScene::new("schlegel", &event_loop, camera2, Srgba::WHITE, "basic");
+    //scenes.insert(scene2.window.id(), scene2);
 
-    let shape = Polyhedron::dodecahedron();
+    let mut shape = Polyhedron::cube();
     event_loop.run(move |event, _, control_flow| match &event {
         winit::event::Event::MainEventsCleared => {
             for (_, scene) in scenes.iter() {
@@ -74,7 +73,7 @@ pub fn main() {
                 if &scene.title == "model" {
                     shape.render_model(scene, &frame_input);
                 } else {
-                    shape.render_schlegel(scene, &frame_input);
+                    //shape.render_schlegel(scene, &frame_input);
                     //Polyhedron::dodecahedron().render_model(scene, &frame_input);
                 }
 
