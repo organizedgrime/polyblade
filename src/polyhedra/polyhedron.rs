@@ -1,8 +1,4 @@
-use std::{
-    collections::{HashSet},
-    ops::{Add},
-};
-
+use std::{collections::HashSet, ops::Add};
 
 use serde::{Deserialize, Serialize};
 use three_d::*;

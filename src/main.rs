@@ -17,10 +17,9 @@ pub async fn start() -> Result<(), JsValue> {
 
 #[cfg(not(target_arch = "wasm32"))]
 pub fn main() {
-    
     use paper_blade::prelude::{Polyhedron, WindowScene};
-    use std::{collections::HashMap};
-    use three_d::{renderer::*};
+    use std::collections::HashMap;
+    use three_d::renderer::*;
 
     //let shape = Polyhedron::dodecahedron();
     // shape.render_form();

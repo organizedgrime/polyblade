@@ -1,12 +1,7 @@
 use std::{fs::File, io::Read};
 
 use three_d::{renderer::*, FrameInputGenerator, WindowedContext};
-use winit::{
-    event_loop::EventLoop,
-    window::{Window},
-};
-
-
+use winit::{event_loop::EventLoop, window::Window};
 
 pub struct WindowScene {
     // Window stuff
