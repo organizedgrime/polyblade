@@ -44,7 +44,7 @@ impl Point {
     }
 
     pub fn update(&mut self) {
-        //self.dxyz *= DAMPING;
+        self.dxyz *= DAMPING;
         self.xyz += self.dxyz;
     }
 
@@ -167,6 +167,7 @@ impl Polyhedron {
         }
         edges
     }
+
     pub fn neighbors(&self) -> HashSet<(usize, usize)> {
         // Track all neighbors
         let mut neighbors = HashSet::new();
@@ -189,46 +190,51 @@ impl Polyhedron {
         neighbors
     }
 
+    pub fn foreigners(&self) -> HashSet<(usize, usize)> {
+        // Track all neighbors
+        let mut foreigners = HashSet::new();
+        let mut known = self.adjacents();
+        known.extend(self.neighbors());
+        // For each point
+        for v1 in 0..self.points.len() {
+            for v2 in 0..self.points.len() {
+                let pair = if v1 < v2 { (v1, v2) } else { (v2, v1) };
+                if v1 != v2 && known.get(&pair).is_none() {
+                    foreigners.insert(pair);
+                }
+            }
+        }
+        foreigners
+    }
+
     pub fn apply_forces(&mut self, edges: HashSet<(usize, usize)>, l: f32, k: f32) {
         for (i1, i2) in edges.into_iter() {
             let v1 = &self.points[i1].pos();
             let v2 = &self.points[i2].pos();
 
-            let dx = v1.x - v2.x;
-            let dy = v1.y - v2.y;
-            let dz = v1.z - v2.z;
+            let dx = v2.x - v1.x;
+            let dy = v2.y - v1.y;
+            let dz = v2.z - v1.z;
             let dist = (dx * dx + dy * dy + dz * dz).sqrt();
 
-            //let diff = v1.pos() - v2.pos();
-            //let dist = diff.magnitude();
-
             let distention = dist - l;
+            let restorative_force = k / 2.0 * (distention * distention);
+            let fx = (dx / 1.0) * restorative_force / 700.0;
+            let fy = (dy / 1.0) * restorative_force / 700.0;
+            let fz = (dz / 1.0) * restorative_force / 700.0;
+            let f = vec3(fx, fy, fz);
 
-            let restorative_force = k / 2.0 * distention;
-            if dist > 0.0 {
-                let fx = (dx / dist) * restorative_force / 1000.0;
-                let fy = (dy / dist) * restorative_force / 1000.0;
-                let fz = (dz / dist) * restorative_force / 1000.0;
-                let f = vec3(fx, fy, fz);
-
-                /*
+            if i1 == 0 && i2 == 1 {
                 println!(
-                    "dist: {:?}, dist: {}, disten: {}, rest: {}, f: {:?}",
-                    dist, dist, distention, restorative_force, f
-                );
-
-                println!(
-                    "adding fx: {:?} to v2.x: {:?} so it gets closer to v1.x {:?}",
-                    f, v2, v1
-                );
-                */
-
-                self.points[i1].add_force(-f);
-                self.points[i2].add_force(f);
-
-                self.points[i1].update();
-                self.points[i2].update();
+                        "({}, {}) adding v1 {:?} + fx {:?} so it gets closer to v2 {:?} current dist {}",
+                        i1, i2, v1.x, f.x, v2.x, dist
+                    );
             }
+            self.points[i1].add_force(f);
+            self.points[i2].add_force(-f);
+
+            self.points[i1].update();
+            self.points[i2].update();
         }
     }
 
@@ -243,14 +249,14 @@ impl Polyhedron {
         let projection_face = &self.faces[0];
 
         // Natural lengths
-        let l_a = 1.5;
+        let l_a = 1.0;
         let l_n = 2.0_f32.sqrt() * l_a;
         let l_d = 2.0_f32.sqrt() * l_n;
 
         // Spring constants
-        let k_a = 0.2;
-        let k_n = 0.5;
-        let k_d = 0.6;
+        let k_a = 0.4;
+        let k_n = 0.7;
+        let k_d = 0.8;
 
         // Compute elastic forces
         // Ea should act on every edge
@@ -261,19 +267,17 @@ impl Polyhedron {
         //
 
         let edges = self.adjacents();
-        println!("adjacents: {:?}", edges);
+        //println!("adjacents: {:?}", edges);
         self.apply_forces(edges, l_a, k_a);
+        //self.apply_forces(edges.into_iter().filter(|b| b.0 == 0).collect(), l_a, k_a);
 
         let edges = self.neighbors();
-        println!("neighbors: {:?}", edges);
-        self.apply_forces(edges, l_n, k_n);
+        //println!("neighbors: {:?}", edges);
+        // self.apply_forces(edges, l_n, k_n);
 
         // diagonalz
-        let mut edges = Vec::new();
-        edges.push((2, 6));
-        edges.push((3, 7));
-        edges.push((1, 5));
-        edges.push((0, 4));
+        let edges = self.foreigners();
+        //println!("foreigners: {:?}", edges);
         //self.apply_forces(edges, l_d, k_d);
 
         /*
@@ -436,7 +440,7 @@ impl Polyhedron {
 
         let time = frame_input.accumulated_time as f32;
         let model =
-            Mat4::from_angle_y(radians(0.001 * time)) * Mat4::from_angle_x(radians(0.001 * time));
+            Mat4::from_angle_y(radians(0.001 * time)) * Mat4::from_angle_x(radians(0.000 * time));
 
         scene.program.use_uniform("model", model);
         scene.program.use_uniform(

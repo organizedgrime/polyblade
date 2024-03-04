@@ -73,7 +73,6 @@ pub fn main() {
 
                 if &scene.title == "model" {
                     shape.render_model(scene, &frame_input);
-                    println!("shape:\n{:?}", shape);
                 } else {
                     //shape.render_schlegel(scene, &frame_input);
                     //Polyhedron::dodecahedron().render_model(scene, &frame_input);
