@@ -40,10 +40,11 @@ impl Point {
 
     pub fn add_force(&mut self, force: Vector3<f32>) {
         self.dxyz += force;
+        //self.dxyz = self.dxyz.normalize();
     }
 
     pub fn update(&mut self) {
-        self.dxyz *= DAMPING;
+        //self.dxyz *= DAMPING;
         self.xyz += self.dxyz;
     }
 
@@ -71,18 +72,11 @@ pub struct Polyhedron {
 }
 
 impl Polyhedron {
+    /*
     pub fn adjacents(&self, v: usize) -> Vec<usize> {
         self.points[v].adjacents.clone()
     }
-
-    pub fn neighbors(&self, v: usize) -> Vec<usize> {
-        let my_adjacents = self.adjacents(v);
-        let mut my_neighbor = Vec::new();
-        for v in my_adjacents.iter() {
-            my_neighbor.extend(self.adjacents(*v));
-        }
-        my_neighbor
-    }
+    */
 }
 
 // Platonic Solids
@@ -159,15 +153,83 @@ impl Polyhedron {
 
 // Operations
 impl Polyhedron {
-    pub fn edges(&self) -> HashSet<(usize, usize)> {
+    pub fn adjacents(&self) -> HashSet<(usize, usize)> {
         let mut edges = HashSet::new();
         // For every
         for (v1, point) in self.points.iter().enumerate() {
             for v2 in point.adjacents.clone().into_iter() {
-                edges.insert((v1, v2));
+                if v1 <= v2 {
+                    edges.insert((v1, v2));
+                } else {
+                    edges.insert((v2, v1));
+                }
             }
         }
         edges
+    }
+    pub fn neighbors(&self) -> HashSet<(usize, usize)> {
+        // Track all neighbors
+        let mut neighbors = HashSet::new();
+        // For each point
+        for v1 in 0..self.points.len() {
+            // Grab its adjacents
+            let my_adjacents = self.points[v1].adjacents.clone();
+            for v2 in my_adjacents.into_iter() {
+                for v3 in self.points[v2].adjacents.clone() {
+                    if v1 != v3 {
+                        if v1 < v3 {
+                            neighbors.insert((v1, v3));
+                        } else {
+                            neighbors.insert((v3, v1));
+                        }
+                    }
+                }
+            }
+        }
+        neighbors
+    }
+
+    pub fn apply_forces(&mut self, edges: HashSet<(usize, usize)>, l: f32, k: f32) {
+        for (i1, i2) in edges.into_iter() {
+            let v1 = &self.points[i1].pos();
+            let v2 = &self.points[i2].pos();
+
+            let dx = v1.x - v2.x;
+            let dy = v1.y - v2.y;
+            let dz = v1.z - v2.z;
+            let dist = (dx * dx + dy * dy + dz * dz).sqrt();
+
+            //let diff = v1.pos() - v2.pos();
+            //let dist = diff.magnitude();
+
+            let distention = dist - l;
+
+            let restorative_force = k / 2.0 * distention;
+            if dist > 0.0 {
+                let fx = (dx / dist) * restorative_force / 1000.0;
+                let fy = (dy / dist) * restorative_force / 1000.0;
+                let fz = (dz / dist) * restorative_force / 1000.0;
+                let f = vec3(fx, fy, fz);
+
+                /*
+                println!(
+                    "dist: {:?}, dist: {}, disten: {}, rest: {}, f: {:?}",
+                    dist, dist, distention, restorative_force, f
+                );
+
+                println!(
+                    "adding fx: {:?} to v2.x: {:?} so it gets closer to v1.x {:?}",
+                    f, v2, v1
+                );
+                */
+
+                self.points[i1].add_force(-f);
+                self.points[i2].add_force(f);
+
+                self.points[i1].update();
+                self.points[i2].update();
+            }
+        }
     }
 
     pub fn apply_spring_forces(&mut self) {
@@ -181,14 +243,14 @@ impl Polyhedron {
         let projection_face = &self.faces[0];
 
         // Natural lengths
-        let l_a = 1.0;
-        let l_n = 1.5;
-        let l_d = 2.0;
+        let l_a = 1.5;
+        let l_n = 2.0_f32.sqrt() * l_a;
+        let l_d = 2.0_f32.sqrt() * l_n;
 
         // Spring constants
-        let k_a = 0.9;
+        let k_a = 0.2;
         let k_n = 0.5;
-        let k_d = 0.7;
+        let k_d = 0.6;
 
         // Compute elastic forces
         // Ea should act on every edge
@@ -196,47 +258,23 @@ impl Polyhedron {
         // Ed should act only on diameter edges
         //
         //
-
-        let mut edges = Vec::new();
-
-        for i in 0..self.points.len() {
-            for a in self.adjacents(i) {
-                edges.push((i, a));
-            }
-            for n in self.neighbors(i) {
-                edges.push((i, n));
-            }
-        }
-
         //
-        for (i1, i2) in edges.into_iter() {
-            let v1 = &self.points[i1];
-            let v2 = &self.points[i2];
 
-            let dxyz = v1.dxyz() - v2.dxyz();
-            let dh = dxyz.magnitude();
-            let rest_length = v1.pos().distance(v2.pos());
-            let distention = dh - rest_length;
-            let restorative_force = k_a * distention;
-            let f = if dh > 0.0 {
-                (dxyz / dh) * restorative_force
-            } else {
-                vec3(0.0, 0.0, 0.0)
-            };
-            println!(
-                "dxy: {:?}, dh: {}, disten: {}, rest: {}, f: {:?}",
-                dxyz, dh, distention, restorative_force, f
-            );
+        let edges = self.adjacents();
+        println!("adjacents: {:?}", edges);
+        self.apply_forces(edges, l_a, k_a);
 
-            println!("adding force: {:?}", f);
+        let edges = self.neighbors();
+        println!("neighbors: {:?}", edges);
+        self.apply_forces(edges, l_n, k_n);
 
-            self.points[i1].add_force(f);
-            self.points[i2].add_force(-f);
-        }
-
-        for i in 0..self.points.len() {
-            self.points[i].update();
-        }
+        // diagonalz
+        let mut edges = Vec::new();
+        edges.push((2, 6));
+        edges.push((3, 7));
+        edges.push((1, 5));
+        edges.push((0, 4));
+        //self.apply_forces(edges, l_d, k_d);
 
         /*
         let e_a = k_a / 2.0 * sum ( (l_a - abs(v_i - v_j)^2) );
