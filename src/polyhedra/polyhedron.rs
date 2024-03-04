@@ -19,33 +19,9 @@ pub struct Polyhedron {
 
     // List of faces
     pub faces: Vec<Vec<usize>>,
-}
 
-// Platonic Solids
-impl Polyhedron {
-    pub fn cube() -> Polyhedron {
-        Polyhedron {
-            name: String::from("C"),
-            points: vec![
-                Point::new(vec![1, 2, 7]),
-                Point::new(vec![0, 3, 6]),
-                Point::new(vec![0, 3, 5]),
-                Point::new(vec![1, 2, 4]),
-                Point::new(vec![3, 5, 6]),
-                Point::new(vec![2, 4, 7]),
-                Point::new(vec![1, 4, 7]),
-                Point::new(vec![0, 5, 6]),
-            ],
-            faces: vec![
-                vec![0, 1, 6, 7],
-                vec![1, 3, 4, 6],
-                vec![3, 2, 5, 4],
-                vec![2, 0, 7, 5],
-                vec![2, 3, 1, 0],
-                vec![6, 7, 5, 4],
-            ],
-        }
-    }
+    // Secret list of vertices that need to avoid each other
+    pub(crate) enemies: HashSet<(usize, usize)>,
 }
 
 // Operations
@@ -131,6 +107,30 @@ impl Polyhedron {
         //self.apply_forces(edges.into_iter().filter(|b| b.0 == 0).collect(), l_a, k_a);
         self.apply_forces(self.neighbors(), l_n, k_n);
         self.apply_forces(self.strangers(), l_d, k_d);
+        self.apply_forces(self.enemies.clone(), l_d, k_d);
+    }
+
+    pub fn center(&mut self) {
+        let mut shift = vec3(0.0, 0.0, 0.0);
+        for point in &self.points {
+            shift += point.pos();
+        }
+        shift /= self.points.len() as f32;
+        for i in 0..self.points.len() {
+            self.points[i].xyz -= shift;
+        }
+    }
+
+    pub fn quarrel(&mut self) {
+        let threshold = 0.05;
+        for v1 in 0..self.points.len() {
+            for v2 in 0..self.points.len() {
+                if self.points[v1].pos().distance(self.points[v2].pos()).abs() < threshold {
+                    let pair = if v1 < v2 { (v1, v2) } else { (v2, v1) };
+                    self.enemies.insert(pair);
+                }
+            }
+        }
     }
 }
 
@@ -244,12 +244,14 @@ impl Polyhedron {
     }
     pub fn render_model(&mut self, scene: &mut WindowScene, frame_input: &FrameInput) {
         self.apply_spring_forces();
+        self.center();
+        self.quarrel();
         let (positions, colors, barycentric) = self.triangle_buffers(&scene.context);
         //let program = scene.program.unwrap();
 
         let time = frame_input.accumulated_time as f32;
         let model =
-            Mat4::from_angle_y(radians(0.001 * time)) * Mat4::from_angle_x(radians(0.000 * time));
+            Mat4::from_angle_y(radians(0.001 * time)) * Mat4::from_angle_x(radians(0.0004 * time));
 
         scene.program.use_uniform("model", model);
         scene.program.use_uniform(
