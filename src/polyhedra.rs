@@ -1,3 +1,4 @@
+mod platonic;
 mod point;
 mod polyhedron;
 
