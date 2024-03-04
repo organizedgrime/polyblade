@@ -1,12 +1,12 @@
-use std::{fs::File, io::Read, sync::Arc};
+use std::{fs::File, io::Read};
 
-use three_d::{renderer::*, FrameInput, FrameInputGenerator, WindowedContext};
+use three_d::{renderer::*, FrameInputGenerator, WindowedContext};
 use winit::{
     event_loop::EventLoop,
-    window::{Window, WindowId},
+    window::{Window},
 };
 
-use crate::prelude::Polyhedron;
+
 
 pub struct WindowScene {
     // Window stuff

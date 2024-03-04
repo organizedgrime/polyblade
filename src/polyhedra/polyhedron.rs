@@ -1,14 +1,13 @@
 use std::{
-    collections::{HashMap, HashSet},
-    iter::Chain,
-    ops::{Add, Mul},
+    collections::{HashSet},
+    ops::{Add},
 };
 
-use rand::random;
+
 use serde::{Deserialize, Serialize};
 use three_d::*;
 
-use crate::prelude::{Renderable, WindowScene, HSL};
+use crate::prelude::{WindowScene, HSL};
 
 use super::Point;
 
