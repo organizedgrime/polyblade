@@ -1,6 +1,5 @@
 use std::{
-    iter::Chain,
-    ops::{Add, Mul},
+    collections::HashSet, iter::Chain, ops::{Add, Mul}
 };
 
 use rand::random;
@@ -24,10 +23,13 @@ pub struct Polyhedron {
     pub name: String,
 
     // List of faces
-    pub faces: Vec<Vec<usize>>, 
+    pub faces: Vec<Vec<usize>>,
 
     // Vertices in adjacency list
     pub vertices: Vec<Vec<usize>>,
+
+    // XYZ Coordinates of Vertices
+    pub xyz: Vec<Vector3<f32>>,
 }
 
 // Platonic Solids
@@ -38,6 +40,13 @@ impl Polyhedron {
     }
     */
 
+    pub fn cube() -> Polyhedron {
+        let mut cube: Polyhedron = serde_json::from_slice(CUBE_DATA).unwrap();
+        cube.xyz = vec![vec3(0.0, 0.0, 0.0); cube.xyz.len()];
+        cube
+    }
+
+    /*
     pub fn cube() -> Polyhedron {
         Polyhedron {
             name: String::from("C"),
@@ -60,8 +69,8 @@ impl Polyhedron {
                 vec![0, 5, 6],
             ],
         }
-        //serde_json::from_slice(CUBE_DATA).unwrap()
     }
+    */
 
     /*
     pub fn octahedron() -> Polyhedron {
@@ -80,38 +89,80 @@ impl Polyhedron {
 
 // Operations
 impl Polyhedron {
-    pub fn elastic(&self) {
+
+    pub fn edges(&self) -> HashSet<(usize, usize)> {
+        let mut edges = HashSet::new();
+        // For every 
+        for (v1, neighbors) in self.vertices.iter().enumerate() {
+            for v2 in neighbors.into_iter() {
+                edges.insert((v1, *v2));
+            }
+        }
+        edges
+    }
+
+
+    pub fn apply_spring_forces(&self) {
         // a = adjacent (length of an edge in 3D space)
         // n = neighbor (length of a path between two vertices is 2)
         // d = diameter (circumsphere / face of projection)
 
-        // For each vertex in the face of projection
+        // Fix the vertices associates with each category
+        //let vertices_a =
+        let vertices_d = self.faces[0];
         let projection_face = self.faces[0];
+
+
+        // Natural lengths
+        let l_a = 1.0;
+        let l_n = 1.5;
+        let l_d = 2.0;
+
+        // Spring constants
+        let k_a = 0.2;
+        let k_n = 0.5;
+        let k_d = 0.7;
+
+        
+        // Compute elastic forces
+        // Ea should act on every edge
+        // En should act between every vertex and all vertices which exist two away from it
+        // Ed should act only on diameter edges
+        //
+        //
+        let edges = self.edges();
+        // 
+        for edge in edges.iter() {
+
+        }
+
+        let e_a = k_a / 2.0 * sum ( (l_a - abs(v_i - v_j)^2) );
+
+        // For each vertex in the face of projection
         let Ed = 0.0;
         for i in 0..=projection_face.len() {
             let edge = (projection_face[i], projection_face[(i+1) % projection_face.len()]);
-            Ed += 
+            Ed +=
         }
         let Ed = Kd / 2.0 * self.faces[projection_face].iter().fold(0, |acc, vertex| {
             acc + ()
         });
-            
+
 
 
 
         // Natural lengths of virtual springs
         let La = 0.5;
 
-        let Ea = Ka / 2.0 * 
+        let Ea = Ka / 2.0 *
     }
 }
 
-/*
 impl Polyhedron {
-    fn face_vertices(&self, face_index: usize) -> Vec<Vector3<f32>> {
+    fn face_xyz(&self, face_index: usize) -> Vec<Vector3<f32>> {
         self.faces[face_index]
             .iter()
-            .map(|f| self.vertices[*f].clone())
+            .map(|f| self.xyz[*f].clone())
             .collect()
     }
 
@@ -119,8 +170,8 @@ impl Polyhedron {
         let face = &self.faces[face_index];
         let mut normal = Vector3::<f32>::new(0.0, 0.0, 0.0);
         for i in 0..face.len() {
-            let v1 = self.vertices[face[i]];
-            let v2 = self.vertices[face[(i + 1) % face.len()]];
+            let v1 = self.xyz[face[i]];
+            let v2 = self.xyz[face[(i + 1) % face.len()]];
             normal = normal.add(v1.cross(v2));
         }
         normal.normalize()
@@ -128,7 +179,7 @@ impl Polyhedron {
 
     fn face_centroid(&self, face_index: usize) -> Vector3<f32> {
         // All vertices associated with this face
-        let vertices: Vec<_> = self.face_vertices(face_index);
+        let vertices: Vec<_> = self.face_xyz(face_index);
         let n = vertices.len() as f32;
 
         // Find the center of the polygon
@@ -145,20 +196,20 @@ impl Polyhedron {
         &self,
         context: &Context,
     ) -> (VertexBuffer, VertexBuffer, VertexBuffer, VertexBuffer) {
-        let mut polyhedron_vertices = Vec::new();
+        let mut polyhedron_xyz = Vec::new();
         let mut polyhedron_colors = Vec::new();
         let mut polyhedron_barycentric = Vec::new();
         let mut polyhedron_edges = Vec::new();
 
         for face_index in 0..self.faces.len() {
             // Create triangles from the center to each corner
-            let mut face_vertices = Vec::new();
-            let vertices = self.face_vertices(face_index);
+            let mut face_xyz = Vec::new();
+            let vertices = self.face_xyz(face_index);
             let center = self.face_centroid(face_index);
 
             // Construct a triangle
             for i in 0..vertices.len() {
-                face_vertices.extend(vec![
+                face_xyz.extend(vec![
                     vertices[i],
                     center,
                     vertices[(i + 1) % vertices.len()],
@@ -177,11 +228,11 @@ impl Polyhedron {
                 0.5,
             )
             .to_linear_srgb();
-            polyhedron_colors.extend(vec![color; face_vertices.len()]);
-            polyhedron_vertices.extend(face_vertices);
+            polyhedron_colors.extend(vec![color; face_xyz.len()]);
+            polyhedron_xyz.extend(face_xyz);
         }
 
-        let positions = VertexBuffer::new_with_data(context, &polyhedron_vertices);
+        let positions = VertexBuffer::new_with_data(context, &polyhedron_xyz);
         let colors = VertexBuffer::new_with_data(context, &polyhedron_colors);
         let barycentric = VertexBuffer::new_with_data(context, &polyhedron_barycentric);
         let edges = VertexBuffer::new_with_data(context, &polyhedron_edges);
@@ -209,6 +260,7 @@ impl Polyhedron {
 
 impl Polyhedron {
     pub fn render_schlegel(&self, scene: &mut WindowScene, frame_input: &FrameInput) {
+        self.apply_spring_forces();
         scene.camera.set_view(
             self.face_normal(0) * 0.75,
             vec3(0.0, 0.0, 0.0),
@@ -236,6 +288,7 @@ impl Polyhedron {
         );
     }
     pub fn render_model(&self, scene: &mut WindowScene, frame_input: &FrameInput) {
+        self.apply_spring_forces();
         let (positions, colors, barycentric, edges) = self.triangle_buffers(&scene.context);
         //let program = scene.program.unwrap();
 
@@ -261,4 +314,3 @@ impl Polyhedron {
         );
     }
 }
-*/

@@ -53,7 +53,7 @@ pub fn main() {
     let scene2 = WindowScene::new("schlegel", &event_loop, camera2, Srgba::WHITE, "basic");
     scenes.insert(scene2.window.id(), scene2);
 
-    let shape = Polyhedron::dodecahedron();
+    let shape = Polyhedron::cube();
     event_loop.run(move |event, _, control_flow| match &event {
         winit::event::Event::MainEventsCleared => {
             for (_, scene) in scenes.iter() {

@@ -19,12 +19,4 @@ impl Assembler {
         }
         //self.flags[face][v1] = v2;
     }
-
-    pub fn commit(&self) -> Polyhedron {
-        Polyhedron {
-            name: String::new(),
-            faces: vec![],
-            vertices: vec![],
-        }
-    }
 }
