@@ -21,35 +21,40 @@ pub struct Polyhedron {
     pub faces: Vec<Vec<usize>>,
 }
 
+impl Polyhedron {
+    pub fn new(name: &str, points: Vec<Vec<usize>>, faces: Vec<Vec<usize>>) -> Polyhedron {
+        Polyhedron {
+            name: String::from(name),
+            points: points.into_iter().map(|p| Point::new(p)).collect(),
+            faces,
+        }
+    }
+}
+
 // Platonic Solids
 impl Polyhedron {
     pub fn tetrahedron() -> Polyhedron {
-        Polyhedron {
-            name: String::from("T"),
-            points: vec![
-                Point::new(vec![1, 2, 3]),
-                Point::new(vec![0, 2, 3]),
-                Point::new(vec![0, 1, 3]),
-                Point::new(vec![0, 1, 2]),
-            ],
-            faces: vec![vec![0, 1, 2], vec![1, 0, 3], vec![2, 1, 3], vec![0, 2, 3]],
-        }
+        Polyhedron::new(
+            "T",
+            vec![vec![1, 2, 3], vec![0, 2, 3], vec![0, 1, 3], vec![0, 1, 2]],
+            vec![vec![0, 1, 2], vec![1, 0, 3], vec![2, 1, 3], vec![0, 2, 3]],
+        )
     }
 
     pub fn cube() -> Polyhedron {
-        Polyhedron {
-            name: String::from("C"),
-            points: vec![
-                Point::new(vec![1, 2, 7]),
-                Point::new(vec![0, 3, 6]),
-                Point::new(vec![0, 3, 5]),
-                Point::new(vec![1, 2, 4]),
-                Point::new(vec![3, 5, 6]),
-                Point::new(vec![2, 4, 7]),
-                Point::new(vec![1, 4, 7]),
-                Point::new(vec![0, 5, 6]),
+        Polyhedron::new(
+            "C",
+            vec![
+                vec![1, 2, 7],
+                vec![0, 3, 6],
+                vec![0, 3, 5],
+                vec![1, 2, 4],
+                vec![3, 5, 6],
+                vec![2, 4, 7],
+                vec![1, 4, 7],
+                vec![0, 5, 6],
             ],
-            faces: vec![
+            vec![
                 vec![0, 1, 6, 7],
                 vec![1, 3, 4, 6],
                 vec![3, 2, 5, 4],
@@ -57,20 +62,20 @@ impl Polyhedron {
                 vec![2, 3, 1, 0],
                 vec![6, 7, 5, 4],
             ],
-        }
+        )
     }
     pub fn octahedron() -> Polyhedron {
-        Polyhedron {
-            name: String::from("O"),
-            points: vec![
-                Point::new(vec![1, 2, 3, 4]),
-                Point::new(vec![0, 2, 4, 5]),
-                Point::new(vec![0, 1, 3, 5]),
-                Point::new(vec![0, 2, 4, 5]),
-                Point::new(vec![0, 1, 3, 5]),
-                Point::new(vec![1, 2, 3, 4]),
+        Polyhedron::new(
+            "O",
+            vec![
+                vec![1, 2, 3, 4],
+                vec![0, 2, 4, 5],
+                vec![0, 1, 3, 5],
+                vec![0, 2, 4, 5],
+                vec![0, 1, 3, 5],
+                vec![1, 2, 3, 4],
             ],
-            faces: vec![
+            vec![
                 vec![2, 0, 1],
                 vec![1, 0, 4],
                 vec![4, 0, 3],
@@ -80,14 +85,10 @@ impl Polyhedron {
                 vec![4, 5, 1],
                 vec![1, 5, 2],
             ],
-        }
+        )
     }
     pub fn dodecahedron() -> Polyhedron {
-        Polyhedron {
-            name: todo!(),
-            points: todo!(),
-            faces: todo!(),
-        }
+        Polyhedron::new("D", vec![vec![2, 3, 1]], vec![])
     }
     pub fn icosahedron() -> Polyhedron {
         Polyhedron {
@@ -181,6 +182,17 @@ impl Polyhedron {
         //self.apply_forces(edges.into_iter().filter(|b| b.0 == 0).collect(), l_a, k_a);
         self.apply_forces(self.neighbors(), l_n, k_n);
         self.apply_forces(self.strangers(), l_d, k_d);
+    }
+
+    pub fn center(&mut self) {
+        let mut shift = vec3(0.0, 0.0, 0.0);
+        for point in &self.points {
+            shift += point.pos();
+        }
+        shift /= self.points.len() as f32;
+        for i in 0..self.points.len() {
+            self.points[i].xyz -= shift;
+        }
     }
 }
 
@@ -294,6 +306,7 @@ impl Polyhedron {
     }
     pub fn render_model(&mut self, scene: &mut WindowScene, frame_input: &FrameInput) {
         self.apply_spring_forces();
+        self.center();
         let (positions, colors, barycentric) = self.triangle_buffers(&scene.context);
         //let program = scene.program.unwrap();
 
