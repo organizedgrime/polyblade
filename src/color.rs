@@ -20,8 +20,6 @@ impl HSL {
         use std::cmp::{max, min};
 
         let mut h: f64;
-        let s: f64;
-        let l: f64;
 
         let (r, g, b) = (rgb[0], rgb[1], rgb[2]);
 
@@ -33,7 +31,7 @@ impl HSL {
         let (min, max) = (min as f64 / 255_f64, max as f64 / 255_f64);
 
         // Luminosity is the average of the max and min rgb color intensities.
-        l = (max + min) / 2_f64;
+        let l: f64 = (max + min) / 2_f64;
 
         // Saturation
         let delta: f64 = max - min;
@@ -47,11 +45,11 @@ impl HSL {
         }
 
         // it's not gray
-        if l < 0.5_f64 {
-            s = delta / (max + min);
+        let s = if l < 0.5_f64 {
+            delta / (max + min)
         } else {
-            s = delta / (2_f64 - max - min);
-        }
+            delta / (2_f64 - max - min)
+        };
 
         // Hue
         let r2 = (((max - r) / 6_f64) + (delta / 2_f64)) / delta;
@@ -67,7 +65,7 @@ impl HSL {
         // Fix wraparounds
         if h < 0 as f64 {
             h += 1_f64;
-        } else if h > 1 as f64 {
+        } else if h > 1_f64 {
             h -= 1_f64;
         }
 

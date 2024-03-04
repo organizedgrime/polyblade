@@ -60,7 +60,7 @@ impl WindowScene {
         };
 
         // Construct the new window from the builder
-        let window = window_builder.build(&event_loop).unwrap();
+        let window = window_builder.build(event_loop).unwrap();
         // Create a context for this window
         let context = WindowedContext::from_winit_window(
             &window,
@@ -76,11 +76,11 @@ impl WindowScene {
         let program: Program = {
             let mut vertex_shader = String::new();
             let mut fragment_shader = String::new();
-            File::open(&format!("src/shaders/{}.vert", program_name))
+            File::open(format!("src/shaders/{}.vert", program_name))
                 .unwrap()
                 .read_to_string(&mut vertex_shader)
                 .unwrap();
-            File::open(&format!("src/shaders/{}.frag", program_name))
+            File::open(format!("src/shaders/{}.frag", program_name))
                 .unwrap()
                 .read_to_string(&mut fragment_shader)
                 .unwrap();
