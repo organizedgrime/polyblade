@@ -46,6 +46,7 @@ impl Point {
     pub fn update(&mut self) {
         self.dxyz *= DAMPING;
         self.xyz += self.dxyz;
+        //self.dxyz = vec3(0.0, 0.0, 0.0);
     }
 
     pub fn pos(&self) -> Vector3<f32> {
@@ -130,7 +131,7 @@ impl Polyhedron {
         ];
 
         for i in 0..c.points.len() {
-            c.points[i].xyz = xyz[i];
+            c.points[i].xyz = xyz[i]; //* 4.0;
         }
 
         c
@@ -208,28 +209,18 @@ impl Polyhedron {
     }
 
     pub fn apply_forces(&mut self, edges: HashSet<(usize, usize)>, l: f32, k: f32) {
+        println!("applying forces to : {:?}", edges);
         for (i1, i2) in edges.into_iter() {
             let v1 = &self.points[i1].pos();
             let v2 = &self.points[i2].pos();
 
-            let dx = v2.x - v1.x;
-            let dy = v2.y - v1.y;
-            let dz = v2.z - v1.z;
-            let dist = (dx * dx + dy * dy + dz * dz).sqrt();
+            let d = v1.xyz() - v2.xyz();
+            let dist = d.magnitude();
+            let distention = l - dist;
+            let restorative_force = k / 2.0 * distention;
+            let f = d * restorative_force / 1000.0;
 
-            let distention = dist - l;
-            let restorative_force = k / 2.0 * (distention * distention);
-            let fx = (dx / 1.0) * restorative_force / 700.0;
-            let fy = (dy / 1.0) * restorative_force / 700.0;
-            let fz = (dz / 1.0) * restorative_force / 700.0;
-            let f = vec3(fx, fy, fz);
-
-            if i1 == 0 && i2 == 1 {
-                println!(
-                        "({}, {}) adding v1 {:?} + fx {:?} so it gets closer to v2 {:?} current dist {}",
-                        i1, i2, v1.x, f.x, v2.x, dist
-                    );
-            }
+            // If positive, we want to get further from the origin
             self.points[i1].add_force(f);
             self.points[i2].add_force(-f);
 
@@ -249,12 +240,12 @@ impl Polyhedron {
         let projection_face = &self.faces[0];
 
         // Natural lengths
-        let l_a = 1.0;
+        let l_a = 0.7;
         let l_n = 2.0_f32.sqrt() * l_a;
-        let l_d = 2.0_f32.sqrt() * l_n;
+        let l_d = 3.0_f32.sqrt() * l_a;
 
         // Spring constants
-        let k_a = 0.4;
+        let k_a = 0.7;
         let k_n = 0.7;
         let k_d = 0.8;
 
@@ -273,12 +264,12 @@ impl Polyhedron {
 
         let edges = self.neighbors();
         //println!("neighbors: {:?}", edges);
-        // self.apply_forces(edges, l_n, k_n);
+        self.apply_forces(edges, l_n, k_n);
 
         // diagonalz
         let edges = self.foreigners();
         //println!("foreigners: {:?}", edges);
-        //self.apply_forces(edges, l_d, k_d);
+        self.apply_forces(edges, l_d, k_d);
 
         /*
         let e_a = k_a / 2.0 * sum ( (l_a - abs(v_i - v_j)^2) );
