@@ -23,6 +23,19 @@ pub struct Polyhedron {
 
 // Platonic Solids
 impl Polyhedron {
+    pub fn tetrahedron() -> Polyhedron {
+        Polyhedron {
+            name: String::from("T"),
+            points: vec![
+                Point::new(vec![1, 2, 3]),
+                Point::new(vec![0, 2, 3]),
+                Point::new(vec![0, 1, 3]),
+                Point::new(vec![0, 1, 2]),
+            ],
+            faces: vec![vec![0, 1, 2], vec![1, 0, 3], vec![2, 1, 3], vec![0, 2, 3]],
+        }
+    }
+
     pub fn cube() -> Polyhedron {
         Polyhedron {
             name: String::from("C"),
@@ -44,6 +57,27 @@ impl Polyhedron {
                 vec![2, 3, 1, 0],
                 vec![6, 7, 5, 4],
             ],
+        }
+    }
+    pub fn octahedron() -> Polyhedron {
+        Polyhedron {
+            name: todo!(),
+            points: todo!(),
+            faces: todo!(),
+        }
+    }
+    pub fn dodecahedron() -> Polyhedron {
+        Polyhedron {
+            name: todo!(),
+            points: todo!(),
+            faces: todo!(),
+        }
+    }
+    pub fn icosahedron() -> Polyhedron {
+        Polyhedron {
+            name: todo!(),
+            points: todo!(),
+            faces: todo!(),
         }
     }
 }
