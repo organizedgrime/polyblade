@@ -88,7 +88,45 @@ impl Polyhedron {
         )
     }
     pub fn dodecahedron() -> Polyhedron {
-        Polyhedron::new("D", vec![vec![2, 3, 1]], vec![])
+        Polyhedron::new(
+            "D",
+            vec![
+                vec![1, 4, 7],
+                vec![0, 2, 9],
+                vec![1, 3, 11],
+                vec![4, 2, 13],
+                vec![0, 3, 5],
+                vec![4, 6, 14],
+                vec![5, 7, 16],
+                vec![0, 6, 8],
+                vec![7, 9, 17],
+                vec![1, 8, 10],
+                vec![9, 11, 18],
+                vec![2, 10, 12],
+                vec![11, 13, 19],
+                vec![3, 14, 12],
+                vec![5, 13, 15],
+                vec![14, 16, 19],
+                vec![15, 6, 17],
+                vec![8, 16, 18],
+                vec![10, 17, 19],
+                vec![12, 18, 15],
+            ],
+            vec![
+                vec![0, 1, 2, 3, 4],
+                vec![0, 4, 5, 6, 7],
+                vec![0, 7, 8, 9, 1],
+                vec![1, 9, 10, 11, 2],
+                vec![2, 11, 12, 13, 3],
+                vec![3, 13, 14, 5, 4],
+                vec![16, 6, 7, 8, 17],
+                vec![17, 8, 9, 10, 18],
+                vec![18, 10, 11, 12, 19],
+                vec![19, 12, 13, 14, 15],
+                vec![15, 14, 5, 6, 16],
+                vec![15, 16, 17, 18, 19],
+            ],
+        )
     }
     pub fn icosahedron() -> Polyhedron {
         Polyhedron {
@@ -154,7 +192,7 @@ impl Polyhedron {
             let dist = d.magnitude();
             let distention = l - dist;
             let restorative_force = k / 2.0 * distention;
-            let f = d * restorative_force / 1000.0;
+            let f = d * restorative_force / 10000.0;
 
             self.points[i1].add_force(f);
             self.points[i2].add_force(-f);
@@ -170,8 +208,8 @@ impl Polyhedron {
 
         // Natural lengths
         let l_a = 0.7;
-        let l_n = l_a * 4.0;
-        let l_d = l_a * 6.0;
+        let l_n = l_a * 2.0;
+        let l_d = l_a * 4.0;
 
         // Spring constants
         let k_a = 0.9;
@@ -312,7 +350,7 @@ impl Polyhedron {
 
         let time = frame_input.accumulated_time as f32;
         let model =
-            Mat4::from_angle_y(radians(0.001 * time)) * Mat4::from_angle_x(radians(0.000 * time));
+            Mat4::from_angle_y(radians(0.001 * time)) * Mat4::from_angle_x(radians(0.0004 * time));
 
         scene.program.use_uniform("model", model);
         scene.program.use_uniform(
