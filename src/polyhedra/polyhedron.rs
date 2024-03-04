@@ -1,5 +1,5 @@
 use std::{
-    collections::HashSet,
+    collections::{HashMap, HashSet},
     iter::Chain,
     ops::{Add, Mul},
 };
@@ -21,10 +21,10 @@ const DAMPING: f32 = 0.96;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Point {
-    // List of point neighbors by index
-    pub neighbors: Vec<usize>,
+    // List of point adjacents by index
+    pub adjacents: Vec<usize>,
     // Position
-    xyz: Vector3<f32>,
+    pub xyz: Vector3<f32>,
     // Speed
     dxyz: Vector3<f32>,
 }
@@ -32,7 +32,7 @@ pub struct Point {
 impl Point {
     pub fn new(neighbors: Vec<usize>) -> Self {
         Self {
-            neighbors,
+            adjacents: neighbors,
             xyz: vec3(random(), random(), random()).normalize(),
             dxyz: vec3(0.0, 0.0, 0.0),
         }
@@ -70,6 +70,21 @@ pub struct Polyhedron {
     pub faces: Vec<Vec<usize>>,
 }
 
+impl Polyhedron {
+    pub fn adjacents(&self, v: usize) -> Vec<usize> {
+        self.points[v].adjacents.clone()
+    }
+
+    pub fn neighbors(&self, v: usize) -> Vec<usize> {
+        let my_adjacents = self.adjacents(v);
+        let mut my_neighbor = Vec::new();
+        for v in my_adjacents.iter() {
+            my_neighbor.extend(self.adjacents(*v));
+        }
+        my_neighbor
+    }
+}
+
 // Platonic Solids
 impl Polyhedron {
     /*
@@ -87,7 +102,7 @@ impl Polyhedron {
     */
 
     pub fn cube() -> Polyhedron {
-        Polyhedron {
+        let mut c = Polyhedron {
             name: String::from("C"),
             points: vec![
                 Point::new(vec![1, 2, 7]),
@@ -100,14 +115,31 @@ impl Polyhedron {
                 Point::new(vec![0, 5, 6]),
             ],
             faces: vec![
-                vec![0, 1, 6, 7],
-                vec![1, 3, 4, 6],
-                vec![3, 2, 5, 4],
-                vec![2, 0, 7, 5],
-                vec![7, 6, 4, 5],
-                vec![2, 3, 1, 0],
+                vec![3, 0, 1, 2],
+                vec![3, 4, 5, 0],
+                vec![0, 5, 6, 1],
+                vec![1, 6, 7, 2],
+                vec![2, 7, 4, 3],
+                vec![5, 4, 7, 6],
             ],
+        };
+
+        let xyz = vec![
+            vec3(0.407, 0.407, 0.407),
+            vec3(-0.707, 0.707, 0.707),
+            vec3(-0.707, -0.707, 0.707),
+            vec3(0.707, -0.707, 0.707),
+            vec3(0.707, -0.707, -0.707),
+            vec3(0.707, 0.707, -0.707),
+            vec3(-0.707, 0.707, -0.707),
+            vec3(-0.707, -0.707, -0.707),
+        ];
+
+        for i in 0..c.points.len() {
+            c.points[i].xyz = xyz[i];
         }
+
+        c
     }
 
     /*
@@ -131,7 +163,7 @@ impl Polyhedron {
         let mut edges = HashSet::new();
         // For every
         for (v1, point) in self.points.iter().enumerate() {
-            for v2 in point.neighbors.clone().into_iter() {
+            for v2 in point.adjacents.clone().into_iter() {
                 edges.insert((v1, v2));
             }
         }
@@ -154,7 +186,7 @@ impl Polyhedron {
         let l_d = 2.0;
 
         // Spring constants
-        let k_a = 0.2;
+        let k_a = 0.9;
         let k_n = 0.5;
         let k_d = 0.7;
 
@@ -164,38 +196,42 @@ impl Polyhedron {
         // Ed should act only on diameter edges
         //
         //
-        let edges = self.edges();
+
+        let mut edges = Vec::new();
+
+        for i in 0..self.points.len() {
+            for a in self.adjacents(i) {
+                edges.push((i, a));
+            }
+            for n in self.neighbors(i) {
+                edges.push((i, n));
+            }
+        }
+
         //
         for (i1, i2) in edges.into_iter() {
             let v1 = &self.points[i1];
             let v2 = &self.points[i2];
 
-            if true {
-                //v1.pos().magnitude().abs() < 3.0 {
-                let dxyz = v1.dxyz() - v2.dxyz();
+            let dxyz = v1.dxyz() - v2.dxyz();
+            let dh = dxyz.magnitude();
+            let rest_length = v1.pos().distance(v2.pos());
+            let distention = dh - rest_length;
+            let restorative_force = k_a * distention;
+            let f = if dh > 0.0 {
+                (dxyz / dh) * restorative_force
+            } else {
+                vec3(0.0, 0.0, 0.0)
+            };
+            println!(
+                "dxy: {:?}, dh: {}, disten: {}, rest: {}, f: {:?}",
+                dxyz, dh, distention, restorative_force, f
+            );
 
-                let dh = dxyz.magnitude();
+            println!("adding force: {:?}", f);
 
-                //let dh = v1.pos().distance(v2.pos());
-
-                let rest_length = v1.pos().distance(v2.pos());
-                let distention = dh - rest_length;
-                let restorative_force = k_a * distention;
-                let f = if dh > 1.0 {
-                    (dxyz / dh) * restorative_force
-                } else {
-                    (dxyz * dh) * restorative_force
-                };
-                println!(
-                    "dxy: {:?}, dh: {}, disten: {}, rest: {}, f: {:?}",
-                    dxyz, dh, distention, restorative_force, f
-                );
-
-                println!("adding force: {:?}", f);
-
-                self.points[i1].add_force(f);
-                self.points[i2].add_force(f);
-            }
+            self.points[i1].add_force(f);
+            self.points[i2].add_force(-f);
         }
 
         for i in 0..self.points.len() {
