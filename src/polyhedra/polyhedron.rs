@@ -217,6 +217,9 @@ impl Polyhedron {
 impl Polyhedron {
     pub fn render_schlegel(&mut self, scene: &mut WindowScene, frame_input: &FrameInput) {
         self.apply_spring_forces();
+        self.center();
+        self.quarrel();
+
         scene.camera.set_view(
             self.face_normal(0) * 0.75,
             vec3(0.0, 0.0, 0.0),

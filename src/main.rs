@@ -49,10 +49,10 @@ pub fn main() {
         0.1,
         10.0,
     );
-    let _scene2 = WindowScene::new("schlegel", &event_loop, camera2, Srgba::WHITE, "basic");
-    //scenes.insert(scene2.window.id(), scene2);
+    let scene2 = WindowScene::new("schlegel", &event_loop, camera2, Srgba::WHITE, "schlegel");
+    scenes.insert(scene2.window.id(), scene2);
 
-    let mut shape = Polyhedron::octahedron();
+    let mut shape = Polyhedron::dodecahedron();
     event_loop.run(move |event, _, control_flow| match &event {
         winit::event::Event::MainEventsCleared => {
             for (_, scene) in scenes.iter() {
@@ -73,7 +73,7 @@ pub fn main() {
                 if &scene.title == "model" {
                     shape.render_model(scene, &frame_input);
                 } else {
-                    //shape.render_schlegel(scene, &frame_input);
+                    shape.render_schlegel(scene, &frame_input);
                     //Polyhedron::dodecahedron().render_model(scene, &frame_input);
                 }
 
