@@ -52,7 +52,7 @@ pub fn main() {
     let _scene2 = WindowScene::new("schlegel", &event_loop, camera2, Srgba::WHITE, "basic");
     //scenes.insert(scene2.window.id(), scene2);
 
-    let mut shape = Polyhedron::tetrahedron();
+    let mut shape = Polyhedron::octahedron();
     event_loop.run(move |event, _, control_flow| match &event {
         winit::event::Event::MainEventsCleared => {
             for (_, scene) in scenes.iter() {

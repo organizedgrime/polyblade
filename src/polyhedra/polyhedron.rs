@@ -61,9 +61,25 @@ impl Polyhedron {
     }
     pub fn octahedron() -> Polyhedron {
         Polyhedron {
-            name: todo!(),
-            points: todo!(),
-            faces: todo!(),
+            name: String::from("O"),
+            points: vec![
+                Point::new(vec![1, 2, 3, 4]),
+                Point::new(vec![0, 2, 4, 5]),
+                Point::new(vec![0, 1, 3, 5]),
+                Point::new(vec![0, 2, 4, 5]),
+                Point::new(vec![0, 1, 3, 5]),
+                Point::new(vec![1, 2, 3, 4]),
+            ],
+            faces: vec![
+                vec![2, 0, 1],
+                vec![1, 0, 4],
+                vec![4, 0, 3],
+                vec![3, 0, 2],
+                vec![3, 5, 2],
+                vec![3, 5, 4],
+                vec![4, 5, 1],
+                vec![1, 5, 2],
+            ],
         }
     }
     pub fn dodecahedron() -> Polyhedron {
@@ -153,8 +169,8 @@ impl Polyhedron {
 
         // Natural lengths
         let l_a = 0.7;
-        let l_n = l_a * 2.0;
-        let l_d = l_a * 4.0;
+        let l_n = l_a * 4.0;
+        let l_d = l_a * 6.0;
 
         // Spring constants
         let k_a = 0.9;
