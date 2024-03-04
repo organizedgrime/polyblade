@@ -19,16 +19,9 @@ pub struct Polyhedron {
 
     // List of faces
     pub faces: Vec<Vec<usize>>,
-}
 
-impl Polyhedron {
-    pub fn new(name: &str, points: Vec<Vec<usize>>, faces: Vec<Vec<usize>>) -> Polyhedron {
-        Polyhedron {
-            name: String::from(name),
-            points: points.into_iter().map(|p| Point::new(p)).collect(),
-            faces,
-        }
-    }
+    // Secret list of vertices that need to avoid each other
+    pub(crate) enemies: HashSet<(usize, usize)>,
 }
 
 // Operations
@@ -114,6 +107,7 @@ impl Polyhedron {
         //self.apply_forces(edges.into_iter().filter(|b| b.0 == 0).collect(), l_a, k_a);
         self.apply_forces(self.neighbors(), l_n, k_n);
         self.apply_forces(self.strangers(), l_d, k_d);
+        self.apply_forces(self.enemies.clone(), l_d, k_d);
     }
 
     pub fn center(&mut self) {
@@ -124,6 +118,18 @@ impl Polyhedron {
         shift /= self.points.len() as f32;
         for i in 0..self.points.len() {
             self.points[i].xyz -= shift;
+        }
+    }
+
+    pub fn quarrel(&mut self) {
+        let threshold = 0.05;
+        for v1 in 0..self.points.len() {
+            for v2 in 0..self.points.len() {
+                if self.points[v1].pos().distance(self.points[v2].pos()).abs() < threshold {
+                    let pair = if v1 < v2 { (v1, v2) } else { (v2, v1) };
+                    self.enemies.insert(pair);
+                }
+            }
         }
     }
 }
@@ -239,6 +245,7 @@ impl Polyhedron {
     pub fn render_model(&mut self, scene: &mut WindowScene, frame_input: &FrameInput) {
         self.apply_spring_forces();
         self.center();
+        self.quarrel();
         let (positions, colors, barycentric) = self.triangle_buffers(&scene.context);
         //let program = scene.program.unwrap();
 
