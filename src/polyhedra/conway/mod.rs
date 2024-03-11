@@ -1,21 +1,21 @@
 mod graph;
 pub use graph::*;
 
-trait Conway: Graph + Sized {
-    fn contract_edge(&mut self, edge: impl Into<Edge<Self>>) {
+trait Conway<V: Vertex>: Graph<V> + Sized {
+    fn contract_edge(&mut self, edge: impl Into<Edge<V>>) {
         let edge = edge.into();
         // Determine all of a's connections
-        let connections = self.connections(&edge.a);
+        let connections = self.connections(edge.a);
         // Give b all the same connections
         for connection in connections {
             self.connect((edge.b.clone(), connection))
         }
         // Delete a
-        self.delete(&edge.a);
+        self.delete(edge.a);
     }
 
-    fn split_vertex(&mut self, vertex: Self::Vertex) {
-        let edges = self.edges(&vertex);
+    fn split_vertex(&mut self, vertex: V) {
+        let edges = self.edges(vertex);
         let mut new_face = vec![vertex.clone()];
         // Skipping the first connection
         for edge in edges[1..].iter() {
@@ -31,7 +31,7 @@ trait Conway: Graph + Sized {
         }
 
         for i in 0..new_face.len() {
-            let edge: Edge<Self> = (
+            let edge: Edge<V> = (
                 new_face[i].clone(),
                 new_face[(i + 1) % new_face.len()].clone(),
             )
@@ -40,8 +40,14 @@ trait Conway: Graph + Sized {
         }
     }
 
+    fn truncate(&mut self) {
+        for vertex in self.vertices() {
+            self.split_vertex(vertex);
+        }
+    }
+
     //
-    fn dual(&mut self) {}
+    //fn dual(&mut self) {}
 
     /*
      * `t` truncate is equivalent to vertex splitting
@@ -56,7 +62,7 @@ trait Conway: Graph + Sized {
      */
 }
 
-impl<G: Graph> Conway for G {}
+impl<G: Graph<usize>> Conway<usize> for G {}
 
 #[cfg(test)]
 mod test {
@@ -81,13 +87,13 @@ mod test {
         assert_eq!(graph.vertices().len(), 5);
         assert_eq!(graph.all_edges().len(), 4);
 
-        assert_eq!(graph.connections(&0), vec![2]);
-        assert_eq!(graph.connections(&1), vec![2]);
+        assert_eq!(graph.connections(0), vec![2]);
+        assert_eq!(graph.connections(1), vec![2]);
 
-        assert_eq!(graph.connections(&2), vec![0, 1, 3, 4]);
+        assert_eq!(graph.connections(2), vec![0, 1, 3, 4]);
 
-        assert_eq!(graph.connections(&3), vec![2]);
-        assert_eq!(graph.connections(&4), vec![2]);
+        assert_eq!(graph.connections(3), vec![2]);
+        assert_eq!(graph.connections(4), vec![2]);
     }
 
     #[test]
