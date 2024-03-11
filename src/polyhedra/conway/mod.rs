@@ -16,18 +16,27 @@ trait Conway: Graph + Sized {
 
     fn split_vertex(&mut self, vertex: Self::Vertex) {
         let edges = self.edges(&vertex);
-        let mut new_vertex = edges[0].a.clone();
+        let mut new_face = vec![vertex.clone()];
         // Skipping the first connection
         for edge in edges[1..].iter() {
             // Insert a new vertex
-            let b = self.insert();
+            let new_vertex = self.insert();
+            new_face.push(new_vertex.clone());
             // Connect the new one
-            self.connect((edge.a.clone(), b));
-            // Connect to the previous
-            self.connect((edge.a.clone(), new_vertex.clone()));
-            new_vertex = edge.a.clone();
-            // Disconnect the old one
+            self.connect((edge.other(vertex.clone()), new_vertex));
+        }
+
+        for edge in edges[1..].iter() {
             self.disconnect(edge);
+        }
+
+        for i in 0..new_face.len() {
+            let edge: Edge<Self> = (
+                new_face[i].clone(),
+                new_face[(i + 1) % new_face.len()].clone(),
+            )
+                .into();
+            self.connect(edge);
         }
     }
 
@@ -64,7 +73,13 @@ mod test {
         graph.connect((3, 4));
         graph.connect((3, 5));
 
+        assert_eq!(graph.vertices().len(), 6);
+        assert_eq!(graph.all_edges().len(), 5);
+
         graph.contract_edge((1, 3));
+
+        assert_eq!(graph.vertices().len(), 5);
+        assert_eq!(graph.all_edges().len(), 4);
 
         assert_eq!(graph.connections(&0), vec![2]);
         assert_eq!(graph.connections(&1), vec![2]);
@@ -73,5 +88,25 @@ mod test {
 
         assert_eq!(graph.connections(&3), vec![2]);
         assert_eq!(graph.connections(&4), vec![2]);
+    }
+
+    #[test]
+    fn split_vertex() {
+        let mut graph = SimpleGraph::new(5);
+        graph.connect((1, 0));
+        graph.connect((1, 2));
+
+        graph.connect((1, 3));
+        graph.connect((1, 4));
+
+        assert_eq!(graph.vertices().len(), 5);
+        assert_eq!(graph.all_edges().len(), 4);
+
+        graph.split_vertex(1);
+
+        println!("all_edges: {:?}", graph.all_edges());
+
+        assert_eq!(graph.vertices().len(), 8);
+        assert_eq!(graph.all_edges().len(), 8);
     }
 }

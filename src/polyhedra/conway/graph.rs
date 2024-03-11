@@ -1,7 +1,26 @@
+use std::{collections::HashSet, hash::Hash};
+
 #[derive(Clone, Copy)]
 pub struct Edge<G: Graph> {
     pub a: G::Vertex,
     pub b: G::Vertex,
+}
+impl<G: Graph> Edge<G> {
+    pub fn other(&self, v: G::Vertex) -> G::Vertex {
+        if self.a == v {
+            self.b.clone()
+        } else {
+            self.a.clone()
+        }
+    }
+}
+impl<G: Graph> std::fmt::Debug for Edge<G> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Edge")
+            .field("a", &self.a)
+            .field("b", &self.b)
+            .finish()
+    }
 }
 impl<G: Graph> From<&Edge<G>> for Edge<G> {
     fn from(value: &Edge<G>) -> Self {
@@ -23,8 +42,10 @@ impl<G: Graph> PartialEq for Edge<G> {
     }
 }
 
+impl<G: Graph> Eq for Edge<G> {}
+
 pub trait Graph: Sized {
-    type Vertex: Clone + PartialEq;
+    type Vertex: Clone + PartialEq + std::fmt::Debug;
     //type Edge = Edge<Self>;
 
     // New with n vertices
@@ -45,6 +66,19 @@ pub trait Graph: Sized {
             .collect()
     }
     fn connections(&self, vertex: &Self::Vertex) -> Vec<Self::Vertex>;
+
+    fn vertices(&self) -> Vec<Self::Vertex>;
+    fn all_edges(&self) -> Vec<Edge<Self>> {
+        let mut edges = Vec::new();
+        for vertex in self.vertices() {
+            for edge in self.edges(&vertex) {
+                if !edges.contains(&edge) {
+                    edges.push(edge);
+                }
+            }
+        }
+        edges
+    }
 }
 
 pub struct SimpleGraph {
@@ -58,6 +92,10 @@ impl Graph for SimpleGraph {
         Self {
             adjacency_matrix: vec![vec![false; vertex_count]; vertex_count],
         }
+    }
+
+    fn vertices(&self) -> Vec<Self::Vertex> {
+        (0..self.adjacency_matrix.len()).collect()
     }
 
     fn connect(&mut self, edge: impl Into<Edge<Self>>) {
@@ -80,7 +118,7 @@ impl Graph for SimpleGraph {
         self.adjacency_matrix
             .push(vec![false; self.adjacency_matrix.len() + 1]);
 
-        self.adjacency_matrix.len()
+        self.adjacency_matrix.len() - 1
     }
 
     fn delete(&mut self, vertex: &Self::Vertex) {
