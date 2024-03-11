@@ -30,8 +30,8 @@ pub fn main() {
 
     let camera1 = Camera::new_perspective(
         Viewport::new_at_origo(1, 1),
-        vec3(0.0, 0.0, 6.0),
-        vec3(0.0, 0.0, 0.0),
+        vec3(0.0, 0.0, 4.0),
+        Vector3::zero(),
         vec3(0.0, 1.0, 0.0),
         degrees(45.0),
         0.1,
@@ -43,7 +43,7 @@ pub fn main() {
     let camera2 = Camera::new_perspective(
         Viewport::new_at_origo(1, 1),
         vec3(0.0, 0.0, 6.0),
-        vec3(0.0, 0.0, 0.0),
+        Vector3::zero(),
         vec3(0.0, 1.0, 0.0),
         degrees(170.0),
         0.1,
@@ -52,7 +52,7 @@ pub fn main() {
     let scene2 = WindowScene::new("schlegel", &event_loop, camera2, Srgba::WHITE, "schlegel");
     scenes.insert(scene2.window.id(), scene2);
 
-    let mut shape = Polyhedron::dodecahedron();
+    let mut shape = Polyhedron::icosahedron();
     event_loop.run(move |event, _, control_flow| match &event {
         winit::event::Event::MainEventsCleared => {
             for (_, scene) in scenes.iter() {
@@ -70,6 +70,7 @@ pub fn main() {
                     color.x, color.y, color.z, 1.0, 1.0,
                 ));
 
+                shape.update();
                 if &scene.title == "model" {
                     shape.render_model(scene, &frame_input);
                 } else {

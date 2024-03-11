@@ -2,8 +2,6 @@ use cgmath::{vec3, InnerSpace, Vector3};
 use rand::random;
 use serde::{Deserialize, Serialize};
 
-const DAMPING: f32 = 0.96;
-
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Point {
     // List of point adjacents by index
@@ -28,12 +26,9 @@ impl Point {
     }
 
     pub fn update(&mut self) {
-        self.dxyz *= DAMPING;
+        // Damping
+        self.dxyz *= 0.92;
         self.xyz += self.dxyz;
-    }
-
-    pub fn pos(&self) -> Vector3<f32> {
-        self.xyz
     }
 
     pub fn dxyz(&self) -> Vector3<f32> {
