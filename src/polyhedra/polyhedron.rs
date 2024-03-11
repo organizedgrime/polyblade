@@ -94,7 +94,7 @@ impl Polyhedron {
         // d = diameter (circumsphere / face of projection)
 
         // Natural lengths
-        let l_a = 0.7;
+        let l_a = 0.7 / 1.5;
         let l_n = l_a * 2.0;
         let l_d = l_a * 4.0;
 
@@ -220,11 +220,23 @@ impl Polyhedron {
         self.center();
         self.quarrel();
 
-        scene.camera.set_view(
-            self.face_normal(0) * 0.75,
-            vec3(0.0, 0.0, 0.0),
-            vec3(0.0, 1.0, 0.0),
+        println!(
+            "distances: {:?}",
+            self.points
+                .iter()
+                .map(|p| p.pos().magnitude())
+                .collect::<Vec<_>>()
         );
+        let r = self.face_normal(0) * 1.2;
+
+        let theta = 2.0 * (1.0 / (2.0_f32.sqrt() * r.magnitude() - 1.0)).atan();
+        scene
+            .camera
+            .set_view(r, vec3(0.0, 0.0, 0.0), vec3(0.0, 1.0, 0.0));
+
+        scene
+            .camera
+            .set_perspective_projection(radians(theta), 0.01, 10.0);
 
         let (positions, colors, barycentric) = self.triangle_buffers(&scene.context);
         let model = Mat4::from_angle_x(radians(0.0));
