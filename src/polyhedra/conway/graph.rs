@@ -1,61 +1,8 @@
-use super::Polyhedron;
-
-trait Conway: Graph + Sized {
-    fn contract_edge(&mut self, edge: Edge<Self>) {
-        // Determine all of a's connections
-        let connections = self.connections(&edge.a);
-        // Delete a
-        self.delete(&edge.a);
-        // Give b all the same connections
-        for connection in connections {
-            self.connect(Edge::<Self>::new(edge.b.clone(), connection))
-        }
-    }
-
-    fn split_vertex(&mut self, vertex: Self::Vertex) {
-        let edges = self.edges(&vertex);
-        let mut new_vertex = edges[0].a.clone();
-        // Skipping the first connection
-        for edge in edges[1..].iter() {
-            // Insert a new vertex
-            let b = self.insert();
-            // Connect the new one
-            self.connect((edge.a.clone(), b));
-            // Connect to the previous
-            self.connect((edge.a.clone(), new_vertex.clone()));
-            new_vertex = edge.a.clone();
-            // Disconnect the old one
-            self.disconnect(edge);
-        }
-    }
-
-    //
-    fn dual(&mut self) {}
-
-    /*
-     * `t` truncate is equivalent to vertex splitting
-     * `a` ambo is equivalent to the composition of vertex splitting and edge contraction vefore
-     * applying vertex splitting.
-     * `b` bevel is equivalent to `ta`
-     * `e` expand is equal to `aa`
-     * `s` snub is applying `e` followed by diagonal addition
-     * the rest are just duals, apparently
-     *
-     *
-     */
-}
-
 #[derive(Clone, Copy)]
-struct Edge<G: Graph> {
+pub struct Edge<G: Graph> {
     pub a: G::Vertex,
     pub b: G::Vertex,
 }
-impl<G: Graph> Edge<G> {
-    fn new(a: G::Vertex, b: G::Vertex) -> Self {
-        Self { a, b }
-    }
-}
-
 impl<G: Graph> From<&Edge<G>> for Edge<G> {
     fn from(value: &Edge<G>) -> Self {
         (value.a.clone(), value.b.clone()).into()
@@ -76,7 +23,7 @@ impl<G: Graph> PartialEq for Edge<G> {
     }
 }
 
-trait Graph: Sized {
+pub trait Graph: Sized {
     type Vertex: Clone + PartialEq;
     //type Edge = Edge<Self>;
 
@@ -94,13 +41,13 @@ trait Graph: Sized {
     fn edges(&self, vertex: &Self::Vertex) -> Vec<Edge<Self>> {
         self.connections(&vertex)
             .iter()
-            .map(|other| Edge::<Self>::new(vertex.clone(), other.clone()))
+            .map(|other| (vertex.clone(), other.clone()).into())
             .collect()
     }
     fn connections(&self, vertex: &Self::Vertex) -> Vec<Self::Vertex>;
 }
 
-struct SimpleGraph {
+pub struct SimpleGraph {
     pub adjacency_matrix: Vec<Vec<bool>>,
 }
 
@@ -150,7 +97,7 @@ impl Graph for SimpleGraph {
     fn connections(&self, vertex: &Self::Vertex) -> Vec<Self::Vertex> {
         let mut connections: Vec<Self::Vertex> = Vec::new();
         for (other, connected) in self.adjacency_matrix[*vertex].iter().enumerate() {
-            if *connected {
+            if *connected && other != *vertex {
                 connections.push(other)
             }
         }
