@@ -1,3 +1,5 @@
+//#![feature(associated_type_defaults)]
+
 mod color;
 mod polyhedra;
 mod render;
