@@ -1,18 +1,7 @@
-use std::collections::HashSet;
-
-use super::{Point, Polyhedron};
+use super::Polyhedron;
 
 // Platonic Solids
 impl Polyhedron {
-    pub fn new(name: &str, points: Vec<Vec<usize>>, faces: Vec<Vec<usize>>) -> Polyhedron {
-        Polyhedron {
-            name: String::from(name),
-            points: points.into_iter().map(Point::new).collect(),
-            faces,
-            enemies: HashSet::new(),
-        }
-    }
-
     pub fn tetrahedron() -> Polyhedron {
         Polyhedron::new(
             "T",
