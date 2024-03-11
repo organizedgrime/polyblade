@@ -1,8 +1,8 @@
-mod conway;
+mod graph;
 mod platonic;
 mod point;
 mod polyhedron;
 
-pub use conway::*;
+pub use graph::*;
 pub use point::*;
 pub use polyhedron::*;

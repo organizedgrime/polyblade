@@ -1,7 +1,6 @@
-mod graph;
-pub use graph::*;
+pub use super::*;
 
-trait Conway<V: Vertex>: Graph<V> + Sized {
+pub trait Conway<V: Vertex>: Graph<V> + Sized {
     fn contract_edge(&mut self, edge: impl Into<Edge<V>>) {
         let edge = edge.into();
         // Determine all of a's connections
