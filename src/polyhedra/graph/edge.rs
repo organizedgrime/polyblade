@@ -1,4 +1,6 @@
-use super::Vertex;
+use super::{Vertex, VertexId};
+
+pub type EdgeId = (VertexId, VertexId);
 
 #[derive(Debug, Clone, Eq, Copy)]
 pub struct Edge<V: Vertex> {
@@ -7,8 +9,11 @@ pub struct Edge<V: Vertex> {
 }
 
 impl<V: Vertex> Edge<V> {
-    pub fn other(&self, v: V) -> V {
-        if self.a == v {
+    pub fn id(&self) -> EdgeId {
+        (self.a.id(), self.b.id())
+    }
+    pub fn other(&self, v: VertexId) -> V {
+        if self.a.id() == v.id() {
             self.b.clone()
         } else {
             self.a.clone()

@@ -22,7 +22,7 @@ pub struct Polyhedron {
 
     // Secret list of vertices that need to avoid each other
     pub(crate) enemies: HashSet<(usize, usize)>,
-    edge_length: f32,
+    pub(crate) edge_length: f32,
 }
 
 // Operations
@@ -30,7 +30,11 @@ impl Polyhedron {
     pub fn new(name: &str, points: Vec<Vec<usize>>, faces: Vec<Vec<usize>>) -> Polyhedron {
         Polyhedron {
             name: String::from(name),
-            points: points.into_iter().map(Point::new).collect(),
+            points: points
+                .into_iter()
+                .enumerate()
+                .map(|(id, neighbors)| Point::new(id, neighbors))
+                .collect(),
             faces,
             enemies: HashSet::new(),
             edge_length: 1.0,
