@@ -127,6 +127,19 @@ impl Graph<Point> for Polyhedron {
                 v
             })
             .collect();
+
+        self.faces = self
+            .faces
+            .clone()
+            .into_iter()
+            .map(|face| {
+                face.into_iter()
+                    .filter(|i| *i != id)
+                    .map(|i| if i > id { i - 1 } else { i })
+                    .collect::<Vec<usize>>()
+            })
+            .filter(|face| face.len() > 2)
+            .collect();
     }
 
     fn connections(&self, id: VertexId) -> Vec<Point> {

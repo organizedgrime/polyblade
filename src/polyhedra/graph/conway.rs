@@ -63,6 +63,12 @@ mod test {
     use crate::prelude::*;
     use test_case::test_case;
 
+    #[test]
+    fn poly() {
+        let mut dodeca = Polyhedron::icosahedron();
+        dodeca.contract_edge((0, 1));
+    }
+
     #[test_case(SimpleGraph::new_disconnected(6) ; "SimpleGraph")]
     #[test_case(Polyhedron::new_disconnected(6) ; "Polyhedron")]
     fn contract_edge<C: Conway<V>, V: Vertex>(mut graph: C) {
