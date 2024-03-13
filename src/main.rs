@@ -53,7 +53,6 @@ pub fn main() {
     scenes.insert(scene2.window.id(), scene2);
 
     let mut shape = Polyhedron::icosahedron();
-    shape.contract_edge((0, 1));
     let mut counter = 0;
     event_loop.run(move |event, _, control_flow| match &event {
         winit::event::Event::MainEventsCleared => {
@@ -75,7 +74,7 @@ pub fn main() {
                 counter += 1;
                 if counter == 1000 {
                     //shape.contract_edge((0, 1));
-                    //shape.truncate();
+                    shape.ambo();
                 }
 
                 shape.update();

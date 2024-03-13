@@ -29,26 +29,42 @@ pub trait Conway<V: Vertex>: Graph<V> + Sized {
         self.connect((previous, id));
     }
 
+    /// `t` truncate is equivalent to vertex splitting
     fn truncate(&mut self) {
         for vertex in self.vertices() {
             self.split_vertex(vertex.id());
         }
     }
 
+    /// `a` ambo is equivalent to the composition of vertex splitting and edge contraction vefore
+    /// applying vertex splitting.
+    fn ambo(&mut self) {
+        for edge in self.all_edges() {
+            self.contract_edge(edge.id());
+            self.split_vertex(edge.id().1);
+        }
+        self.truncate()
+    }
+
     //
     //fn dual(&mut self) {}
+    /// `b` bevel is equivalent to `ta`
+    fn bevel(&mut self) {
+        self.truncate();
+        self.ambo();
+    }
 
-    /*
-     * `t` truncate is equivalent to vertex splitting
-     * `a` ambo is equivalent to the composition of vertex splitting and edge contraction vefore
-     * applying vertex splitting.
-     * `b` bevel is equivalent to `ta`
-     * `e` expand is equal to `aa`
-     * `s` snub is applying `e` followed by diagonal addition
-     * the rest are just duals, apparently
-     *
-     *
-     */
+    /// `e` expand is equal to `aa`
+    fn expand(&mut self) {
+        self.ambo();
+        self.ambo();
+    }
+
+    /// `s` snub is applying `e` followed by diagonal addition
+    fn snub(&mut self) {
+        self.expand();
+        //self.diagonal_addition();
+    }
 }
 
 impl<T, V> Conway<V> for T
@@ -86,14 +102,6 @@ mod test {
         graph.contract_edge((1, 3));
 
         assert_eq!(graph.vertices().len(), 5);
-        println!(
-            "all_edges: {:?}",
-            graph
-                .all_edges()
-                .into_iter()
-                .map(|e| e.id())
-                .collect::<Vec<_>>()
-        );
         assert_eq!(graph.all_edges().len(), 4);
 
         assert_eq!(ids(graph.connections(0)), vec![2]);
