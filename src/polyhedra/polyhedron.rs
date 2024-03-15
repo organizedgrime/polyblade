@@ -198,7 +198,7 @@ impl Polyhedron {
         let mut polyhedron_colors = Vec::new();
         let mut polyhedron_barycentric = Vec::new();
 
-        for face_index in 0..self.faces.len() - 1 {
+        for face_index in 0..self.faces.len() {
             // Create triangles from the center to each corner
             let mut face_xyz = Vec::new();
             let vertices = self.face_xyz(face_index);

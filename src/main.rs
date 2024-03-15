@@ -50,9 +50,9 @@ pub fn main() {
         10.0,
     );
     let scene2 = WindowScene::new("schlegel", &event_loop, camera2, Srgba::WHITE, "schlegel");
-    scenes.insert(scene2.window.id(), scene2);
+    // scenes.insert(scene2.window.id(), scene2);
 
-    let mut shape = Polyhedron::icosahedron();
+    let mut shape = Polyhedron::dodecahedron();
     let mut counter = 0;
     event_loop.run(move |event, _, control_flow| match &event {
         winit::event::Event::MainEventsCleared => {
@@ -72,9 +72,10 @@ pub fn main() {
                 ));
 
                 counter += 1;
-                if counter == 1000 {
-                    //shape.contract_edge((0, 1));
+                if counter == 10000 {
                     shape.ambo();
+                    //shape.contract_edge((0, 1));
+                    //shape.ambo();
                 }
 
                 shape.update();

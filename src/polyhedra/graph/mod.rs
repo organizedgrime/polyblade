@@ -97,6 +97,26 @@ impl Graph<Point> for Polyhedron {
             self.points[edge.a.id].connect(edge.b.id);
             self.points[edge.b.id].connect(edge.a.id);
         }
+        // one face is going to become two faces
+        // it is whichever face contains both of these points that we will modify
+
+        for x in 0..self.faces.len() {
+            let face = &self.faces[x];
+            if let Some(i) = face.iter().position(|v| v == &id.0)
+                && let Some(j) = face.iter().position(|v| v == &id.1)
+            {
+                // assume i is smaller fix later
+                let t = std::cmp::min(i, j);
+                let p = std::cmp::max(i, j);
+
+                let f1 = face[t..p].to_vec();
+                let f2 = [face[p..].to_vec(), face[..t].to_vec()].concat();
+
+                self.faces.remove(x);
+                self.faces.push(f1);
+                self.faces.push(f2);
+            }
+        }
     }
 
     fn disconnect(&mut self, id: EdgeId) {
