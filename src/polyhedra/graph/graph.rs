@@ -5,8 +5,8 @@ use super::*;
 pub trait Graph<V: Vertex>: Sized {
     fn vertex(&self, id: VertexId) -> Option<V>;
     fn edge(&self, id: EdgeId) -> Option<Edge> {
-        if let (Some(v1), Some(v2)) = (self.vertex(id.0), self.vertex(id.1)) {
-            Some((v1, v2).into())
+        if self.vertex(id.0).is_some() && self.vertex(id.1).is_some() {
+            Some((id.0, id.1).into())
         } else {
             None
         }
@@ -26,7 +26,7 @@ pub trait Graph<V: Vertex>: Sized {
         if let Some(vertex) = self.vertex(id) {
             self.connections(id)
                 .iter()
-                .map(|other| (vertex.clone(), other.clone()).into())
+                .map(|other| (vertex.id(), other.id()).into())
                 .collect()
         } else {
             vec![]
@@ -59,17 +59,14 @@ pub trait Graph<V: Vertex>: Sized {
         node: VertexId,
         path: &mut Vec<VertexId>,
         visited: &mut HashSet<VertexId>,
-        cycles: &mut Vec<Face>,
+        cycles: &mut HashSet<Face>,
     ) {
         visited.insert(node);
         path.push(node);
 
         for neighbor in self.connections(node) {
             if neighbor.id() == start && path.len() > 2 {
-                let face = Face(path.clone());
-                if !cycles.contains(&face) {
-                    cycles.push(face);
-                }
+                cycles.insert(Face(path.clone()));
             } else if !visited.contains(&neighbor.id()) {
                 self.dfs(start, neighbor.id(), path, visited, cycles);
             }
@@ -81,7 +78,7 @@ pub trait Graph<V: Vertex>: Sized {
 
     // Depth-first search to detect cycles
     fn recompute_faces(&mut self) {
-        let mut cycles = Vec::new();
+        let mut cycles = HashSet::new();
         let mut visited = HashSet::new();
         let mut path = Vec::new();
 
@@ -92,6 +89,7 @@ pub trait Graph<V: Vertex>: Sized {
         }
 
         let max_faces = 2 + self.all_edges().len() - self.vertices().len();
+        let mut cycles = cycles.into_iter().collect::<Vec<_>>();
         cycles.sort_by(|c1, c2| c1.len().cmp(&c2.len()));
         let cycles = cycles[0..max_faces].to_vec();
         println!("cycles: {:?}", cycles);
