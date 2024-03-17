@@ -1,5 +1,6 @@
 mod conway;
 mod edge;
+mod face;
 mod graph;
 mod vertex;
 
@@ -7,6 +8,7 @@ use std::collections::HashSet;
 
 pub use conway::*;
 pub use edge::*;
+pub use face::*;
 pub use graph::*;
 pub use vertex::*;
 
@@ -14,6 +16,7 @@ use super::{Point, Polyhedron};
 
 pub struct SimpleGraph {
     pub adjacency_matrix: Vec<Vec<bool>>,
+    pub faces: Vec<Face>,
 }
 
 impl Graph<usize> for SimpleGraph {
@@ -27,6 +30,7 @@ impl Graph<usize> for SimpleGraph {
     fn new_disconnected(vertex_count: usize) -> Self {
         Self {
             adjacency_matrix: vec![vec![false; vertex_count]; vertex_count],
+            faces: vec![],
         }
     }
 
@@ -34,10 +38,19 @@ impl Graph<usize> for SimpleGraph {
         (0..self.adjacency_matrix.len()).collect()
     }
 
+    fn faces(&self) -> Vec<Face> {
+        self.faces.clone()
+    }
+
+    fn set_faces(&mut self, faces: Vec<Face>) {
+        self.faces = faces;
+    }
+
     fn connect(&mut self, id: EdgeId) {
         if let Some(edge) = self.edge(id) {
             self.adjacency_matrix[edge.a][edge.b] = true;
             self.adjacency_matrix[edge.b][edge.a] = true;
+            self.recompute_faces();
         }
     }
 
@@ -45,6 +58,7 @@ impl Graph<usize> for SimpleGraph {
         if let Some(edge) = self.edge(id) {
             self.adjacency_matrix[edge.a][edge.b] = false;
             self.adjacency_matrix[edge.b][edge.a] = false;
+            self.recompute_faces();
         }
     }
 
@@ -86,7 +100,7 @@ impl Graph<Point> for Polyhedron {
         Polyhedron {
             name: "".to_string(),
             points: (0..vertex_count).map(Point::new_empty).collect(),
-            //faces: vec![],
+            faces: vec![],
             enemies: HashSet::new(),
             edge_length: 1.0,
         }
@@ -96,36 +110,24 @@ impl Graph<Point> for Polyhedron {
         if let Some(edge) = self.edge(id) {
             self.points[edge.a.id].connect(edge.b.id);
             self.points[edge.b.id].connect(edge.a.id);
+            self.recompute_faces();
         }
-        // one face is going to become two faces
-        // it is whichever face contains both of these points that we will modify
-
-        /*
-        for x in 0..self.faces.len() {
-            let face = &self.faces[x];
-            if let Some(i) = face.iter().position(|v| v == &id.0)
-                && let Some(j) = face.iter().position(|v| v == &id.1)
-            {
-                // assume i is smaller fix later
-                let t = std::cmp::min(i, j);
-                let p = std::cmp::max(i, j);
-
-                let f1 = face[t..p].to_vec();
-                let f2 = [face[p..].to_vec(), face[..t].to_vec()].concat();
-
-                self.faces.remove(x);
-                self.faces.push(f1);
-                self.faces.push(f2);
-            }
-        }
-        */
     }
 
     fn disconnect(&mut self, id: EdgeId) {
         if let Some(edge) = self.edge(id) {
             self.points[edge.a.id].disconnect(edge.b.id);
             self.points[edge.b.id].disconnect(edge.a.id);
+            self.recompute_faces();
         }
+    }
+
+    fn faces(&self) -> Vec<Face> {
+        self.faces.clone()
+    }
+
+    fn set_faces(&mut self, faces: Vec<Face>) {
+        self.faces = faces;
     }
 
     fn insert(&mut self) -> Point {
@@ -220,9 +222,9 @@ mod test {
         graph.connect((1, 2));
         graph.connect((2, 3));
 
-        assert_eq!(graph.chordless_cycles().len(), 0);
+        assert_eq!(graph.faces().len(), 0);
 
         graph.connect((2, 0));
-        assert_eq!(graph.chordless_cycles(), vec![vec![0, 1, 2]]);
+        assert_eq!(graph.faces(), vec![Face(vec![0, 1, 2])]);
     }
 }

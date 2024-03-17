@@ -5,7 +5,7 @@ use three_d::*;
 
 use crate::prelude::{WindowScene, HSL};
 
-use super::{Graph, Point};
+use super::{Face, Graph, Point};
 
 // Representation of an undirected graph
 // Uses adjacency lists
@@ -18,7 +18,7 @@ pub struct Polyhedron {
     pub points: Vec<Point>,
 
     // List of faces
-    //pub faces: Vec<Vec<usize>>,
+    pub faces: Vec<Face>,
 
     // Secret list of vertices that need to avoid each other
     pub(crate) enemies: HashSet<(usize, usize)>,
@@ -28,17 +28,19 @@ pub struct Polyhedron {
 // Operations
 impl Polyhedron {
     pub fn new(name: &str, points: Vec<Vec<usize>>, faces: Vec<Vec<usize>>) -> Polyhedron {
-        Polyhedron {
+        let mut poly = Polyhedron {
             name: String::from(name),
             points: points
                 .into_iter()
                 .enumerate()
                 .map(|(id, neighbors)| Point::new(id, neighbors))
                 .collect(),
-            //faces,
+            faces: vec![],
             enemies: HashSet::new(),
             edge_length: 1.0,
-        }
+        };
+        poly.recompute_faces();
+        poly
     }
 
     fn adjacents(&self) -> HashSet<(usize, usize)> {
@@ -167,14 +169,14 @@ impl Polyhedron {
 
 impl Polyhedron {
     fn face_xyz(&self, face_index: usize) -> Vec<Vector3<f32>> {
-        self.chordless_cycles()[face_index]
+        self.faces()[face_index]
             .iter()
             .map(|f| self.points[*f].xyz)
             .collect()
     }
 
     fn face_normal(&self, face_index: usize) -> Vector3<f32> {
-        let face = &self.chordless_cycles()[face_index];
+        let face = &self.faces()[face_index].0;
         let mut normal = Vector3::<f32>::new(0.0, 0.0, 0.0);
         for i in 0..face.len() {
             let v1 = self.points[face[i]].xyz;
@@ -198,7 +200,7 @@ impl Polyhedron {
         let mut polyhedron_colors = Vec::new();
         let mut polyhedron_barycentric = Vec::new();
 
-        let faces = self.chordless_cycles();
+        let faces = self.faces();
         for face_index in 0..faces.len() {
             // Create triangles from the center to each corner
             let mut face_xyz = Vec::new();

@@ -1,6 +1,6 @@
 use std::collections::{HashMap, HashSet};
 
-use super::{Edge, EdgeId, Vertex, VertexId};
+use super::*;
 
 pub trait Graph<V: Vertex>: Sized {
     fn vertex(&self, id: VertexId) -> Option<V>;
@@ -32,6 +32,8 @@ pub trait Graph<V: Vertex>: Sized {
             vec![]
         }
     }
+    // Faces
+    fn faces(&self) -> Vec<Face>;
     // Vertices that are connected to a given vertex
     fn connections(&self, id: VertexId) -> Vec<V>;
     // All vertices
@@ -49,7 +51,6 @@ pub trait Graph<V: Vertex>: Sized {
                 acc
             })
     }
-
     // Depth-first search to detect cycles
     fn dfs(
         &self,
@@ -57,7 +58,7 @@ pub trait Graph<V: Vertex>: Sized {
         node: VertexId,
         path: &mut Vec<VertexId>,
         visited: &mut HashSet<VertexId>,
-        cycles: &mut Vec<Vec<VertexId>>,
+        cycles: &mut Vec<Face>,
     ) {
         visited.insert(node);
         path.push(node);
@@ -65,19 +66,9 @@ pub trait Graph<V: Vertex>: Sized {
         let neighbors = self.connections(node);
         for neighbor in neighbors {
             if neighbor.id() == start && path.len() > 2 {
-                if cycles
-                    .iter()
-                    .find(|cycle| {
-                        let mut c = cycle.to_vec();
-                        let mut p = path.clone();
-                        c.sort();
-                        p.sort();
-                        c == p
-                    })
-                    .is_none()
-                    && path.len() == 4
-                {
-                    cycles.push(path.clone());
+                let face = Face(path.clone());
+                if !cycles.contains(&face) {
+                    cycles.push(face);
                 }
             } else if !visited.contains(&neighbor.id()) {
                 self.dfs(start, neighbor.id(), path, visited, cycles);
@@ -89,8 +80,7 @@ pub trait Graph<V: Vertex>: Sized {
     }
 
     // Depth-first search to detect cycles
-
-    fn chordless_cycles(&self) -> Vec<Vec<VertexId>> {
+    fn recompute_faces(&mut self) {
         let mut cycles = Vec::new();
         let mut visited = HashSet::new();
         let mut path = Vec::new();
@@ -101,6 +91,12 @@ pub trait Graph<V: Vertex>: Sized {
             path.clear();
         }
 
-        cycles
+        let max_faces = 2 + self.all_edges().len() - self.vertices().len();
+        cycles.sort_by(|c1, c2| c1.len().cmp(&c2.len()));
+        let cycles = cycles[0..max_faces].to_vec();
+        println!("cycles: {:?}", cycles);
+        self.set_faces(cycles)
     }
+
+    fn set_faces(&mut self, faces: Vec<Face>);
 }
