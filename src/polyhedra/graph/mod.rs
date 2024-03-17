@@ -110,7 +110,7 @@ impl Graph<Point> for Polyhedron {
         if let Some(edge) = self.edge(id) {
             self.points[edge.a.id].connect(edge.b.id);
             self.points[edge.b.id].connect(edge.a.id);
-            self.recompute_faces();
+            //            self.recompute_faces();
         }
     }
 
@@ -118,7 +118,7 @@ impl Graph<Point> for Polyhedron {
         if let Some(edge) = self.edge(id) {
             self.points[edge.a.id].disconnect(edge.b.id);
             self.points[edge.b.id].disconnect(edge.a.id);
-            self.recompute_faces();
+            //           self.recompute_faces();
         }
     }
 

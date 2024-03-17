@@ -60,11 +60,11 @@ pub trait Graph<V: Vertex>: Sized {
         visited: &mut HashSet<VertexId>,
         cycles: &mut Vec<Face>,
     ) {
+        //let max_faces = 2 + self.all_edges().len() - self.vertices().len();
         visited.insert(node);
         path.push(node);
 
-        let neighbors = self.connections(node);
-        for neighbor in neighbors {
+        for neighbor in self.connections(node) {
             if neighbor.id() == start && path.len() > 2 {
                 let face = Face(path.clone());
                 if !cycles.contains(&face) {
