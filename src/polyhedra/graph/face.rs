@@ -48,7 +48,6 @@ impl PartialEq for Face {
 impl Eq for Face {}
 impl Hash for Face {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        //println!("hashid: {:?}", self.id());
         let mut edges = self.edges().into_iter().collect::<Vec<_>>();
         edges.sort();
         for edge in edges {

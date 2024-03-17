@@ -53,7 +53,6 @@ pub fn main() {
     // scenes.insert(scene2.window.id(), scene2);
 
     let mut shape = Polyhedron::cube();
-    println!("cycles: {:?}", shape.faces());
     let mut counter = 0;
     event_loop.run(move |event, _, control_flow| match &event {
         winit::event::Event::MainEventsCleared => {
@@ -77,7 +76,6 @@ pub fn main() {
                     //shape.ambo();
                     shape.truncate();
                     shape.recompute_faces();
-                    //shape.ambo();
                 }
 
                 shape.update();

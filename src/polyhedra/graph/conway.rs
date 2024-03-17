@@ -4,7 +4,7 @@ pub trait Conway<V: Vertex>: Graph<V> + Sized {
     fn contract_edge(&mut self, id: EdgeId) {
         // Give b all the same connections as a
         for b in self.connections(id.0) {
-            self.connect((b.id(), id.1))
+            self.connect((b, id.1))
         }
         // Delete a
         self.delete(id.0);
@@ -104,13 +104,13 @@ mod test {
         assert_eq!(graph.vertices().len(), 5);
         assert_eq!(graph.all_edges().len(), 4);
 
-        assert_eq!(ids(graph.connections(0)), vec![2]);
-        assert_eq!(ids(graph.connections(1)), vec![2]);
+        assert_eq!(graph.connections(0), vec![2]);
+        assert_eq!(graph.connections(1), vec![2]);
 
-        assert_eq!(ids(graph.connections(2)), vec![0, 1, 3, 4]);
+        assert_eq!(graph.connections(2), vec![0, 1, 3, 4]);
 
-        assert_eq!(ids(graph.connections(3)), vec![2]);
-        assert_eq!(ids(graph.connections(4)), vec![2]);
+        assert_eq!(graph.connections(3), vec![2]);
+        assert_eq!(graph.connections(4), vec![2]);
     }
 
     #[test_case(SimpleGraph::new_disconnected(5) ; "SimpleGraph")]
@@ -126,8 +126,6 @@ mod test {
         assert_eq!(graph.all_edges().len(), 4);
 
         graph.split_vertex(1);
-
-        println!("all_edges: {:?}", graph.all_edges());
 
         assert_eq!(graph.vertices().len(), 8);
         assert_eq!(graph.all_edges().len(), 8);
