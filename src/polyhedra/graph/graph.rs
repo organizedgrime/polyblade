@@ -52,46 +52,56 @@ pub trait Graph<V: Vertex>: Sized {
                 acc
             })
     }
-    // Depth-first search to detect cycles
-    fn dfs(
-        &self,
-        start: VertexId,
-        node: VertexId,
-        path: &mut Vec<VertexId>,
-        visited: &mut HashSet<VertexId>,
-        cycles: &mut HashSet<Face>,
-    ) {
-        visited.insert(node);
-        path.push(node);
 
-        for neighbor in self.connections(node) {
-            if neighbor.id() == start && path.len() > 2 {
-                cycles.insert(Face(path.clone()));
-            } else if !visited.contains(&neighbor.id()) {
-                self.dfs(start, neighbor.id(), path, visited, cycles);
+    fn recompute_faces(&mut self) {
+        let all_edges = self.all_edges();
+        let mut triplets = Vec::<Face>::new();
+        let mut cycles = HashSet::<Face>::new();
+
+        // find all the triplets
+        for u in self.vertices() {
+            let adj = self.connections(u.id());
+            for x in adj.iter() {
+                for y in adj.iter() {
+                    if x != y && u.id() < x.id() && x.id() < y.id() {
+                        let new_face = Face(vec![x.id(), u.id(), y.id()]);
+                        if all_edges.contains(&(x.id(), y.id()).into()) {
+                            cycles.insert(new_face);
+                        } else {
+                            triplets.push(new_face);
+                        }
+                    }
+                }
             }
         }
 
-        visited.remove(&node);
-        path.pop();
-    }
-
-    // Depth-first search to detect cycles
-    fn recompute_faces(&mut self) {
-        let mut cycles = HashSet::new();
-        let mut visited = HashSet::new();
-        let mut path = Vec::new();
-
-        for v in self.vertices() {
-            self.dfs(v.id(), v.id(), &mut path, &mut visited, &mut cycles);
-            visited.clear();
-            path.clear();
+        // while there are unparsed triplets
+        while let Some(triplet) = triplets.pop() {
+            let p = triplet.0;
+            // for each v adjacent to u_t
+            for v in self.connections(*p.last().unwrap()) {
+                if v.id() > p[1] {
+                    // if v is not a neighbor of u_2..u_t-1
+                    if !p[1..p.len() - 1]
+                        .iter()
+                        .fold(false, |acc, vi| acc || self.connections(*vi).contains(&v))
+                    {
+                        let new_face = Face([p.clone(), vec![v.id()]].concat());
+                        println!("pushing new face: {:?}", new_face);
+                        if self.connections(p[0]).contains(&v) {
+                            //cycles.remo
+                            cycles.insert(new_face);
+                        } else {
+                            triplets.push(new_face);
+                        }
+                    }
+                }
+            }
         }
 
-        let max_faces = 2 + self.all_edges().len() - self.vertices().len();
         let mut cycles = cycles.into_iter().collect::<Vec<_>>();
         cycles.sort_by(|c1, c2| c1.len().cmp(&c2.len()));
-        let cycles = cycles[0..max_faces].to_vec();
+        let cycles = cycles[0..self.face_count()].to_vec();
         println!("cycles: {:?}", cycles);
         self.set_faces(cycles)
     }
