@@ -1,4 +1,4 @@
-use super::{Vertex, VertexId};
+use super::VertexId;
 
 pub type EdgeId = (VertexId, VertexId);
 
@@ -18,9 +18,9 @@ impl Edge {
     }
     pub fn other(&self, v: VertexId) -> VertexId {
         if self.a == v {
-            self.b.clone()
+            self.b
         } else {
-            self.a.clone()
+            self.a
         }
     }
 }

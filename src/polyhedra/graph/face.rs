@@ -18,7 +18,7 @@ impl Face {
         other
             .0
             .iter()
-            .fold(true, |acc, v| acc && self.0.contains(v))
+            .all(|v| self.0.contains(v))
     }
 
     pub fn len(&self) -> usize {

@@ -49,7 +49,7 @@ pub fn main() {
         0.1,
         10.0,
     );
-    let scene2 = WindowScene::new("schlegel", &event_loop, camera2, Srgba::WHITE, "schlegel");
+    let _scene2 = WindowScene::new("schlegel", &event_loop, camera2, Srgba::WHITE, "schlegel");
     // scenes.insert(scene2.window.id(), scene2);
 
     let mut shape = Polyhedron::cube();

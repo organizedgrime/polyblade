@@ -1,4 +1,4 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::{HashSet};
 
 use super::*;
 
@@ -45,8 +45,7 @@ pub trait Graph<V: Vertex>: Sized {
     fn all_edges(&self) -> HashSet<Edge> {
         self.vertices()
             .iter()
-            .map(|v| self.edges(v.id()))
-            .flatten()
+            .flat_map(|v| self.edges(v.id()))
             .fold(HashSet::<Edge>::new(), |mut acc, e| {
                 acc.insert(e);
                 acc
@@ -84,7 +83,7 @@ pub trait Graph<V: Vertex>: Sized {
                     // if v is not a neighbor of u_2..u_t-1
                     if !p[1..p.len() - 1]
                         .iter()
-                        .fold(false, |acc, vi| acc || self.connections(*vi).contains(&v))
+                        .any(|vi| self.connections(*vi).contains(&v))
                     {
                         let new_face = Face([p.clone(), vec![v.id()]].concat());
                         println!("pushing new face: {:?}", new_face);
@@ -100,7 +99,7 @@ pub trait Graph<V: Vertex>: Sized {
         }
 
         let mut cycles = cycles.into_iter().collect::<Vec<_>>();
-        cycles.sort_by(|c1, c2| c1.len().cmp(&c2.len()));
+        cycles.sort_by_key(|c1| c1.len());
         let cycles = cycles[0..self.face_count()].to_vec();
         println!("cycles: {:?}", cycles);
         self.set_faces(cycles)

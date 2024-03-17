@@ -91,7 +91,7 @@ impl Graph<usize> for SimpleGraph {
 
 impl Graph<Point> for Polyhedron {
     fn vertex(&self, id: VertexId) -> Option<Point> {
-        self.points.get(id).map(|v| v.clone())
+        self.points.get(id).cloned()
     }
 
     fn new_disconnected(vertex_count: usize) -> Self {
