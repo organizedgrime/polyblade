@@ -1,3 +1,5 @@
+use std::collections::{HashMap, HashSet};
+
 use super::{Edge, EdgeId, Vertex, VertexId};
 
 pub trait Graph<V: Vertex>: Sized {
@@ -46,5 +48,59 @@ pub trait Graph<V: Vertex>: Sized {
                 }
                 acc
             })
+    }
+
+    // Depth-first search to detect cycles
+    fn dfs(
+        &self,
+        start: VertexId,
+        node: VertexId,
+        path: &mut Vec<VertexId>,
+        visited: &mut HashSet<VertexId>,
+        cycles: &mut Vec<Vec<VertexId>>,
+    ) {
+        visited.insert(node);
+        path.push(node);
+
+        let neighbors = self.connections(node);
+        for neighbor in neighbors {
+            if neighbor.id() == start && path.len() > 2 {
+                if cycles
+                    .iter()
+                    .find(|cycle| {
+                        let mut c = cycle.to_vec();
+                        let mut p = path.clone();
+                        c.sort();
+                        p.sort();
+                        c == p
+                    })
+                    .is_none()
+                    && path.len() == 4
+                {
+                    cycles.push(path.clone());
+                }
+            } else if !visited.contains(&neighbor.id()) {
+                self.dfs(start, neighbor.id(), path, visited, cycles);
+            }
+        }
+
+        visited.remove(&node);
+        path.pop();
+    }
+
+    // Depth-first search to detect cycles
+
+    fn chordless_cycles(&self) -> Vec<Vec<VertexId>> {
+        let mut cycles = Vec::new();
+        let mut visited = HashSet::new();
+        let mut path = Vec::new();
+
+        for v in self.vertices() {
+            self.dfs(v.id(), v.id(), &mut path, &mut visited, &mut cycles);
+            visited.clear();
+            path.clear();
+        }
+
+        cycles
     }
 }

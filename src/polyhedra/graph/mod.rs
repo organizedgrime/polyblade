@@ -86,7 +86,7 @@ impl Graph<Point> for Polyhedron {
         Polyhedron {
             name: "".to_string(),
             points: (0..vertex_count).map(Point::new_empty).collect(),
-            faces: vec![],
+            //faces: vec![],
             enemies: HashSet::new(),
             edge_length: 1.0,
         }
@@ -100,6 +100,7 @@ impl Graph<Point> for Polyhedron {
         // one face is going to become two faces
         // it is whichever face contains both of these points that we will modify
 
+        /*
         for x in 0..self.faces.len() {
             let face = &self.faces[x];
             if let Some(i) = face.iter().position(|v| v == &id.0)
@@ -117,6 +118,7 @@ impl Graph<Point> for Polyhedron {
                 self.faces.push(f2);
             }
         }
+        */
     }
 
     fn disconnect(&mut self, id: EdgeId) {
@@ -148,6 +150,7 @@ impl Graph<Point> for Polyhedron {
             })
             .collect();
 
+        /*
         self.faces = self
             .faces
             .clone()
@@ -160,6 +163,7 @@ impl Graph<Point> for Polyhedron {
             })
             .filter(|face| face.len() > 2)
             .collect();
+            */
     }
 
     fn connections(&self, id: VertexId) -> Vec<Point> {
@@ -206,5 +210,19 @@ mod test {
         assert_eq!(ids(graph.connections(0)), vec![1]);
         assert_eq!(ids(graph.connections(1)), vec![0]);
         assert_eq!(ids(graph.connections(2)), vec![]);
+    }
+
+    #[test_case(SimpleGraph::new_disconnected(4) ; "SimpleGraph")]
+    #[test_case(Polyhedron::new_disconnected(4) ; "Polyhedron")]
+    fn chorsless_cycles<G: Graph<V>, V: Vertex>(mut graph: G) {
+        // Connect
+        graph.connect((0, 1));
+        graph.connect((1, 2));
+        graph.connect((2, 3));
+
+        assert_eq!(graph.chordless_cycles().len(), 0);
+
+        graph.connect((2, 0));
+        assert_eq!(graph.chordless_cycles(), vec![vec![0, 1, 2]]);
     }
 }
