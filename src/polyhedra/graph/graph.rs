@@ -1,4 +1,4 @@
-use std::collections::{HashSet};
+use std::collections::HashSet;
 
 use super::*;
 
@@ -99,7 +99,7 @@ pub trait Graph<V: Vertex>: Sized {
         }
 
         let mut cycles = cycles.into_iter().collect::<Vec<_>>();
-        cycles.sort_by_key(|c1| c1.len());
+        cycles.sort_by_key(|c1| c1.0.len());
         let cycles = cycles[0..self.face_count()].to_vec();
         println!("cycles: {:?}", cycles);
         self.set_faces(cycles)

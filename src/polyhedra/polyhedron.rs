@@ -170,6 +170,7 @@ impl Polyhedron {
 impl Polyhedron {
     fn face_xyz(&self, face_index: usize) -> Vec<Vector3<f32>> {
         self.faces()[face_index]
+            .0
             .iter()
             .map(|f| self.points[*f].xyz)
             .collect()

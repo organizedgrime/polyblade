@@ -53,12 +53,7 @@ impl PartialEq for Edge {
 
 impl std::cmp::PartialOrd for Edge {
     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        let id1 = self.id();
-        let id2 = other.id();
-        match id1.0.partial_cmp(&id2.0) {
-            Some(core::cmp::Ordering::Equal) => id1.1.partial_cmp(&id2.1),
-            ord => ord,
-        }
+        Some(self.cmp(other))
     }
 }
 

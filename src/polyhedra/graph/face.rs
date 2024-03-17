@@ -15,18 +15,7 @@ impl std::fmt::Debug for Face {
 
 impl Face {
     pub fn contains(&self, other: &Face) -> bool {
-        other
-            .0
-            .iter()
-            .all(|v| self.0.contains(v))
-    }
-
-    pub fn len(&self) -> usize {
-        self.0.len()
-    }
-
-    pub fn iter(&self) -> std::slice::Iter<'_, VertexId> {
-        self.0.iter()
+        other.0.iter().all(|v| self.0.contains(v))
     }
 
     pub fn edges(&self) -> HashSet<Edge> {
