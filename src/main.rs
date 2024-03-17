@@ -17,7 +17,7 @@ pub async fn start() -> Result<(), JsValue> {
 
 #[cfg(not(target_arch = "wasm32"))]
 pub fn main() {
-    use paper_blade::prelude::{Polyhedron, WindowScene};
+    use paper_blade::prelude::*;
     use std::collections::HashMap;
     use three_d::renderer::*;
 
@@ -50,9 +50,11 @@ pub fn main() {
         10.0,
     );
     let scene2 = WindowScene::new("schlegel", &event_loop, camera2, Srgba::WHITE, "schlegel");
-    scenes.insert(scene2.window.id(), scene2);
+    // scenes.insert(scene2.window.id(), scene2);
 
-    let mut shape = Polyhedron::icosahedron();
+    let mut shape = Polyhedron::cube();
+    println!("cycles: {:?}", shape.faces());
+    let mut counter = 0;
     event_loop.run(move |event, _, control_flow| match &event {
         winit::event::Event::MainEventsCleared => {
             for (_, scene) in scenes.iter() {
@@ -69,6 +71,13 @@ pub fn main() {
                 frame_input.screen().clear(ClearState::color_and_depth(
                     color.x, color.y, color.z, 1.0, 1.0,
                 ));
+
+                counter += 1;
+                if counter == 4000 {
+                    //shape.ambo();
+                    shape.truncate();
+                    //shape.ambo();
+                }
 
                 shape.update();
                 if &scene.title == "model" {

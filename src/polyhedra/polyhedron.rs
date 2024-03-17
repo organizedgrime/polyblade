@@ -5,7 +5,7 @@ use three_d::*;
 
 use crate::prelude::{WindowScene, HSL};
 
-use super::Point;
+use super::{Face, Graph, Point};
 
 // Representation of an undirected graph
 // Uses adjacency lists
@@ -18,23 +18,29 @@ pub struct Polyhedron {
     pub points: Vec<Point>,
 
     // List of faces
-    pub faces: Vec<Vec<usize>>,
+    pub faces: Vec<Face>,
 
     // Secret list of vertices that need to avoid each other
     pub(crate) enemies: HashSet<(usize, usize)>,
-    edge_length: f32,
+    pub(crate) edge_length: f32,
 }
 
 // Operations
 impl Polyhedron {
     pub fn new(name: &str, points: Vec<Vec<usize>>, faces: Vec<Vec<usize>>) -> Polyhedron {
-        Polyhedron {
+        let mut poly = Polyhedron {
             name: String::from(name),
-            points: points.into_iter().map(Point::new).collect(),
-            faces,
+            points: points
+                .into_iter()
+                .enumerate()
+                .map(|(id, neighbors)| Point::new(id, neighbors))
+                .collect(),
+            faces: vec![],
             enemies: HashSet::new(),
             edge_length: 1.0,
-        }
+        };
+        poly.recompute_faces();
+        poly
     }
 
     fn adjacents(&self) -> HashSet<(usize, usize)> {
@@ -163,14 +169,14 @@ impl Polyhedron {
 
 impl Polyhedron {
     fn face_xyz(&self, face_index: usize) -> Vec<Vector3<f32>> {
-        self.faces[face_index]
+        self.faces()[face_index]
             .iter()
             .map(|f| self.points[*f].xyz)
             .collect()
     }
 
     fn face_normal(&self, face_index: usize) -> Vector3<f32> {
-        let face = &self.faces[face_index];
+        let face = &self.faces()[face_index].0;
         let mut normal = Vector3::<f32>::new(0.0, 0.0, 0.0);
         for i in 0..face.len() {
             let v1 = self.points[face[i]].xyz;
@@ -194,7 +200,8 @@ impl Polyhedron {
         let mut polyhedron_colors = Vec::new();
         let mut polyhedron_barycentric = Vec::new();
 
-        for face_index in 0..self.faces.len() - 1 {
+        let faces = self.faces();
+        for face_index in 0..faces.len() {
             // Create triangles from the center to each corner
             let mut face_xyz = Vec::new();
             let vertices = self.face_xyz(face_index);
@@ -214,12 +221,8 @@ impl Polyhedron {
                 ]);
             }
 
-            let color = HSL::new(
-                (360.0 / (self.faces.len() as f64)) * face_index as f64,
-                1.0,
-                0.5,
-            )
-            .to_linear_srgb();
+            let color = HSL::new((360.0 / (faces.len() as f64)) * face_index as f64, 1.0, 0.5)
+                .to_linear_srgb();
             polyhedron_colors.extend(vec![color; face_xyz.len()]);
             polyhedron_xyz.extend(face_xyz);
         }
