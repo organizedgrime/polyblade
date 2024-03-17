@@ -2,7 +2,7 @@ use super::{Vertex, VertexId};
 
 pub type EdgeId = (VertexId, VertexId);
 
-#[derive(Debug, Clone, Eq, Copy)]
+#[derive(Debug, Clone, Copy)]
 pub struct Edge<V: Vertex> {
     pub a: V,
     pub b: V,
@@ -37,5 +37,12 @@ impl<V: Vertex> From<(V, V)> for Edge<V> {
 impl<V: Vertex> PartialEq for Edge<V> {
     fn eq(&self, other: &Self) -> bool {
         (self.a == other.a && self.b == other.b) || (self.a == other.b && self.b == other.a)
+    }
+}
+
+impl<V: Vertex> Eq for Edge<V> {}
+impl<V: Vertex> std::hash::Hash for Edge<V> {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.id().hash(state);
     }
 }

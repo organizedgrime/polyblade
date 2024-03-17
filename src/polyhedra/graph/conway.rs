@@ -34,7 +34,6 @@ pub trait Conway<V: Vertex>: Graph<V> + Sized {
         for vertex in self.vertices() {
             self.split_vertex(vertex.id());
         }
-        self.recompute_faces();
     }
 
     /// `a` ambo is equivalent to the composition of vertex splitting and edge contraction vefore

@@ -50,7 +50,6 @@ impl Graph<usize> for SimpleGraph {
         if let Some(edge) = self.edge(id) {
             self.adjacency_matrix[edge.a][edge.b] = true;
             self.adjacency_matrix[edge.b][edge.a] = true;
-            self.recompute_faces();
         }
     }
 
@@ -58,7 +57,6 @@ impl Graph<usize> for SimpleGraph {
         if let Some(edge) = self.edge(id) {
             self.adjacency_matrix[edge.a][edge.b] = false;
             self.adjacency_matrix[edge.b][edge.a] = false;
-            self.recompute_faces();
         }
     }
 
@@ -131,7 +129,7 @@ impl Graph<Point> for Polyhedron {
     }
 
     fn insert(&mut self) -> Point {
-        let point = Point::new(self.points.len(), vec![]);
+        let point = Point::new(self.points.len(), HashSet::new());
         self.points.push(point.clone());
         point
     }

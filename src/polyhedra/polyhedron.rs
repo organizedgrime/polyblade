@@ -33,7 +33,7 @@ impl Polyhedron {
             points: points
                 .into_iter()
                 .enumerate()
-                .map(|(id, neighbors)| Point::new(id, neighbors))
+                .map(|(id, neighbors)| Point::new(id, neighbors.into_iter().collect()))
                 .collect(),
             faces: vec![],
             enemies: HashSet::new(),

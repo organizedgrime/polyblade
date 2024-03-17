@@ -32,6 +32,9 @@ pub trait Graph<V: Vertex>: Sized {
             vec![]
         }
     }
+    fn face_count(&self) -> usize {
+        2 + self.all_edges().len() - self.vertices().len()
+    }
     // Faces
     fn faces(&self) -> Vec<Face>;
     // Vertices that are connected to a given vertex
@@ -39,15 +42,13 @@ pub trait Graph<V: Vertex>: Sized {
     // All vertices
     fn vertices(&self) -> Vec<V>;
     // All edges
-    fn all_edges(&self) -> Vec<Edge<V>> {
+    fn all_edges(&self) -> HashSet<Edge<V>> {
         self.vertices()
             .iter()
             .map(|v| self.edges(v.id()))
             .flatten()
-            .fold(Vec::new(), |mut acc, e| {
-                if !acc.contains(&e) {
-                    acc.push(e);
-                }
+            .fold(HashSet::<Edge<V>>::new(), |mut acc, e| {
+                acc.insert(e);
                 acc
             })
     }
@@ -60,7 +61,6 @@ pub trait Graph<V: Vertex>: Sized {
         visited: &mut HashSet<VertexId>,
         cycles: &mut Vec<Face>,
     ) {
-        //let max_faces = 2 + self.all_edges().len() - self.vertices().len();
         visited.insert(node);
         path.push(node);
 

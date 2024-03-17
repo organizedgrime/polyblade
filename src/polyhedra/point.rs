@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use cgmath::{vec3, InnerSpace, Vector3, Zero};
 use rand::random;
 use serde::{Deserialize, Serialize};
@@ -8,7 +10,7 @@ use super::{Vertex, VertexId};
 pub struct Point {
     pub id: usize,
     // List of point adjacents by index
-    pub adjacents: Vec<usize>,
+    pub adjacents: HashSet<usize>,
     // Position
     pub xyz: Vector3<f32>,
     // Speed
@@ -36,14 +38,14 @@ impl Point {
     pub fn new_empty(id: usize) -> Self {
         Self {
             id,
-            adjacents: vec![],
+            adjacents: HashSet::new(),
             xyz: Vector3::zero(),
             dxyz: Vector3::zero(),
         }
     }
     pub fn connect(&mut self, id: usize) {
-        if !self.adjacents.contains(&id) && id != self.id() {
-            self.adjacents.push(id)
+        if id != self.id() {
+            self.adjacents.insert(id);
         }
     }
     pub fn disconnect(&mut self, id: usize) {
@@ -65,10 +67,10 @@ impl Point {
             .collect()
     }
 
-    pub fn new(id: usize, neighbors: Vec<usize>) -> Self {
+    pub fn new(id: usize, adjacents: HashSet<usize>) -> Self {
         Self {
             id,
-            adjacents: neighbors,
+            adjacents,
             xyz: vec3(random(), random(), random()).normalize(),
             dxyz: vec3(0.0, 0.0, 0.0),
         }

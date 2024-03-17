@@ -1306,28 +1306,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "paper-blade"
-version = "0.1.0"
-dependencies = [
- "cgmath",
- "console_error_panic_hook",
- "console_log",
- "log",
- "rand",
- "ron",
- "ronda",
- "serde",
- "serde_json",
- "test-case",
- "three-d",
- "three-d-asset 0.7.0",
- "tokio",
- "wasm-bindgen",
- "wasm-bindgen-futures",
- "winit",
-]
-
-[[package]]
 name = "paste"
 version = "1.0.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1368,6 +1346,28 @@ dependencies = [
  "fdeflate",
  "flate2",
  "miniz_oxide",
+]
+
+[[package]]
+name = "polyblade"
+version = "0.1.0"
+dependencies = [
+ "cgmath",
+ "console_error_panic_hook",
+ "console_log",
+ "log",
+ "rand",
+ "ron",
+ "ronda",
+ "serde",
+ "serde_json",
+ "test-case",
+ "three-d",
+ "three-d-asset 0.7.0",
+ "tokio",
+ "wasm-bindgen",
+ "wasm-bindgen-futures",
+ "winit",
 ]
 
 [[package]]
