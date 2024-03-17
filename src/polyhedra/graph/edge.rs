@@ -3,45 +3,52 @@ use super::{Vertex, VertexId};
 pub type EdgeId = (VertexId, VertexId);
 
 #[derive(Debug, Clone, Copy)]
-pub struct Edge<V: Vertex> {
-    pub a: V,
-    pub b: V,
+pub struct Edge {
+    pub a: VertexId,
+    pub b: VertexId,
 }
 
-impl<V: Vertex> Edge<V> {
+impl Edge {
     pub fn id(&self) -> EdgeId {
-        (self.a.id(), self.b.id())
+        if self.a < self.b {
+            (self.a, self.b)
+        } else {
+            (self.b, self.a)
+        }
     }
-    pub fn other(&self, v: VertexId) -> V {
-        if self.a.id() == v.id() {
+    pub fn other(&self, v: VertexId) -> VertexId {
+        if self.a == v {
             self.b.clone()
         } else {
             self.a.clone()
         }
     }
 }
-impl<V: Vertex> From<&Edge<V>> for Edge<V> {
-    fn from(value: &Edge<V>) -> Self {
+/*
+impl From<&Edge> for Edge {
+    fn from(value: &Edge) -> Self {
         (value.a.clone(), value.b.clone()).into()
     }
 }
-impl<V: Vertex> From<(V, V)> for Edge<V> {
+*/
+
+impl<V: Vertex> From<(V, V)> for Edge {
     fn from(value: (V, V)) -> Self {
         Self {
-            a: value.0,
-            b: value.1,
+            a: value.0.id(),
+            b: value.1.id(),
         }
     }
 }
 
-impl<V: Vertex> PartialEq for Edge<V> {
+impl PartialEq for Edge {
     fn eq(&self, other: &Self) -> bool {
-        (self.a == other.a && self.b == other.b) || (self.a == other.b && self.b == other.a)
+        self.id() == other.id()
     }
 }
 
-impl<V: Vertex> Eq for Edge<V> {}
-impl<V: Vertex> std::hash::Hash for Edge<V> {
+impl Eq for Edge {}
+impl std::hash::Hash for Edge {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
         self.id().hash(state);
     }

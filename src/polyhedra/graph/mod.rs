@@ -106,17 +106,15 @@ impl Graph<Point> for Polyhedron {
 
     fn connect(&mut self, id: EdgeId) {
         if let Some(edge) = self.edge(id) {
-            self.points[edge.a.id].connect(edge.b.id);
-            self.points[edge.b.id].connect(edge.a.id);
-            //            self.recompute_faces();
+            self.points[edge.a].connect(edge.b);
+            self.points[edge.b].connect(edge.a);
         }
     }
 
     fn disconnect(&mut self, id: EdgeId) {
         if let Some(edge) = self.edge(id) {
-            self.points[edge.a.id].disconnect(edge.b.id);
-            self.points[edge.b.id].disconnect(edge.a.id);
-            //           self.recompute_faces();
+            self.points[edge.a].disconnect(edge.b);
+            self.points[edge.b].disconnect(edge.a);
         }
     }
 
@@ -149,21 +147,6 @@ impl Graph<Point> for Polyhedron {
                 v
             })
             .collect();
-
-        /*
-        self.faces = self
-            .faces
-            .clone()
-            .into_iter()
-            .map(|face| {
-                face.into_iter()
-                    .filter(|i| *i != id)
-                    .map(|i| if i > id { i - 1 } else { i })
-                    .collect::<Vec<usize>>()
-            })
-            .filter(|face| face.len() > 2)
-            .collect();
-            */
     }
 
     fn connections(&self, id: VertexId) -> Vec<Point> {
@@ -180,49 +163,5 @@ impl Graph<Point> for Polyhedron {
 
     fn vertices(&self) -> Vec<Point> {
         self.points.clone()
-    }
-}
-
-#[cfg(test)]
-mod test {
-    use crate::prelude::*;
-    use test_case::test_case;
-
-    #[test_case(SimpleGraph::new_disconnected(4) ; "SimpleGraph")]
-    #[test_case(Polyhedron::new_disconnected(4) ; "Polyhedron")]
-    fn basics<G: Graph<V>, V: Vertex>(mut graph: G) {
-        // Connect
-        graph.connect((0, 1));
-        graph.connect((0, 2));
-        graph.connect((1, 2));
-        assert_eq!(ids(graph.connections(0)), vec![1, 2]);
-        assert_eq!(ids(graph.connections(1)), vec![0, 2]);
-        assert_eq!(ids(graph.connections(2)), vec![0, 1]);
-        assert_eq!(ids(graph.connections(3)), vec![]);
-
-        // Disconnect
-        graph.disconnect((0, 1));
-        assert_eq!(ids(graph.connections(0)), vec![2]);
-        assert_eq!(ids(graph.connections(1)), vec![2]);
-
-        // Delete
-        graph.delete(1);
-        assert_eq!(ids(graph.connections(0)), vec![1]);
-        assert_eq!(ids(graph.connections(1)), vec![0]);
-        assert_eq!(ids(graph.connections(2)), vec![]);
-    }
-
-    #[test_case(SimpleGraph::new_disconnected(4) ; "SimpleGraph")]
-    #[test_case(Polyhedron::new_disconnected(4) ; "Polyhedron")]
-    fn chorsless_cycles<G: Graph<V>, V: Vertex>(mut graph: G) {
-        // Connect
-        graph.connect((0, 1));
-        graph.connect((1, 2));
-        graph.connect((2, 3));
-
-        assert_eq!(graph.faces().len(), 0);
-
-        graph.connect((2, 0));
-        assert_eq!(graph.faces(), vec![Face(vec![0, 1, 2])]);
     }
 }

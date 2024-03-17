@@ -1,6 +1,3 @@
-//#![feature(associated_type_defaults)]
-#![feature(let_chains)]
-
 mod color;
 mod polyhedra;
 mod render;
