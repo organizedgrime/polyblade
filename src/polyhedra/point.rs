@@ -10,7 +10,7 @@ use super::{Vertex, VertexId};
 pub struct Point {
     pub id: usize,
     // List of point adjacents by index
-    pub adjacents: HashSet<usize>,
+    pub adjacents: HashSet<VertexId>,
     // Position
     pub xyz: Vector3<f32>,
     // Speed

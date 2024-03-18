@@ -92,17 +92,16 @@ pub trait Graph<V: Vertex>: Sized {
             // for each v adjacent to u_t
             for v in self.connections(p[p.len() - 1]) {
                 if v > p[1] {
+                    let c = self.connections(v);
                     // if v is not a neighbor of u_2..u_t-1
-                    if !p[1..p.len() - 1]
-                        .iter()
-                        .any(|vi| self.connections(*vi).contains(&v))
-                    {
+                    if !p[1..p.len() - 1].iter().any(|vi| c.contains(vi)) {
                         let new_face = Face([p.clone(), vec![v]].concat());
                         if self.connections(p[0]).contains(&v) {
                             //cycles.remo
                             println!("found new cycle: {:?}", new_face);
                             cycles.insert(new_face);
                         } else {
+                            //println!("lengthened: {:?}", new_face);
                             triplets.push(new_face);
                         }
                     }
@@ -254,7 +253,7 @@ impl Graph<Point> for Polyhedron {
 
     fn connections(&self, id: VertexId) -> HashSet<VertexId> {
         if let Some(vertex) = self.vertex(id) {
-            vertex.adjacents.clone().into_iter().collect()
+            vertex.adjacents.clone()
         } else {
             HashSet::new()
         }

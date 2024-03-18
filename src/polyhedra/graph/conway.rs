@@ -3,7 +3,8 @@ pub use super::*;
 pub trait Conway<V: Vertex>: Graph<V> + Sized {
     fn contract_edge(&mut self, id: EdgeId) {
         // Give b all the same connections as a
-        for b in self.connections(id.0) {
+        let adj = self.connections(id.0).clone();
+        for b in adj.into_iter() {
             self.connect((b, id.1))
         }
         // Delete a
