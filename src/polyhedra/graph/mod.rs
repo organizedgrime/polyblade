@@ -48,7 +48,7 @@ pub trait Graph<V: Vertex>: Sized {
     // Faces
     fn faces(&self) -> Vec<Face>;
     // Vertices that are connected to a given vertex
-    fn connections(&self, id: VertexId) -> Vec<VertexId>;
+    fn connections(&self, id: VertexId) -> HashSet<VertexId>;
     // All vertices
     fn vertices(&self) -> Vec<V>;
     // All edges
@@ -67,9 +67,10 @@ pub trait Graph<V: Vertex>: Sized {
         let mut triplets = Vec::<Face>::new();
         let mut cycles = HashSet::<Face>::new();
 
+        println!("finding triplets");
         // find all the triplets
         for u in self.vertices() {
-            let adj: Vec<VertexId> = self.connections(u.id());
+            let adj: HashSet<VertexId> = self.connections(u.id());
             for x in adj.clone().into_iter() {
                 for y in adj.clone().into_iter() {
                     if x != y && u.id().clone() < x && x < y {
@@ -83,12 +84,13 @@ pub trait Graph<V: Vertex>: Sized {
                 }
             }
         }
-
+        println!("processing triplets");
         // while there are unparsed triplets
-        while let Some(triplet) = triplets.pop() {
+        while !triplets.is_empty() && cycles.len() < self.face_count() {
+            let triplet = triplets.remove(0);
             let p = triplet.0;
             // for each v adjacent to u_t
-            for v in self.connections(*p.last().unwrap()) {
+            for v in self.connections(p[p.len() - 1]) {
                 if v > p[1] {
                     // if v is not a neighbor of u_2..u_t-1
                     if !p[1..p.len() - 1]
@@ -98,6 +100,7 @@ pub trait Graph<V: Vertex>: Sized {
                         let new_face = Face([p.clone(), vec![v]].concat());
                         if self.connections(p[0]).contains(&v) {
                             //cycles.remo
+                            println!("found new cycle: {:?}", new_face);
                             cycles.insert(new_face);
                         } else {
                             triplets.push(new_face);
@@ -106,11 +109,9 @@ pub trait Graph<V: Vertex>: Sized {
                 }
             }
         }
+        println!("done");
 
-        let mut cycles = cycles.into_iter().collect::<Vec<_>>();
-        cycles.sort_by_key(|c1| c1.0.len());
-        let cycles = cycles[0..self.face_count()].to_vec();
-        self.set_faces(cycles)
+        self.set_faces(cycles.into_iter().collect())
     }
 
     fn set_faces(&mut self, faces: Vec<Face>);
@@ -180,11 +181,11 @@ impl Graph<usize> for SimpleGraph {
         self.adjacency_matrix.remove(id);
     }
 
-    fn connections(&self, vertex: usize) -> Vec<usize> {
-        let mut connections: Vec<usize> = Vec::new();
+    fn connections(&self, vertex: usize) -> HashSet<VertexId> {
+        let mut connections = HashSet::<VertexId>::new();
         for (other, connected) in self.adjacency_matrix[vertex].iter().enumerate() {
             if *connected && other != vertex {
-                connections.push(other)
+                connections.insert(other);
             }
         }
         connections
@@ -251,11 +252,11 @@ impl Graph<Point> for Polyhedron {
             .collect();
     }
 
-    fn connections(&self, id: VertexId) -> Vec<VertexId> {
+    fn connections(&self, id: VertexId) -> HashSet<VertexId> {
         if let Some(vertex) = self.vertex(id) {
             vertex.adjacents.clone().into_iter().collect()
         } else {
-            vec![]
+            HashSet::new()
         }
     }
 
@@ -276,21 +277,21 @@ mod test {
         graph.connect((0, 1));
         graph.connect((0, 2));
         graph.connect((1, 2));
-        assert_eq!(graph.connections(0), vec![1, 2]);
-        assert_eq!(graph.connections(1), vec![0, 2]);
-        assert_eq!(graph.connections(2), vec![0, 1]);
-        assert_eq!(graph.connections(3), vec![]);
+        assert_eq!(graph.connections(0), vec![1, 2].into_iter().collect());
+        assert_eq!(graph.connections(1), vec![0, 2].into_iter().collect());
+        assert_eq!(graph.connections(2), vec![0, 1].into_iter().collect());
+        assert_eq!(graph.connections(3), vec![].into_iter().collect());
 
         // Disconnect
         graph.disconnect((0, 1));
-        assert_eq!(graph.connections(0), vec![2]);
-        assert_eq!(graph.connections(1), vec![2]);
+        assert_eq!(graph.connections(0), vec![2].into_iter().collect());
+        assert_eq!(graph.connections(1), vec![2].into_iter().collect());
 
         // Delete
         graph.delete(1);
-        assert_eq!(graph.connections(0), vec![1]);
-        assert_eq!(graph.connections(1), vec![0]);
-        assert_eq!(graph.connections(2), vec![]);
+        assert_eq!(graph.connections(0), vec![1].into_iter().collect());
+        assert_eq!(graph.connections(1), vec![0].into_iter().collect());
+        assert_eq!(graph.connections(2), vec![].into_iter().collect());
     }
 
     #[test_case(SimpleGraph::new_disconnected(4) ; "SimpleGraph")]

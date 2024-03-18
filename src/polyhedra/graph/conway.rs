@@ -10,7 +10,8 @@ pub trait Conway<V: Vertex>: Graph<V> + Sized {
         self.delete(id.0);
     }
 
-    fn split_vertex(&mut self, id: VertexId) {
+    fn split_vertex(&mut self, id: VertexId) -> Face {
+        let mut new_face = HashSet::new();
         let mut previous = id;
         for edge in &self.edges(id)[1..] {
             // Remove existing connection
@@ -20,6 +21,7 @@ pub trait Conway<V: Vertex>: Graph<V> + Sized {
 
             // Build new face
             self.connect((previous, new_vertex.id()));
+            new_face.insert(new_vertex.id());
             previous = new_vertex.id();
 
             // Reform old connection
@@ -27,6 +29,8 @@ pub trait Conway<V: Vertex>: Graph<V> + Sized {
         }
         // Close the new face
         self.connect((previous, id));
+        new_face.insert(id);
+        Face(new_face.into_iter().collect())
     }
 
     /// `t` truncate is equivalent to vertex splitting
@@ -39,11 +43,19 @@ pub trait Conway<V: Vertex>: Graph<V> + Sized {
     /// `a` ambo is equivalent to the composition of vertex splitting and edge contraction vefore
     /// applying vertex splitting.
     fn ambo(&mut self) {
-        for edge in self.all_edges() {
-            self.contract_edge(edge.id());
-            self.split_vertex(edge.id().1);
+        let mut edges = HashSet::new();
+        for vertex in self.vertices() {
+            for edge in self.split_vertex(vertex.id()).edges() {
+                edges.insert(edge);
+            }
         }
-        self.truncate()
+
+        for edge in self.all_edges() {
+            if !edges.contains(&edge) {
+                println!("contracting: {:?}", edge);
+                self.contract_edge(edge.id());
+            }
+        }
     }
 
     //
@@ -104,13 +116,13 @@ mod test {
         assert_eq!(graph.vertices().len(), 5);
         assert_eq!(graph.all_edges().len(), 4);
 
-        assert_eq!(graph.connections(0), vec![2]);
-        assert_eq!(graph.connections(1), vec![2]);
+        assert_eq!(graph.connections(0), vec![2].into_iter().collect());
+        assert_eq!(graph.connections(1), vec![2].into_iter().collect());
 
-        assert_eq!(graph.connections(2), vec![0, 1, 3, 4]);
+        assert_eq!(graph.connections(2), vec![0, 1, 3, 4].into_iter().collect());
 
-        assert_eq!(graph.connections(3), vec![2]);
-        assert_eq!(graph.connections(4), vec![2]);
+        assert_eq!(graph.connections(3), vec![2].into_iter().collect());
+        assert_eq!(graph.connections(4), vec![2].into_iter().collect());
     }
 
     #[test_case(SimpleGraph::new_disconnected(5) ; "SimpleGraph")]

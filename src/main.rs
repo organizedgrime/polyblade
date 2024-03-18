@@ -72,9 +72,9 @@ pub fn main() {
                 ));
 
                 counter += 1;
-                if counter == 4000 {
-                    //shape.ambo();
-                    shape.truncate();
+                if counter == 1000 {
+                    shape.ambo();
+                    //shape.truncate();
                     shape.recompute_faces();
                 }
 
