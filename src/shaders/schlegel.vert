@@ -5,7 +5,7 @@ in vec4 color;
 uniform mat4 model;
 uniform mat4 projection;
 out vec4 v_color;
-varying vec3 vbc;
+out vec3 vbc;
 
 void main() {
 	vbc = barycentric;

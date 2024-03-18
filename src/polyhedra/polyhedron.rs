@@ -1,11 +1,8 @@
-use std::{collections::HashSet, ops::Add};
-
-use serde::{Deserialize, Serialize};
-use three_d::*;
-
+use super::*;
 use crate::prelude::{WindowScene, HSL};
-
-use super::{Face, Graph, Point};
+use serde::{Deserialize, Serialize};
+use std::{collections::HashSet, ops::Add};
+use three_d::*;
 
 // Representation of an undirected graph
 // Uses adjacency lists
@@ -27,13 +24,13 @@ pub struct Polyhedron {
 
 // Operations
 impl Polyhedron {
-    pub fn new(name: &str, points: Vec<Vec<usize>>, faces: Vec<Vec<usize>>) -> Polyhedron {
+    pub fn new(name: &str, points: Vec<Vec<usize>>, _faces: Vec<Vec<usize>>) -> Polyhedron {
         let mut poly = Polyhedron {
             name: String::from(name),
             points: points
                 .into_iter()
                 .enumerate()
-                .map(|(id, neighbors)| Point::new(id, neighbors))
+                .map(|(id, neighbors)| Point::new(id, neighbors.into_iter().collect()))
                 .collect(),
             faces: vec![],
             enemies: HashSet::new(),
@@ -43,18 +40,17 @@ impl Polyhedron {
         poly
     }
 
-    fn adjacents(&self) -> HashSet<(usize, usize)> {
+    fn adjacents(&self) -> HashSet<Edge> {
         let mut edges = HashSet::new();
         for (v1, point) in self.points.iter().enumerate() {
             for v2 in point.adjacents.clone().into_iter() {
-                let pair = if v1 < v2 { (v1, v2) } else { (v2, v1) };
-                edges.insert(pair);
+                edges.insert((v1, v2).into());
             }
         }
         edges
     }
 
-    fn neighbors(&self) -> HashSet<(usize, usize)> {
+    fn neighbors(&self) -> HashSet<Edge> {
         // Track all neighbors
         let mut neighbors = HashSet::new();
         // For each point
@@ -62,9 +58,8 @@ impl Polyhedron {
             // Grab its adjacents
             for v2 in self.points[v1].adjacents.clone() {
                 for v3 in self.points[v2].adjacents.clone() {
-                    let pair = if v1 < v3 { (v1, v3) } else { (v3, v1) };
                     if v1 != v3 {
-                        neighbors.insert(pair);
+                        neighbors.insert((v1, v3).into());
                     }
                 }
             }
@@ -72,23 +67,23 @@ impl Polyhedron {
         neighbors
     }
 
-    fn strangers(&self) -> HashSet<(usize, usize)> {
+    fn strangers(&self) -> HashSet<Edge> {
         let mut strangers = HashSet::new();
         let mut known = self.adjacents();
         known.extend(self.neighbors());
         for v1 in 0..self.points.len() {
             for v2 in 0..self.points.len() {
-                let pair = if v1 < v2 { (v1, v2) } else { (v2, v1) };
-                if v1 != v2 && known.get(&pair).is_none() {
-                    strangers.insert(pair);
+                let edge = (v1, v2).into();
+                if v1 != v2 && !known.contains(&edge) {
+                    strangers.insert(edge);
                 }
             }
         }
         strangers
     }
 
-    fn apply_forces(&mut self, edges: HashSet<(usize, usize)>, l: f32, k: f32) {
-        for (i1, i2) in edges.into_iter() {
+    fn apply_forces(&mut self, edges: HashSet<Edge>, l: f32, k: f32) {
+        for (i1, i2) in edges.into_iter().map(|e| e.id()) {
             let v1 = &self.points[i1].xyz;
             let v2 = &self.points[i2].xyz;
 
@@ -113,7 +108,7 @@ impl Polyhedron {
         // Natural lengths
         let l_a = 0.7 / 1.5; //self.edge_length;
         let l_n = l_a * 2.0;
-        let l_d = l_a * 4.0;
+        let l_d = l_a * 5.0;
 
         // Spring constants
         let k_a = 0.9;
@@ -121,10 +116,8 @@ impl Polyhedron {
         let k_d = 0.3;
 
         self.apply_forces(self.adjacents(), l_a, k_a);
-        //self.apply_forces(edges.into_iter().filter(|b| b.0 == 0).collect(), l_a, k_a);
         self.apply_forces(self.neighbors(), l_n, k_n);
         self.apply_forces(self.strangers(), l_d, k_d);
-        //self.apply_forces(self.enemies.clone(), l_d, k_d);
     }
 
     fn center(&mut self) {
@@ -170,6 +163,7 @@ impl Polyhedron {
 impl Polyhedron {
     fn face_xyz(&self, face_index: usize) -> Vec<Vector3<f32>> {
         self.faces()[face_index]
+            .0
             .iter()
             .map(|f| self.points[*f].xyz)
             .collect()

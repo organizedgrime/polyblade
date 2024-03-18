@@ -1,6 +1,6 @@
 in vec4 v_color;
 out vec4 fragColor;
-varying vec3 vbc;
+in vec3 vbc;
 
 const float lineWidth = 2.5;
 
