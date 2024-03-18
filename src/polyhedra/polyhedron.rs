@@ -1,11 +1,8 @@
-use std::{collections::HashSet, ops::Add};
-
-use serde::{Deserialize, Serialize};
-use three_d::*;
-
+use super::*;
 use crate::prelude::{WindowScene, HSL};
-
-use super::{Edge, Face, Graph, Point, VertexId};
+use serde::{Deserialize, Serialize};
+use std::{collections::HashSet, ops::Add};
+use three_d::*;
 
 // Representation of an undirected graph
 // Uses adjacency lists
@@ -111,7 +108,7 @@ impl Polyhedron {
         // Natural lengths
         let l_a = 0.7 / 1.5; //self.edge_length;
         let l_n = l_a * 2.0;
-        let l_d = l_a * 4.0;
+        let l_d = l_a * 5.0;
 
         // Spring constants
         let k_a = 0.9;
