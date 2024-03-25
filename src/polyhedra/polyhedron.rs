@@ -18,7 +18,7 @@ pub struct Polyhedron {
     pub faces: Vec<Face>,
 
     // Secret list of vertices that need to avoid each other
-    pub(crate) enemies: HashSet<(usize, usize)>,
+    pub(crate) enemies: HashSet<Edge>,
     pub(crate) edge_length: f32,
 }
 
@@ -41,45 +41,59 @@ impl Polyhedron {
     }
 
     fn adjacents(&self) -> HashSet<Edge> {
-        let mut edges = HashSet::new();
-        for (v1, point) in self.points.iter().enumerate() {
-            for v2 in point.adjacents.clone().into_iter() {
-                edges.insert((v1, v2).into());
-            }
-        }
-        edges
+        self.all_edges()
     }
 
     fn neighbors(&self) -> HashSet<Edge> {
+        let adjacents = self.adjacents();
+
         // Track all neighbors
         let mut neighbors = HashSet::new();
+
         // For each point
         for v1 in 0..self.points.len() {
             // Grab its adjacents
             for v2 in self.points[v1].adjacents.clone() {
-                for v3 in self.points[v2].adjacents.clone() {
-                    if v1 != v3 {
-                        neighbors.insert((v1, v3).into());
+                for v3 in self.points[v1].adjacents.clone() {
+                    let e = (v2, v3).into();
+                    if v2 != v3 && !adjacents.contains(&e) {
+                        neighbors.insert(e);
                     }
                 }
             }
         }
+
         neighbors
     }
 
-    fn strangers(&self) -> HashSet<Edge> {
-        let mut strangers = HashSet::new();
-        let mut known = self.adjacents();
-        known.extend(self.neighbors());
-        for v1 in 0..self.points.len() {
-            for v2 in 0..self.points.len() {
-                let edge = (v1, v2).into();
-                if v1 != v2 && !known.contains(&edge) {
-                    strangers.insert(edge);
+    fn diameter(&self) -> HashSet<Edge> {
+        let mut non_diameter = self.all_edges(); //HashSet::new();
+        let mut diameter = HashSet::new();
+
+        let mut modi = true;
+        while modi {
+            modi = false;
+            for edge in non_diameter.clone().iter() {
+                let id = edge.id();
+                for j in self.points[id.1].adjacents.clone() {
+                    if id.0 != j {
+                        let l = non_diameter.len();
+                        non_diameter.insert((id.0, j).into());
+                        diameter.insert((id.0, j).into());
+
+                        if non_diameter.len() > l {
+                            modi = true;
+                        }
+                    }
                 }
             }
+
+            if modi {
+                diameter = HashSet::new();
+            }
         }
-        strangers
+
+        &non_diameter - &diameter
     }
 
     fn apply_forces(&mut self, edges: HashSet<Edge>, l: f32, k: f32) {
@@ -106,9 +120,12 @@ impl Polyhedron {
         // d = diameter (circumsphere / face of projection)
 
         // Natural lengths
-        let l_a = 0.7 / 1.5; //self.edge_length;
+        let l_d = self.edge_length * 2.0;
+        let l_a = l_d / 5.0;
+
+        //let l_a = 0.7 / 1.5; //self.edge_length;
         let l_n = l_a * 2.0;
-        let l_d = l_a * 5.0;
+        //let l_d = l_a * 5.0;
 
         // Spring constants
         let k_a = 0.9;
@@ -117,7 +134,10 @@ impl Polyhedron {
 
         self.apply_forces(self.adjacents(), l_a, k_a);
         self.apply_forces(self.neighbors(), l_n, k_n);
-        self.apply_forces(self.strangers(), l_d, k_d);
+        let d = self.diameter();
+        println!("d: {:?}", d);
+        self.apply_forces(d, l_d, k_d);
+        //self.apply_forces(self.enemies.clone(), l_d * 1.5, k_d / 2.0);
     }
 
     fn center(&mut self) {
@@ -133,20 +153,23 @@ impl Polyhedron {
     }
 
     fn resize(&mut self) {
-        self.edge_length /= self
+        let mean_magnitude = self
             .points
             .iter()
             .map(|p| p.xyz.magnitude())
             .fold(0.0, f32::max);
+        let distance = mean_magnitude - 1.0;
+        //println!("distance");
+
+        self.edge_length -= distance / 500.0;
     }
 
     fn quarrel(&mut self) {
-        let threshold = 0.05;
+        let threshold = 0.001;
         for v1 in 0..self.points.len() {
             for v2 in 0..self.points.len() {
                 if self.points[v1].xyz.distance(self.points[v2].xyz).abs() < threshold {
-                    let pair = if v1 < v2 { (v1, v2) } else { (v2, v1) };
-                    self.enemies.insert(pair);
+                    self.enemies.insert((v1, v2).into());
                 }
             }
         }

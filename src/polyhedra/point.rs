@@ -71,8 +71,9 @@ impl Point {
         Self {
             id,
             adjacents,
+            //xyz: Vector3::zero(),
             xyz: vec3(random(), random(), random()).normalize(),
-            dxyz: vec3(0.0, 0.0, 0.0),
+            dxyz: Vector3::zero(),
         }
     }
 
