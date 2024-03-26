@@ -11,14 +11,46 @@ pub trait Conway<V: Vertex>: Graph<V> + Sized {
         self.delete(id.0);
     }
 
+    /*
+    fn split_vertex(&mut self, id: VertexId) -> Face {
+        let mut new_face = vec![];
+        let mut danglers = vec![];
+
+        // Remove all connections
+        for edge in &self.edges(id) {
+            // Remove existing connection
+            self.disconnect(edge.id());
+            // Track the free hangers
+            danglers.push(edge.other(id).id());
+        }
+
+        danglers.sort();
+
+        for d in danglers {
+            // Create new node and connect to dangler
+            let n = self.insert(Some(id)).id();
+            self.connect((d, n));
+            new_face.push(n);
+        }
+
+        for i in 0..new_face.len() {
+            self.connect((new_face[i], new_face[(i + 1) % new_face.len()]));
+        }
+
+        self.delete(id);
+
+        Face(new_face.into_iter().collect())
+    }
+    */
+
     fn split_vertex(&mut self, id: VertexId) -> Face {
         let mut new_face = HashSet::new();
         let mut previous = id;
-        for edge in &self.edges(id)[1..] {
+        for v2 in &self.connections(id).into_iter().collect::<Vec<_>>()[1..] {
             // Remove existing connection
-            self.disconnect(edge.id());
+            self.disconnect((id, *v2));
             // Insert a new vertex
-            let new_vertex = self.insert();
+            let new_vertex = self.insert(Some(id));
 
             // Build new face
             self.connect((previous, new_vertex.id()));
@@ -26,7 +58,7 @@ pub trait Conway<V: Vertex>: Graph<V> + Sized {
             previous = new_vertex.id();
 
             // Reform old connection
-            self.connect((edge.other(id).id(), new_vertex.id()));
+            self.connect((*v2, new_vertex.id()));
         }
         // Close the new face
         self.connect((previous, id));

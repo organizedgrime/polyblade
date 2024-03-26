@@ -80,12 +80,14 @@ impl Polyhedron {
         // d = diameter (circumsphere / face of projection)
 
         // Natural lengths
-        //let l_d = self.edge_length * 2.0;
+        let l_d = self.edge_length * 2.0;
         //let l_a = l_d / 5.0;
 
-        let l_a = 0.7 / 1.5; //self.edge_length;
-        let l_n = l_a * 2.0;
-        let l_d = l_a * 5.0;
+        //let l_a = 0.7 / 1.5; //self.edge_length;
+        //let l_n = l_a * 2.0;
+        //let l_d = l_a * 5.0;
+        let l_n = l_d / 8.0;
+        let l_a = l_n / 2.0;
 
         // Spring constants
         let k_a = 0.9;
@@ -94,8 +96,7 @@ impl Polyhedron {
 
         self.apply_forces(self.adjacents.clone(), l_a, k_a);
         self.apply_forces(self.neighbors.clone(), l_n, k_n);
-        let d = self.diameter.clone();
-        self.apply_forces(d, l_d, k_d);
+        self.apply_forces(self.diameter.clone(), l_d, k_d);
         //self.apply_forces(self.enemies.clone(), l_d * 1.5, k_d / 2.0);
     }
 
@@ -120,7 +121,7 @@ impl Polyhedron {
         let distance = mean_magnitude - 1.0;
         //println!("distance");
 
-        self.edge_length -= distance / 500.0;
+        self.edge_length -= distance / 200.0;
     }
 
     fn quarrel(&mut self) {

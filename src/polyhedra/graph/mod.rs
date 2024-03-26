@@ -3,7 +3,7 @@ mod edge;
 mod face;
 mod vertex;
 
-use std::collections::HashSet;
+use std::{collections::HashSet, u32};
 
 pub use conway::*;
 pub use edge::*;
@@ -32,7 +32,7 @@ pub trait Graph<V: Vertex>: Sized {
     /// Disconnect two vertices
     fn disconnect(&mut self, id: EdgeId);
     /// New vertex
-    fn insert(&mut self) -> V;
+    fn insert(&mut self, neighbor: Option<VertexId>) -> V;
     /// Delete
     fn delete(&mut self, id: VertexId);
     /// Edges of a vertex
@@ -116,56 +116,85 @@ pub trait Graph<V: Vertex>: Sized {
     }
     /// Neighbors
     fn neighbors(&self) -> HashSet<Edge> {
-        let vertices = self.vertices();
-        let adjacents = self.adjacents();
+        let V = self.vertices().len();
+        let dist = self.distances();
 
-        // Track all neighbors
-        let mut neighbors = HashSet::new();
-
-        // For each point
-        for v1 in vertices {
-            // Grab its adjacents
-            for v2 in self.connections(v1.id()) {
-                for v3 in self.connections(v1.id()) {
-                    let e = (v2, v3).into();
-                    if v2 != v3 && !adjacents.contains(&e) {
-                        neighbors.insert(e);
-                    }
+        let mut neighbors = HashSet::<Edge>::new();
+        for u in 0..V {
+            for v in 0..V {
+                if dist[u][v] == 2 || dist[v][u] == 2 {
+                    neighbors.insert((u, v).into());
                 }
             }
         }
-
         neighbors
     }
-    /// Periphery / diameter
-    fn diameter(&self) -> HashSet<Edge> {
-        let mut non_diameter = self.adjacents(); //HashSet::new();
-        let mut diameter = HashSet::new();
 
-        let mut modi = true;
-        while modi {
-            modi = false;
-            for edge in non_diameter.clone().iter() {
-                let id = edge.id();
-                for j in self.connections(id.1) {
-                    if id.0 != j {
-                        let l = non_diameter.len();
-                        non_diameter.insert((id.0, j).into());
-                        diameter.insert((id.0, j).into());
+    fn distances(&self) -> Vec<Vec<u32>> {
+        let V = self.vertices().len();
+        // let dist be a |V| × |V| array of minimum distances initialized to ∞ (infinity)
+        let mut dist = vec![vec![u32::MAX; V]; V];
 
-                        if non_diameter.len() > l {
-                            modi = true;
+        for edge in self.adjacents() {
+            // The weight of the edge (u, v)
+            dist[edge.id().0][edge.id().1] = 1;
+            dist[edge.id().1][edge.id().0] = 1;
+
+            for v in self.vertices() {
+                dist[v.id()][v.id()] = 0;
+            }
+
+            for k in 0..V {
+                for i in 0..V {
+                    for j in 0..V {
+                        if dist[i][k] != u32::MAX && dist[k][j] != u32::MAX {
+                            if dist[i][j] > dist[i][k] + dist[k][j] {
+                                dist[i][j] = dist[i][k] + dist[k][j];
+                                dist[j][i] = dist[i][k] + dist[k][j];
+                            }
                         }
                     }
                 }
             }
-
-            if modi {
-                diameter = HashSet::new();
-            }
         }
 
-        &non_diameter - &diameter
+        dist
+    }
+
+    /// Periphery / diameter
+    fn diameter(&self) -> HashSet<Edge> {
+        let V = self.vertices().len();
+        let dist = self.distances();
+        let max = dist
+            .clone()
+            .into_iter()
+            .flatten()
+            .filter(|&b| b < u32::MAX)
+            .max()
+            .unwrap();
+        let mut diameter = HashSet::<Edge>::new();
+        for u in 0..V {
+            for v in 0..V {
+                if dist[u][v] == max.clone() || dist[v][u] == max.clone() {
+                    diameter.insert((u, v).into());
+                }
+            }
+        }
+        /*
+        if diameter.len() < (V / 4) {
+            println!("including some more, N = {} was too high", max);
+            max -= 1;
+            for u in 0..V {
+                for v in 0..V {
+                    if dist[u][v] == max.clone() || dist[v][u] == max.clone() {
+                        diameter.insert((u, v).into());
+                    }
+                }
+            }
+        }
+        */
+        println!("diameter N = {}: {:?}", max, diameter);
+        diameter
     }
 }
 
@@ -207,7 +236,7 @@ impl Graph<usize> for SimpleGraph {
         }
     }
 
-    fn insert(&mut self) -> usize {
+    fn insert(&mut self, neighbor: Option<VertexId>) -> usize {
         for i in 0..self.adjacency_matrix.len() {
             self.adjacency_matrix[i].push(false);
         }
@@ -268,8 +297,11 @@ impl Graph<Point> for Polyhedron {
         }
     }
 
-    fn insert(&mut self) -> Point {
-        let point = Point::new(self.points.len(), HashSet::new());
+    fn insert(&mut self, neighbor: Option<VertexId>) -> Point {
+        let mut point = Point::new(self.points.len(), HashSet::new());
+        if let Some(v) = neighbor {
+            point.xyz = self.points[v].xyz;
+        }
         self.points.push(point.clone());
         point
     }

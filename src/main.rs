@@ -52,8 +52,8 @@ pub fn main() {
     let _scene2 = WindowScene::new("schlegel", &event_loop, camera2, Srgba::WHITE, "schlegel");
     // scenes.insert(scene2.window.id(), scene2);
 
-    let mut shape = Polyhedron::icosahedron();
-    let mut shape2 = Polyhedron::dodecahedron();
+    let mut shape = Polyhedron::dodecahedron();
+    //let mut shape2 = Polyhedron::dodecahedron();
     let mut counter = 0;
     event_loop.run(move |event, _, control_flow| match &event {
         winit::event::Event::MainEventsCleared => {
@@ -73,17 +73,18 @@ pub fn main() {
                 ));
 
                 counter += 1;
-                if counter == 1000 {
+                if counter == 2000 {
                     //}|| counter == 3000 {
                     //shape.ambo();
-                    shape2.truncate();
+                    //shape2.truncate();
                     shape.truncate();
+                    //shape.split_vertex(0);
                     shape.recompute_qualities();
-                    shape2.recompute_qualities();
+                    //shape2.recompute_qualities();
                 }
 
                 shape.update();
-                shape2.update();
+                //shape2.update();
                 if &scene.title == "model" {
                     shape.render_model(scene, &frame_input);
                     //shape2.render_model(scene, &frame_input);
