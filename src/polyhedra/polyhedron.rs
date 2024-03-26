@@ -37,7 +37,7 @@ impl Polyhedron {
         self.diameter = self.diameter();
     }
 
-    pub fn new(name: &str, points: Vec<Vec<usize>>, _faces: Vec<Vec<usize>>) -> Polyhedron {
+    pub fn new(name: &str, points: Vec<Vec<usize>>) -> Polyhedron {
         let mut poly = Polyhedron {
             name: String::from(name),
             points: points
