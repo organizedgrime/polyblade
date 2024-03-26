@@ -3,7 +3,10 @@ mod edge;
 mod face;
 mod vertex;
 
-use std::{collections::HashSet, u32};
+use std::{
+    collections::{HashMap, HashSet},
+    u32,
+};
 
 pub use conway::*;
 pub use edge::*;
@@ -53,6 +56,43 @@ pub trait Graph<V: Vertex>: Sized {
     // Faces
     // Vertices that are connected to a given vertex
     fn connections(&self, id: VertexId) -> HashSet<VertexId>;
+    fn sorted_connections(&self, id: VertexId) -> Vec<VertexId> {
+        let mut m = HashSet::<(VertexId, VertexId)>::new();
+        for face in self.faces().into_iter() {
+            for i in 0..face.0.len() {
+                if face.0[i] == id {
+                    m.insert((
+                        face.0[(i + face.0.len() - 1) % face.0.len()],
+                        face.0[(i + 1) % face.0.len()],
+                    ));
+                }
+            }
+        }
+        println!("id: {:?}", id);
+        println!("m: {:?}", m);
+
+        let mut root = m.clone().into_iter().collect::<Vec<_>>()[0].0;
+        let mut conn = vec![root];
+
+        while let Some(next) = m.clone().into_iter().find(|e| e.0 == root || e.1 == root) {
+            root = if next.0 == root { next.1 } else { next.0 };
+            if !conn.contains(&root) {
+                conn.push(root);
+            }
+            m.remove(&next);
+        }
+
+        println!("conn: {:?}", conn);
+        println!("connold: {:?}", self.connections(id));
+
+        for x in self.connections(id) {
+            if !conn.contains(&x) {
+                conn.push(x);
+            }
+        }
+
+        conn
+    }
     /// All faces
     fn faces(&self) -> Vec<Face> {
         let all_edges = self.adjacents();

@@ -11,24 +11,23 @@ pub trait Conway<V: Vertex>: Graph<V> + Sized {
         self.delete(id.0);
     }
 
-    /*
-    fn split_vertex(&mut self, id: VertexId) -> Face {
+    fn split_vertex(&mut self, v: VertexId) -> Face {
         let mut new_face = vec![];
         let mut danglers = vec![];
 
         // Remove all connections
-        for edge in &self.edges(id) {
+        for u in self.sorted_connections(v) {
             // Remove existing connection
-            self.disconnect(edge.id());
+            self.disconnect((v, u));
             // Track the free hangers
-            danglers.push(edge.other(id).id());
+            danglers.push(u);
         }
 
         danglers.sort();
 
         for d in danglers {
             // Create new node and connect to dangler
-            let n = self.insert(Some(id)).id();
+            let n = self.insert(Some(v)).id();
             self.connect((d, n));
             new_face.push(n);
         }
@@ -37,12 +36,12 @@ pub trait Conway<V: Vertex>: Graph<V> + Sized {
             self.connect((new_face[i], new_face[(i + 1) % new_face.len()]));
         }
 
-        self.delete(id);
+        self.delete(v);
 
         Face(new_face.into_iter().collect())
     }
-    */
 
+    /*
     fn split_vertex(&mut self, id: VertexId) -> Face {
         let mut new_face = HashSet::new();
         let mut previous = id;
@@ -65,6 +64,8 @@ pub trait Conway<V: Vertex>: Graph<V> + Sized {
         new_face.insert(id);
         Face(new_face.into_iter().collect())
     }
+
+    */
 
     /// `t` truncate is equivalent to vertex splitting
     fn truncate(&mut self) {

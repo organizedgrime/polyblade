@@ -77,8 +77,8 @@ pub fn main() {
                     //}|| counter == 3000 {
                     //shape.ambo();
                     //shape2.truncate();
-                    //shape.truncate();
-                    shape.split_vertex(0);
+                    shape.truncate();
+                    //shape.split_vertex(0);
                     shape.recompute_qualities();
                     //shape2.recompute_qualities();
                 }
