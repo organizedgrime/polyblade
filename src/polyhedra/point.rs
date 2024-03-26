@@ -8,9 +8,7 @@ use super::{Vertex, VertexId};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Point {
-    pub id: usize,
-    // List of point adjacents by index
-    pub adjacents: HashSet<VertexId>,
+    pub id: VertexId,
     // Position
     pub xyz: Vector3<f32>,
     // Speed
@@ -38,40 +36,14 @@ impl Point {
     pub fn new_empty(id: usize) -> Self {
         Self {
             id,
-            adjacents: HashSet::new(),
             xyz: Vector3::zero(),
             dxyz: Vector3::zero(),
         }
     }
-    pub fn connect(&mut self, id: usize) {
-        if id != self.id() {
-            self.adjacents.insert(id);
-        }
-    }
-    pub fn disconnect(&mut self, id: usize) {
-        self.adjacents = self
-            .adjacents
-            .clone()
-            .into_iter()
-            .filter(|v| v != &id)
-            .collect();
-    }
-    pub fn delete(&mut self, id: usize) {
-        self.disconnect(id);
-        self.adjacents = self
-            .adjacents
-            .clone()
-            .into_iter()
-            .map(|i| if i > id { i - 1 } else { i })
-            //.filter(|i| i.id() != self.id())
-            .collect()
-    }
 
-    pub fn new(id: usize, adjacents: HashSet<usize>) -> Self {
+    pub fn new(id: usize) -> Self {
         Self {
             id,
-            adjacents,
-            //xyz: Vector3::zero(),
             xyz: vec3(random(), random(), random()).normalize(),
             dxyz: Vector3::zero(),
         }

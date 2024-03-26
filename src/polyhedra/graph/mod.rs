@@ -11,35 +11,104 @@ use std::{
 pub use conway::*;
 pub use edge::*;
 pub use face::*;
+use serde::{Deserialize, Serialize};
 pub use vertex::*;
 
 use super::{Point, Polyhedron};
 
-pub trait Graph<V: Vertex>: Sized {
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Graph {
+    pub adjacency_matrix: Vec<Vec<bool>>,
+    pub faces: Vec<Face>,
+    pub adjacents: HashSet<Edge>,
+    pub neighbors: HashSet<Edge>,
+    pub diameter: HashSet<Edge>,
+    pub dist: Vec<Vec<u32>>,
+}
+
+impl Graph {
+    pub fn update(&mut self) {
+        self.adjacents();
+        self.distances();
+        self.neighbors();
+        self.diameter();
+        self.faces();
+    }
+
+    pub fn vertex(&self, id: VertexId) -> Option<usize> {
+        if id < self.adjacency_matrix.len() {
+            Some(id)
+        } else {
+            None
+        }
+    }
+
     /// New with n vertices
-    fn new_disconnected(vertex_count: usize) -> Self;
+    pub fn new_disconnected(vertex_count: usize) -> Self {
+        let mut poly = Self {
+            adjacency_matrix: vec![vec![false; vertex_count]; vertex_count],
+            faces: vec![],
+            adjacents: HashSet::new(),
+            neighbors: HashSet::new(),
+            diameter: HashSet::new(),
+            dist: vec![],
+        };
+        poly.update();
+        poly
+    }
     /// Vertex
-    fn vertex(&self, id: VertexId) -> Option<V>;
+    //fn vertex(&self, id: VertexId) -> Option<V>;
     /// Edge
-    fn edge(&self, id: EdgeId) -> Option<Edge> {
+    pub fn edge(&self, id: EdgeId) -> Option<Edge> {
         if self.vertex(id.0).is_some() && self.vertex(id.1).is_some() {
             Some((id.0, id.1).into())
         } else {
             None
         }
     }
-    /// All vertices
-    fn vertices(&self) -> Vec<V>;
-    /// Connect two vertices
-    fn connect(&mut self, id: EdgeId);
-    /// Disconnect two vertices
-    fn disconnect(&mut self, id: EdgeId);
-    /// New vertex
-    fn insert(&mut self, neighbor: Option<VertexId>) -> V;
-    /// Delete
-    fn delete(&mut self, id: VertexId);
+
+    pub fn vertices(&self) -> Vec<usize> {
+        (0..self.adjacency_matrix.len()).collect()
+    }
+
+    pub fn connect(&mut self, id: EdgeId) {
+        if let Some(edge) = self.edge(id) {
+            self.adjacency_matrix[edge.a][edge.b] = true;
+            self.adjacency_matrix[edge.b][edge.a] = true;
+            self.update();
+        }
+    }
+
+    pub fn disconnect(&mut self, id: EdgeId) {
+        if let Some(edge) = self.edge(id) {
+            self.adjacency_matrix[edge.a][edge.b] = false;
+            self.adjacency_matrix[edge.b][edge.a] = false;
+            self.update();
+        }
+    }
+
+    pub fn insert(&mut self, neighbor: Option<VertexId>) -> usize {
+        for i in 0..self.adjacency_matrix.len() {
+            self.adjacency_matrix[i].push(false);
+        }
+
+        self.adjacency_matrix
+            .push(vec![false; self.adjacency_matrix.len() + 1]);
+
+        self.update();
+        self.adjacency_matrix.len() - 1
+    }
+
+    pub fn delete(&mut self, id: usize) {
+        for i in 0..self.adjacency_matrix.len() {
+            self.adjacency_matrix[i].remove(id);
+        }
+        self.adjacency_matrix.remove(id);
+        self.update();
+    }
+
     /// Edges of a vertex
-    fn edges(&self, id: VertexId) -> Vec<Edge> {
+    pub fn edges(&self, id: VertexId) -> Vec<Edge> {
         if let Some(vertex) = self.vertex(id) {
             self.connections(id)
                 .into_iter()
@@ -50,15 +119,25 @@ pub trait Graph<V: Vertex>: Sized {
         }
     }
     /// Number of faces
-    fn face_count(&self) -> usize {
-        2 + self.adjacents().len() - self.vertices().len()
+    pub fn face_count(&mut self) -> i64 {
+        self.adjacents();
+        2 + self.adjacents.len() as i64 - self.vertices().len() as i64
     }
     // Faces
     // Vertices that are connected to a given vertex
-    fn connections(&self, id: VertexId) -> HashSet<VertexId>;
-    fn sorted_connections(&self, id: VertexId) -> Vec<VertexId> {
+    //fn connections(&self, id: VertexId) -> HashSet<VertexId>;
+    pub fn connections(&self, vertex: usize) -> HashSet<VertexId> {
+        let mut connections = HashSet::<VertexId>::new();
+        for (other, connected) in self.adjacency_matrix[vertex].iter().enumerate() {
+            if *connected && other != vertex {
+                connections.insert(other);
+            }
+        }
+        connections
+    }
+    pub fn sorted_connections(&mut self, id: VertexId) -> Vec<VertexId> {
         let mut m = HashSet::<(VertexId, VertexId)>::new();
-        for face in self.faces().into_iter() {
+        for face in self.faces.clone().into_iter() {
             for i in 0..face.0.len() {
                 if face.0[i] == id {
                     m.insert((
@@ -94,8 +173,8 @@ pub trait Graph<V: Vertex>: Sized {
         conn
     }
     /// All faces
-    fn faces(&self) -> Vec<Face> {
-        let all_edges = self.adjacents();
+    pub fn faces(&mut self) {
+        let all_edges = self.adjacents.clone();
         let mut triplets = Vec::<Face>::new();
         let mut cycles = HashSet::<Face>::new();
 
@@ -118,7 +197,7 @@ pub trait Graph<V: Vertex>: Sized {
         }
         println!("processing triplets");
         // while there are unparsed triplets
-        while !triplets.is_empty() && cycles.len() < self.face_count() {
+        while !triplets.is_empty() && (cycles.len() as i64) < self.face_count() {
             let triplet = triplets.remove(0);
             let p = triplet.0;
             // for each v adjacent to u_t
@@ -142,11 +221,12 @@ pub trait Graph<V: Vertex>: Sized {
         }
         println!("done");
 
-        cycles.into_iter().collect()
+        self.faces = cycles.into_iter().collect();
     }
     /// All edges
-    fn adjacents(&self) -> HashSet<Edge> {
-        self.vertices()
+    pub fn adjacents(&mut self) {
+        self.adjacents = self
+            .vertices()
             .iter()
             .flat_map(|v| self.edges(v.id()))
             .fold(HashSet::<Edge>::new(), |mut acc, e| {
@@ -155,9 +235,9 @@ pub trait Graph<V: Vertex>: Sized {
             })
     }
     /// Neighbors
-    fn neighbors(&self) -> HashSet<Edge> {
+    pub fn neighbors(&mut self) {
         let V = self.vertices().len();
-        let dist = self.distances();
+        let dist = self.dist.clone();
 
         let mut neighbors = HashSet::<Edge>::new();
         for u in 0..V {
@@ -167,15 +247,15 @@ pub trait Graph<V: Vertex>: Sized {
                 }
             }
         }
-        neighbors
+        self.neighbors = neighbors
     }
 
-    fn distances(&self) -> Vec<Vec<u32>> {
+    pub fn distances(&mut self) {
         let V = self.vertices().len();
         // let dist be a |V| × |V| array of minimum distances initialized to ∞ (infinity)
         let mut dist = vec![vec![u32::MAX; V]; V];
 
-        for edge in self.adjacents() {
+        for edge in self.adjacents.clone() {
             // The weight of the edge (u, v)
             dist[edge.id().0][edge.id().1] = 1;
             dist[edge.id().1][edge.id().0] = 1;
@@ -198,32 +278,21 @@ pub trait Graph<V: Vertex>: Sized {
             }
         }
 
-        dist
+        self.dist = dist;
     }
 
     /// Periphery / diameter
-    fn diameter(&self) -> HashSet<Edge> {
+    pub fn diameter(&mut self) {
         let V = self.vertices().len();
-        let dist = self.distances();
-        let max = dist
+        let dist = self.dist.clone();
+        if let Some(max) = dist
             .clone()
             .into_iter()
             .flatten()
             .filter(|&b| b < u32::MAX)
             .max()
-            .unwrap();
-        let mut diameter = HashSet::<Edge>::new();
-        for u in 0..V {
-            for v in 0..V {
-                if dist[u][v] == max.clone() || dist[v][u] == max.clone() {
-                    diameter.insert((u, v).into());
-                }
-            }
-        }
-        /*
-        if diameter.len() < (V / 4) {
-            println!("including some more, N = {} was too high", max);
-            max -= 1;
+        {
+            let mut diameter = HashSet::<Edge>::new();
             for u in 0..V {
                 for v in 0..V {
                     if dist[u][v] == max.clone() || dist[v][u] == max.clone() {
@@ -231,79 +300,28 @@ pub trait Graph<V: Vertex>: Sized {
                     }
                 }
             }
-        }
-        */
-        println!("diameter N = {}: {:?}", max, diameter);
-        diameter
-    }
-}
-
-pub struct SimpleGraph {
-    pub adjacency_matrix: Vec<Vec<bool>>,
-    pub faces: Vec<Face>,
-}
-
-impl Graph<usize> for SimpleGraph {
-    fn vertex(&self, id: VertexId) -> Option<usize> {
-        if id < self.adjacency_matrix.len() {
-            Some(id)
-        } else {
-            None
-        }
-    }
-    fn new_disconnected(vertex_count: usize) -> Self {
-        Self {
-            adjacency_matrix: vec![vec![false; vertex_count]; vertex_count],
-            faces: vec![],
-        }
-    }
-
-    fn vertices(&self) -> Vec<usize> {
-        (0..self.adjacency_matrix.len()).collect()
-    }
-
-    fn connect(&mut self, id: EdgeId) {
-        if let Some(edge) = self.edge(id) {
-            self.adjacency_matrix[edge.a][edge.b] = true;
-            self.adjacency_matrix[edge.b][edge.a] = true;
-        }
-    }
-
-    fn disconnect(&mut self, id: EdgeId) {
-        if let Some(edge) = self.edge(id) {
-            self.adjacency_matrix[edge.a][edge.b] = false;
-            self.adjacency_matrix[edge.b][edge.a] = false;
-        }
-    }
-
-    fn insert(&mut self, neighbor: Option<VertexId>) -> usize {
-        for i in 0..self.adjacency_matrix.len() {
-            self.adjacency_matrix[i].push(false);
-        }
-
-        self.adjacency_matrix
-            .push(vec![false; self.adjacency_matrix.len() + 1]);
-
-        self.adjacency_matrix.len() - 1
-    }
-
-    fn delete(&mut self, id: usize) {
-        for i in 0..self.adjacency_matrix.len() {
-            self.adjacency_matrix[i].remove(id);
-        }
-        self.adjacency_matrix.remove(id);
-    }
-
-    fn connections(&self, vertex: usize) -> HashSet<VertexId> {
-        let mut connections = HashSet::<VertexId>::new();
-        for (other, connected) in self.adjacency_matrix[vertex].iter().enumerate() {
-            if *connected && other != vertex {
-                connections.insert(other);
+            /*
+            if diameter.len() < (V / 4) {
+                println!("including some more, N = {} was too high", max);
+                max -= 1;
+                for u in 0..V {
+                    for v in 0..V {
+                        if dist[u][v] == max.clone() || dist[v][u] == max.clone() {
+                            diameter.insert((u, v).into());
+                        }
+                    }
+                }
             }
+            */
+            println!("diameter N = {}: {:?}", max, diameter);
+            self.diameter = diameter
         }
-        connections
     }
 }
+
+/*
+pub struct SimpleGraph {}
+
 
 impl Graph<Point> for Polyhedron {
     fn vertex(&self, id: VertexId) -> Option<Point> {
@@ -419,3 +437,4 @@ mod test {
         assert_eq!(graph.faces(), vec![Face(vec![0, 1, 2])]);
     }
 }
+*/

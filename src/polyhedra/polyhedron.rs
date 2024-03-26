@@ -12,15 +12,8 @@ pub struct Polyhedron {
     pub name: String,
 
     // Points
+    pub graph: Graph,
     pub points: Vec<Point>,
-
-    // List of faces
-    pub faces: Vec<Face>,
-
-    // Spring forces
-    pub adjacents: HashSet<Edge>,
-    pub neighbors: HashSet<Edge>,
-    pub diameter: HashSet<Edge>,
 
     // Secret list of vertices that need to avoid each other
     pub(crate) enemies: HashSet<Edge>,
@@ -31,27 +24,33 @@ pub struct Polyhedron {
 impl Polyhedron {
     // After a change is made
     pub fn recompute_qualities(&mut self) {
-        self.faces = self.faces();
-        self.adjacents = self.adjacents();
-        self.neighbors = self.neighbors();
-        self.diameter = self.diameter();
+        self.graph.adjacents();
+        self.graph.distances();
+        self.graph.neighbors();
+        self.graph.diameter();
+        self.graph.faces();
     }
 
     pub fn new(name: &str, points: Vec<Vec<usize>>) -> Polyhedron {
         let mut poly = Polyhedron {
             name: String::from(name),
+            graph: Graph::new_disconnected(points.len()),
             points: points
+                .clone()
                 .into_iter()
                 .enumerate()
-                .map(|(id, neighbors)| Point::new(id, neighbors.into_iter().collect()))
+                .map(|(i, _)| Point::new(i))
                 .collect(),
-            faces: vec![],
             enemies: HashSet::new(),
             edge_length: 1.0,
-            adjacents: HashSet::new(),
-            neighbors: HashSet::new(),
-            diameter: HashSet::new(),
         };
+
+        for (i, conns) in points.into_iter().enumerate() {
+            for j in conns {
+                poly.graph.connect((i, j).into());
+            }
+        }
+
         poly.recompute_qualities();
         poly
     }
@@ -94,9 +93,9 @@ impl Polyhedron {
         let k_n = 0.4;
         let k_d = 0.3;
 
-        self.apply_forces(self.adjacents.clone(), l_a, k_a);
-        self.apply_forces(self.neighbors.clone(), l_n, k_n);
-        self.apply_forces(self.diameter.clone(), l_d, k_d);
+        self.apply_forces(self.graph.adjacents.clone(), l_a, k_a);
+        self.apply_forces(self.graph.neighbors.clone(), l_n, k_n);
+        self.apply_forces(self.graph.diameter.clone(), l_d, k_d);
         //self.apply_forces(self.enemies.clone(), l_d * 1.5, k_d / 2.0);
     }
 
@@ -145,7 +144,7 @@ impl Polyhedron {
 
 impl Polyhedron {
     fn face_xyz(&self, face_index: usize) -> Vec<Vector3<f32>> {
-        self.faces[face_index]
+        self.graph.faces[face_index]
             .0
             .iter()
             .map(|f| self.points[*f].xyz)
@@ -153,7 +152,7 @@ impl Polyhedron {
     }
 
     fn face_normal(&self, face_index: usize) -> Vector3<f32> {
-        let face = &self.faces[face_index].0;
+        let face = &self.graph.faces[face_index].0;
         let mut normal = Vector3::<f32>::new(0.0, 0.0, 0.0);
         for i in 0..face.len() {
             let v1 = self.points[face[i]].xyz;
@@ -177,7 +176,7 @@ impl Polyhedron {
         let mut polyhedron_colors = Vec::new();
         let mut polyhedron_barycentric = Vec::new();
 
-        for face_index in 0..self.faces.len() {
+        for face_index in 0..self.graph.faces.len() {
             // Create triangles from the center to each corner
             let mut face_xyz = Vec::new();
             let vertices = self.face_xyz(face_index);
@@ -198,7 +197,7 @@ impl Polyhedron {
             }
 
             let color = HSL::new(
-                (360.0 / (self.faces.len() as f64)) * face_index as f64,
+                (360.0 / (self.graph.faces.len() as f64)) * face_index as f64,
                 1.0,
                 0.5,
             )
