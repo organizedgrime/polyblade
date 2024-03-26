@@ -17,6 +17,11 @@ pub struct Polyhedron {
     // List of faces
     pub faces: Vec<Face>,
 
+    // Spring forces
+    pub adjacents: HashSet<Edge>,
+    pub neighbors: HashSet<Edge>,
+    pub diameter: HashSet<Edge>,
+
     // Secret list of vertices that need to avoid each other
     pub(crate) enemies: HashSet<Edge>,
     pub(crate) edge_length: f32,
@@ -24,6 +29,14 @@ pub struct Polyhedron {
 
 // Operations
 impl Polyhedron {
+    // After a change is made
+    pub fn recompute_qualities(&mut self) {
+        self.faces = self.faces();
+        self.adjacents = self.adjacents();
+        self.neighbors = self.neighbors();
+        self.diameter = self.diameter();
+    }
+
     pub fn new(name: &str, points: Vec<Vec<usize>>, _faces: Vec<Vec<usize>>) -> Polyhedron {
         let mut poly = Polyhedron {
             name: String::from(name),
@@ -35,65 +48,12 @@ impl Polyhedron {
             faces: vec![],
             enemies: HashSet::new(),
             edge_length: 1.0,
+            adjacents: HashSet::new(),
+            neighbors: HashSet::new(),
+            diameter: HashSet::new(),
         };
-        poly.recompute_faces();
+        poly.recompute_qualities();
         poly
-    }
-
-    fn adjacents(&self) -> HashSet<Edge> {
-        self.all_edges()
-    }
-
-    fn neighbors(&self) -> HashSet<Edge> {
-        let adjacents = self.adjacents();
-
-        // Track all neighbors
-        let mut neighbors = HashSet::new();
-
-        // For each point
-        for v1 in 0..self.points.len() {
-            // Grab its adjacents
-            for v2 in self.points[v1].adjacents.clone() {
-                for v3 in self.points[v1].adjacents.clone() {
-                    let e = (v2, v3).into();
-                    if v2 != v3 && !adjacents.contains(&e) {
-                        neighbors.insert(e);
-                    }
-                }
-            }
-        }
-
-        neighbors
-    }
-
-    fn diameter(&self) -> HashSet<Edge> {
-        let mut non_diameter = self.all_edges(); //HashSet::new();
-        let mut diameter = HashSet::new();
-
-        let mut modi = true;
-        while modi {
-            modi = false;
-            for edge in non_diameter.clone().iter() {
-                let id = edge.id();
-                for j in self.points[id.1].adjacents.clone() {
-                    if id.0 != j {
-                        let l = non_diameter.len();
-                        non_diameter.insert((id.0, j).into());
-                        diameter.insert((id.0, j).into());
-
-                        if non_diameter.len() > l {
-                            modi = true;
-                        }
-                    }
-                }
-            }
-
-            if modi {
-                diameter = HashSet::new();
-            }
-        }
-
-        &non_diameter - &diameter
     }
 
     fn apply_forces(&mut self, edges: HashSet<Edge>, l: f32, k: f32) {
@@ -120,22 +80,21 @@ impl Polyhedron {
         // d = diameter (circumsphere / face of projection)
 
         // Natural lengths
-        let l_d = self.edge_length * 2.0;
-        let l_a = l_d / 5.0;
+        //let l_d = self.edge_length * 2.0;
+        //let l_a = l_d / 5.0;
 
-        //let l_a = 0.7 / 1.5; //self.edge_length;
+        let l_a = 0.7 / 1.5; //self.edge_length;
         let l_n = l_a * 2.0;
-        //let l_d = l_a * 5.0;
+        let l_d = l_a * 5.0;
 
         // Spring constants
         let k_a = 0.9;
         let k_n = 0.4;
         let k_d = 0.3;
 
-        self.apply_forces(self.adjacents(), l_a, k_a);
-        self.apply_forces(self.neighbors(), l_n, k_n);
-        let d = self.diameter();
-        println!("d: {:?}", d);
+        self.apply_forces(self.adjacents.clone(), l_a, k_a);
+        self.apply_forces(self.neighbors.clone(), l_n, k_n);
+        let d = self.diameter.clone();
         self.apply_forces(d, l_d, k_d);
         //self.apply_forces(self.enemies.clone(), l_d * 1.5, k_d / 2.0);
     }
@@ -185,7 +144,7 @@ impl Polyhedron {
 
 impl Polyhedron {
     fn face_xyz(&self, face_index: usize) -> Vec<Vector3<f32>> {
-        self.faces()[face_index]
+        self.faces[face_index]
             .0
             .iter()
             .map(|f| self.points[*f].xyz)
@@ -193,7 +152,7 @@ impl Polyhedron {
     }
 
     fn face_normal(&self, face_index: usize) -> Vector3<f32> {
-        let face = &self.faces()[face_index].0;
+        let face = &self.faces[face_index].0;
         let mut normal = Vector3::<f32>::new(0.0, 0.0, 0.0);
         for i in 0..face.len() {
             let v1 = self.points[face[i]].xyz;
@@ -217,8 +176,7 @@ impl Polyhedron {
         let mut polyhedron_colors = Vec::new();
         let mut polyhedron_barycentric = Vec::new();
 
-        let faces = self.faces();
-        for face_index in 0..faces.len() {
+        for face_index in 0..self.faces.len() {
             // Create triangles from the center to each corner
             let mut face_xyz = Vec::new();
             let vertices = self.face_xyz(face_index);
@@ -238,8 +196,12 @@ impl Polyhedron {
                 ]);
             }
 
-            let color = HSL::new((360.0 / (faces.len() as f64)) * face_index as f64, 1.0, 0.5)
-                .to_linear_srgb();
+            let color = HSL::new(
+                (360.0 / (self.faces.len() as f64)) * face_index as f64,
+                1.0,
+                0.5,
+            )
+            .to_linear_srgb();
             polyhedron_colors.extend(vec![color; face_xyz.len()]);
             polyhedron_xyz.extend(face_xyz);
         }

@@ -78,8 +78,8 @@ pub fn main() {
                     //shape.ambo();
                     shape2.truncate();
                     shape.truncate();
-                    shape.recompute_faces();
-                    shape2.recompute_faces();
+                    shape.recompute_qualities();
+                    shape2.recompute_qualities();
                 }
 
                 shape.update();

@@ -13,7 +13,11 @@ pub use vertex::*;
 use super::{Point, Polyhedron};
 
 pub trait Graph<V: Vertex>: Sized {
+    /// New with n vertices
+    fn new_disconnected(vertex_count: usize) -> Self;
+    /// Vertex
     fn vertex(&self, id: VertexId) -> Option<V>;
+    /// Edge
     fn edge(&self, id: EdgeId) -> Option<Edge> {
         if self.vertex(id.0).is_some() && self.vertex(id.1).is_some() {
             Some((id.0, id.1).into())
@@ -21,17 +25,17 @@ pub trait Graph<V: Vertex>: Sized {
             None
         }
     }
-    // New with n vertices
-    fn new_disconnected(vertex_count: usize) -> Self;
-    // Connect two vertices
+    /// All vertices
+    fn vertices(&self) -> Vec<V>;
+    /// Connect two vertices
     fn connect(&mut self, id: EdgeId);
-    // Disconnect two vertices
+    /// Disconnect two vertices
     fn disconnect(&mut self, id: EdgeId);
-    // New vertex
+    /// New vertex
     fn insert(&mut self) -> V;
-    // Delete
+    /// Delete
     fn delete(&mut self, id: VertexId);
-    // Edges of a vertex
+    /// Edges of a vertex
     fn edges(&self, id: VertexId) -> Vec<Edge> {
         if let Some(vertex) = self.vertex(id) {
             self.connections(id)
@@ -42,28 +46,16 @@ pub trait Graph<V: Vertex>: Sized {
             vec![]
         }
     }
+    /// Number of faces
     fn face_count(&self) -> usize {
-        2 + self.all_edges().len() - self.vertices().len()
+        2 + self.adjacents().len() - self.vertices().len()
     }
     // Faces
-    fn faces(&self) -> Vec<Face>;
     // Vertices that are connected to a given vertex
     fn connections(&self, id: VertexId) -> HashSet<VertexId>;
-    // All vertices
-    fn vertices(&self) -> Vec<V>;
-    // All edges
-    fn all_edges(&self) -> HashSet<Edge> {
-        self.vertices()
-            .iter()
-            .flat_map(|v| self.edges(v.id()))
-            .fold(HashSet::<Edge>::new(), |mut acc, e| {
-                acc.insert(e);
-                acc
-            })
-    }
-
-    fn recompute_faces(&mut self) {
-        let all_edges = self.all_edges();
+    /// All faces
+    fn faces(&self) -> Vec<Face> {
+        let all_edges = self.adjacents();
         let mut triplets = Vec::<Face>::new();
         let mut cycles = HashSet::<Face>::new();
 
@@ -110,10 +102,71 @@ pub trait Graph<V: Vertex>: Sized {
         }
         println!("done");
 
-        self.set_faces(cycles.into_iter().collect())
+        cycles.into_iter().collect()
     }
+    /// All edges
+    fn adjacents(&self) -> HashSet<Edge> {
+        self.vertices()
+            .iter()
+            .flat_map(|v| self.edges(v.id()))
+            .fold(HashSet::<Edge>::new(), |mut acc, e| {
+                acc.insert(e);
+                acc
+            })
+    }
+    /// Neighbors
+    fn neighbors(&self) -> HashSet<Edge> {
+        let vertices = self.vertices();
+        let adjacents = self.adjacents();
 
-    fn set_faces(&mut self, faces: Vec<Face>);
+        // Track all neighbors
+        let mut neighbors = HashSet::new();
+
+        // For each point
+        for v1 in vertices {
+            // Grab its adjacents
+            for v2 in self.connections(v1.id()) {
+                for v3 in self.connections(v1.id()) {
+                    let e = (v2, v3).into();
+                    if v2 != v3 && !adjacents.contains(&e) {
+                        neighbors.insert(e);
+                    }
+                }
+            }
+        }
+
+        neighbors
+    }
+    /// Periphery / diameter
+    fn diameter(&self) -> HashSet<Edge> {
+        let mut non_diameter = self.adjacents(); //HashSet::new();
+        let mut diameter = HashSet::new();
+
+        let mut modi = true;
+        while modi {
+            modi = false;
+            for edge in non_diameter.clone().iter() {
+                let id = edge.id();
+                for j in self.connections(id.1) {
+                    if id.0 != j {
+                        let l = non_diameter.len();
+                        non_diameter.insert((id.0, j).into());
+                        diameter.insert((id.0, j).into());
+
+                        if non_diameter.len() > l {
+                            modi = true;
+                        }
+                    }
+                }
+            }
+
+            if modi {
+                diameter = HashSet::new();
+            }
+        }
+
+        &non_diameter - &diameter
+    }
 }
 
 pub struct SimpleGraph {
@@ -138,14 +191,6 @@ impl Graph<usize> for SimpleGraph {
 
     fn vertices(&self) -> Vec<usize> {
         (0..self.adjacency_matrix.len()).collect()
-    }
-
-    fn faces(&self) -> Vec<Face> {
-        self.faces.clone()
-    }
-
-    fn set_faces(&mut self, faces: Vec<Face>) {
-        self.faces = faces;
     }
 
     fn connect(&mut self, id: EdgeId) {
@@ -203,6 +248,9 @@ impl Graph<Point> for Polyhedron {
             faces: vec![],
             enemies: HashSet::new(),
             edge_length: 1.0,
+            adjacents: HashSet::new(),
+            neighbors: HashSet::new(),
+            diameter: HashSet::new(),
         }
     }
 
@@ -218,14 +266,6 @@ impl Graph<Point> for Polyhedron {
             self.points[edge.a].disconnect(edge.b);
             self.points[edge.b].disconnect(edge.a);
         }
-    }
-
-    fn faces(&self) -> Vec<Face> {
-        self.faces.clone()
-    }
-
-    fn set_faces(&mut self, faces: Vec<Face>) {
-        self.faces = faces;
     }
 
     fn insert(&mut self) -> Point {
