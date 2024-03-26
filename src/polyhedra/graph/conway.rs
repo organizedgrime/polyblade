@@ -3,21 +3,53 @@ pub use super::*;
 pub trait Conway<V: Vertex>: Graph<V> + Sized {
     fn contract_edge(&mut self, id: EdgeId) {
         // Give b all the same connections as a
-        for b in self.connections(id.0) {
+        let adj = self.connections(id.0).clone();
+        for b in adj.into_iter() {
             self.connect((b, id.1))
         }
         // Delete a
         self.delete(id.0);
     }
 
+    fn split_vertex(&mut self, v: VertexId) -> Face {
+        let mut new_face = vec![];
+        let mut danglers = vec![];
+
+        // Remove all connections
+        for u in self.sorted_connections(v) {
+            // Remove existing connection
+            self.disconnect((v, u));
+            // Track the free hangers
+            danglers.push(u);
+        }
+
+        danglers.sort();
+
+        for d in danglers {
+            // Create new node and connect to dangler
+            let n = self.insert(Some(v)).id();
+            self.connect((d, n));
+            new_face.push(n);
+        }
+
+        for i in 0..new_face.len() {
+            self.connect((new_face[i], new_face[(i + 1) % new_face.len()]));
+        }
+
+        self.delete(v);
+
+        Face(new_face.into_iter().collect())
+    }
+
+    /*
     fn split_vertex(&mut self, id: VertexId) -> Face {
         let mut new_face = HashSet::new();
         let mut previous = id;
-        for edge in &self.edges(id)[1..] {
+        for v2 in &self.connections(id).into_iter().collect::<Vec<_>>()[1..] {
             // Remove existing connection
-            self.disconnect(edge.id());
+            self.disconnect((id, *v2));
             // Insert a new vertex
-            let new_vertex = self.insert();
+            let new_vertex = self.insert(Some(id));
 
             // Build new face
             self.connect((previous, new_vertex.id()));
@@ -25,13 +57,15 @@ pub trait Conway<V: Vertex>: Graph<V> + Sized {
             previous = new_vertex.id();
 
             // Reform old connection
-            self.connect((edge.other(id).id(), new_vertex.id()));
+            self.connect((*v2, new_vertex.id()));
         }
         // Close the new face
         self.connect((previous, id));
         new_face.insert(id);
         Face(new_face.into_iter().collect())
     }
+
+    */
 
     /// `t` truncate is equivalent to vertex splitting
     fn truncate(&mut self) {
@@ -50,7 +84,7 @@ pub trait Conway<V: Vertex>: Graph<V> + Sized {
             }
         }
 
-        for edge in self.all_edges() {
+        for edge in self.adjacents() {
             if !edges.contains(&edge) {
                 println!("contracting: {:?}", edge);
                 self.contract_edge(edge.id());
@@ -109,12 +143,12 @@ mod test {
         graph.connect((3, 5));
 
         assert_eq!(graph.vertices().len(), 6);
-        assert_eq!(graph.all_edges().len(), 5);
+        assert_eq!(graph.adjacents().len(), 5);
 
         graph.contract_edge((1, 3));
 
         assert_eq!(graph.vertices().len(), 5);
-        assert_eq!(graph.all_edges().len(), 4);
+        assert_eq!(graph.adjacents().len(), 4);
 
         assert_eq!(graph.connections(0), vec![2].into_iter().collect());
         assert_eq!(graph.connections(1), vec![2].into_iter().collect());
@@ -135,11 +169,11 @@ mod test {
         graph.connect((1, 4));
 
         assert_eq!(graph.vertices().len(), 5);
-        assert_eq!(graph.all_edges().len(), 4);
+        assert_eq!(graph.adjacents().len(), 4);
 
         graph.split_vertex(1);
 
         assert_eq!(graph.vertices().len(), 8);
-        assert_eq!(graph.all_edges().len(), 8);
+        assert_eq!(graph.adjacents().len(), 8);
     }
 }

@@ -1,8 +1,10 @@
+use serde::{Deserialize, Serialize};
+
 use super::VertexId;
 
 pub type EdgeId = (VertexId, VertexId);
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Serialize, Deserialize, Clone, Copy)]
 pub struct Edge {
     pub a: VertexId,
     pub b: VertexId,

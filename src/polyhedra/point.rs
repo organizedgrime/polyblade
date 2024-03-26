@@ -10,7 +10,7 @@ use super::{Vertex, VertexId};
 pub struct Point {
     pub id: usize,
     // List of point adjacents by index
-    pub adjacents: HashSet<usize>,
+    pub adjacents: HashSet<VertexId>,
     // Position
     pub xyz: Vector3<f32>,
     // Speed
@@ -71,8 +71,9 @@ impl Point {
         Self {
             id,
             adjacents,
+            //xyz: Vector3::zero(),
             xyz: vec3(random(), random(), random()).normalize(),
-            dxyz: vec3(0.0, 0.0, 0.0),
+            dxyz: Vector3::zero(),
         }
     }
 

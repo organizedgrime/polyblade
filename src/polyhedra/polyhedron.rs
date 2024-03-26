@@ -17,14 +17,27 @@ pub struct Polyhedron {
     // List of faces
     pub faces: Vec<Face>,
 
+    // Spring forces
+    pub adjacents: HashSet<Edge>,
+    pub neighbors: HashSet<Edge>,
+    pub diameter: HashSet<Edge>,
+
     // Secret list of vertices that need to avoid each other
-    pub(crate) enemies: HashSet<(usize, usize)>,
+    pub(crate) enemies: HashSet<Edge>,
     pub(crate) edge_length: f32,
 }
 
 // Operations
 impl Polyhedron {
-    pub fn new(name: &str, points: Vec<Vec<usize>>, _faces: Vec<Vec<usize>>) -> Polyhedron {
+    // After a change is made
+    pub fn recompute_qualities(&mut self) {
+        self.faces = self.faces();
+        self.adjacents = self.adjacents();
+        self.neighbors = self.neighbors();
+        self.diameter = self.diameter();
+    }
+
+    pub fn new(name: &str, points: Vec<Vec<usize>>) -> Polyhedron {
         let mut poly = Polyhedron {
             name: String::from(name),
             points: points
@@ -35,51 +48,12 @@ impl Polyhedron {
             faces: vec![],
             enemies: HashSet::new(),
             edge_length: 1.0,
+            adjacents: HashSet::new(),
+            neighbors: HashSet::new(),
+            diameter: HashSet::new(),
         };
-        poly.recompute_faces();
+        poly.recompute_qualities();
         poly
-    }
-
-    fn adjacents(&self) -> HashSet<Edge> {
-        let mut edges = HashSet::new();
-        for (v1, point) in self.points.iter().enumerate() {
-            for v2 in point.adjacents.clone().into_iter() {
-                edges.insert((v1, v2).into());
-            }
-        }
-        edges
-    }
-
-    fn neighbors(&self) -> HashSet<Edge> {
-        // Track all neighbors
-        let mut neighbors = HashSet::new();
-        // For each point
-        for v1 in 0..self.points.len() {
-            // Grab its adjacents
-            for v2 in self.points[v1].adjacents.clone() {
-                for v3 in self.points[v2].adjacents.clone() {
-                    if v1 != v3 {
-                        neighbors.insert((v1, v3).into());
-                    }
-                }
-            }
-        }
-        neighbors
-    }
-
-    fn strangers(&self) -> HashSet<Edge> {
-        let mut strangers = HashSet::new();
-        let mut known = self.adjacents();
-        known.extend(self.neighbors());
-        for v1 in 0..self.points.len() {
-            for v2 in 0..self.points.len() {
-                let edge = (v1, v2).into();
-                if v1 != v2 && !known.contains(&edge) {
-                    strangers.insert(edge);
-                }
-            }
-        }
-        strangers
     }
 
     fn apply_forces(&mut self, edges: HashSet<Edge>, l: f32, k: f32) {
@@ -106,18 +80,24 @@ impl Polyhedron {
         // d = diameter (circumsphere / face of projection)
 
         // Natural lengths
-        let l_a = 0.7 / 1.5; //self.edge_length;
-        let l_n = l_a * 2.0;
-        let l_d = l_a * 5.0;
+        let l_d = self.edge_length * 2.0;
+        //let l_a = l_d / 5.0;
+
+        //let l_a = 0.7 / 1.5; //self.edge_length;
+        //let l_n = l_a * 2.0;
+        //let l_d = l_a * 5.0;
+        let l_n = l_d / 8.0;
+        let l_a = l_n / 2.0;
 
         // Spring constants
         let k_a = 0.9;
         let k_n = 0.4;
         let k_d = 0.3;
 
-        self.apply_forces(self.adjacents(), l_a, k_a);
-        self.apply_forces(self.neighbors(), l_n, k_n);
-        self.apply_forces(self.strangers(), l_d, k_d);
+        self.apply_forces(self.adjacents.clone(), l_a, k_a);
+        self.apply_forces(self.neighbors.clone(), l_n, k_n);
+        self.apply_forces(self.diameter.clone(), l_d, k_d);
+        //self.apply_forces(self.enemies.clone(), l_d * 1.5, k_d / 2.0);
     }
 
     fn center(&mut self) {
@@ -133,20 +113,23 @@ impl Polyhedron {
     }
 
     fn resize(&mut self) {
-        self.edge_length /= self
+        let mean_magnitude = self
             .points
             .iter()
             .map(|p| p.xyz.magnitude())
             .fold(0.0, f32::max);
+        let distance = mean_magnitude - 1.0;
+        //println!("distance");
+
+        self.edge_length -= distance / 200.0;
     }
 
     fn quarrel(&mut self) {
-        let threshold = 0.05;
+        let threshold = 0.001;
         for v1 in 0..self.points.len() {
             for v2 in 0..self.points.len() {
                 if self.points[v1].xyz.distance(self.points[v2].xyz).abs() < threshold {
-                    let pair = if v1 < v2 { (v1, v2) } else { (v2, v1) };
-                    self.enemies.insert(pair);
+                    self.enemies.insert((v1, v2).into());
                 }
             }
         }
@@ -162,7 +145,7 @@ impl Polyhedron {
 
 impl Polyhedron {
     fn face_xyz(&self, face_index: usize) -> Vec<Vector3<f32>> {
-        self.faces()[face_index]
+        self.faces[face_index]
             .0
             .iter()
             .map(|f| self.points[*f].xyz)
@@ -170,7 +153,7 @@ impl Polyhedron {
     }
 
     fn face_normal(&self, face_index: usize) -> Vector3<f32> {
-        let face = &self.faces()[face_index].0;
+        let face = &self.faces[face_index].0;
         let mut normal = Vector3::<f32>::new(0.0, 0.0, 0.0);
         for i in 0..face.len() {
             let v1 = self.points[face[i]].xyz;
@@ -194,8 +177,7 @@ impl Polyhedron {
         let mut polyhedron_colors = Vec::new();
         let mut polyhedron_barycentric = Vec::new();
 
-        let faces = self.faces();
-        for face_index in 0..faces.len() {
+        for face_index in 0..self.faces.len() {
             // Create triangles from the center to each corner
             let mut face_xyz = Vec::new();
             let vertices = self.face_xyz(face_index);
@@ -215,8 +197,12 @@ impl Polyhedron {
                 ]);
             }
 
-            let color = HSL::new((360.0 / (faces.len() as f64)) * face_index as f64, 1.0, 0.5)
-                .to_linear_srgb();
+            let color = HSL::new(
+                (360.0 / (self.faces.len() as f64)) * face_index as f64,
+                1.0,
+                0.5,
+            )
+            .to_linear_srgb();
             polyhedron_colors.extend(vec![color; face_xyz.len()]);
             polyhedron_xyz.extend(face_xyz);
         }
