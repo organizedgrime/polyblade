@@ -277,16 +277,13 @@ impl Graph {
     }
     /// Neighbors
     pub fn neighbors(&mut self) {
-        let V = self.vertices().len();
         let dist = self.dist.clone();
 
         let mut neighbors = HashSet::<Edge>::new();
-        for u in 0..V {
-            for v in 0..V {
-                let lu = dist.get(&u);
-                let lv = dist.get(&v);
-                if let (Some(lu), Some(lv)) = (lu, lv) {
-                    if lu.get(&v) == Some(&2) || lv.get(&u) == Some(&2) {
+        for u in self.vertices() {
+            for v in self.vertices() {
+                if dist.contains_key(&u) && dist.contains_key(&v) {
+                    if dist[&u][&v] == 2 || dist[&v][&u] == 2 {
                         neighbors.insert((u, v).into());
                     }
                 }
@@ -330,7 +327,7 @@ impl Graph {
                         //let lj = dist.get_mut(&j);
                         if dist[&i][&k] != u32::MAX && dist[&k][&j] != u32::MAX {
                             let nv = dist[&i][&k] + dist[&k][&j];
-                            if dist[&i][&j] > nv {
+                            if dist[&i][&j] > nv || dist[&j][&i] > nv {
                                 {
                                     let li = dist.get_mut(&i).unwrap();
                                     li.insert(j, nv);
@@ -404,7 +401,6 @@ impl Graph {
 
     /// Periphery / diameter
     pub fn diameter(&mut self) {
-        let V = self.vertices().len();
         let dist = self.dist.clone();
         if let Some(max) = dist
             .clone()
@@ -416,12 +412,10 @@ impl Graph {
             .max()
         {
             let mut diameter = HashSet::<Edge>::new();
-            for u in 0..V {
-                for v in 0..V {
-                    let lu = dist.get(&u);
-                    let lv = dist.get(&v);
-                    if let (Some(lu), Some(lv)) = (lu, lv) {
-                        if lu[&v] == max.clone() || lv[&u] == max.clone() {
+            for u in self.vertices() {
+                for v in self.vertices() {
+                    if dist.contains_key(&u) && dist.contains_key(&v) {
+                        if dist[&u][&v] == max || dist[&v][&u] == max {
                             diameter.insert((u, v).into());
                         }
                     }

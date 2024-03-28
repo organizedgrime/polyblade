@@ -28,7 +28,7 @@ impl Polyhedron {
     }
 
     pub fn truncate(&mut self) {
-        self.graph.truncate();
+        self.graph.ambo();
         self.graph.update();
 
         // remove all the removed vertices
@@ -74,19 +74,24 @@ impl Polyhedron {
 
     fn apply_forces(&mut self, edges: HashSet<Edge>, l: f32, k: f32) {
         for (i1, i2) in edges.into_iter().map(|e| e.id()) {
-            let v1 = &self.points[i1].xyz;
-            let v2 = &self.points[i2].xyz;
+            let i1 = self.points.iter().position(|p| p.id == i1);
+            let i2 = self.points.iter().position(|p| p.id == i2);
 
-            let d = v1 - v2;
-            let dist = d.magnitude();
-            let distention = l - dist;
-            let restorative_force = k / 2.0 * distention;
-            let time_factor = 1000.0;
-            let f = d * restorative_force / time_factor;
-            self.points[i1].add_force(f);
-            self.points[i2].add_force(-f);
-            self.points[i1].update();
-            self.points[i2].update();
+            if let (Some(i1), Some(i2)) = (i1, i2) {
+                let v1 = &self.points[i1].xyz;
+                let v2 = &self.points[i2].xyz;
+
+                let d = v1 - v2;
+                let dist = d.magnitude();
+                let distention = l - dist;
+                let restorative_force = k / 2.0 * distention;
+                let time_factor = 1000.0;
+                let f = d * restorative_force / time_factor;
+                self.points[i1].add_force(f);
+                self.points[i2].add_force(-f);
+                self.points[i1].update();
+                self.points[i2].update();
+            }
         }
     }
 
@@ -141,6 +146,7 @@ impl Polyhedron {
     }
 
     fn quarrel(&mut self) {
+        /*
         let threshold = 0.001;
         for v1 in 0..self.points.len() {
             for v2 in 0..self.points.len() {
@@ -149,6 +155,7 @@ impl Polyhedron {
                 }
             }
         }
+        */
     }
 
     pub fn update(&mut self) {
@@ -164,7 +171,7 @@ impl Polyhedron {
         self.graph.faces[face_index]
             .0
             .iter()
-            .map(|f| self.points[*f].xyz)
+            .map(|f| self.points.iter().find(|p| p.id == *f).unwrap().xyz)
             .collect()
     }
 
@@ -172,9 +179,14 @@ impl Polyhedron {
         let face = &self.graph.faces[face_index].0;
         let mut normal = Vector3::<f32>::new(0.0, 0.0, 0.0);
         for i in 0..face.len() {
-            let v1 = self.points[face[i]].xyz;
-            let v2 = self.points[face[(i + 1) % face.len()]].xyz;
-            normal += v1.cross(v2);
+            let v1 = self.points.iter().find(|p| p.id == face[i]);
+            let v2 = self
+                .points
+                .iter()
+                .find(|p| p.id == face[(i + 1) % face.len()]);
+            if let (Some(v1), Some(v2)) = (v1, v2) {
+                normal += v1.xyz.cross(v2.xyz);
+            }
         }
         normal.normalize()
     }

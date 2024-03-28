@@ -78,10 +78,14 @@ impl Graph {
     pub fn ambo(&mut self) {
         let mut edges = HashSet::new();
         for vertex in self.vertices() {
+            let e = self.split_vertex(vertex.id()).edges();
+            println!("e: {:?}", e);
             for edge in self.split_vertex(vertex.id()).edges() {
                 edges.insert(edge);
             }
         }
+
+        self.adjacents();
 
         for edge in self.adjacents.clone() {
             if !edges.contains(&edge) {
