@@ -11,6 +11,7 @@ impl Graph {
         self.delete(id.0);
     }
 
+    /*
     pub fn split_vertex(&mut self, v: VertexId) -> Face {
         let mut new_face = vec![];
         let mut danglers = vec![];
@@ -23,7 +24,7 @@ impl Graph {
             danglers.push(u);
         }
 
-        danglers.sort();
+        //danglers.sort();
 
         for d in danglers {
             // Create new node and connect to dangler
@@ -40,8 +41,8 @@ impl Graph {
 
         Face(new_face.into_iter().collect())
     }
+    */
 
-    /*
     fn split_vertex(&mut self, id: VertexId) -> Face {
         let mut new_face = HashSet::new();
         let mut previous = id;
@@ -64,8 +65,6 @@ impl Graph {
         new_face.insert(id);
         Face(new_face.into_iter().collect())
     }
-
-    */
 
     /// `t` truncate is equivalent to vertex splitting
     pub fn truncate(&mut self) {
@@ -139,17 +138,18 @@ mod test {
         assert_eq!(graph.adjacents.len(), 5);
 
         graph.contract_edge((1, 3));
+        graph.update();
 
         assert_eq!(graph.vertices().len(), 5);
         assert_eq!(graph.adjacents.len(), 4);
 
-        assert_eq!(graph.connections(0), vec![2].into_iter().collect());
-        assert_eq!(graph.connections(1), vec![2].into_iter().collect());
+        assert_eq!(graph.connections(0), vec![3].into_iter().collect());
+        assert_eq!(graph.connections(2), vec![3].into_iter().collect());
 
-        assert_eq!(graph.connections(2), vec![0, 1, 3, 4].into_iter().collect());
+        assert_eq!(graph.connections(3), vec![0, 2, 4, 5].into_iter().collect());
 
-        assert_eq!(graph.connections(3), vec![2].into_iter().collect());
-        assert_eq!(graph.connections(4), vec![2].into_iter().collect());
+        assert_eq!(graph.connections(4), vec![3].into_iter().collect());
+        assert_eq!(graph.connections(5), vec![3].into_iter().collect());
     }
 
     #[test]

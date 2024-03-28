@@ -18,12 +18,12 @@ use super::{Point, Polyhedron};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Graph {
-    pub adjacency_matrix: Vec<Vec<bool>>,
+    pub adjacency_matrix: HashMap<VertexId, HashMap<VertexId, bool>>,
     pub faces: Vec<Face>,
     pub adjacents: HashSet<Edge>,
     pub neighbors: HashSet<Edge>,
     pub diameter: HashSet<Edge>,
-    pub dist: Vec<Vec<u32>>,
+    pub dist: HashMap<usize, Vec<u32>>,
 }
 
 impl Graph {
@@ -46,12 +46,20 @@ impl Graph {
     /// New with n vertices
     pub fn new_disconnected(vertex_count: usize) -> Self {
         let mut poly = Self {
-            adjacency_matrix: vec![vec![false; vertex_count]; vertex_count],
+            adjacency_matrix: (0..vertex_count)
+                .into_iter()
+                .map(|x| {
+                    (
+                        x,
+                        (0..vertex_count).into_iter().map(|y| (y, false)).collect(), // vec![false; vertex_count]
+                    )
+                })
+                .collect(),
             faces: vec![],
             adjacents: HashSet::new(),
             neighbors: HashSet::new(),
             diameter: HashSet::new(),
-            dist: vec![],
+            dist: HashMap::new(),
         };
         poly.update();
         poly
@@ -67,43 +75,74 @@ impl Graph {
         }
     }
 
-    pub fn vertices(&self) -> Vec<usize> {
-        (0..self.adjacency_matrix.len()).collect()
+    pub fn vertices(&self) -> Vec<VertexId> {
+        self.adjacency_matrix
+            .clone()
+            .into_iter()
+            .map(|(k, _)| k)
+            .collect()
     }
 
     pub fn connect(&mut self, id: EdgeId) {
         if let Some(edge) = self.edge(id) {
-            self.adjacency_matrix[edge.a][edge.b] = true;
-            self.adjacency_matrix[edge.b][edge.a] = true;
+            if let Some(list) = self.adjacency_matrix.get_mut(&edge.a) {
+                list.insert(edge.b, true);
+            }
+            if let Some(list) = self.adjacency_matrix.get_mut(&edge.b) {
+                list.insert(edge.a, true);
+            }
             self.update();
         }
     }
 
     pub fn disconnect(&mut self, id: EdgeId) {
         if let Some(edge) = self.edge(id) {
-            self.adjacency_matrix[edge.a][edge.b] = false;
-            self.adjacency_matrix[edge.b][edge.a] = false;
+            if let Some(list) = self.adjacency_matrix.get_mut(&edge.a) {
+                list.insert(edge.b, false);
+            }
+            if let Some(list) = self.adjacency_matrix.get_mut(&edge.b) {
+                list.insert(edge.a, false);
+            }
             self.update();
         }
     }
 
-    pub fn insert(&mut self, neighbor: Option<VertexId>) -> usize {
+    pub fn insert(&mut self, neighbor: Option<VertexId>) -> VertexId {
+        let new_id = self
+            .adjacency_matrix
+            .clone()
+            .into_iter()
+            .map(|(k, _)| k)
+            .max()
+            .unwrap()
+            + 1;
+
         for i in 0..self.adjacency_matrix.len() {
-            self.adjacency_matrix[i].push(false);
+            if let Some(list) = self.adjacency_matrix.get_mut(&i) {
+                list.insert(new_id, false);
+            }
         }
 
-        self.adjacency_matrix
-            .push(vec![false; self.adjacency_matrix.len() + 1]);
+        self.adjacency_matrix.insert(
+            new_id,
+            [self.vertices(), vec![new_id]]
+                .concat()
+                .into_iter()
+                .map(|v| (v, false))
+                .collect(), // vec![false; self.adjacency_matrix.len() + 1]
+        );
 
         self.update();
-        self.adjacency_matrix.len() - 1
+        new_id
     }
 
     pub fn delete(&mut self, id: usize) {
         for i in 0..self.adjacency_matrix.len() {
-            self.adjacency_matrix[i].remove(id);
+            if let Some(list) = self.adjacency_matrix.get_mut(&i) {
+                list.remove(&id);
+            }
         }
-        self.adjacency_matrix.remove(id);
+        self.adjacency_matrix.remove(&id);
         self.update();
     }
 
@@ -128,9 +167,11 @@ impl Graph {
     //fn connections(&self, id: VertexId) -> HashSet<VertexId>;
     pub fn connections(&self, vertex: usize) -> HashSet<VertexId> {
         let mut connections = HashSet::<VertexId>::new();
-        for (other, connected) in self.adjacency_matrix[vertex].iter().enumerate() {
-            if *connected && other != vertex {
-                connections.insert(other);
+        if let Some(list) = self.adjacency_matrix.get(&vertex) {
+            for (other, connected) in list.into_iter() {
+                if *connected && other != &vertex {
+                    connections.insert(*other);
+                }
             }
         }
         connections
@@ -242,8 +283,12 @@ impl Graph {
         let mut neighbors = HashSet::<Edge>::new();
         for u in 0..V {
             for v in 0..V {
-                if dist[u][v] == 2 || dist[v][u] == 2 {
-                    neighbors.insert((u, v).into());
+                let lu = dist.get(&u);
+                let lv = dist.get(&v);
+                if let (Some(lu), Some(lv)) = (lu, lv) {
+                    if lu[v] == 2 || lv[u] == 2 {
+                        neighbors.insert((u, v).into());
+                    }
                 }
             }
         }
@@ -253,24 +298,49 @@ impl Graph {
     pub fn distances(&mut self) {
         let V = self.vertices().len();
         // let dist be a |V| × |V| array of minimum distances initialized to ∞ (infinity)
-        let mut dist = vec![vec![u32::MAX; V]; V];
+        let mut dist: HashMap<VertexId, Vec<u32>> = self
+            .adjacency_matrix
+            .clone()
+            .into_iter()
+            .map(|(k, _)| (k, vec![u32::MAX; V]))
+            .collect();
+        //let mut dist = vec![vec![u32::MAX; V]; V];
 
         for edge in self.adjacents.clone() {
             // The weight of the edge (u, v)
-            dist[edge.id().0][edge.id().1] = 1;
-            dist[edge.id().1][edge.id().0] = 1;
+            if let Some(l0) = dist.get_mut(&edge.id().0) {
+                l0.insert(edge.id().1, 1);
+            }
+            if let Some(l1) = dist.get_mut(&edge.id().1) {
+                l1.insert(edge.id().0, 1);
+            }
 
             for v in self.vertices() {
-                dist[v.id()][v.id()] = 0;
+                if let Some(list) = dist.get_mut(&v.id()) {
+                    list.insert(v.id(), 0);
+                }
             }
 
             for k in 0..V {
                 for i in 0..V {
                     for j in 0..V {
-                        if dist[i][k] != u32::MAX && dist[k][j] != u32::MAX {
-                            if dist[i][j] > dist[i][k] + dist[k][j] {
-                                dist[i][j] = dist[i][k] + dist[k][j];
-                                dist[j][i] = dist[i][k] + dist[k][j];
+                        if dist.contains_key(&j) {
+                            let li = dist.get(&i);
+                            //let lj = dist.get_mut(&j);
+                            let lk = dist.get(&k);
+                            if let (Some(li), Some(lk)) = (li, lk) {
+                                if li[k] < u32::MAX / 2 && lk[j] < u32::MAX / 2 {
+                                    println!("lik {}, lkj {}", li[k], lk[j]);
+                                    let nv = li[k] + lk[j];
+                                    {
+                                        let li = dist.get_mut(&i).unwrap();
+                                        li.insert(j, nv);
+                                    }
+                                    {
+                                        let lj = dist.get_mut(&j).unwrap();
+                                        lj.insert(j, nv);
+                                    }
+                                }
                             }
                         }
                     }
@@ -288,6 +358,7 @@ impl Graph {
         if let Some(max) = dist
             .clone()
             .into_iter()
+            .map(|(_, v)| v)
             .flatten()
             .filter(|&b| b < u32::MAX)
             .max()
@@ -295,8 +366,12 @@ impl Graph {
             let mut diameter = HashSet::<Edge>::new();
             for u in 0..V {
                 for v in 0..V {
-                    if dist[u][v] == max.clone() || dist[v][u] == max.clone() {
-                        diameter.insert((u, v).into());
+                    let lu = dist.get(&u);
+                    let lv = dist.get(&v);
+                    if let (Some(lu), Some(lv)) = (lu, lv) {
+                        if lu[v] == max.clone() || lv[u] == max.clone() {
+                            diameter.insert((u, v).into());
+                        }
                     }
                 }
             }
@@ -319,89 +394,14 @@ impl Graph {
     }
 }
 
-/*
-pub struct SimpleGraph {}
-
-
-impl Graph<Point> for Polyhedron {
-    fn vertex(&self, id: VertexId) -> Option<Point> {
-        self.points.get(id).cloned()
-    }
-
-    fn new_disconnected(vertex_count: usize) -> Self {
-        Polyhedron {
-            name: "".to_string(),
-            points: (0..vertex_count).map(Point::new_empty).collect(),
-            faces: vec![],
-            enemies: HashSet::new(),
-            edge_length: 1.0,
-            adjacents: HashSet::new(),
-            neighbors: HashSet::new(),
-            diameter: HashSet::new(),
-        }
-    }
-
-    fn connect(&mut self, id: EdgeId) {
-        if let Some(edge) = self.edge(id) {
-            self.points[edge.a].connect(edge.b);
-            self.points[edge.b].connect(edge.a);
-        }
-    }
-
-    fn disconnect(&mut self, id: EdgeId) {
-        if let Some(edge) = self.edge(id) {
-            self.points[edge.a].disconnect(edge.b);
-            self.points[edge.b].disconnect(edge.a);
-        }
-    }
-
-    fn insert(&mut self, neighbor: Option<VertexId>) -> Point {
-        let mut point = Point::new(self.points.len(), HashSet::new());
-        if let Some(v) = neighbor {
-            point.xyz = self.points[v].xyz;
-        }
-        self.points.push(point.clone());
-        point
-    }
-
-    fn delete(&mut self, id: VertexId) {
-        for i in 0..self.points.len() {
-            self.points[i].delete(id);
-        }
-        self.points.remove(id);
-        self.points = self
-            .points
-            .clone()
-            .into_iter()
-            .enumerate()
-            .map(|(new_id, mut v)| {
-                v.id = new_id;
-                v
-            })
-            .collect();
-    }
-
-    fn connections(&self, id: VertexId) -> HashSet<VertexId> {
-        if let Some(vertex) = self.vertex(id) {
-            vertex.adjacents.clone()
-        } else {
-            HashSet::new()
-        }
-    }
-
-    fn vertices(&self) -> Vec<Point> {
-        self.points.clone()
-    }
-}
-
 #[cfg(test)]
 mod test {
     use crate::prelude::*;
     use test_case::test_case;
 
-    #[test_case(SimpleGraph::new_disconnected(4) ; "SimpleGraph")]
-    #[test_case(Polyhedron::new_disconnected(4) ; "Polyhedron")]
-    fn basics<G: Graph<V>, V: Vertex>(mut graph: G) {
+    #[test]
+    fn basics() {
+        let mut graph = Graph::new_disconnected(4);
         // Connect
         graph.connect((0, 1));
         graph.connect((0, 2));
@@ -418,23 +418,24 @@ mod test {
 
         // Delete
         graph.delete(1);
-        assert_eq!(graph.connections(0), vec![1].into_iter().collect());
-        assert_eq!(graph.connections(1), vec![0].into_iter().collect());
-        assert_eq!(graph.connections(2), vec![].into_iter().collect());
+        assert_eq!(graph.connections(0), vec![2].into_iter().collect());
+        assert_eq!(graph.connections(1), vec![].into_iter().collect());
+        assert_eq!(graph.connections(2), vec![0].into_iter().collect());
     }
 
-    #[test_case(SimpleGraph::new_disconnected(4) ; "SimpleGraph")]
-    #[test_case(Polyhedron::new_disconnected(4) ; "Polyhedron")]
-    fn chorsless_cycles<G: Graph<V>, V: Vertex>(mut graph: G) {
+    #[test]
+    fn chordless_cycles() {
+        let mut graph = Graph::new_disconnected(4);
         // Connect
         graph.connect((0, 1));
         graph.connect((1, 2));
         graph.connect((2, 3));
 
-        assert_eq!(graph.faces().len(), 0);
+        graph.update();
+        assert_eq!(graph.faces.len(), 0);
 
         graph.connect((2, 0));
-        assert_eq!(graph.faces(), vec![Face(vec![0, 1, 2])]);
+        graph.update();
+        assert_eq!(graph.faces, vec![Face(vec![0, 1, 2])]);
     }
 }
-*/
