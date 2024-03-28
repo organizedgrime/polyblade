@@ -133,6 +133,7 @@ mod test {
 
         graph.connect((3, 4));
         graph.connect((3, 5));
+        graph.update();
 
         assert_eq!(graph.vertices().len(), 6);
         assert_eq!(graph.adjacents.len(), 5);
@@ -160,11 +161,13 @@ mod test {
 
         graph.connect((1, 3));
         graph.connect((1, 4));
+        graph.update();
 
         assert_eq!(graph.vertices().len(), 5);
         assert_eq!(graph.adjacents.len(), 4);
 
         graph.split_vertex(1);
+        graph.update();
 
         assert_eq!(graph.vertices().len(), 8);
         assert_eq!(graph.adjacents.len(), 8);

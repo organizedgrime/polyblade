@@ -323,20 +323,13 @@ impl Graph {
             })
             .collect();
 
-        println!("dist: {:?}", dist);
-
-        //let mut dist = vec![vec![u32::MAX; V]; V];
-
         for k in self.vertices() {
             for i in self.vertices() {
                 for j in self.vertices() {
                     if dist.contains_key(&j) && dist.contains_key(&i) && dist.contains_key(&k) {
                         //let lj = dist.get_mut(&j);
                         if dist[&i][&k] != u32::MAX && dist[&k][&j] != u32::MAX {
-                            //println!("lik {}, lkj {}", dist[&i][&k], dist[&k][&j]);
-
                             let nv = dist[&i][&k] + dist[&k][&j];
-
                             if dist[&i][&j] > nv {
                                 {
                                     let li = dist.get_mut(&i).unwrap();
