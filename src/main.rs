@@ -78,8 +78,8 @@ pub fn main() {
                     //shape.ambo();
                     //shape2.truncate();
                     //shape.graph.truncate();
-                    //shape.split_vertex(0);
-                    //shape.recompute_qualities();
+                    shape.truncate();
+                    shape.recompute_qualities();
                     //shape2.recompute_qualities();
                 }
 

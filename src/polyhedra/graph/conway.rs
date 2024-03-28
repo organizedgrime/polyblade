@@ -43,7 +43,7 @@ impl Graph {
     }
     */
 
-    fn split_vertex(&mut self, id: VertexId) -> Face {
+    pub fn split_vertex(&mut self, id: VertexId) -> Face {
         let mut new_face = HashSet::new();
         let mut previous = id;
         for v2 in &self.connections(id).into_iter().collect::<Vec<_>>()[1..] {

@@ -24,11 +24,28 @@ pub struct Polyhedron {
 impl Polyhedron {
     // After a change is made
     pub fn recompute_qualities(&mut self) {
-        self.graph.adjacents();
-        self.graph.distances();
-        self.graph.neighbors();
-        self.graph.diameter();
-        self.graph.faces();
+        self.graph.update();
+    }
+
+    pub fn truncate(&mut self) {
+        self.graph.truncate();
+        self.graph.update();
+
+        // remove all the removed vertices
+        let vs = self.graph.vertices();
+        for id in self.points.clone().into_iter().map(|p| p.id) {
+            if !vs.contains(&id) {
+                self.points
+                    .remove(self.points.iter().position(|p| p.id == id).unwrap());
+            }
+        }
+
+        // add all the new ones
+        for v in vs {
+            if self.points.iter().find(|p| p.id == v).is_none() {
+                self.points.push(Point::new(v));
+            }
+        }
     }
 
     pub fn new(name: &str, points: Vec<Vec<usize>>) -> Polyhedron {
