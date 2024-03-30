@@ -4,13 +4,32 @@ pub use super::*;
 
 impl Graph {
     pub fn contract_edge(&mut self, id: EdgeId) {
-        // Give b all the same connections as a
-        let adj = self.connections(id.0).clone();
-        for b in adj.into_iter() {
-            self.connect((b, id.1))
+        // This operation requires up to date edges
+        self.update();
+
+        //println
+        let c0 = self.ghosts(id.0);
+        let c1 = self.ghosts(id.1);
+
+        println!("c0: {:?}, c1: {:?}", c0, c1);
+
+        //let all_edges = self.adjacents;
+        for x in c0.iter() {
+            for y in c1.iter() {
+                let true_edge = (*x, *y).into();
+                if self.adjacents.contains(&true_edge) {
+                    println!("FOUND A TRUE EDGE!");
+                    // Give b all the same connections as a
+                    let adj = self.connections(true_edge.id().0).clone();
+                    for b in adj.into_iter() {
+                        self.connect((b, true_edge.id().1))
+                    }
+                    // Delete a
+                    self.delete(true_edge.id().0);
+                    break;
+                }
+            }
         }
-        // Delete a
-        self.delete(id.0);
     }
 
     /*
@@ -51,15 +70,14 @@ impl Graph {
     pub fn split_vertex(&mut self, id: VertexId) {
         let connections: Vec<VertexId> = self.connections(id).into_iter().collect();
 
-        /*
         // Add the connections to the ghost matrix
         if !self.ghost_matrix.contains_key(&id) {
             self.ghost_matrix.insert(id, HashSet::new());
         }
         for c in &connections {
-            //self.ghost_matrix[&id].insert(*c);
+            println!("removing {id}, adding {c} to ghost");
+            self.ghost_matrix.get_mut(&id).unwrap().insert(*c);
         }
-        */
 
         //self.delete(id);
         let mut new_face = Vec::new();
@@ -91,26 +109,17 @@ impl Graph {
     /// `a` ambo is equivalent to the composition of vertex splitting and edge contraction vefore
     /// applying vertex splitting.
     pub fn ambo(&mut self) {
-
-        /*
-        //let mut edges = HashSet::new();
+        let original_edges = self.adjacents.clone();
         for vertex in self.vertices() {
-            let e = self.split_vertex(vertex.id());
-            println!("e: {:?}", e);
-            for edge in self.split_vertex(vertex.id()).edges() {
-                edges.insert(edge);
-            }
+            self.update();
+            self.split_vertex(vertex.id());
         }
 
-        self.adjacents();
-
-        for edge in self.adjacents.clone() {
-            if !edges.contains(&edge) {
-                println!("contracting: {:?}", edge);
-                self.contract_edge(edge.id());
-            }
+        for edge in original_edges.iter() {
+            self.contract_edge(edge.id());
         }
-            */
+        println!("edges: {:?}", self.adjacents);
+        println!("verts: {:?}", self.vertices());
     }
 
     //
@@ -162,6 +171,7 @@ mod test {
         graph.contract_edge((1, 3));
         graph.update();
 
+        println!("g: {:?}", graph);
         assert_eq!(graph.vertices().len(), 5);
         assert_eq!(graph.adjacents.len(), 4);
 

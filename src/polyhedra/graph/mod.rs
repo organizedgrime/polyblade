@@ -151,13 +151,11 @@ impl Graph {
     }
 
     pub fn delete(&mut self, id: usize) {
-        for i in 0..self.adjacency_matrix.len() {
-            if let Some(list) = self.adjacency_matrix.get_mut(&i) {
-                list.remove(&id);
-            }
+        for v in self.vertices().iter() {
+            self.adjacency_matrix.get_mut(v).unwrap().remove(&id);
+            //.unwrap();
         }
-        self.adjacency_matrix.remove(&id);
-        //self.update();
+        self.adjacency_matrix.remove(&id); //.unwrap();
     }
 
     /// Edges of a vertex
@@ -180,6 +178,9 @@ impl Graph {
     // Vertices that are connected to a given vertex
     //fn connections(&self, id: VertexId) -> HashSet<VertexId>;
     pub fn connections(&self, vertex: usize) -> HashSet<VertexId> {
+        if let Some(children) = self.ghost_matrix.get(&vertex) {
+            return children.clone();
+        }
         let mut connections = HashSet::<VertexId>::new();
         if let Some(list) = self.adjacency_matrix.get(&vertex) {
             for (other, connected) in list.into_iter() {
@@ -227,6 +228,21 @@ impl Graph {
 
         conn
     }
+
+    pub fn ghosts(&self, id: VertexId) -> HashSet<VertexId> {
+        if !self.ghost_matrix.contains_key(&id) {
+            vec![id].into_iter().collect()
+        } else {
+            let l = self.ghost_matrix.get(&id).unwrap();
+            l.into_iter()
+                .map(|g| self.ghosts(*g))
+                .fold(HashSet::new(), |mut acc, l| {
+                    acc.extend(l);
+                    acc
+                })
+        }
+    }
+
     /// All faces
     pub fn faces(&mut self) {
         let all_edges = self.adjacents.clone();
