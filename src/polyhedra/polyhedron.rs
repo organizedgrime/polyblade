@@ -28,7 +28,7 @@ impl Polyhedron {
     }
 
     pub fn truncate(&mut self) {
-        self.graph.ambo();
+        self.graph.truncate();
         self.graph.update();
 
         // remove all the removed vertices
