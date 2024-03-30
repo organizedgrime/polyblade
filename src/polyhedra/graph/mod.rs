@@ -234,12 +234,15 @@ impl Graph {
             vec![id].into_iter().collect()
         } else {
             let l = self.ghost_matrix.get(&id).unwrap();
+            l.clone()
+            /*
             l.into_iter()
                 .map(|g| self.ghosts(*g))
                 .fold(HashSet::new(), |mut acc, l| {
                     acc.extend(l);
                     acc
                 })
+                */
         }
     }
 
