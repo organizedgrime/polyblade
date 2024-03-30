@@ -7,6 +7,7 @@ use std::{
     collections::{HashMap, HashSet},
     u32,
 };
+use tracing::*;
 
 pub use conway::*;
 pub use edge::*;
@@ -18,12 +19,23 @@ use super::{Point, Polyhedron};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Graph {
+    /// Adjacents
     pub adjacency_matrix: HashMap<VertexId, HashMap<VertexId, bool>>,
+    /// Nodes that have been split
+    pub ghost_matrix: HashMap<VertexId, HashSet<VertexId>>,
+    /// Faces
     pub faces: Vec<Face>,
+    /// Edge sets
     pub adjacents: HashSet<Edge>,
     pub neighbors: HashSet<Edge>,
     pub diameter: HashSet<Edge>,
-    pub dist: HashMap<usize, HashMap<VertexId, u32>>,
+
+    /// Distances between all points
+    pub dist: HashMap<VertexId, HashMap<VertexId, u32>>,
+    // Positions in 3D space
+    //pub positions: HashMap<VertexId, Vector3<f32>>,
+    // Speeds
+    //pub speeds: HashMap<VertexId, Vector3<f32>>,
 }
 
 impl Graph {
@@ -55,6 +67,7 @@ impl Graph {
                     )
                 })
                 .collect(),
+            ghost_matrix: HashMap::new(),
             faces: vec![],
             adjacents: HashSet::new(),
             neighbors: HashSet::new(),
@@ -84,6 +97,7 @@ impl Graph {
     }
 
     pub fn connect(&mut self, id: EdgeId) {
+        debug!("connecting {:?}", id);
         if let Some(edge) = self.edge(id) {
             if let Some(list) = self.adjacency_matrix.get_mut(&edge.a) {
                 list.insert(edge.b, true);
@@ -443,7 +457,6 @@ impl Graph {
 #[cfg(test)]
 mod test {
     use crate::prelude::*;
-    use test_case::test_case;
 
     #[test]
     fn basics() {

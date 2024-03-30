@@ -12,7 +12,8 @@ impl Graph {
     }
 
     /*
-    pub fn split_vertex(&mut self, v: VertexId) -> Face {
+    pub fn split_vertex(&mut self, v: VertexId) {
+        //-> Face {
         let mut new_face = vec![];
         let mut danglers = vec![];
 
@@ -33,20 +34,33 @@ impl Graph {
             new_face.push(n);
         }
 
+        // Link all the
         for i in 0..new_face.len() {
             self.connect((new_face[i], new_face[(i + 1) % new_face.len()]));
         }
 
-        self.delete(v);
+        //self.delete(v);
 
-        Face(new_face.into_iter().collect())
+        //Face(new_face.into_iter().collect())
     }
     */
 
-    pub fn split_vertex(&mut self, id: VertexId) -> Face {
-        let mut new_face = HashSet::new();
+    // /*
+    pub fn split_vertex(&mut self, id: VertexId) {
+        let connections: Vec<VertexId> = self.connections(id).into_iter().collect();
+
+        /*
+        // Add the connections to the ghost matrix
+        if !self.ghost_matrix.contains_key(&id) {
+            self.ghost_matrix.insert(id, HashSet::new());
+        }
+        for c in &connections {
+            //self.ghost_matrix[&id].insert(*c);
+        }
+        */
+
         let mut previous = id;
-        for v2 in &self.connections(id).into_iter().collect::<Vec<_>>()[1..] {
+        for v2 in &connections[1..] {
             // Remove existing connection
             self.disconnect((id, *v2));
             // Insert a new vertex
@@ -54,7 +68,6 @@ impl Graph {
 
             // Build new face
             self.connect((previous, new_vertex.id()));
-            new_face.insert(new_vertex.id());
             previous = new_vertex.id();
 
             // Reform old connection
@@ -62,10 +75,8 @@ impl Graph {
         }
         // Close the new face
         self.connect((previous, id));
-        new_face.insert(id);
-        Face(new_face.into_iter().collect())
     }
-
+    //*/
     /// `t` truncate is equivalent to vertex splitting
     pub fn truncate(&mut self) {
         for vertex in self.vertices() {
@@ -76,9 +87,11 @@ impl Graph {
     /// `a` ambo is equivalent to the composition of vertex splitting and edge contraction vefore
     /// applying vertex splitting.
     pub fn ambo(&mut self) {
-        let mut edges = HashSet::new();
+
+        /*
+        //let mut edges = HashSet::new();
         for vertex in self.vertices() {
-            let e = self.split_vertex(vertex.id()).edges();
+            let e = self.split_vertex(vertex.id());
             println!("e: {:?}", e);
             for edge in self.split_vertex(vertex.id()).edges() {
                 edges.insert(edge);
@@ -93,6 +106,7 @@ impl Graph {
                 self.contract_edge(edge.id());
             }
         }
+            */
     }
 
     //
@@ -119,7 +133,6 @@ impl Graph {
 #[cfg(test)]
 mod test {
     use crate::prelude::*;
-    use test_case::test_case;
 
     #[test]
     fn poly() {
