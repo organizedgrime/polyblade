@@ -1,3 +1,5 @@
+use cgmath::Zero;
+
 pub use super::*;
 
 impl Graph {
@@ -59,22 +61,24 @@ impl Graph {
         }
         */
 
-        let mut previous = id;
-        for v2 in &connections[1..] {
-            // Remove existing connection
-            self.disconnect((id, *v2));
-            // Insert a new vertex
-            let new_vertex = self.insert(Some(id));
+        //self.delete(id);
+        let mut new_face = Vec::new();
 
-            // Build new face
-            self.connect((previous, new_vertex.id()));
-            previous = new_vertex.id();
-
+        for v2 in &connections {
+            // Insert a new node in the same location
+            let new_vertex = self.insert(Some(Vector3::zero()));
+            //
+            new_face.push(new_vertex);
             // Reform old connection
             self.connect((*v2, new_vertex.id()));
         }
-        // Close the new face
-        self.connect((previous, id));
+
+        // Link all the
+        for i in 0..new_face.len() {
+            self.connect((new_face[i], new_face[(i + 1) % new_face.len()]));
+        }
+
+        self.delete(id);
     }
     //*/
     /// `t` truncate is equivalent to vertex splitting
@@ -186,6 +190,7 @@ mod test {
         graph.split_vertex(1);
         graph.update();
 
+        println!("g: {:?}", graph);
         assert_eq!(graph.vertices().len(), 8);
         assert_eq!(graph.adjacents.len(), 8);
     }

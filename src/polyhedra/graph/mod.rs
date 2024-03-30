@@ -3,6 +3,7 @@ mod edge;
 mod face;
 mod vertex;
 
+use cgmath::Vector3;
 use std::{
     collections::{HashMap, HashSet},
     u32,
@@ -48,7 +49,7 @@ impl Graph {
     }
 
     pub fn vertex(&self, id: VertexId) -> Option<usize> {
-        if id < self.adjacency_matrix.len() {
+        if self.adjacency_matrix.contains_key(&id) {
             Some(id)
         } else {
             None
@@ -97,31 +98,35 @@ impl Graph {
     }
 
     pub fn connect(&mut self, id: EdgeId) {
-        debug!("connecting {:?}", id);
+        println!("connecting {:?}", id);
         if let Some(edge) = self.edge(id) {
-            if let Some(list) = self.adjacency_matrix.get_mut(&edge.a) {
-                list.insert(edge.b, true);
-            }
-            if let Some(list) = self.adjacency_matrix.get_mut(&edge.b) {
-                list.insert(edge.a, true);
-            }
-            //self.update();
+            self.adjacency_matrix
+                .get_mut(&edge.a)
+                .unwrap()
+                .insert(edge.b, true);
+
+            self.adjacency_matrix
+                .get_mut(&edge.b)
+                .unwrap()
+                .insert(edge.a, true);
         }
     }
 
     pub fn disconnect(&mut self, id: EdgeId) {
         if let Some(edge) = self.edge(id) {
-            if let Some(list) = self.adjacency_matrix.get_mut(&edge.a) {
-                list.insert(edge.b, false);
-            }
-            if let Some(list) = self.adjacency_matrix.get_mut(&edge.b) {
-                list.insert(edge.a, false);
-            }
-            //self.update();
+            self.adjacency_matrix
+                .get_mut(&edge.a)
+                .unwrap()
+                .insert(edge.b, false);
+            self.adjacency_matrix
+                .get_mut(&edge.b)
+                .unwrap()
+                .insert(edge.a, false);
         }
     }
 
-    pub fn insert(&mut self, neighbor: Option<VertexId>) -> VertexId {
+    pub fn insert(&mut self, pos: Option<Vector3<f32>>) -> VertexId {
+        let existing_vertices = self.vertices();
         let new_id = self
             .adjacency_matrix
             .clone()
@@ -139,14 +144,9 @@ impl Graph {
 
         self.adjacency_matrix.insert(
             new_id,
-            [self.vertices(), vec![new_id]]
-                .concat()
-                .into_iter()
-                .map(|v| (v, false))
-                .collect(), // vec![false; self.adjacency_matrix.len() + 1]
+            existing_vertices.into_iter().map(|v| (v, false)).collect(),
         );
 
-        //self.update();
         new_id
     }
 
