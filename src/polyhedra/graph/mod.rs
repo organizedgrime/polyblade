@@ -25,6 +25,7 @@ pub struct Graph {
     pub adjacency_matrix: HashMap<VertexId, HashMap<VertexId, bool>>,
     /// Nodes that have been split and their children
     pub ghost_matrix: HashMap<VertexId, HashSet<VertexId>>,
+    pub ghost_edges: HashMap<Edge, Edge>,
 
     /// [Derived Properties]
     /// Faces
@@ -60,6 +61,7 @@ impl Graph {
                 })
                 .collect(),
             ghost_matrix: HashMap::new(),
+            ghost_edges: HashMap::new(),
             faces: vec![],
             adjacents: HashSet::new(),
             neighbors: HashSet::new(),
@@ -207,16 +209,20 @@ impl Graph {
     // Vertices that are connected to a given vertex
     //fn connections(&self, id: VertexId) -> HashSet<VertexId>;
     pub fn connections(&self, vertex: usize) -> HashSet<VertexId> {
-        /*
-        if let Some(children) = self.ghost_matrix.get(&vertex) {
-            return children.clone();
-        }
-        */
         let mut connections = HashSet::<VertexId>::new();
         if let Some(list) = self.adjacency_matrix.get(&vertex) {
             for (other, connected) in list.into_iter() {
                 if *connected && other != &vertex {
                     connections.insert(*other);
+                }
+            }
+        }
+
+        for (k, v) in self.ghost_edges.iter() {
+            if k.u == vertex || k.v == vertex {
+                let xxx = k.other(vertex);
+                if self.vertices().contains(&xxx) {
+                    connections.insert(v.other(vertex));
                 }
             }
         }
@@ -262,24 +268,22 @@ impl Graph {
     }
     */
 
-    /*
-        pub fn ghosts(&self, id: VertexId) -> HashSet<VertexId> {
-            if !self.ghost_matrix.contains_key(&id) {
-                vec![id].into_iter().collect()
-            } else {
-                let l = self.ghost_matrix.get(&id).unwrap();
-                l.clone()
-                /*
-                l.into_iter()
-                    .map(|g| self.ghosts(*g))
-                    .fold(HashSet::new(), |mut acc, l| {
-                        acc.extend(l);
-                        acc
-                    })
-                    */
-            }
+    pub fn ghosts(&self, id: VertexId) -> HashSet<VertexId> {
+        if !self.ghost_matrix.contains_key(&id) {
+            vec![id].into_iter().collect()
+        } else {
+            let l = self.ghost_matrix.get(&id).unwrap();
+            l.clone()
+            /*
+            l.into_iter()
+                .map(|g| self.ghosts(*g))
+                .fold(HashSet::new(), |mut acc, l| {
+                    acc.extend(l);
+                    acc
+                })
+                */
         }
-    */
+    }
 
     /// All faces
     pub fn faces(&mut self) {
@@ -304,7 +308,6 @@ impl Graph {
                 }
             }
         }
-        println!("processing triplets");
         // while there are unparsed triplets
         while !triplets.is_empty() && (cycles.len() as i64) < self.face_count() {
             let triplet = triplets.remove(0);
@@ -318,7 +321,6 @@ impl Graph {
                         let new_face = Face([p.clone(), vec![v]].concat());
                         if self.connections(p[0]).contains(&v) {
                             //cycles.remo
-                            println!("found new cycle: {:?}", new_face);
                             cycles.insert(new_face);
                         } else {
                             //println!("lengthened: {:?}", new_face);
@@ -328,7 +330,6 @@ impl Graph {
                 }
             }
         }
-        println!("done");
 
         self.faces = cycles.into_iter().collect();
     }
@@ -501,7 +502,7 @@ impl Graph {
                 }
             }
             */
-            println!("diameter N = {}: {:?}", max, diameter);
+            //println!("diameter N = {}: {:?}", max, diameter);
             self.diameter = diameter
         }
     }
@@ -520,12 +521,14 @@ impl Display for Graph {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let mut vertices = self.vertices();
         vertices.sort();
+        let mut adjacents = self.adjacents.clone().into_iter().collect::<Vec<_>>();
+        adjacents.sort();
 
         f.write_fmt(format_args!(
             "name:\t{}\nvertices:\t{:?}\nadjacents:\t{}\nfaces:{:?}",
             self.name,
             vertices,
-            self.adjacents
+            adjacents
                 .iter()
                 .fold(String::new(), |acc, e| format!("{acc}, {e}")),
             self.faces

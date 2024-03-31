@@ -1,6 +1,5 @@
 use super::*;
 use crate::prelude::{WindowScene, HSL};
-use serde::{Deserialize, Serialize};
 use std::{collections::HashSet, ops::Add};
 use three_d::*;
 
@@ -29,17 +28,8 @@ impl Graph {
     }
 
     fn apply_spring_forces(&mut self) {
-        // a = adjacent (length of an edge in 3D space)
-        // n = neighbor (length of a path between two vertices is 2)
-        // d = diameter (circumsphere / face of projection)
-
         // Natural lengths
         let l_d = self.edge_length * 2.0;
-        //let l_a = l_d / 5.0;
-
-        //let l_a = 0.7 / 1.5; //self.edge_length;
-        //let l_n = l_a * 2.0;
-        //let l_d = l_a * 5.0;
         let l_a = l_d / 5.0;
         let l_n = l_a * 2.0;
 
@@ -48,10 +38,10 @@ impl Graph {
         let k_n = 0.4;
         let k_d = 0.3;
 
+        // Apply!
         self.apply_forces(self.adjacents.clone(), l_a, k_a);
         self.apply_forces(self.neighbors.clone(), l_n, k_n);
         self.apply_forces(self.diameter.clone(), l_d, k_d);
-        //self.apply_forces(self.enemies.clone(), l_d * 1.5, k_d / 2.0);
     }
 
     fn center(&mut self) {
@@ -83,9 +73,7 @@ impl Graph {
         self.resize();
         self.apply_spring_forces()
     }
-}
 
-impl Graph {
     fn face_xyz(&self, face_index: usize) -> Vec<Vector3<f32>> {
         self.faces[face_index]
             .0
@@ -153,9 +141,7 @@ impl Graph {
 
         (positions, colors, barycentric)
     }
-}
 
-impl Graph {
     pub fn render_schlegel(&mut self, scene: &mut WindowScene, frame_input: &FrameInput) {
         /*
         println!(

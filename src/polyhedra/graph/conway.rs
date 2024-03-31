@@ -3,77 +3,28 @@ use cgmath::Zero;
 pub use super::*;
 
 impl Graph {
-    pub fn contract_edge(&mut self, id: EdgeId) {
-        /*
-        // This operation requires up to date edges
-        self.recompute_qualities();
-
-        //println
-        let c0 = self.ghosts(id.0);
-        let c1 = self.ghosts(id.1);
-
-        if id.0 == 0 || id.1 == 0 {
-            println!("{}: {:?}, {}: c1: {:?}", id.0, c0, id.1, c1);
+    pub fn contract_edge(&mut self, edge: Edge) {
+        println!("contracting e: {}", edge);
+        let id = self.ghost_edges.get(&edge).unwrap_or(&edge).id();
+        println!("contracting te: {:?}", id);
+        // Give b all the same connections as a
+        let adj = self.connections(id.0).clone();
+        for b in adj.into_iter() {
+            self.connect((b, id.1))
         }
-
-        //let all_edges = self.adjacents;
-        for x in c0.iter() {
-            for y in c1.iter() {
-                let true_edge = (*x, *y).into();
-                if self.adjacents.contains(&true_edge) {
-                    println!("FOUND A TRUE EDGE!");
-                    // Give b all the same connections as a
-                    let adj = self.connections(true_edge.id().0).clone();
-                    for b in adj.into_iter() {
-                        self.connect((b, true_edge.id().1))
-                    }
-                    // Delete a
-                    self.delete(true_edge.id().0);
-                    break;
-                }
+        // Delete a
+        self.delete(id.0);
+        for (_, v) in self.ghost_edges.iter_mut() {
+            if v.v == id.0 || v.u == id.0 {
+                *v = (id.1, v.other(id.0)).into();
             }
         }
-        */
     }
 
-    /*
     pub fn split_vertex(&mut self, v: VertexId) {
-        //-> Face {
-        let mut new_face = vec![];
-        let mut danglers = vec![];
-
-        // Remove all connections
-        for u in self.connections(v) {
-            // Remove existing connection
-            self.disconnect((v, u));
-            // Track the free hangers
-            danglers.push(u);
-        }
-
-        //danglers.sort();
-
-        for d in danglers {
-            // Create new node and connect to dangler
-            let n = self.insert(Some(v)).id();
-            self.connect((d, n));
-            new_face.push(n);
-        }
-
-        // Link all the
-        for i in 0..new_face.len() {
-            self.connect((new_face[i], new_face[(i + 1) % new_face.len()]));
-        }
-
-        //self.delete(v);
-
-        //Face(new_face.into_iter().collect())
-    }
-    */
-
-    // /*
-    pub fn split_vertex(&mut self, id: VertexId) {
-        let original_position = self.positions[&id];
-        let connections: Vec<VertexId> = self.connections(id).into_iter().collect();
+        println!("split_{v}");
+        let original_position = self.positions[&v];
+        let connections: Vec<VertexId> = self.connections(v).into_iter().collect();
 
         /*
         // Add the connections to the ghost matrix
@@ -89,13 +40,34 @@ impl Graph {
         //self.delete(id);
         let mut new_face = Vec::new();
 
-        for v2 in &connections {
+        for u in connections {
             // Insert a new node in the same location
             let new_vertex = self.insert(Some(original_position));
             //
             new_face.push(new_vertex);
             // Reform old connection
-            self.connect((*v2, new_vertex));
+            self.connect((u, new_vertex));
+            println!("split_{v}: ({u}, {new_vertex})");
+
+            println!(
+                "split_{v}: inserting {:?} to ghosts",
+                Into::<Edge>::into((v, u)).id()
+            );
+
+            let ge: Edge = (v, u).into();
+            let mut adv = false;
+            for (_, v) in self.ghost_edges.iter_mut() {
+                if v.id() == ge.id() {
+                    *v = (new_vertex, u).into();
+                    adv = true;
+                    break;
+                }
+            }
+            if !adv {
+                // Track ghost edge
+                self.ghost_edges
+                    .insert((v, u).into(), (new_vertex, u).into());
+            }
         }
 
         // Link all the
@@ -103,7 +75,7 @@ impl Graph {
             self.connect((new_face[i], new_face[(i + 1) % new_face.len()]));
         }
 
-        self.delete(id);
+        self.delete(v);
     }
     //*/
     /// `t` truncate is equivalent to vertex splitting
@@ -117,15 +89,17 @@ impl Graph {
     /// applying vertex splitting.
     pub fn ambo(&mut self) {
         let original_edges = self.adjacents.clone();
-        for vertex in self.vertices() {
-            self.split_vertex(vertex);
-        }
+
+        self.truncate();
+
+        self.recompute_qualities();
+
+        println!("ghost edges: {:#?}", self.ghost_edges);
 
         for edge in original_edges.iter() {
-            self.contract_edge(edge.id());
+            self.contract_edge(*edge);
+            self.recompute_qualities();
         }
-        println!("edges: {:?}", self.adjacents);
-        println!("verts: {:?}", self.vertices());
     }
 
     //
@@ -168,7 +142,7 @@ mod test {
         assert_eq!(graph.vertices().len(), 6);
         assert_eq!(graph.adjacents.len(), 5);
 
-        graph.contract_edge((1, 3));
+        graph.contract_edge(Edge { v: 1, u: 3 });
         graph.recompute_qualities();
 
         println!("g: {:?}", graph);

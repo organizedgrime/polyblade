@@ -53,6 +53,15 @@ pub fn main() {
     // scenes.insert(scene2.window.id(), scene2);
 
     let mut shape = Graph::cube();
+    println!("graph:\n{shape}\n");
+    /*
+     * shape.split_vertex(0);
+    shape.recompute_qualities();
+    println!("graph:\n{shape}\n");
+    shape.split_vertex(1);
+    shape.recompute_qualities();
+    */
+    println!("graph:\n{shape}\n");
     let mut counter = 0;
     event_loop.run(move |event, _, control_flow| match &event {
         winit::event::Event::MainEventsCleared => {
@@ -73,16 +82,10 @@ pub fn main() {
 
                 counter += 1;
                 if counter == 1000 {
-                    //}|| counter == 3000 {
-                    //shape.ambo();
-                    //shape.split_vertex(counter / 1000);
-                    //shape.graph.truncate();
-                    shape.truncate();
-                    //
-                    //shape.split_vertex
+                    //shape.contract_edge((0, 1).into());
+                    shape.ambo();
                     shape.recompute_qualities();
-                    println!("hey:::::\n{shape}");
-                    //shape2.recompute_qualities();
+                    println!("graph:\n{shape}\n");
                 }
 
                 shape.update();
