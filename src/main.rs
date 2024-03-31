@@ -21,13 +21,8 @@ pub fn main() {
     use std::collections::HashMap;
     use three_d::renderer::*;
 
-    //let shape = Polyhedron::dodecahedron();
-    // shape.render_form();
-    //shape.render_schlegel();
     let mut scenes = HashMap::new();
-
     let event_loop = winit::event_loop::EventLoop::new();
-
     let camera1 = Camera::new_perspective(
         Viewport::new_at_origo(1, 1),
         vec3(0.0, 0.0, 4.0),
@@ -52,15 +47,7 @@ pub fn main() {
     let _scene2 = WindowScene::new("schlegel", &event_loop, camera2, Srgba::WHITE, "schlegel");
     // scenes.insert(scene2.window.id(), scene2);
 
-    let mut shape = Graph::cube();
-    println!("graph:\n{shape}\n");
-    /*
-     * shape.split_vertex(0);
-    shape.recompute_qualities();
-    println!("graph:\n{shape}\n");
-    shape.split_vertex(1);
-    shape.recompute_qualities();
-    */
+    let mut shape = PolyGraph::cube();
     println!("graph:\n{shape}\n");
     let mut counter = 0;
     event_loop.run(move |event, _, control_flow| match &event {
@@ -82,7 +69,6 @@ pub fn main() {
 
                 counter += 1;
                 if counter == 1000 {
-                    //shape.contract_edge((0, 1).into());
                     shape.ambo();
                     shape.recompute_qualities();
                     println!("graph:\n{shape}\n");

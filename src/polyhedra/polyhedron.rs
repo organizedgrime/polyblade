@@ -4,7 +4,7 @@ use std::{collections::HashSet, ops::Add};
 use three_d::*;
 
 // Operations
-impl Graph {
+impl PolyGraph {
     fn apply_forces(&mut self, edges: HashSet<Edge>, l: f32, k: f32) {
         for (v, u) in edges.into_iter().map(|e| e.id()) {
             let diff = self.positions[&v] - self.positions[&u];
