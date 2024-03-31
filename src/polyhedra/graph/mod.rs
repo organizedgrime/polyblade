@@ -23,8 +23,7 @@ pub struct Graph {
     /// [Actual Graph]
     /// Adjacents
     pub adjacency_matrix: HashMap<VertexId, HashMap<VertexId, bool>>,
-    /// Nodes that have been split and their children
-    pub ghost_matrix: HashMap<VertexId, HashSet<VertexId>>,
+    /// Edges that have had Vertices split
     pub ghost_edges: HashMap<Edge, Edge>,
 
     /// [Derived Properties]
@@ -59,7 +58,6 @@ impl Graph {
                     )
                 })
                 .collect(),
-            ghost_matrix: HashMap::new(),
             ghost_edges: HashMap::new(),
             faces: vec![],
             adjacents: HashSet::new(),
@@ -144,7 +142,7 @@ impl Graph {
 
     pub fn insert(&mut self, pos: Option<Vector3<f32>>) -> VertexId {
         let existing_vertices = self.vertices();
-        let new_id = self.adjacency_matrix.clone().into_keys().max().unwrap() + 1;
+        let new_id = self.adjacency_matrix.keys().max().unwrap() + 1;
 
         // Adjacency matric update
         for (_, l) in self.adjacency_matrix.iter_mut() {
@@ -210,63 +208,8 @@ impl Graph {
                 }
             }
         }
+
         connections
-    }
-    /*
-    pub fn sorted_connections(&mut self, id: VertexId) -> Vec<VertexId> {
-        let mut m = HashSet::<(VertexId, VertexId)>::new();
-        for face in self.faces.clone().into_iter() {
-            for i in 0..face.0.len() {
-                if face.0[i] == id {
-                    m.insert((
-                        face.0[(i + face.0.len() - 1) % face.0.len()],
-                        face.0[(i + 1) % face.0.len()],
-                    ));
-                }
-            }
-        }
-        println!("id: {:?}", id);
-        println!("m: {:?}", m);
-
-        let mut root = m.clone().into_iter().collect::<Vec<_>>()[0].0;
-        let mut conn = vec![root];
-
-        while let Some(next) = m.clone().into_iter().find(|e| e.0 == root || e.1 == root) {
-            root = if next.0 == root { next.1 } else { next.0 };
-            if !conn.contains(&root) {
-                conn.push(root);
-            }
-            m.remove(&next);
-        }
-
-        println!("conn: {:?}", conn);
-        println!("connold: {:?}", self.connections(id));
-
-        for x in self.connections(id) {
-            if !conn.contains(&x) {
-                conn.push(x);
-            }
-        }
-
-        conn
-    }
-    */
-
-    pub fn ghosts(&self, id: VertexId) -> HashSet<VertexId> {
-        if !self.ghost_matrix.contains_key(&id) {
-            vec![id].into_iter().collect()
-        } else {
-            let l = self.ghost_matrix.get(&id).unwrap();
-            l.clone()
-            /*
-            l.into_iter()
-                .map(|g| self.ghosts(*g))
-                .fold(HashSet::new(), |mut acc, l| {
-                    acc.extend(l);
-                    acc
-                })
-                */
-        }
     }
 
     /// All faces
@@ -275,7 +218,6 @@ impl Graph {
         let mut triplets = Vec::<Face>::new();
         let mut cycles = HashSet::<Face>::new();
 
-        println!("finding triplets");
         // find all the triplets
         for u in self.vertices() {
             let adj: HashSet<VertexId> = self.connections(u);
@@ -317,6 +259,7 @@ impl Graph {
 
         self.faces = cycles.into_iter().collect();
     }
+
     /// All edges
     pub fn adjacents(&mut self) {
         self.adjacents = self
@@ -335,10 +278,7 @@ impl Graph {
         let mut neighbors = HashSet::<Edge>::new();
         for u in self.vertices() {
             for v in self.vertices() {
-                if dist.contains_key(&u)
-                    && dist.contains_key(&v)
-                    && (dist[&u][&v] == 2 || dist[&v][&u] == 2)
-                {
+                if dist[&u][&v] == 2 || dist[&v][&u] == 2 {
                     neighbors.insert((u, v).into());
                 }
             }
@@ -376,20 +316,11 @@ impl Graph {
         for k in self.vertices() {
             for i in self.vertices() {
                 for j in self.vertices() {
-                    if dist.contains_key(&j) && dist.contains_key(&i) && dist.contains_key(&k) {
-                        //let lj = dist.get_mut(&j);
-                        if dist[&i][&k] != u32::MAX && dist[&k][&j] != u32::MAX {
-                            let nv = dist[&i][&k] + dist[&k][&j];
-                            if dist[&i][&j] > nv || dist[&j][&i] > nv {
-                                {
-                                    let li = dist.get_mut(&i).unwrap();
-                                    li.insert(j, nv);
-                                }
-                                {
-                                    let lj = dist.get_mut(&j).unwrap();
-                                    lj.insert(i, nv);
-                                }
-                            }
+                    if dist[&i][&k] != u32::MAX && dist[&k][&j] != u32::MAX {
+                        let nv = dist[&i][&k] + dist[&k][&j];
+                        if dist[&i][&j] > nv || dist[&j][&i] > nv {
+                            dist.get_mut(&i).unwrap().insert(j, nv);
+                            dist.get_mut(&j).unwrap().insert(i, nv);
                         }
                     }
                 }
@@ -399,95 +330,24 @@ impl Graph {
         self.dist = dist;
     }
 
-    /*
-    pub fn distances(&mut self) {
-        let V = self.vertices().len();
-        // let dist be a |V| × |V| array of minimum distances initialized to ∞ (infinity)
-
-        let mut id_map: Vec<VertexId> = self
-            .adjacency_matrix
-            .clone()
-            .into_iter()
-            .map(|(k, _)| k)
-            .collect();
-
-        let mut lookup: Vec<usize> = self
-            .vertices()
-            .into_iter()
-            .map(|v| id_map.iter().position(|u| u == &v).unwrap())
-            .collect();
-
-        let mut dist = vec![vec![u32::MAX; V]; V];
-
-        for edge in self.adjacents.clone() {
-            // The weight of the edge (u, v)
-            dist[lookup[edge.id().0]][lookup[edge.id().1]] = 1;
-            dist[lookup[edge.id().1]][lookup[edge.id().0]] = 1;
-
-            for v in self.vertices() {
-                dist[lookup[v.id()]][lookup[v.id()]] = 0;
-            }
-
-            for k in 0..V {
-                for i in 0..V {
-                    for j in 0..V {
-                        if dist[lookup[i]][lookup[k]] < u32::MAX
-                            && dist[lookup[k]][lookup[j]] < u32::MAX
-                        {
-                            let nv = dist[lookup[i]][lookup[k]] + dist[lookup[k]][lookup[j]];
-                            dist[lookup[i]][lookup[j]] = nv;
-                            dist[lookup[j]][lookup[i]] = nv;
-                        }
-                    }
-                }
-            }
-        }
-
-        for (i, li) in dist.iter().enumerate() {
-            for (j, d) in li.iter().enumerate() {
-                if let Some(li)
-
-            }
-        }
-    }
-    */
-
     /// Periphery / diameter
     pub fn diameter(&mut self) {
         let dist = self.dist.clone();
         if let Some(max) = dist
-            .clone()
-            .into_values()
+            .values()
             .flatten()
             .map(|(_, d)| d)
-            .filter(|&d| d < u32::MAX)
+            .filter(|&d| d < &u32::MAX)
             .max()
         {
             let mut diameter = HashSet::<Edge>::new();
             for u in self.vertices() {
                 for v in self.vertices() {
-                    if dist.contains_key(&u)
-                        && dist.contains_key(&v)
-                        && (dist[&u][&v] == max || dist[&v][&u] == max)
-                    {
+                    if &dist[&u][&v] == max || &dist[&v][&u] == max {
                         diameter.insert((u, v).into());
                     }
                 }
             }
-            /*
-            if diameter.len() < (V / 4) {
-                println!("including some more, N = {} was too high", max);
-                max -= 1;
-                for u in 0..V {
-                    for v in 0..V {
-                        if dist[u][v] == max.clone() || dist[v][u] == max.clone() {
-                            diameter.insert((u, v).into());
-                        }
-                    }
-                }
-            }
-            */
-            //println!("diameter N = {}: {:?}", max, diameter);
             self.diameter = diameter
         }
     }

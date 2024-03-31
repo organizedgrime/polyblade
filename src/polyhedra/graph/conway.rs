@@ -4,9 +4,8 @@ pub use super::*;
 
 impl Graph {
     pub fn contract_edge(&mut self, edge: Edge) {
-        //println!("contracting e: {}", edge);
+        // If this is the ghost edge, find its extant counterpart
         let id = self.ghost_edges.get(&edge).unwrap_or(&edge).id();
-        //rintln!("contracting te: {:?}", id);
         // Give b all the same connections as a
         let adj = self.connections(id.0).clone();
         for b in adj.into_iter() {
@@ -26,18 +25,6 @@ impl Graph {
         let original_position = self.positions[&v];
         let connections: Vec<VertexId> = self.connections(v).into_iter().collect();
 
-        /*
-        // Add the connections to the ghost matrix
-        if !self.ghost_matrix.contains_key(&id) {
-            self.ghost_matrix.insert(id, HashSet::new());
-        }
-        for c in &connections {
-            println!("removing {id}, adding {c} to ghost");
-            self.ghost_matrix.get_mut(&id).unwrap().insert(*c);
-        }
-        */
-
-        //self.delete(id);
         let mut new_face = Vec::new();
 
         for u in connections {
@@ -100,7 +87,7 @@ impl Graph {
             self.contract_edge(*edge);
         }
         self.recompute_qualities();
-        self.ghost_matrix = HashMap::new();
+        self.ghost_edges = HashMap::new();
     }
 
     //

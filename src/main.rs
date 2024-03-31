@@ -21,13 +21,8 @@ pub fn main() {
     use std::collections::HashMap;
     use three_d::renderer::*;
 
-    //let shape = Polyhedron::dodecahedron();
-    // shape.render_form();
-    //shape.render_schlegel();
     let mut scenes = HashMap::new();
-
     let event_loop = winit::event_loop::EventLoop::new();
-
     let camera1 = Camera::new_perspective(
         Viewport::new_at_origo(1, 1),
         vec3(0.0, 0.0, 4.0),
@@ -73,9 +68,8 @@ pub fn main() {
                 ));
 
                 counter += 1;
-                if counter == 2000 {
-                    //shape.contract_edge((0, 1).into());
-                    shape.expand();
+                if counter == 1000 {
+                    shape.ambo();
                     shape.recompute_qualities();
                     println!("graph:\n{shape}\n");
                 }
