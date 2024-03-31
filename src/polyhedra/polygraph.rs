@@ -1,11 +1,5 @@
-mod conway;
-mod edge;
-mod face;
-mod vertex;
-
+pub use super::*;
 use cgmath::{vec3, InnerSpace, Vector3, Zero};
-pub use edge::*;
-pub use face::*;
 use rand::random;
 use serde::{Deserialize, Serialize};
 use std::{
@@ -13,7 +7,6 @@ use std::{
     fmt::Display,
     u32,
 };
-pub use vertex::*;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct PolyGraph {

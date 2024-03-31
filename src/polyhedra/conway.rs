@@ -1,4 +1,4 @@
-use cgmath::VectorSpace;
+use std::collections::HashMap;
 
 pub use super::*;
 
@@ -27,7 +27,7 @@ impl PolyGraph {
 
         let mut new_face = Vec::new();
 
-        for u in connections {
+        'connections: for u in connections {
             // Insert a new node in the same location
             let new_vertex = self.insert(Some(original_position));
             //
@@ -42,19 +42,15 @@ impl PolyGraph {
             );
 
             let ge: Edge = (v, u).into();
-            let mut adv = false;
+            let ne: Edge = (new_vertex, u).into();
             for (_, v) in self.ghost_edges.iter_mut() {
                 if v.id() == ge.id() {
-                    *v = (new_vertex, u).into();
-                    adv = true;
-                    break;
+                    *v = ne;
+                    continue 'connections;
                 }
             }
-            if !adv {
-                // Track ghost edge
-                self.ghost_edges
-                    .insert((v, u).into(), (new_vertex, u).into());
-            }
+            // Track ghost edge
+            self.ghost_edges.insert(ge, ne);
         }
 
         // Link all the
@@ -64,12 +60,14 @@ impl PolyGraph {
 
         self.delete(v);
     }
-    //*/
+
     /// `t` truncate is equivalent to vertex splitting
     pub fn truncate(&mut self) {
         for vertex in self.vertices() {
             self.split_vertex(vertex);
         }
+        self.recompute_qualities();
+        self.name += "b";
     }
 
     /// `a` ambo is equivalent to the composition of vertex splitting and edge contraction vefore
@@ -77,17 +75,18 @@ impl PolyGraph {
     pub fn ambo(&mut self) {
         let original_edges = self.adjacents.clone();
 
+        // Truncate
         self.truncate();
 
-        self.recompute_qualities();
-
-        println!("ghost edges: {:#?}", self.ghost_edges);
-
+        // Contract original edge set
         for edge in original_edges.iter() {
             self.contract_edge(*edge);
         }
+
         self.recompute_qualities();
         self.ghost_edges = HashMap::new();
+        self.name.truncate(self.name.len() - 1);
+        self.name += "a";
     }
 
     //
@@ -95,19 +94,21 @@ impl PolyGraph {
     /// `b` bevel is equivalent to `ta`
     pub fn bevel(&mut self) {
         self.truncate();
-        self.recompute_qualities();
         self.ambo();
+        self.name.truncate(self.name.len() - 2);
+        self.name += "b";
     }
 
     /// `e` expand is equal to `aa`
     pub fn expand(&mut self) {
         self.ambo();
-        self.recompute_qualities();
         self.ambo();
+        self.name.truncate(self.name.len() - 2);
+        self.name += "e";
     }
 
     /// `s` snub is applying `e` followed by diagonal addition
-    fn snub(&mut self) {
+    pub fn snub(&mut self) {
         self.expand();
         //self.diagonal_addition();
     }
