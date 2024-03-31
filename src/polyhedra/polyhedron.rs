@@ -4,94 +4,27 @@ use serde::{Deserialize, Serialize};
 use std::{collections::HashSet, ops::Add};
 use three_d::*;
 
-// Representation of an undirected graph
-// Uses adjacency lists
-#[derive(Debug, Serialize, Deserialize)]
-pub struct Polyhedron {
-    // Conway Polyhedron Notation
-    pub name: String,
-
-    // Points
-    pub graph: Graph,
-    pub points: Vec<Point>,
-
-    // Secret list of vertices that need to avoid each other
-    pub(crate) enemies: HashSet<Edge>,
-    pub(crate) edge_length: f32,
-}
-
 // Operations
-impl Polyhedron {
-    // After a change is made
-    pub fn recompute_qualities(&mut self) {
-        self.graph.update();
-    }
-
-    pub fn truncate(&mut self) {
-        self.graph.ambo();
-        self.graph.update();
-
-        // remove all the removed vertices
-        let vs = self.graph.vertices();
-        for id in self.points.clone().into_iter().map(|p| p.id) {
-            if !vs.contains(&id) {
-                self.points
-                    .remove(self.points.iter().position(|p| p.id == id).unwrap());
-            }
-        }
-
-        // add all the new ones
-        for v in vs {
-            if self.points.iter().find(|p| p.id == v).is_none() {
-                self.points.push(Point::new(v));
-            }
-        }
-    }
-
-    pub fn new(name: &str, points: Vec<Vec<usize>>) -> Polyhedron {
-        let mut poly = Polyhedron {
-            name: String::from(name),
-            graph: Graph::new_disconnected(points.len()),
-            points: points
-                .clone()
-                .into_iter()
-                .enumerate()
-                .map(|(i, _)| Point::new(i))
-                .collect(),
-            enemies: HashSet::new(),
-            edge_length: 1.0,
-        };
-
-        for (i, conns) in points.into_iter().enumerate() {
-            for j in conns {
-                poly.graph.connect((i, j).into());
-            }
-        }
-
-        poly.recompute_qualities();
-        poly
-    }
-
+impl Graph {
     fn apply_forces(&mut self, edges: HashSet<Edge>, l: f32, k: f32) {
-        for (i1, i2) in edges.into_iter().map(|e| e.id()) {
-            let i1 = self.points.iter().position(|p| p.id == i1);
-            let i2 = self.points.iter().position(|p| p.id == i2);
+        for (v, u) in edges.into_iter().map(|e| e.id()) {
+            let diff = &self.positions[&v] - &self.positions[&u];
+            let dist = diff.magnitude();
+            let distention = l - dist;
+            let restorative_force = k / 2.0 * distention;
+            let time_factor = 1000.0;
+            let f = diff * restorative_force / time_factor;
 
-            if let (Some(i1), Some(i2)) = (i1, i2) {
-                let v1 = &self.points[i1].xyz;
-                let v2 = &self.points[i2].xyz;
+            // Add forces
+            *self.speeds.get_mut(&v).unwrap() += f;
+            *self.speeds.get_mut(&u).unwrap() -= f;
 
-                let d = v1 - v2;
-                let dist = d.magnitude();
-                let distention = l - dist;
-                let restorative_force = k / 2.0 * distention;
-                let time_factor = 1000.0;
-                let f = d * restorative_force / time_factor;
-                self.points[i1].add_force(f);
-                self.points[i2].add_force(-f);
-                self.points[i1].update();
-                self.points[i2].update();
-            }
+            // Apply damping
+            *self.speeds.get_mut(&v).unwrap() *= 0.92;
+            *self.speeds.get_mut(&u).unwrap() *= 0.92;
+
+            *self.positions.get_mut(&v).unwrap() += self.speeds[&v];
+            *self.positions.get_mut(&u).unwrap() += self.speeds[&u];
         }
     }
 
@@ -115,80 +48,64 @@ impl Polyhedron {
         let k_n = 0.4;
         let k_d = 0.3;
 
-        self.apply_forces(self.graph.adjacents.clone(), l_a, k_a);
-        self.apply_forces(self.graph.neighbors.clone(), l_n, k_n);
-        self.apply_forces(self.graph.diameter.clone(), l_d, k_d);
+        self.apply_forces(self.adjacents.clone(), l_a, k_a);
+        self.apply_forces(self.neighbors.clone(), l_n, k_n);
+        self.apply_forces(self.diameter.clone(), l_d, k_d);
         //self.apply_forces(self.enemies.clone(), l_d * 1.5, k_d / 2.0);
     }
 
     fn center(&mut self) {
         let shift = self
-            .points
+            .positions
             .iter()
-            .map(|p| p.xyz)
+            .map(|(_, v)| v)
             .fold(Vector3::zero(), Vector3::add)
-            / self.points.len() as f32;
-        for i in 0..self.points.len() {
-            self.points[i].xyz -= shift;
+            / self.vertex_count() as f32;
+
+        for (_, v) in self.positions.iter_mut() {
+            *v -= shift;
         }
     }
 
     fn resize(&mut self) {
         let mean_magnitude = self
-            .points
+            .positions
             .iter()
-            .map(|p| p.xyz.magnitude())
+            .map(|(_, p)| p.magnitude())
             .fold(0.0, f32::max);
         let distance = mean_magnitude - 1.0;
-        //println!("distance");
 
         self.edge_length -= distance / 200.0;
-    }
-
-    fn quarrel(&mut self) {
-        /*
-        let threshold = 0.001;
-        for v1 in 0..self.points.len() {
-            for v2 in 0..self.points.len() {
-                if self.points[v1].xyz.distance(self.points[v2].xyz).abs() < threshold {
-                    self.enemies.insert((v1, v2).into());
-                }
-            }
-        }
-        */
     }
 
     pub fn update(&mut self) {
         self.center();
         self.resize();
-        self.quarrel();
         self.apply_spring_forces()
     }
 }
 
-impl Polyhedron {
+impl Graph {
     fn face_xyz(&self, face_index: usize) -> Vec<Vector3<f32>> {
-        self.graph.faces[face_index]
-            .0
+        self.positions
             .iter()
-            .map(|f| self.points.iter().find(|p| p.id == *f).unwrap().xyz)
+            .filter_map(|(v, p)| {
+                if self.faces[face_index].0.contains(&v) {
+                    Some(p.clone())
+                } else {
+                    None
+                }
+            })
             .collect()
     }
 
     fn face_normal(&self, face_index: usize) -> Vector3<f32> {
-        let face = &self.graph.faces[face_index].0;
-        let mut normal = Vector3::<f32>::new(0.0, 0.0, 0.0);
-        for i in 0..face.len() {
-            let v1 = self.points.iter().find(|p| p.id == face[i]);
-            let v2 = self
-                .points
-                .iter()
-                .find(|p| p.id == face[(i + 1) % face.len()]);
-            if let (Some(v1), Some(v2)) = (v1, v2) {
-                normal += v1.xyz.cross(v2.xyz);
-            }
-        }
-        normal.normalize()
+        self.faces[face_index]
+            .0
+            .iter()
+            .map(|v| self.positions[v])
+            .fold(Vector3::zero(), |acc, v| acc.cross(v))
+            .normalize()
     }
 
     fn face_centroid(&self, face_index: usize) -> Vector3<f32> {
@@ -205,7 +122,7 @@ impl Polyhedron {
         let mut polyhedron_colors = Vec::new();
         let mut polyhedron_barycentric = Vec::new();
 
-        for face_index in 0..self.graph.faces.len() {
+        for face_index in 0..self.faces.len() {
             // Create triangles from the center to each corner
             let mut face_xyz = Vec::new();
             let vertices = self.face_xyz(face_index);
@@ -226,7 +143,7 @@ impl Polyhedron {
             }
 
             let color = HSL::new(
-                (360.0 / (self.graph.faces.len() as f64)) * face_index as f64,
+                (360.0 / (self.faces.len() as f64)) * face_index as f64,
                 1.0,
                 0.5,
             )
@@ -243,7 +160,7 @@ impl Polyhedron {
     }
 }
 
-impl Polyhedron {
+impl Graph {
     pub fn render_schlegel(&mut self, scene: &mut WindowScene, frame_input: &FrameInput) {
         /*
         println!(

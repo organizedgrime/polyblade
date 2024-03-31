@@ -52,8 +52,7 @@ pub fn main() {
     let _scene2 = WindowScene::new("schlegel", &event_loop, camera2, Srgba::WHITE, "schlegel");
     // scenes.insert(scene2.window.id(), scene2);
 
-    let mut shape = Polyhedron::cube();
-    //let mut shape2 = Polyhedron::dodecahedron();
+    let mut shape = Graph::dodecahedron();
     let mut counter = 0;
     event_loop.run(move |event, _, control_flow| match &event {
         winit::event::Event::MainEventsCleared => {
@@ -73,17 +72,16 @@ pub fn main() {
                 ));
 
                 counter += 1;
-                if counter == 500 {
+                if counter == 1000 {
                     //}|| counter == 3000 {
                     //shape.ambo();
                     //shape2.truncate();
                     //shape.graph.truncate();
-                    shape.truncate();
-                    shape.recompute_qualities();
-                    println!(
-                        "HEY!!!!!!!!!!!!!!!!!!!!!!!\n{}",
-                        shape.graph.adjacents.len()
-                    );
+                    //shape.truncate();
+                    //
+                    //shape.split_vertex
+                    //shape.recompute_qualities();
+                    println!("HEY!!!!!!!!!!!!!!!!!!!!!!!\n{}", shape.adjacents.len());
                     //shape2.recompute_qualities();
                 }
 

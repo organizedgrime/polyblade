@@ -5,13 +5,15 @@ pub use super::*;
 impl Graph {
     pub fn contract_edge(&mut self, id: EdgeId) {
         // This operation requires up to date edges
-        self.update();
+        self.recompute_qualities();
 
         //println
         let c0 = self.ghosts(id.0);
         let c1 = self.ghosts(id.1);
 
-        println!("c0: {:?}, c1: {:?}", c0, c1);
+        if id.0 == 0 || id.1 == 0 {
+            println!("{}: {:?}, {}: c1: {:?}", id.0, c0, id.1, c1);
+        }
 
         //let all_edges = self.adjacents;
         for x in c0.iter() {
@@ -111,7 +113,7 @@ impl Graph {
     pub fn ambo(&mut self) {
         let original_edges = self.adjacents.clone();
         for vertex in self.vertices() {
-            self.update();
+            self.recompute_qualities();
             self.split_vertex(vertex.id());
         }
 
@@ -148,12 +150,6 @@ mod test {
     use crate::prelude::*;
 
     #[test]
-    fn poly() {
-        let mut dodeca = Polyhedron::icosahedron();
-        dodeca.graph.contract_edge((0, 1));
-    }
-
-    #[test]
     fn contract_edge() {
         let mut graph = Graph::new_disconnected(6);
         graph.connect((1, 0));
@@ -163,13 +159,13 @@ mod test {
 
         graph.connect((3, 4));
         graph.connect((3, 5));
-        graph.update();
+        graph.recompute_qualities();
 
         assert_eq!(graph.vertices().len(), 6);
         assert_eq!(graph.adjacents.len(), 5);
 
         graph.contract_edge((1, 3));
-        graph.update();
+        graph.recompute_qualities();
 
         println!("g: {:?}", graph);
         assert_eq!(graph.vertices().len(), 5);
@@ -192,13 +188,13 @@ mod test {
 
         graph.connect((1, 3));
         graph.connect((1, 4));
-        graph.update();
+        graph.recompute_qualities();
 
         assert_eq!(graph.vertices().len(), 5);
         assert_eq!(graph.adjacents.len(), 4);
 
         graph.split_vertex(1);
-        graph.update();
+        graph.recompute_qualities();
 
         println!("g: {:?}", graph);
         assert_eq!(graph.vertices().len(), 8);

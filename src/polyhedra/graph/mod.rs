@@ -3,62 +3,52 @@ mod edge;
 mod face;
 mod vertex;
 
-use cgmath::Vector3;
+use cgmath::{vec3, InnerSpace, Vector3, Zero};
+pub use edge::*;
+pub use face::*;
+use rand::random;
+use serde::{Deserialize, Serialize};
 use std::{
     collections::{HashMap, HashSet},
     u32,
 };
-use tracing::*;
-
-pub use conway::*;
-pub use edge::*;
-pub use face::*;
-use serde::{Deserialize, Serialize};
 pub use vertex::*;
-
-use super::{Point, Polyhedron};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Graph {
+    /// Conway Polyhedron Notation
+    pub name: String,
+
+    /// [Actual Graph]
     /// Adjacents
     pub adjacency_matrix: HashMap<VertexId, HashMap<VertexId, bool>>,
-    /// Nodes that have been split
+    /// Nodes that have been split and their children
     pub ghost_matrix: HashMap<VertexId, HashSet<VertexId>>,
+
+    /// [Derived Properties]
     /// Faces
     pub faces: Vec<Face>,
     /// Edge sets
     pub adjacents: HashSet<Edge>,
     pub neighbors: HashSet<Edge>,
     pub diameter: HashSet<Edge>,
-
     /// Distances between all points
     pub dist: HashMap<VertexId, HashMap<VertexId, u32>>,
-    // Positions in 3D space
-    //pub positions: HashMap<VertexId, Vector3<f32>>,
-    // Speeds
-    //pub speeds: HashMap<VertexId, Vector3<f32>>,
+
+    /// [Render Properties]
+    /// Positions in 3D space
+    pub positions: HashMap<VertexId, Vector3<f32>>,
+    /// Speeds
+    pub speeds: HashMap<VertexId, Vector3<f32>>,
+    /// Edge length
+    pub edge_length: f32,
 }
 
 impl Graph {
-    pub fn update(&mut self) {
-        self.adjacents();
-        self.distances();
-        self.neighbors();
-        self.diameter();
-        self.faces();
-    }
-
-    pub fn vertex(&self, id: VertexId) -> Option<usize> {
-        if self.adjacency_matrix.contains_key(&id) {
-            Some(id)
-        } else {
-            None
-        }
-    }
-
     /// New with n vertices
     pub fn new_disconnected(vertex_count: usize) -> Self {
         let mut poly = Self {
+            name: String::new(),
             adjacency_matrix: (0..vertex_count)
                 .into_iter()
                 .map(|x| {
@@ -74,16 +64,38 @@ impl Graph {
             neighbors: HashSet::new(),
             diameter: HashSet::new(),
             dist: HashMap::new(),
+            positions: (0..vertex_count)
+                .into_iter()
+                .map(|x| (x, vec3(random(), random(), random()).normalize()))
+                .collect(),
+            speeds: (0..vertex_count)
+                .into_iter()
+                .map(|x| (x, Vector3::zero()))
+                .collect(),
+            edge_length: 1.0,
         };
-        poly.update();
+        poly.recompute_qualities();
         poly
     }
+
+    /// New known shape
+    pub fn new_platonic(name: &str, points: Vec<Vec<usize>>) -> Self {
+        let mut poly = Self::new_disconnected(points.len());
+        poly.name = String::from(name);
+        for (i, conns) in points.into_iter().enumerate() {
+            for j in conns {
+                poly.connect((i, j).into());
+            }
+        }
+
+        poly.recompute_qualities();
+        poly
+    }
+
     /// Vertex
-    //fn vertex(&self, id: VertexId) -> Option<V>;
-    /// Edge
-    pub fn edge(&self, id: EdgeId) -> Option<Edge> {
-        if self.vertex(id.0).is_some() && self.vertex(id.1).is_some() {
-            Some((id.0, id.1).into())
+    pub fn vertex(&self, id: VertexId) -> Option<usize> {
+        if self.adjacency_matrix.contains_key(&id) {
+            Some(id)
         } else {
             None
         }
@@ -95,6 +107,19 @@ impl Graph {
             .into_iter()
             .map(|(k, _)| k)
             .collect()
+    }
+
+    pub fn vertex_count(&self) -> usize {
+        self.positions.len()
+    }
+
+    /// Edge
+    pub fn edge(&self, id: EdgeId) -> Option<Edge> {
+        if self.vertex(id.0).is_some() && self.vertex(id.1).is_some() {
+            Some((id.0, id.1).into())
+        } else {
+            None
+        }
     }
 
     pub fn connect(&mut self, id: EdgeId) {
@@ -471,6 +496,14 @@ impl Graph {
             self.diameter = diameter
         }
     }
+
+    pub fn recompute_qualities(&mut self) {
+        self.adjacents();
+        self.distances();
+        self.neighbors();
+        self.diameter();
+        self.faces();
+    }
 }
 
 #[cfg(test)]
@@ -509,11 +542,11 @@ mod test {
         graph.connect((1, 2));
         graph.connect((2, 3));
 
-        graph.update();
+        graph.recompute_qualities();
         assert_eq!(graph.faces.len(), 0);
 
         graph.connect((2, 0));
-        graph.update();
+        graph.recompute_qualities();
         assert_eq!(graph.faces, vec![Face(vec![0, 1, 2])]);
     }
 }
