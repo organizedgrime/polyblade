@@ -133,7 +133,7 @@ mod test {
         assert_eq!(graph.vertices().len(), 6);
         assert_eq!(graph.adjacents.len(), 5);
 
-        graph.contract_edge(Edge { v: 1, u: 3 });
+        graph.contract_edge((1, 3).into());
         graph.recompute_qualities();
 
         println!("g: {:?}", graph);

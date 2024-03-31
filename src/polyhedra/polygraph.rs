@@ -73,7 +73,7 @@ impl PolyGraph {
         poly.name = String::from(name);
         for (v, conns) in points.into_iter().enumerate() {
             for u in conns {
-                poly.connect(Edge { v, u }.id());
+                poly.connect(Into::<Edge>::into((v, u)).id());
             }
         }
 
@@ -98,39 +98,16 @@ impl PolyGraph {
         self.positions.len()
     }
 
-    /// Edge
-    pub fn edge(&self, id: EdgeId) -> Option<Edge> {
-        if self.vertex(id.0).is_some() && self.vertex(id.1).is_some() {
-            Some((id.0, id.1).into())
-        } else {
-            None
-        }
+    pub fn connect(&mut self, e: impl Into<Edge>) {
+        let (v, u) = e.into().id();
+        self.adjacency_matrix.get_mut(&v).unwrap().insert(u, true);
+        self.adjacency_matrix.get_mut(&u).unwrap().insert(v, true);
     }
 
-    pub fn connect(&mut self, id: EdgeId) {
-        if let Some(edge) = self.edge(id) {
-            self.adjacency_matrix
-                .get_mut(&edge.v)
-                .unwrap()
-                .insert(edge.u, true);
-            self.adjacency_matrix
-                .get_mut(&edge.u)
-                .unwrap()
-                .insert(edge.v, true);
-        }
-    }
-
-    pub fn disconnect(&mut self, id: EdgeId) {
-        if let Some(edge) = self.edge(id) {
-            self.adjacency_matrix
-                .get_mut(&edge.v)
-                .unwrap()
-                .insert(edge.u, false);
-            self.adjacency_matrix
-                .get_mut(&edge.u)
-                .unwrap()
-                .insert(edge.v, false);
-        }
+    pub fn disconnect(&mut self, e: impl Into<Edge>) {
+        let (v, u) = e.into().id();
+        self.adjacency_matrix.get_mut(&v).unwrap().insert(u, false);
+        self.adjacency_matrix.get_mut(&u).unwrap().insert(v, false);
     }
 
     pub fn insert(&mut self, pos: Option<Vector3<f32>>) -> VertexId {

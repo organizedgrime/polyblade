@@ -8,8 +8,8 @@ pub type EdgeId = (VertexId, VertexId);
 
 #[derive(Debug, Serialize, Deserialize, Clone, Copy)]
 pub struct Edge {
-    pub v: VertexId,
-    pub u: VertexId,
+    v: VertexId,
+    u: VertexId,
 }
 
 impl Edge {
@@ -37,17 +37,6 @@ impl Display for Edge {
         f.write_fmt(format_args!("({}, {})", self.id().0, self.id().1))
     }
 }
-
-/*
-impl<V: Vertex> From<(V, V)> for Edge {
-    fn from(value: (V, V)) -> Self {
-        Self {
-            a: value.0.id(),
-            b: value.1.id(),
-        }
-    }
-}
-*/
 
 impl From<(VertexId, VertexId)> for Edge {
     fn from(value: (VertexId, VertexId)) -> Self {
