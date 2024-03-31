@@ -22,7 +22,6 @@ impl PolyGraph {
     }
 
     pub fn split_vertex(&mut self, v: VertexId) {
-        println!("split_{v}");
         let original_position = self.positions[&v];
         let connections: Vec<VertexId> = self.connections(v).into_iter().collect();
 
@@ -35,22 +34,22 @@ impl PolyGraph {
             new_face.push(new_vertex);
             // Reform old connection
             self.connect((u, new_vertex));
+
             println!("split_{v}: ({u}, {new_vertex})");
 
-            println!(
-                "split_{v}: inserting {:?} to ghosts",
-                Into::<Edge>::into((v, u)).id()
-            );
-
+            // Track the ghost edge and new edge
             let ge: Edge = (v, u).into();
             let ne: Edge = (new_vertex, u).into();
+            // If there is already a ghost
             for (_, v) in self.ghost_edges.iter_mut() {
                 if v.id() == ge.id() {
+                    // Update its child
                     *v = ne;
                     continue 'connections;
                 }
             }
-            // Track ghost edge
+
+            // Track ghost edge directly if one didnt already exist
             self.ghost_edges.insert(ge, ne);
         }
 
