@@ -47,7 +47,7 @@ pub fn main() {
     let _scene2 = WindowScene::new("schlegel", &event_loop, camera2, Srgba::WHITE, "schlegel");
     // scenes.insert(scene2.window.id(), scene2);
 
-    let mut shape = Graph::cube();
+    let mut shape = PolyGraph::cube();
     println!("graph:\n{shape}\n");
     let mut counter = 0;
     event_loop.run(move |event, _, control_flow| match &event {

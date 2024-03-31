@@ -2,7 +2,7 @@ use cgmath::VectorSpace;
 
 pub use super::*;
 
-impl Graph {
+impl PolyGraph {
     pub fn contract_edge(&mut self, edge: Edge) {
         // If this is the ghost edge, find its extant counterpart
         let id = self.ghost_edges.get(&edge).unwrap_or(&edge).id();
@@ -119,7 +119,7 @@ mod test {
 
     #[test]
     fn contract_edge() {
-        let mut graph = Graph::new_disconnected(6);
+        let mut graph = PolyGraph::new_disconnected(6);
         graph.connect((1, 0));
         graph.connect((1, 2));
 
@@ -150,7 +150,7 @@ mod test {
 
     #[test]
     fn split_vertex() {
-        let mut graph = Graph::new_disconnected(5);
+        let mut graph = PolyGraph::new_disconnected(5);
         graph.connect((1, 0));
         graph.connect((1, 2));
 

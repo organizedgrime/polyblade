@@ -16,7 +16,7 @@ use std::{
 pub use vertex::*;
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct Graph {
+pub struct PolyGraph {
     /// Conway Polyhedron Notation
     pub name: String,
 
@@ -45,7 +45,7 @@ pub struct Graph {
     pub edge_length: f32,
 }
 
-impl Graph {
+impl PolyGraph {
     /// New with n vertices
     pub fn new_disconnected(vertex_count: usize) -> Self {
         let mut poly = Self {
@@ -363,7 +363,7 @@ impl Graph {
     }
 }
 
-impl Display for Graph {
+impl Display for PolyGraph {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let mut vertices = self.vertices();
         vertices.sort();
@@ -390,7 +390,7 @@ mod test {
 
     #[test]
     fn basics() {
-        let mut graph = Graph::new_disconnected(4);
+        let mut graph = PolyGraph::new_disconnected(4);
         // Connect
         graph.connect((0, 1));
         graph.connect((0, 2));
@@ -414,7 +414,7 @@ mod test {
 
     #[test]
     fn chordless_cycles() {
-        let mut graph = Graph::new_disconnected(4);
+        let mut graph = PolyGraph::new_disconnected(4);
         // Connect
         graph.connect((0, 1));
         graph.connect((1, 2));
