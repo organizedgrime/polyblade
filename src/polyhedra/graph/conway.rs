@@ -90,7 +90,7 @@ impl Graph {
             //
             new_face.push(new_vertex);
             // Reform old connection
-            self.connect((*v2, new_vertex.id()));
+            self.connect((*v2, new_vertex));
         }
 
         // Link all the
@@ -104,7 +104,8 @@ impl Graph {
     /// `t` truncate is equivalent to vertex splitting
     pub fn truncate(&mut self) {
         for vertex in self.vertices() {
-            self.split_vertex(vertex.id());
+            self.split_vertex(vertex);
+            self.recompute_qualities();
         }
     }
 
@@ -113,8 +114,7 @@ impl Graph {
     pub fn ambo(&mut self) {
         let original_edges = self.adjacents.clone();
         for vertex in self.vertices() {
-            self.recompute_qualities();
-            self.split_vertex(vertex.id());
+            self.split_vertex(vertex);
         }
 
         for edge in original_edges.iter() {

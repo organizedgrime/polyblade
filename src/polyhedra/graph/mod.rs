@@ -161,34 +161,39 @@ impl Graph {
             .unwrap()
             + 1;
 
-        for i in 0..self.adjacency_matrix.len() {
-            if let Some(list) = self.adjacency_matrix.get_mut(&i) {
-                list.insert(new_id, false);
-            }
+        // Adjacency matric update
+        for (_, l) in self.adjacency_matrix.iter_mut() {
+            (*l).insert(new_id, false);
         }
-
         self.adjacency_matrix.insert(
             new_id,
             existing_vertices.into_iter().map(|v| (v, false)).collect(),
         );
+        // Position and speed
+        self.positions.insert(
+            new_id,
+            pos.unwrap_or(Vector3::new(random(), random(), random()).normalize()),
+        );
+        self.speeds.insert(new_id, Vector3::zero());
 
         new_id
     }
 
     pub fn delete(&mut self, id: usize) {
-        for v in self.vertices().iter() {
-            self.adjacency_matrix.get_mut(v).unwrap().remove(&id);
-            //.unwrap();
+        for (_, l) in self.adjacency_matrix.iter_mut() {
+            (*l).remove(&id);
         }
-        self.adjacency_matrix.remove(&id); //.unwrap();
+        self.adjacency_matrix.remove(&id);
+        self.positions.remove(&id);
+        self.speeds.remove(&id);
     }
 
     /// Edges of a vertex
     pub fn edges(&self, id: VertexId) -> Vec<Edge> {
-        if let Some(vertex) = self.vertex(id) {
+        if let Some(v) = self.vertex(id) {
             self.connections(id)
                 .into_iter()
-                .map(|other| (vertex.id(), other).into())
+                .map(|other| (v, other).into())
                 .collect()
         } else {
             vec![]
@@ -216,6 +221,7 @@ impl Graph {
         }
         connections
     }
+    /*
     pub fn sorted_connections(&mut self, id: VertexId) -> Vec<VertexId> {
         let mut m = HashSet::<(VertexId, VertexId)>::new();
         for face in self.faces.clone().into_iter() {
@@ -253,6 +259,7 @@ impl Graph {
 
         conn
     }
+    */
 
     pub fn ghosts(&self, id: VertexId) -> HashSet<VertexId> {
         if !self.ghost_matrix.contains_key(&id) {
@@ -280,11 +287,11 @@ impl Graph {
         println!("finding triplets");
         // find all the triplets
         for u in self.vertices() {
-            let adj: HashSet<VertexId> = self.connections(u.id());
+            let adj: HashSet<VertexId> = self.connections(u);
             for x in adj.clone().into_iter() {
                 for y in adj.clone().into_iter() {
-                    if x != y && u.id().clone() < x && x < y {
-                        let new_face = Face(vec![x, u.id(), y]);
+                    if x != y && u < x && x < y {
+                        let new_face = Face(vec![x, u, y]);
                         if all_edges.contains(&(x, y).into()) {
                             cycles.insert(new_face);
                         } else {
@@ -326,8 +333,8 @@ impl Graph {
     pub fn adjacents(&mut self) {
         self.adjacents = self
             .vertices()
-            .iter()
-            .flat_map(|v| self.edges(v.id()))
+            .into_iter()
+            .flat_map(|v| self.edges(v))
             .fold(HashSet::<Edge>::new(), |mut acc, e| {
                 acc.insert(e);
                 acc
@@ -351,7 +358,6 @@ impl Graph {
     }
 
     pub fn distances(&mut self) {
-        println!("verts: {:?}", self.vertices());
         // let dist be a |V| × |V| array of minimum distances initialized to ∞ (infinity)
         let mut dist: HashMap<VertexId, HashMap<VertexId, u32>> = self
             .vertices()
@@ -500,6 +506,7 @@ impl Graph {
     pub fn recompute_qualities(&mut self) {
         self.adjacents();
         self.distances();
+        // Neighbors and diameters rely on distances
         self.neighbors();
         self.diameter();
         self.faces();
