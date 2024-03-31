@@ -180,23 +180,22 @@ impl PolyGraph {
         self.adjacents();
         2 + self.adjacents.len() as i64 - self.vertices().len() as i64
     }
-    // Faces
+
     // Vertices that are connected to a given vertex
-    //fn connections(&self, id: VertexId) -> HashSet<VertexId>;
-    pub fn connections(&self, vertex: usize) -> HashSet<VertexId> {
+    pub fn connections(&self, v: usize) -> HashSet<VertexId> {
         let mut connections = HashSet::<VertexId>::new();
-        if let Some(list) = self.adjacency_matrix.get(&vertex) {
+        if let Some(list) = self.adjacency_matrix.get(&v) {
             for (other, connected) in list.iter() {
-                if *connected && other != &vertex {
+                if *connected && other != &v {
                     connections.insert(*other);
                 }
             }
         }
 
-        for (k, v) in self.ghost_edges.iter() {
-            if let Some(u) = k.other(vertex) {
+        for (ge, le) in self.ghost_edges.iter() {
+            if let Some(u) = ge.other(v) {
                 if self.vertices().contains(&u) {
-                    connections.insert(v.other(vertex).unwrap());
+                    connections.insert(le.other(v).unwrap());
                 }
             }
         }
