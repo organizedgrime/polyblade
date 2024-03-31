@@ -1,16 +1,16 @@
-use super::Polyhedron;
+use super::Graph;
 
 // Platonic Solids
-impl Polyhedron {
-    pub fn tetrahedron() -> Polyhedron {
-        Polyhedron::new(
+impl Graph {
+    pub fn tetrahedron() -> Graph {
+        Graph::new_platonic(
             "T",
             vec![vec![1, 2, 3], vec![0, 2, 3], vec![0, 1, 3], vec![0, 1, 2]],
         )
     }
 
-    pub fn cube() -> Polyhedron {
-        Polyhedron::new(
+    pub fn cube() -> Graph {
+        Graph::new_platonic(
             "C",
             vec![
                 vec![1, 2, 7],
@@ -24,8 +24,8 @@ impl Polyhedron {
             ],
         )
     }
-    pub fn octahedron() -> Polyhedron {
-        Polyhedron::new(
+    pub fn octahedron() -> Graph {
+        Graph::new_platonic(
             "O",
             vec![
                 vec![1, 2, 3, 4],
@@ -37,8 +37,8 @@ impl Polyhedron {
             ],
         )
     }
-    pub fn dodecahedron() -> Polyhedron {
-        Polyhedron::new(
+    pub fn dodecahedron() -> Graph {
+        Graph::new_platonic(
             "D",
             vec![
                 vec![1, 4, 7],
@@ -64,8 +64,8 @@ impl Polyhedron {
             ],
         )
     }
-    pub fn icosahedron() -> Polyhedron {
-        Polyhedron::new(
+    pub fn icosahedron() -> Graph {
+        Graph::new_platonic(
             "I",
             vec![
                 vec![1, 2, 5, 3, 4],

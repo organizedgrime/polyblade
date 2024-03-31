@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use serde::{Deserialize, Serialize};
 
 use super::VertexId;
@@ -6,24 +8,30 @@ pub type EdgeId = (VertexId, VertexId);
 
 #[derive(Debug, Serialize, Deserialize, Clone, Copy)]
 pub struct Edge {
-    pub a: VertexId,
-    pub b: VertexId,
+    pub v: VertexId,
+    pub u: VertexId,
 }
 
 impl Edge {
     pub fn id(&self) -> EdgeId {
-        if self.a < self.b {
-            (self.a, self.b)
+        if self.v < self.u {
+            (self.v, self.u)
         } else {
-            (self.b, self.a)
+            (self.u, self.v)
         }
     }
     pub fn other(&self, v: VertexId) -> VertexId {
-        if self.a == v {
-            self.b
+        if self.v == v {
+            self.u
         } else {
-            self.a
+            self.v
         }
+    }
+}
+
+impl Display for Edge {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_fmt(format_args!("({}, {})", self.id().0, self.id().1))
     }
 }
 
@@ -41,8 +49,8 @@ impl<V: Vertex> From<(V, V)> for Edge {
 impl From<(VertexId, VertexId)> for Edge {
     fn from(value: (VertexId, VertexId)) -> Self {
         Self {
-            a: value.0,
-            b: value.1,
+            v: value.0,
+            u: value.1,
         }
     }
 }

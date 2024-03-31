@@ -1,166 +1,90 @@
 use super::*;
 use crate::prelude::{WindowScene, HSL};
-use serde::{Deserialize, Serialize};
 use std::{collections::HashSet, ops::Add};
 use three_d::*;
 
-// Representation of an undirected graph
-// Uses adjacency lists
-#[derive(Debug, Serialize, Deserialize)]
-pub struct Polyhedron {
-    // Conway Polyhedron Notation
-    pub name: String,
-
-    // Points
-    pub points: Vec<Point>,
-
-    // List of faces
-    pub faces: Vec<Face>,
-
-    // Spring forces
-    pub adjacents: HashSet<Edge>,
-    pub neighbors: HashSet<Edge>,
-    pub diameter: HashSet<Edge>,
-
-    // Secret list of vertices that need to avoid each other
-    pub(crate) enemies: HashSet<Edge>,
-    pub(crate) edge_length: f32,
-}
-
 // Operations
-impl Polyhedron {
-    // After a change is made
-    pub fn recompute_qualities(&mut self) {
-        self.faces = self.faces();
-        self.adjacents = self.adjacents();
-        self.neighbors = self.neighbors();
-        self.diameter = self.diameter();
-    }
-
-    pub fn new(name: &str, points: Vec<Vec<usize>>) -> Polyhedron {
-        let mut poly = Polyhedron {
-            name: String::from(name),
-            points: points
-                .into_iter()
-                .enumerate()
-                .map(|(id, neighbors)| Point::new(id, neighbors.into_iter().collect()))
-                .collect(),
-            faces: vec![],
-            enemies: HashSet::new(),
-            edge_length: 1.0,
-            adjacents: HashSet::new(),
-            neighbors: HashSet::new(),
-            diameter: HashSet::new(),
-        };
-        poly.recompute_qualities();
-        poly
-    }
-
+impl Graph {
     fn apply_forces(&mut self, edges: HashSet<Edge>, l: f32, k: f32) {
-        for (i1, i2) in edges.into_iter().map(|e| e.id()) {
-            let v1 = &self.points[i1].xyz;
-            let v2 = &self.points[i2].xyz;
-
-            let d = v1 - v2;
-            let dist = d.magnitude();
+        for (v, u) in edges.into_iter().map(|e| e.id()) {
+            let diff = self.positions[&v] - self.positions[&u];
+            let dist = diff.magnitude();
             let distention = l - dist;
             let restorative_force = k / 2.0 * distention;
             let time_factor = 1000.0;
-            let f = d * restorative_force / time_factor;
-            self.points[i1].add_force(f);
-            self.points[i2].add_force(-f);
-            self.points[i1].update();
-            self.points[i2].update();
+            let f = diff * restorative_force / time_factor;
+
+            // Add forces
+            *self.speeds.get_mut(&v).unwrap() += f;
+            *self.speeds.get_mut(&u).unwrap() -= f;
+
+            // Apply damping
+            *self.speeds.get_mut(&v).unwrap() *= 0.92;
+            *self.speeds.get_mut(&u).unwrap() *= 0.92;
+
+            *self.positions.get_mut(&v).unwrap() += self.speeds[&v];
+            *self.positions.get_mut(&u).unwrap() += self.speeds[&u];
         }
     }
 
     fn apply_spring_forces(&mut self) {
-        // a = adjacent (length of an edge in 3D space)
-        // n = neighbor (length of a path between two vertices is 2)
-        // d = diameter (circumsphere / face of projection)
-
         // Natural lengths
         let l_d = self.edge_length * 2.0;
-        //let l_a = l_d / 5.0;
-
-        //let l_a = 0.7 / 1.5; //self.edge_length;
-        //let l_n = l_a * 2.0;
-        //let l_d = l_a * 5.0;
-        let l_n = l_d / 8.0;
-        let l_a = l_n / 2.0;
+        let l_a = l_d / 5.0;
+        let l_n = l_a * 2.0;
 
         // Spring constants
         let k_a = 0.9;
         let k_n = 0.4;
         let k_d = 0.3;
 
+        // Apply!
         self.apply_forces(self.adjacents.clone(), l_a, k_a);
         self.apply_forces(self.neighbors.clone(), l_n, k_n);
         self.apply_forces(self.diameter.clone(), l_d, k_d);
-        //self.apply_forces(self.enemies.clone(), l_d * 1.5, k_d / 2.0);
     }
 
     fn center(&mut self) {
-        let shift = self
-            .points
-            .iter()
-            .map(|p| p.xyz)
-            .fold(Vector3::zero(), Vector3::add)
-            / self.points.len() as f32;
-        for i in 0..self.points.len() {
-            self.points[i].xyz -= shift;
+        let shift = self.positions.values().fold(Vector3::zero(), Vector3::add)
+            / self.vertex_count() as f32;
+
+        for (_, v) in self.positions.iter_mut() {
+            *v -= shift;
         }
     }
 
     fn resize(&mut self) {
         let mean_magnitude = self
-            .points
-            .iter()
-            .map(|p| p.xyz.magnitude())
+            .positions
+            .values()
+            .map(|p| p.magnitude())
             .fold(0.0, f32::max);
         let distance = mean_magnitude - 1.0;
-        //println!("distance");
 
-        self.edge_length -= distance / 200.0;
-    }
-
-    fn quarrel(&mut self) {
-        let threshold = 0.001;
-        for v1 in 0..self.points.len() {
-            for v2 in 0..self.points.len() {
-                if self.points[v1].xyz.distance(self.points[v2].xyz).abs() < threshold {
-                    self.enemies.insert((v1, v2).into());
-                }
-            }
-        }
+        self.edge_length -= distance / 100.0;
     }
 
     pub fn update(&mut self) {
         self.center();
         self.resize();
-        self.quarrel();
         self.apply_spring_forces()
     }
-}
 
-impl Polyhedron {
     fn face_xyz(&self, face_index: usize) -> Vec<Vector3<f32>> {
         self.faces[face_index]
             .0
             .iter()
-            .map(|f| self.points[*f].xyz)
+            .map(|v| self.positions[v])
             .collect()
     }
 
     fn face_normal(&self, face_index: usize) -> Vector3<f32> {
-        let face = &self.faces[face_index].0;
-        let mut normal = Vector3::<f32>::new(0.0, 0.0, 0.0);
-        for i in 0..face.len() {
-            let v1 = self.points[face[i]].xyz;
-            let v2 = self.points[face[(i + 1) % face.len()]].xyz;
-            normal += v1.cross(v2);
-        }
-        normal.normalize()
+        self.faces[face_index]
+            .0
+            .iter()
+            .map(|v| self.positions[v])
+            .fold(Vector3::zero(), |acc, v| acc.cross(v))
+            .normalize()
     }
 
     fn face_centroid(&self, face_index: usize) -> Vector3<f32> {
@@ -213,9 +137,7 @@ impl Polyhedron {
 
         (positions, colors, barycentric)
     }
-}
 
-impl Polyhedron {
     pub fn render_schlegel(&mut self, scene: &mut WindowScene, frame_input: &FrameInput) {
         /*
         println!(

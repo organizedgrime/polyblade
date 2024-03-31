@@ -134,3 +134,12 @@ fn hue_to_rgb(p: f64, q: f64, t: f64) -> f64 {
         p
     }
 }
+
+/*
+fn scheme(sides: usize) -> HSL {
+    match sides {
+
+    }
+
+}
+*/

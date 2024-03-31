@@ -1,7 +1,10 @@
 pub use super::*;
 
-pub trait Conway<V: Vertex>: Graph<V> + Sized {
-    fn contract_edge(&mut self, id: EdgeId) {
+impl Graph {
+    pub fn contract_edge(&mut self, edge: Edge) {
+        println!("contracting e: {}", edge);
+        let id = self.ghost_edges.get(&edge).unwrap_or(&edge).id();
+        println!("contracting te: {:?}", id);
         // Give b all the same connections as a
         let adj = self.connections(id.0).clone();
         for b in adj.into_iter() {
@@ -9,86 +12,91 @@ pub trait Conway<V: Vertex>: Graph<V> + Sized {
         }
         // Delete a
         self.delete(id.0);
+        for (_, v) in self.ghost_edges.iter_mut() {
+            if v.v == id.0 || v.u == id.0 {
+                *v = (id.1, v.other(id.0)).into();
+            }
+        }
     }
 
-    fn split_vertex(&mut self, v: VertexId) -> Face {
-        let mut new_face = vec![];
-        let mut danglers = vec![];
+    pub fn split_vertex(&mut self, v: VertexId) {
+        println!("split_{v}");
+        let original_position = self.positions[&v];
+        let connections: Vec<VertexId> = self.connections(v).into_iter().collect();
 
-        // Remove all connections
-        for u in self.sorted_connections(v) {
-            // Remove existing connection
-            self.disconnect((v, u));
-            // Track the free hangers
-            danglers.push(u);
+        /*
+        // Add the connections to the ghost matrix
+        if !self.ghost_matrix.contains_key(&id) {
+            self.ghost_matrix.insert(id, HashSet::new());
+        }
+        for c in &connections {
+            println!("removing {id}, adding {c} to ghost");
+            self.ghost_matrix.get_mut(&id).unwrap().insert(*c);
+        }
+        */
+
+        //self.delete(id);
+        let mut new_face = Vec::new();
+
+        for u in connections {
+            // Insert a new node in the same location
+            let new_vertex = self.insert(Some(original_position));
+            //
+            new_face.push(new_vertex);
+            // Reform old connection
+            self.connect((u, new_vertex));
+            println!("split_{v}: ({u}, {new_vertex})");
+
+            println!(
+                "split_{v}: inserting {:?} to ghosts",
+                Into::<Edge>::into((v, u)).id()
+            );
+
+            let ge: Edge = (v, u).into();
+            let mut adv = false;
+            for (_, v) in self.ghost_edges.iter_mut() {
+                if v.id() == ge.id() {
+                    *v = (new_vertex, u).into();
+                    adv = true;
+                    break;
+                }
+            }
+            if !adv {
+                // Track ghost edge
+                self.ghost_edges
+                    .insert((v, u).into(), (new_vertex, u).into());
+            }
         }
 
-        danglers.sort();
-
-        for d in danglers {
-            // Create new node and connect to dangler
-            let n = self.insert(Some(v)).id();
-            self.connect((d, n));
-            new_face.push(n);
-        }
-
+        // Link all the
         for i in 0..new_face.len() {
             self.connect((new_face[i], new_face[(i + 1) % new_face.len()]));
         }
 
         self.delete(v);
-
-        Face(new_face.into_iter().collect())
     }
-
-    /*
-    fn split_vertex(&mut self, id: VertexId) -> Face {
-        let mut new_face = HashSet::new();
-        let mut previous = id;
-        for v2 in &self.connections(id).into_iter().collect::<Vec<_>>()[1..] {
-            // Remove existing connection
-            self.disconnect((id, *v2));
-            // Insert a new vertex
-            let new_vertex = self.insert(Some(id));
-
-            // Build new face
-            self.connect((previous, new_vertex.id()));
-            new_face.insert(new_vertex.id());
-            previous = new_vertex.id();
-
-            // Reform old connection
-            self.connect((*v2, new_vertex.id()));
-        }
-        // Close the new face
-        self.connect((previous, id));
-        new_face.insert(id);
-        Face(new_face.into_iter().collect())
-    }
-
-    */
-
+    //*/
     /// `t` truncate is equivalent to vertex splitting
-    fn truncate(&mut self) {
+    pub fn truncate(&mut self) {
         for vertex in self.vertices() {
-            self.split_vertex(vertex.id());
+            self.split_vertex(vertex);
         }
     }
 
     /// `a` ambo is equivalent to the composition of vertex splitting and edge contraction vefore
     /// applying vertex splitting.
-    fn ambo(&mut self) {
-        let mut edges = HashSet::new();
-        for vertex in self.vertices() {
-            for edge in self.split_vertex(vertex.id()).edges() {
-                edges.insert(edge);
-            }
-        }
+    pub fn ambo(&mut self) {
+        let original_edges = self.adjacents.clone();
 
-        for edge in self.adjacents() {
-            if !edges.contains(&edge) {
-                println!("contracting: {:?}", edge);
-                self.contract_edge(edge.id());
-            }
+        self.truncate();
+
+        self.recompute_qualities();
+
+        println!("ghost edges: {:#?}", self.ghost_edges);
+
+        for edge in original_edges.iter() {
+            self.contract_edge(*edge);
+            self.recompute_qualities();
         }
     }
 
@@ -113,27 +121,13 @@ pub trait Conway<V: Vertex>: Graph<V> + Sized {
     }
 }
 
-impl<T, V> Conway<V> for T
-where
-    T: Graph<V>,
-    V: Vertex,
-{
-}
-
 #[cfg(test)]
 mod test {
     use crate::prelude::*;
-    use test_case::test_case;
 
     #[test]
-    fn poly() {
-        let mut dodeca = Polyhedron::icosahedron();
-        dodeca.contract_edge((0, 1));
-    }
-
-    #[test_case(SimpleGraph::new_disconnected(6) ; "SimpleGraph")]
-    #[test_case(Polyhedron::new_disconnected(6) ; "Polyhedron")]
-    fn contract_edge<C: Conway<V>, V: Vertex>(mut graph: C) {
+    fn contract_edge() {
+        let mut graph = Graph::new_disconnected(6);
         graph.connect((1, 0));
         graph.connect((1, 2));
 
@@ -141,39 +135,45 @@ mod test {
 
         graph.connect((3, 4));
         graph.connect((3, 5));
+        graph.recompute_qualities();
 
         assert_eq!(graph.vertices().len(), 6);
-        assert_eq!(graph.adjacents().len(), 5);
+        assert_eq!(graph.adjacents.len(), 5);
 
-        graph.contract_edge((1, 3));
+        graph.contract_edge(Edge { v: 1, u: 3 });
+        graph.recompute_qualities();
 
+        println!("g: {:?}", graph);
         assert_eq!(graph.vertices().len(), 5);
-        assert_eq!(graph.adjacents().len(), 4);
+        assert_eq!(graph.adjacents.len(), 4);
 
-        assert_eq!(graph.connections(0), vec![2].into_iter().collect());
-        assert_eq!(graph.connections(1), vec![2].into_iter().collect());
+        assert_eq!(graph.connections(0), vec![3].into_iter().collect());
+        assert_eq!(graph.connections(2), vec![3].into_iter().collect());
 
-        assert_eq!(graph.connections(2), vec![0, 1, 3, 4].into_iter().collect());
+        assert_eq!(graph.connections(3), vec![0, 2, 4, 5].into_iter().collect());
 
-        assert_eq!(graph.connections(3), vec![2].into_iter().collect());
-        assert_eq!(graph.connections(4), vec![2].into_iter().collect());
+        assert_eq!(graph.connections(4), vec![3].into_iter().collect());
+        assert_eq!(graph.connections(5), vec![3].into_iter().collect());
     }
 
-    #[test_case(SimpleGraph::new_disconnected(5) ; "SimpleGraph")]
-    #[test_case(Polyhedron::new_disconnected(5) ; "Polyhedron")]
-    fn split_vertex<C: Conway<V>, V: Vertex>(mut graph: C) {
+    #[test]
+    fn split_vertex() {
+        let mut graph = Graph::new_disconnected(5);
         graph.connect((1, 0));
         graph.connect((1, 2));
 
         graph.connect((1, 3));
         graph.connect((1, 4));
+        graph.recompute_qualities();
 
         assert_eq!(graph.vertices().len(), 5);
-        assert_eq!(graph.adjacents().len(), 4);
+        assert_eq!(graph.adjacents.len(), 4);
 
         graph.split_vertex(1);
+        graph.recompute_qualities();
 
+        println!("g: {:?}", graph);
         assert_eq!(graph.vertices().len(), 8);
-        assert_eq!(graph.adjacents().len(), 8);
+        assert_eq!(graph.adjacents.len(), 8);
     }
 }
