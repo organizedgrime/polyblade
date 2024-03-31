@@ -54,14 +54,6 @@ pub fn main() {
 
     let mut shape = Graph::cube();
     println!("graph:\n{shape}\n");
-    /*
-     * shape.split_vertex(0);
-    shape.recompute_qualities();
-    println!("graph:\n{shape}\n");
-    shape.split_vertex(1);
-    shape.recompute_qualities();
-    */
-    println!("graph:\n{shape}\n");
     let mut counter = 0;
     event_loop.run(move |event, _, control_flow| match &event {
         winit::event::Event::MainEventsCleared => {
@@ -81,9 +73,9 @@ pub fn main() {
                 ));
 
                 counter += 1;
-                if counter == 1000 {
+                if counter == 2000 {
                     //shape.contract_edge((0, 1).into());
-                    shape.ambo();
+                    shape.expand();
                     shape.recompute_qualities();
                     println!("graph:\n{shape}\n");
                 }

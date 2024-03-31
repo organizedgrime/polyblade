@@ -69,9 +69,7 @@ impl Graph {
             positions: (0..vertex_count)
                 .map(|x| (x, vec3(random(), random(), random()).normalize()))
                 .collect(),
-            speeds: (0..vertex_count)
-                .map(|x| (x, Vector3::zero()))
-                .collect(),
+            speeds: (0..vertex_count).map(|x| (x, Vector3::zero())).collect(),
             edge_length: 1.0,
         };
         poly.recompute_qualities();
@@ -102,9 +100,7 @@ impl Graph {
     }
 
     pub fn vertices(&self) -> Vec<VertexId> {
-        self.adjacency_matrix
-            .clone().into_keys()
-            .collect()
+        self.adjacency_matrix.clone().into_keys().collect()
     }
 
     pub fn vertex_count(&self) -> usize {
@@ -148,12 +144,7 @@ impl Graph {
 
     pub fn insert(&mut self, pos: Option<Vector3<f32>>) -> VertexId {
         let existing_vertices = self.vertices();
-        let new_id = self
-            .adjacency_matrix
-            .clone().into_keys()
-            .max()
-            .unwrap()
-            + 1;
+        let new_id = self.adjacency_matrix.clone().into_keys().max().unwrap() + 1;
 
         // Adjacency matric update
         for (_, l) in self.adjacency_matrix.iter_mut() {
@@ -344,7 +335,10 @@ impl Graph {
         let mut neighbors = HashSet::<Edge>::new();
         for u in self.vertices() {
             for v in self.vertices() {
-                if dist.contains_key(&u) && dist.contains_key(&v) && (dist[&u][&v] == 2 || dist[&v][&u] == 2) {
+                if dist.contains_key(&u)
+                    && dist.contains_key(&v)
+                    && (dist[&u][&v] == 2 || dist[&v][&u] == 2)
+                {
                     neighbors.insert((u, v).into());
                 }
             }
@@ -462,7 +456,8 @@ impl Graph {
     pub fn diameter(&mut self) {
         let dist = self.dist.clone();
         if let Some(max) = dist
-            .clone().into_values()
+            .clone()
+            .into_values()
             .flatten()
             .map(|(_, d)| d)
             .filter(|&d| d < u32::MAX)
@@ -471,7 +466,10 @@ impl Graph {
             let mut diameter = HashSet::<Edge>::new();
             for u in self.vertices() {
                 for v in self.vertices() {
-                    if dist.contains_key(&u) && dist.contains_key(&v) && (dist[&u][&v] == max || dist[&v][&u] == max) {
+                    if dist.contains_key(&u)
+                        && dist.contains_key(&v)
+                        && (dist[&u][&v] == max || dist[&v][&u] == max)
+                    {
                         diameter.insert((u, v).into());
                     }
                 }
@@ -495,6 +493,7 @@ impl Graph {
     }
 
     pub fn recompute_qualities(&mut self) {
+        //
         self.adjacents();
         self.distances();
         // Neighbors and diameters rely on distances

@@ -1,10 +1,12 @@
+use cgmath::VectorSpace;
+
 pub use super::*;
 
 impl Graph {
     pub fn contract_edge(&mut self, edge: Edge) {
-        println!("contracting e: {}", edge);
+        //println!("contracting e: {}", edge);
         let id = self.ghost_edges.get(&edge).unwrap_or(&edge).id();
-        println!("contracting te: {:?}", id);
+        //rintln!("contracting te: {:?}", id);
         // Give b all the same connections as a
         let adj = self.connections(id.0).clone();
         for b in adj.into_iter() {
@@ -96,21 +98,24 @@ impl Graph {
 
         for edge in original_edges.iter() {
             self.contract_edge(*edge);
-            self.recompute_qualities();
         }
+        self.recompute_qualities();
+        self.ghost_matrix = HashMap::new();
     }
 
     //
     //fn dual(&mut self) {}
     /// `b` bevel is equivalent to `ta`
-    fn bevel(&mut self) {
+    pub fn bevel(&mut self) {
         self.truncate();
+        self.recompute_qualities();
         self.ambo();
     }
 
     /// `e` expand is equal to `aa`
-    fn expand(&mut self) {
+    pub fn expand(&mut self) {
         self.ambo();
+        self.recompute_qualities();
         self.ambo();
     }
 
