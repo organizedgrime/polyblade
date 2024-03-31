@@ -1,5 +1,3 @@
-use cgmath::Zero;
-
 pub use super::*;
 
 impl Graph {

@@ -7,7 +7,7 @@ use three_d::*;
 impl Graph {
     fn apply_forces(&mut self, edges: HashSet<Edge>, l: f32, k: f32) {
         for (v, u) in edges.into_iter().map(|e| e.id()) {
-            let diff = &self.positions[&v] - &self.positions[&u];
+            let diff = self.positions[&v] - self.positions[&u];
             let dist = diff.magnitude();
             let distention = l - dist;
             let restorative_force = k / 2.0 * distention;
@@ -45,11 +45,7 @@ impl Graph {
     }
 
     fn center(&mut self) {
-        let shift = self
-            .positions
-            .iter()
-            .map(|(_, v)| v)
-            .fold(Vector3::zero(), Vector3::add)
+        let shift = self.positions.values().fold(Vector3::zero(), Vector3::add)
             / self.vertex_count() as f32;
 
         for (_, v) in self.positions.iter_mut() {
@@ -60,8 +56,8 @@ impl Graph {
     fn resize(&mut self) {
         let mean_magnitude = self
             .positions
-            .iter()
-            .map(|(_, p)| p.magnitude())
+            .values()
+            .map(|p| p.magnitude())
             .fold(0.0, f32::max);
         let distance = mean_magnitude - 1.0;
 
