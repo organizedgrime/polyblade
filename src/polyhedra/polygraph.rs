@@ -194,10 +194,9 @@ impl PolyGraph {
         }
 
         for (k, v) in self.ghost_edges.iter() {
-            if k.u == vertex || k.v == vertex {
-                let xxx = k.other(vertex);
-                if self.vertices().contains(&xxx) {
-                    connections.insert(v.other(vertex));
+            if let Some(u) = k.other(vertex) {
+                if self.vertices().contains(&u) {
+                    connections.insert(v.other(vertex).unwrap());
                 }
             }
         }

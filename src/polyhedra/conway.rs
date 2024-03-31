@@ -14,8 +14,8 @@ impl PolyGraph {
         // Delete a
         self.delete(id.0);
         for (_, v) in self.ghost_edges.iter_mut() {
-            if v.v == id.0 || v.u == id.0 {
-                *v = (id.1, v.other(id.0)).into();
+            if let Some(u) = v.other(id.0) {
+                *v = (id.1, u).into();
             }
         }
     }
