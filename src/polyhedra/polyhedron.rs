@@ -40,8 +40,8 @@ impl Graph {
         //let l_a = 0.7 / 1.5; //self.edge_length;
         //let l_n = l_a * 2.0;
         //let l_d = l_a * 5.0;
-        let l_n = l_d / 8.0;
-        let l_a = l_n / 2.0;
+        let l_a = l_d / 5.0;
+        let l_n = l_a * 2.0;
 
         // Spring constants
         let k_a = 0.9;
