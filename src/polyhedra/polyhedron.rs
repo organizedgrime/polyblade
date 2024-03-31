@@ -87,15 +87,10 @@ impl Graph {
 
 impl Graph {
     fn face_xyz(&self, face_index: usize) -> Vec<Vector3<f32>> {
-        self.positions
+        self.faces[face_index]
+            .0
             .iter()
-            .filter_map(|(v, p)| {
-                if self.faces[face_index].0.contains(&v) {
-                    Some(p.clone())
-                } else {
-                    None
-                }
-            })
+            .map(|v| self.positions[v])
             .collect()
     }
 

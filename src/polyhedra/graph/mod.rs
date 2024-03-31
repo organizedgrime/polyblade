@@ -82,9 +82,9 @@ impl Graph {
     pub fn new_platonic(name: &str, points: Vec<Vec<usize>>) -> Self {
         let mut poly = Self::new_disconnected(points.len());
         poly.name = String::from(name);
-        for (i, conns) in points.into_iter().enumerate() {
-            for j in conns {
-                poly.connect((i, j).into());
+        for (v, conns) in points.into_iter().enumerate() {
+            for u in conns {
+                poly.connect(Edge { v, u }.id());
             }
         }
 
@@ -126,27 +126,27 @@ impl Graph {
         println!("connecting {:?}", id);
         if let Some(edge) = self.edge(id) {
             self.adjacency_matrix
-                .get_mut(&edge.a)
+                .get_mut(&edge.v)
                 .unwrap()
-                .insert(edge.b, true);
+                .insert(edge.u, true);
 
             self.adjacency_matrix
-                .get_mut(&edge.b)
+                .get_mut(&edge.u)
                 .unwrap()
-                .insert(edge.a, true);
+                .insert(edge.v, true);
         }
     }
 
     pub fn disconnect(&mut self, id: EdgeId) {
         if let Some(edge) = self.edge(id) {
             self.adjacency_matrix
-                .get_mut(&edge.a)
+                .get_mut(&edge.v)
                 .unwrap()
-                .insert(edge.b, false);
+                .insert(edge.u, false);
             self.adjacency_matrix
-                .get_mut(&edge.b)
+                .get_mut(&edge.u)
                 .unwrap()
-                .insert(edge.a, false);
+                .insert(edge.v, false);
         }
     }
 
