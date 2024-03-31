@@ -131,14 +131,14 @@ mod test {
         graph.connect((3, 5));
         graph.recompute_qualities();
 
-        assert_eq!(graph.vertices().len(), 6);
+        assert_eq!(graph.vertex_count(), 6);
         assert_eq!(graph.adjacents.len(), 5);
 
         graph.contract_edge((1, 3));
         graph.recompute_qualities();
 
         println!("g: {:?}", graph);
-        assert_eq!(graph.vertices().len(), 5);
+        assert_eq!(graph.vertex_count(), 5);
         assert_eq!(graph.adjacents.len(), 4);
 
         assert_eq!(graph.connections(0), vec![3].into_iter().collect());
@@ -160,14 +160,14 @@ mod test {
         graph.connect((1, 4));
         graph.recompute_qualities();
 
-        assert_eq!(graph.vertices().len(), 5);
+        assert_eq!(graph.vertex_count(), 5);
         assert_eq!(graph.adjacents.len(), 4);
 
         graph.split_vertex(1);
         graph.recompute_qualities();
 
         println!("g: {:?}", graph);
-        assert_eq!(graph.vertices().len(), 8);
+        assert_eq!(graph.vertex_count(), 8);
         assert_eq!(graph.adjacents.len(), 8);
     }
 }

@@ -82,20 +82,16 @@ impl PolyGraph {
     }
 
     /// Vertex
-    pub fn vertex(&self, id: VertexId) -> Option<usize> {
-        if self.adjacency_matrix.contains_key(&id) {
-            Some(id)
-        } else {
-            None
-        }
+    pub fn vertex_exists(&self, v: &VertexId) -> bool {
+        self.adjacency_matrix.contains_key(v)
+    }
+
+    pub fn vertex_count(&self) -> usize {
+        self.adjacency_matrix.len()
     }
 
     pub fn vertices(&self) -> Vec<VertexId> {
         self.adjacency_matrix.clone().into_keys().collect()
-    }
-
-    pub fn vertex_count(&self) -> usize {
-        self.positions.len()
     }
 
     pub fn connect(&mut self, e: impl Into<Edge>) {
@@ -142,20 +138,16 @@ impl PolyGraph {
     }
 
     /// Edges of a vertex
-    pub fn edges(&self, id: VertexId) -> Vec<Edge> {
-        if let Some(v) = self.vertex(id) {
-            self.connections(id)
-                .into_iter()
-                .map(|other| (v, other).into())
-                .collect()
-        } else {
-            vec![]
-        }
+    pub fn edges(&self, v: VertexId) -> Vec<Edge> {
+        self.connections(v)
+            .into_iter()
+            .map(|other| (v, other).into())
+            .collect()
     }
+
     /// Number of faces
     pub fn face_count(&mut self) -> i64 {
-        self.adjacents();
-        2 + self.adjacents.len() as i64 - self.vertices().len() as i64
+        2 + self.adjacents.len() as i64 - self.adjacency_matrix.len() as i64
     }
 
     // Vertices that are connected to a given vertex
@@ -171,7 +163,7 @@ impl PolyGraph {
 
         for (ge, le) in self.ghost_edges.iter() {
             if let Some(u) = ge.other(v) {
-                if self.vertices().contains(&u) {
+                if self.vertex_exists(&u) {
                     connections.insert(le.other(v).unwrap());
                 }
             }
@@ -339,15 +331,17 @@ impl Display for PolyGraph {
         adjacents.sort();
 
         f.write_fmt(format_args!(
-            "name:\t{}\nvertices:\t{:?}\nadjacents:\t{}\nfaces:{:?}",
+            "name:\t\t{}\nvertices:\t{:?}\nadjacents:\t{}\nfaces:\t\t{}\n",
             self.name,
             vertices,
             adjacents
                 .iter()
-                .fold(String::new(), |acc, e| format!("{acc}, {e}")),
-            self.faces
-                .iter()
-                .fold(String::new(), |acc, f| format!("{acc}, {:?}", f.0))
+                .fold(String::new(), |acc, e| format!("{e}, {acc}")),
+            self.faces.iter().fold(String::new(), |acc, f| format!(
+                "[{}], {acc}",
+                f.0.iter()
+                    .fold(String::new(), |acc, x| format!("{x}, {acc}"))
+            ))
         ))
     }
 }
