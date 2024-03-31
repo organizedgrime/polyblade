@@ -3,9 +3,10 @@ use std::collections::HashMap;
 pub use super::*;
 
 impl PolyGraph {
-    pub fn contract_edge(&mut self, edge: Edge) {
+    pub fn contract_edge(&mut self, e: impl Into<Edge>) {
+        let e: Edge = e.into();
         // If this is the ghost edge, find its extant counterpart
-        let id = self.ghost_edges.get(&edge).unwrap_or(&edge).id();
+        let id = self.ghost_edges.get(&e).unwrap_or(&e).id();
         // Give b all the same connections as a
         let adj = self.connections(id.0).clone();
         for b in adj.into_iter() {
@@ -133,7 +134,7 @@ mod test {
         assert_eq!(graph.vertices().len(), 6);
         assert_eq!(graph.adjacents.len(), 5);
 
-        graph.contract_edge((1, 3).into());
+        graph.contract_edge((1, 3));
         graph.recompute_qualities();
 
         println!("g: {:?}", graph);
