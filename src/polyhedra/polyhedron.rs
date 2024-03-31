@@ -75,7 +75,7 @@ impl Graph {
             .fold(0.0, f32::max);
         let distance = mean_magnitude - 1.0;
 
-        self.edge_length -= distance / 200.0;
+        self.edge_length -= distance / 100.0;
     }
 
     pub fn update(&mut self) {

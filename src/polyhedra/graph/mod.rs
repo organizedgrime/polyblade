@@ -10,6 +10,7 @@ use rand::random;
 use serde::{Deserialize, Serialize};
 use std::{
     collections::{HashMap, HashSet},
+    fmt::Display,
     u32,
 };
 pub use vertex::*;
@@ -123,13 +124,11 @@ impl Graph {
     }
 
     pub fn connect(&mut self, id: EdgeId) {
-        println!("connecting {:?}", id);
         if let Some(edge) = self.edge(id) {
             self.adjacency_matrix
                 .get_mut(&edge.v)
                 .unwrap()
                 .insert(edge.u, true);
-
             self.adjacency_matrix
                 .get_mut(&edge.u)
                 .unwrap()
@@ -208,9 +207,11 @@ impl Graph {
     // Vertices that are connected to a given vertex
     //fn connections(&self, id: VertexId) -> HashSet<VertexId>;
     pub fn connections(&self, vertex: usize) -> HashSet<VertexId> {
+        /*
         if let Some(children) = self.ghost_matrix.get(&vertex) {
             return children.clone();
         }
+        */
         let mut connections = HashSet::<VertexId>::new();
         if let Some(list) = self.adjacency_matrix.get(&vertex) {
             for (other, connected) in list.into_iter() {
@@ -261,22 +262,24 @@ impl Graph {
     }
     */
 
-    pub fn ghosts(&self, id: VertexId) -> HashSet<VertexId> {
-        if !self.ghost_matrix.contains_key(&id) {
-            vec![id].into_iter().collect()
-        } else {
-            let l = self.ghost_matrix.get(&id).unwrap();
-            l.clone()
-            /*
-            l.into_iter()
-                .map(|g| self.ghosts(*g))
-                .fold(HashSet::new(), |mut acc, l| {
-                    acc.extend(l);
-                    acc
-                })
-                */
+    /*
+        pub fn ghosts(&self, id: VertexId) -> HashSet<VertexId> {
+            if !self.ghost_matrix.contains_key(&id) {
+                vec![id].into_iter().collect()
+            } else {
+                let l = self.ghost_matrix.get(&id).unwrap();
+                l.clone()
+                /*
+                l.into_iter()
+                    .map(|g| self.ghosts(*g))
+                    .fold(HashSet::new(), |mut acc, l| {
+                        acc.extend(l);
+                        acc
+                    })
+                    */
+            }
         }
-    }
+    */
 
     /// All faces
     pub fn faces(&mut self) {
@@ -510,6 +513,25 @@ impl Graph {
         self.neighbors();
         self.diameter();
         self.faces();
+    }
+}
+
+impl Display for Graph {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut vertices = self.vertices();
+        vertices.sort();
+
+        f.write_fmt(format_args!(
+            "name:\t{}\nvertices:\t{:?}\nadjacents:\t{}\nfaces:{:?}",
+            self.name,
+            vertices,
+            self.adjacents
+                .iter()
+                .fold(String::new(), |acc, e| format!("{acc}, {e}")),
+            self.faces
+                .iter()
+                .fold(String::new(), |acc, f| format!("{acc}, {:?}", f.0))
+        ))
     }
 }
 

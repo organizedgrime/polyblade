@@ -4,6 +4,7 @@ pub use super::*;
 
 impl Graph {
     pub fn contract_edge(&mut self, id: EdgeId) {
+        /*
         // This operation requires up to date edges
         self.recompute_qualities();
 
@@ -32,6 +33,7 @@ impl Graph {
                 }
             }
         }
+        */
     }
 
     /*
@@ -70,8 +72,10 @@ impl Graph {
 
     // /*
     pub fn split_vertex(&mut self, id: VertexId) {
+        let original_position = self.positions[&id];
         let connections: Vec<VertexId> = self.connections(id).into_iter().collect();
 
+        /*
         // Add the connections to the ghost matrix
         if !self.ghost_matrix.contains_key(&id) {
             self.ghost_matrix.insert(id, HashSet::new());
@@ -80,13 +84,14 @@ impl Graph {
             println!("removing {id}, adding {c} to ghost");
             self.ghost_matrix.get_mut(&id).unwrap().insert(*c);
         }
+        */
 
         //self.delete(id);
         let mut new_face = Vec::new();
 
         for v2 in &connections {
             // Insert a new node in the same location
-            let new_vertex = self.insert(Some(Vector3::zero()));
+            let new_vertex = self.insert(Some(original_position));
             //
             new_face.push(new_vertex);
             // Reform old connection
@@ -105,7 +110,6 @@ impl Graph {
     pub fn truncate(&mut self) {
         for vertex in self.vertices() {
             self.split_vertex(vertex);
-            self.recompute_qualities();
         }
     }
 

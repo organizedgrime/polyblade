@@ -81,7 +81,7 @@ pub fn main() {
                     //
                     //shape.split_vertex
                     shape.recompute_qualities();
-                    println!("HEY!!!!!!!!!!!!!!!!!!!!!!!\n{}", shape.adjacents.len());
+                    println!("hey:::::\n{shape}");
                     //shape2.recompute_qualities();
                 }
 
