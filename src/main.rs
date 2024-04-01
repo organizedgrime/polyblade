@@ -53,11 +53,12 @@ pub fn main() {
     let mut control = OrbitControl::new(vec3(0.0, 0.0, 0.0), 1.0, 1000.0);
 
     let mut shape = PolyGraph::cube();
+    let mut rotating = true;
     window.render_loop(move |mut frame_input| {
         shape.update();
 
         // Gui panel to control the number of cubes and whether or not instancing is turned on.
-        let mut panel_width = 0.0;
+        let mut panel_height = 0.0;
         gui.update(
             &mut frame_input.events,
             frame_input.accumulated_time,
@@ -65,10 +66,11 @@ pub fn main() {
             frame_input.device_pixel_ratio,
             |gui_context| {
                 use three_d::egui::*;
-                SidePanel::left("side_panel").show(gui_context, |ui| {
+                TopBottomPanel::top("controls").show(gui_context, |ui| {
                     use three_d::egui::*;
                     ui.heading("Debug Panel");
                     ui.add(Button::new("cube"));
+                    ui.add(Checkbox::new(&mut rotating, "rotating"));
                     ui.add(Label::new(
                         "Increase the cube count until the cubes don't rotate \
                                        smoothly anymore, then toggle on instancing. The rotations \
@@ -100,23 +102,23 @@ pub fn main() {
                         shape.ambo();
                     }
                 });
-                panel_width = gui_context.used_rect().width();
+                panel_height = gui_context.used_rect().height();
             },
         );
 
         let viewport = Viewport {
-            x: (panel_width * frame_input.device_pixel_ratio) as i32,
-            y: 0,
-            width: frame_input.viewport.width
-                - (panel_width * frame_input.device_pixel_ratio) as u32,
-            height: frame_input.viewport.height,
+            x: 0,
+            y: (panel_height * frame_input.device_pixel_ratio) as i32,
+            width: frame_input.viewport.width,
+            height: frame_input.viewport.height
+                - (panel_height * frame_input.device_pixel_ratio) as u32,
         };
         camera.set_viewport(viewport);
 
         // Camera control must be after the gui update.
         control.handle_events(&mut camera, &mut frame_input.events);
 
-        //camera.set_viewport(frame_input.viewport);
+        camera.set_viewport(frame_input.viewport);
 
         frame_input
             .screen()
@@ -125,8 +127,13 @@ pub fn main() {
             .write(|| {
                 let (positions, colors, barycentric) = shape.triangle_buffers(&context);
                 let time = frame_input.accumulated_time as f32;
-                let model = Mat4::from_angle_y(radians(0.001 * time))
-                    * Mat4::from_angle_x(radians(0.0004 * time));
+                let model = if rotating {
+                    Mat4::from_angle_y(radians(0.001 * time))
+                        * Mat4::from_angle_x(radians(0.0004 * time))
+                } else {
+                    Mat4::from_angle_y(radians(0.0)) * Mat4::from_angle_x(radians(0.0))
+                };
+
                 program.use_uniform("model", model);
                 program.use_uniform("projection", camera.projection() * camera.view());
                 program.use_vertex_attribute("position", &positions);
@@ -139,8 +146,6 @@ pub fn main() {
                 );
             })
             .write(|| gui.render());
-
-        //screen.write(|| gui.render()).unwrap();
 
         FrameOutput::default()
     });
