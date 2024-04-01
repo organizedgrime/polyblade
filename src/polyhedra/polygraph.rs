@@ -8,7 +8,7 @@ use std::{
     u32,
 };
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Default, Serialize, Deserialize)]
 pub struct PolyGraph {
     /// Conway Polyhedron Notation
     pub name: String,
@@ -34,6 +34,8 @@ pub struct PolyGraph {
     pub positions: HashMap<VertexId, Vector3<f32>>,
     /// Speeds
     pub speeds: HashMap<VertexId, Vector3<f32>>,
+    /// Edges in the process of contracting visually
+    pub contracting_edges: HashSet<Edge>,
     /// Edge length
     pub edge_length: f32,
 }
@@ -42,26 +44,15 @@ impl PolyGraph {
     /// New with n vertices
     pub fn new_disconnected(vertex_count: usize) -> Self {
         let mut poly = Self {
-            name: String::new(),
             adjacency_matrix: (0..vertex_count)
-                .map(|x| {
-                    (
-                        x,
-                        (0..vertex_count).map(|y| (y, false)).collect(), // vec![false; vertex_count]
-                    )
-                })
+                .map(|x| (x, (0..vertex_count).map(|y| (y, false)).collect()))
                 .collect(),
-            ghost_edges: HashMap::new(),
-            faces: vec![],
-            adjacents: HashSet::new(),
-            neighbors: HashSet::new(),
-            diameter: HashSet::new(),
-            dist: HashMap::new(),
             positions: (0..vertex_count)
                 .map(|x| (x, vec3(random(), random(), random()).normalize()))
                 .collect(),
             speeds: (0..vertex_count).map(|x| (x, Vector3::zero())).collect(),
             edge_length: 1.0,
+            ..Default::default()
         };
         poly.recompute_qualities();
         poly

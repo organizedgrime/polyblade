@@ -1,29 +1,46 @@
 use super::*;
 use crate::prelude::{WindowScene, HSL};
-use std::{collections::HashSet, ops::Add};
+use std::{
+    collections::{HashMap, HashSet},
+    ops::Add,
+};
 use three_d::*;
 
 // Operations
 impl PolyGraph {
     fn apply_forces(&mut self, edges: HashSet<Edge>, l: f32, k: f32) {
         for (v, u) in edges.into_iter().map(|e| e.id()) {
-            let diff = self.positions[&v] - self.positions[&u];
-            let dist = diff.magnitude();
-            let distention = l - dist;
-            let restorative_force = k / 2.0 * distention;
-            let time_factor = 1000.0;
-            let f = diff * restorative_force / time_factor;
+            if self
+                .contracting_edges
+                .iter()
+                .map(|e| self.ghost_edges.get(&e).unwrap_or(&e).id().into())
+                .collect::<Vec<Edge>>()
+                .contains(&(v, u).into())
+            {
+                let vp = self.positions[&v];
+                let up = self.positions[&u];
+                let l = vp.distance(up);
+                *self.positions.get_mut(&v).unwrap() = vp.lerp(up, 0.01 / l);
+                *self.positions.get_mut(&u).unwrap() = up.lerp(vp, 0.01 / l);
+            } else {
+                let diff = self.positions[&v] - self.positions[&u];
+                let dist = diff.magnitude();
+                let distention = l - dist;
+                let restorative_force = k / 2.0 * distention;
+                let time_factor = 1000.0;
+                let f = diff * restorative_force / time_factor;
 
-            // Add forces
-            *self.speeds.get_mut(&v).unwrap() += f;
-            *self.speeds.get_mut(&u).unwrap() -= f;
+                // Add forces
+                *self.speeds.get_mut(&v).unwrap() += f;
+                *self.speeds.get_mut(&u).unwrap() -= f;
 
-            // Apply damping
-            *self.speeds.get_mut(&v).unwrap() *= 0.92;
-            *self.speeds.get_mut(&u).unwrap() *= 0.92;
+                // Apply damping
+                *self.speeds.get_mut(&v).unwrap() *= 0.92;
+                *self.speeds.get_mut(&u).unwrap() *= 0.92;
 
-            *self.positions.get_mut(&v).unwrap() += self.speeds[&v];
-            *self.positions.get_mut(&u).unwrap() += self.speeds[&u];
+                *self.positions.get_mut(&v).unwrap() += self.speeds[&v];
+                *self.positions.get_mut(&u).unwrap() += self.speeds[&u];
+            }
         }
     }
 
@@ -67,7 +84,8 @@ impl PolyGraph {
     pub fn update(&mut self) {
         self.center();
         self.resize();
-        self.apply_spring_forces()
+        self.animate_contraction();
+        self.apply_spring_forces();
     }
 
     fn face_xyz(&self, face_index: usize) -> Vec<Vector3<f32>> {
@@ -201,5 +219,29 @@ impl PolyGraph {
             frame_input.viewport,
             positions.vertex_count(),
         );
+    }
+
+    pub fn animate_contraction(&mut self) {
+        // If all edges are contracted visually
+        if !self.contracting_edges.is_empty()
+            && self.contracting_edges.iter().fold(true, |acc, e| {
+                let (v, u) = self.ghost_edges.get(&e).unwrap_or(&e).id();
+                if self.positions.contains_key(&v) && self.positions.contains_key(&u) {
+                    acc && self.positions[&v].distance(self.positions[&u]) < 0.08
+                } else {
+                    acc
+                }
+            })
+        {
+            // Contract them in the graph
+            for e in self.contracting_edges.clone().into_iter() {
+                self.contract_edge(e);
+            }
+            self.recompute_qualities();
+            self.ghost_edges = HashMap::new();
+            self.contracting_edges = HashSet::new();
+            self.name.truncate(self.name.len() - 1);
+            self.name += "a";
+        }
     }
 }

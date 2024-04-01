@@ -68,7 +68,7 @@ pub fn main() {
                 ));
 
                 counter += 1;
-                if counter == 1000 {
+                if counter == 2000 {
                     shape.ambo();
                     shape.recompute_qualities();
                     println!("graph:\n{shape}\n");
