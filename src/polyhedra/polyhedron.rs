@@ -1,10 +1,12 @@
 use super::*;
-use crate::prelude::{WindowScene, HSL};
+use crate::prelude::HSL;
 use std::{
     collections::{HashMap, HashSet},
     ops::Add,
 };
 use three_d::*;
+
+const TICK_SPEED: f32 = 200.0;
 
 // Operations
 impl PolyGraph {
@@ -13,22 +15,22 @@ impl PolyGraph {
             if self
                 .contracting_edges
                 .iter()
-                .map(|e| self.ghost_edges.get(&e).unwrap_or(&e).id().into())
+                .map(|e| self.ghost_edges.get(e).unwrap_or(e).id().into())
                 .collect::<Vec<Edge>>()
                 .contains(&(v, u).into())
             {
                 let vp = self.positions[&v];
                 let up = self.positions[&u];
                 let l = vp.distance(up);
-                *self.positions.get_mut(&v).unwrap() = vp.lerp(up, 0.01 / l);
-                *self.positions.get_mut(&u).unwrap() = up.lerp(vp, 0.01 / l);
+                let f = (self.edge_length / TICK_SPEED * 3.0) / l;
+                *self.positions.get_mut(&v).unwrap() = vp.lerp(up, f);
+                *self.positions.get_mut(&u).unwrap() = up.lerp(vp, f);
             } else {
                 let diff = self.positions[&v] - self.positions[&u];
                 let dist = diff.magnitude();
                 let distention = l - dist;
                 let restorative_force = k / 2.0 * distention;
-                let time_factor = 1000.0;
-                let f = diff * restorative_force / time_factor;
+                let f = diff * restorative_force / TICK_SPEED;
 
                 // Add forces
                 *self.speeds.get_mut(&v).unwrap() += f;
@@ -47,7 +49,7 @@ impl PolyGraph {
     fn apply_spring_forces(&mut self) {
         // Natural lengths
         let l_d = self.edge_length * 2.0;
-        let l_a = l_d / 5.0;
+        let l_a = l_d / 8.0;
         let l_n = l_a * 2.0;
 
         // Spring constants
@@ -78,7 +80,7 @@ impl PolyGraph {
             .fold(0.0, f32::max);
         let distance = mean_magnitude - 1.0;
 
-        self.edge_length -= distance / 100.0;
+        self.edge_length -= distance / TICK_SPEED;
     }
 
     pub fn update(&mut self) {
@@ -96,6 +98,7 @@ impl PolyGraph {
             .collect()
     }
 
+    #[allow(dead_code)]
     fn face_normal(&self, face_index: usize) -> Vector3<f32> {
         self.faces[face_index]
             .0
@@ -156,76 +159,11 @@ impl PolyGraph {
         (positions, colors, barycentric)
     }
 
-    pub fn render_schlegel(&mut self, scene: &mut WindowScene, frame_input: &FrameInput) {
-        /*
-        println!(
-            "distances: {:?}",
-            self.points
-                .iter()
-                .map(|p| p.xyz.magnitude())
-                .collect::<Vec<_>>()
-        );
-        */
-        let r = self.face_normal(0) * 1.05;
-        let theta = 2.0 * (1.0 / (2.0_f32.sqrt() * r.magnitude() - 1.0)).atan();
-        scene
-            .camera
-            .set_view(r, vec3(0.0, 0.0, 0.0), vec3(0.0, 1.0, 0.0));
-
-        scene
-            .camera
-            .set_perspective_projection(radians(theta), 0.01, 10.0);
-
-        let (positions, colors, barycentric) = self.triangle_buffers(&scene.context);
-
-        let model = Mat4::from_angle_x(radians(0.0));
-
-        scene.program.use_uniform("model", model);
-        scene.program.use_uniform(
-            "projection",
-            scene.camera.projection() * scene.camera.view(),
-        );
-        scene.program.use_vertex_attribute("position", &positions);
-        scene.program.use_vertex_attribute("color", &colors);
-        scene
-            .program
-            .use_vertex_attribute("barycentric", &barycentric);
-        scene.program.draw_arrays(
-            RenderStates::default(),
-            frame_input.viewport,
-            positions.vertex_count(),
-        );
-    }
-    pub fn render_model(&mut self, scene: &mut WindowScene, frame_input: &FrameInput) {
-        let (positions, colors, barycentric) = self.triangle_buffers(&scene.context);
-        //let program = scene.program.unwrap();
-
-        let time = frame_input.accumulated_time as f32;
-        let model =
-            Mat4::from_angle_y(radians(0.001 * time)) * Mat4::from_angle_x(radians(0.0004 * time));
-
-        scene.program.use_uniform("model", model);
-        scene.program.use_uniform(
-            "projection",
-            scene.camera.projection() * scene.camera.view(),
-        );
-        scene.program.use_vertex_attribute("position", &positions);
-        scene.program.use_vertex_attribute("color", &colors);
-        scene
-            .program
-            .use_vertex_attribute("barycentric", &barycentric);
-        scene.program.draw_arrays(
-            RenderStates::default(),
-            frame_input.viewport,
-            positions.vertex_count(),
-        );
-    }
-
     pub fn animate_contraction(&mut self) {
         // If all edges are contracted visually
         if !self.contracting_edges.is_empty()
             && self.contracting_edges.iter().fold(true, |acc, e| {
-                let (v, u) = self.ghost_edges.get(&e).unwrap_or(&e).id();
+                let (v, u) = self.ghost_edges.get(e).unwrap_or(e).id();
                 if self.positions.contains_key(&v) && self.positions.contains_key(&u) {
                     acc && self.positions[&v].distance(self.positions[&u]) < 0.08
                 } else {

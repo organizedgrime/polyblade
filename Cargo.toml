@@ -14,7 +14,7 @@ crate-type = ["cdylib", "rlib"]
 cgmath = {version = "^0.18", features = ["swizzle"] }
 serde = { version = "^1.0", features = ["derive"] }
 serde_json = "1.0.114"
-three-d = { version = "^0.16", features = ["window"] }
+three-d = { version = "^0.16", features = ["window", "egui-gui"] }
 three-d-asset = { version = "0.7", features = ["obj", "jpeg", "http", "serde"] }
 tracing = "0.1.40"
 winit = "0.28"

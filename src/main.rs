@@ -17,13 +17,31 @@ pub async fn start() -> Result<(), JsValue> {
 
 #[cfg(not(target_arch = "wasm32"))]
 pub fn main() {
-    use polyblade::prelude::*;
-    use std::collections::HashMap;
-    use three_d::renderer::*;
+    use cgmath::{Vector3, Zero};
+    use polyblade::prelude::PolyGraph;
+    use three_d::core::{degrees, radians, vec3, ClearState, Context, Mat4, Program, RenderStates};
+    use three_d::window::{FrameOutput, Window, WindowSettings};
+    use three_d::{Camera, OrbitControl, Viewport};
 
-    let mut scenes = HashMap::new();
-    let event_loop = winit::event_loop::EventLoop::new();
-    let camera1 = Camera::new_perspective(
+    let window = Window::new(WindowSettings {
+        title: "polyblade".to_string(),
+        #[cfg(not(target_arch = "wasm32"))]
+        max_size: Some((600, 700)),
+        ..Default::default()
+    })
+    .unwrap();
+
+    // Get the graphics context from the window
+    let context: Context = window.gl();
+    let mut gui = three_d::GUI::new(&context);
+    let program = Program::from_source(
+        &context,
+        include_str!("shaders/basic.vert"),
+        include_str!("shaders/basic.frag"),
+    )
+    .unwrap();
+
+    let mut camera = Camera::new_perspective(
         Viewport::new_at_origo(1, 1),
         vec3(0.0, 0.0, 4.0),
         Vector3::zero(),
@@ -32,89 +50,110 @@ pub fn main() {
         0.1,
         10.0,
     );
-    let scene1 = WindowScene::new("model", &event_loop, camera1, Srgba::WHITE, "basic");
-    scenes.insert(scene1.window.id(), scene1);
-
-    let camera2 = Camera::new_perspective(
-        Viewport::new_at_origo(1, 1),
-        vec3(0.0, 0.0, 6.0),
-        Vector3::zero(),
-        vec3(0.0, 1.0, 0.0),
-        degrees(170.0),
-        0.1,
-        10.0,
-    );
-    let _scene2 = WindowScene::new("schlegel", &event_loop, camera2, Srgba::WHITE, "schlegel");
-    // scenes.insert(scene2.window.id(), scene2);
+    let mut control = OrbitControl::new(vec3(0.0, 0.0, 0.0), 1.0, 1000.0);
+    let mut model_rotation = Mat4::zero();
 
     let mut shape = PolyGraph::cube();
-    println!("graph:\n{shape}\n");
-    let mut counter = 0;
-    event_loop.run(move |event, _, control_flow| match &event {
-        winit::event::Event::MainEventsCleared => {
-            for (_, scene) in scenes.iter() {
-                scene.window.request_redraw();
-            }
-        }
-        winit::event::Event::RedrawRequested(window_id) => {
-            if let Some(scene) = scenes.get_mut(window_id) {
-                // Open
-                scene.context.make_current().unwrap();
-                let frame_input = scene.frame_input_generator.generate(&scene.context);
-                scene.camera.set_viewport(frame_input.viewport);
-                let color = scene.background.to_linear_srgb();
-                frame_input.screen().clear(ClearState::color_and_depth(
-                    color.x, color.y, color.z, 1.0, 1.0,
-                ));
+    let mut rotating = true;
+    window.render_loop(move |mut frame_input| {
+        shape.update();
 
-                counter += 1;
-                if counter == 2000 {
-                    shape.ambo();
-                    shape.recompute_qualities();
-                    println!("graph:\n{shape}\n");
-                }
-
-                shape.update();
-                //shape2.update();
-                if &scene.title == "model" {
-                    shape.render_model(scene, &frame_input);
-                    //shape2.render_model(scene, &frame_input);
-                } else {
-                    shape.render_schlegel(scene, &frame_input);
-                    //Polyhedron::dodecahedron().render_model(scene, &frame_input);
-                }
-
-                // Close
-                scene.context.swap_buffers().unwrap();
-                control_flow.set_poll();
-                scene.window.request_redraw();
-            }
-        }
-        winit::event::Event::WindowEvent { event, window_id } => {
-            if let Some(scene) = scenes.get_mut(window_id) {
-                scene.frame_input_generator.handle_winit_window_event(event);
-                match event {
-                    winit::event::WindowEvent::Resized(physical_size) => {
-                        scene.context.resize(*physical_size);
-                    }
-                    winit::event::WindowEvent::ScaleFactorChanged { new_inner_size, .. } => {
-                        scene.context.resize(**new_inner_size);
-                    }
-                    winit::event::WindowEvent::CloseRequested => {
-                        if let Some(scene) = scenes.get_mut(window_id) {
-                            scene.context.make_current().unwrap();
+        // Gui panel to control the number of cubes and whether or not instancing is turned on.
+        let mut panel_height = 0.0;
+        gui.update(
+            &mut frame_input.events,
+            frame_input.accumulated_time,
+            frame_input.viewport,
+            frame_input.device_pixel_ratio,
+            |gui_context| {
+                use three_d::egui::*;
+                TopBottomPanel::bottom("controls").show(gui_context, |ui| {
+                    use three_d::egui::*;
+                    ui.heading(shape.name.clone());
+                    ui.add(Checkbox::new(&mut rotating, "rotating"));
+                    ui.horizontal(|ui| {
+                        ui.label("Seeds:");
+                        // Buttons to revert to platonic solids
+                        if ui.button("Tetrahedron").clicked() {
+                            shape = PolyGraph::tetrahedron();
                         }
-
-                        scenes.remove(window_id);
-
-                        if scenes.is_empty() {
-                            control_flow.set_exit();
+                        if ui.button("Cube").clicked() {
+                            shape = PolyGraph::cube();
                         }
-                    }
-                    _ => (),
+                        if ui.button("Octahedron").clicked() {
+                            shape = PolyGraph::octahedron();
+                        }
+                        if ui.button("Dodecahedron").clicked() {
+                            shape = PolyGraph::dodecahedron();
+                        }
+                        if ui.button("Icosahedron").clicked() {
+                            shape = PolyGraph::icosahedron();
+                        }
+                    });
+
+                    ui.separator();
+
+                    ui.horizontal(|ui| {
+                        ui.label("Operations:");
+                        //
+                        if ui.button("Truncate").clicked() {
+                            shape.truncate();
+                        }
+                        if ui.button("Ambo").clicked() {
+                            shape.ambo();
+                        }
+                        if ui.button("Bevel").clicked() {
+                            shape.bevel();
+                        }
+                        if ui.button("Expand").clicked() {
+                            shape.expand();
+                        }
+                        if ui.button("Snub").clicked() {
+                            shape.snub();
+                        }
+                    });
+                });
+                panel_height = gui_context.used_rect().height();
+            },
+        );
+
+        let viewport = Viewport {
+            x: 0,
+            y: (panel_height * frame_input.device_pixel_ratio) as i32,
+            width: frame_input.viewport.width,
+            height: frame_input.viewport.height
+                - (panel_height * frame_input.device_pixel_ratio) as u32,
+        };
+        camera.set_viewport(viewport);
+
+        // Camera control must be after the gui update.
+        control.handle_events(&mut camera, &mut frame_input.events);
+
+        frame_input
+            .screen()
+            // Clear the color and depth of the screen render target
+            .clear(ClearState::color_and_depth(0.8, 0.8, 0.8, 1.0, 1.0))
+            .write(|| {
+                let (positions, colors, barycentric) = shape.triangle_buffers(&context);
+                if rotating {
+                    let time = frame_input.accumulated_time as f32;
+                    model_rotation = Mat4::from_angle_y(radians(0.001 * time))
+                        * Mat4::from_angle_x(radians(0.0004 * time))
                 }
-            }
-        }
-        _ => {}
+
+                program.use_uniform("model", model_rotation);
+                program.use_uniform("projection", camera.projection() * camera.view());
+                program.use_vertex_attribute("position", &positions);
+                program.use_vertex_attribute("color", &colors);
+                program.use_vertex_attribute("barycentric", &barycentric);
+                program.draw_arrays(
+                    RenderStates::default(),
+                    camera.viewport(),
+                    positions.vertex_count(),
+                );
+            })
+            .write(|| gui.render());
+
+        FrameOutput::default()
     });
 }

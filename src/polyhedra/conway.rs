@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 pub use super::*;
 
 impl PolyGraph {
@@ -34,8 +32,6 @@ impl PolyGraph {
             new_face.push(new_vertex);
             // Reform old connection
             self.connect((u, new_vertex));
-
-            println!("split_{v}: ({u}, {new_vertex})");
 
             // Track the ghost edge and new edge
             let ge: Edge = (v, u).into();
@@ -74,8 +70,6 @@ impl PolyGraph {
     /// applying vertex splitting.
     pub fn ambo(&mut self) {
         let original_edges = self.adjacents.clone();
-        println!("original: {:?}", original_edges);
-
         // Truncate
         self.truncate();
 
