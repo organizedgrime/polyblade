@@ -6,6 +6,8 @@ use std::{
 };
 use three_d::*;
 
+const TICK_SPEED: f32 = 200.0;
+
 // Operations
 impl PolyGraph {
     fn apply_forces(&mut self, edges: HashSet<Edge>, l: f32, k: f32) {
@@ -20,15 +22,15 @@ impl PolyGraph {
                 let vp = self.positions[&v];
                 let up = self.positions[&u];
                 let l = vp.distance(up);
-                *self.positions.get_mut(&v).unwrap() = vp.lerp(up, 0.01 / l);
-                *self.positions.get_mut(&u).unwrap() = up.lerp(vp, 0.01 / l);
+                let f = (self.edge_length / TICK_SPEED * 3.0) / l;
+                *self.positions.get_mut(&v).unwrap() = vp.lerp(up, f);
+                *self.positions.get_mut(&u).unwrap() = up.lerp(vp, f);
             } else {
                 let diff = self.positions[&v] - self.positions[&u];
                 let dist = diff.magnitude();
                 let distention = l - dist;
                 let restorative_force = k / 2.0 * distention;
-                let time_factor = 1000.0;
-                let f = diff * restorative_force / time_factor;
+                let f = diff * restorative_force / TICK_SPEED;
 
                 // Add forces
                 *self.speeds.get_mut(&v).unwrap() += f;
@@ -78,7 +80,7 @@ impl PolyGraph {
             .fold(0.0, f32::max);
         let distance = mean_magnitude - 1.0;
 
-        self.edge_length -= distance / 100.0;
+        self.edge_length -= distance / TICK_SPEED;
     }
 
     pub fn update(&mut self) {
