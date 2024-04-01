@@ -51,6 +51,7 @@ pub fn main() {
         10.0,
     );
     let mut control = OrbitControl::new(vec3(0.0, 0.0, 0.0), 1.0, 1000.0);
+    let mut model_rotation = Mat4::zero();
 
     let mut shape = PolyGraph::cube();
     let mut rotating = true;
@@ -125,15 +126,13 @@ pub fn main() {
             .clear(ClearState::color_and_depth(0.8, 0.8, 0.8, 1.0, 1.0))
             .write(|| {
                 let (positions, colors, barycentric) = shape.triangle_buffers(&context);
-                let time = frame_input.accumulated_time as f32;
-                let model = if rotating {
-                    Mat4::from_angle_y(radians(0.001 * time))
+                if rotating {
+                    let time = frame_input.accumulated_time as f32;
+                    model_rotation = Mat4::from_angle_y(radians(0.001 * time))
                         * Mat4::from_angle_x(radians(0.0004 * time))
-                } else {
-                    Mat4::from_angle_y(radians(0.0)) * Mat4::from_angle_x(radians(0.0))
-                };
+                }
 
-                program.use_uniform("model", model);
+                program.use_uniform("model", model_rotation);
                 program.use_uniform("projection", camera.projection() * camera.view());
                 program.use_vertex_attribute("position", &positions);
                 program.use_vertex_attribute("color", &colors);
