@@ -66,43 +66,45 @@ pub fn main() {
             frame_input.device_pixel_ratio,
             |gui_context| {
                 use three_d::egui::*;
-                TopBottomPanel::top("controls").show(gui_context, |ui| {
+                TopBottomPanel::bottom("controls").show(gui_context, |ui| {
                     use three_d::egui::*;
-                    ui.heading("Debug Panel");
-                    ui.add(Button::new("cube"));
+                    ui.heading(shape.name.clone());
                     ui.add(Checkbox::new(&mut rotating, "rotating"));
-                    ui.add(Label::new(
-                        "Increase the cube count until the cubes don't rotate \
-                                       smoothly anymore, then toggle on instancing. The rotations \
-                                       should become smooth again.",
-                    ));
+                    ui.horizontal(|ui| {
+                        ui.label("Seeds:");
+                        // Buttons to revert to platonic solids
+                        if ui.button("Tetrahedron").clicked() {
+                            shape = PolyGraph::tetrahedron();
+                        }
+                        if ui.button("Cube").clicked() {
+                            shape = PolyGraph::cube();
+                        }
+                        if ui.button("Octahedron").clicked() {
+                            shape = PolyGraph::octahedron();
+                        }
+                        if ui.button("Dodecahedron").clicked() {
+                            shape = PolyGraph::dodecahedron();
+                        }
+                        if ui.button("Icosahedron").clicked() {
+                            shape = PolyGraph::icosahedron();
+                        }
+                    });
 
-                    // Buttons to revert to platonic solids
-                    if ui.button("T").clicked() {
-                        shape = PolyGraph::tetrahedron();
-                    }
-                    if ui.button("C").clicked() {
-                        shape = PolyGraph::cube();
-                    }
-                    if ui.button("O").clicked() {
-                        shape = PolyGraph::octahedron();
-                    }
-                    if ui.button("D").clicked() {
-                        shape = PolyGraph::dodecahedron();
-                    }
-                    if ui.button("I").clicked() {
-                        shape = PolyGraph::icosahedron();
-                    }
+                    ui.separator();
 
-                    //
-                    if ui.button("t").clicked() {
-                        shape.truncate();
-                    }
-                    if ui.button("a").clicked() {
-                        shape.ambo();
-                    }
+                    ui.horizontal(|ui| {
+                        ui.label("Operations:");
+                        //
+                        if ui.button("Truncate").clicked() {
+                            shape.truncate();
+                        }
+                        if ui.button("Ambo").clicked() {
+                            shape.ambo();
+                        }
+                    });
                 });
-                panel_height = gui_context.used_rect().height();
+                panel_height = 40.0;
+                //panel_height = gui_context.used_rect().height();
             },
         );
 
@@ -111,14 +113,12 @@ pub fn main() {
             y: (panel_height * frame_input.device_pixel_ratio) as i32,
             width: frame_input.viewport.width,
             height: frame_input.viewport.height
-                - (panel_height * frame_input.device_pixel_ratio) as u32,
+                + (panel_height * frame_input.device_pixel_ratio) as u32,
         };
         camera.set_viewport(viewport);
 
         // Camera control must be after the gui update.
         control.handle_events(&mut camera, &mut frame_input.events);
-
-        camera.set_viewport(frame_input.viewport);
 
         frame_input
             .screen()
@@ -141,7 +141,7 @@ pub fn main() {
                 program.use_vertex_attribute("barycentric", &barycentric);
                 program.draw_arrays(
                     RenderStates::default(),
-                    frame_input.viewport,
+                    camera.viewport(),
                     positions.vertex_count(),
                 );
             })
