@@ -15,7 +15,7 @@ impl PolyGraph {
             if self
                 .contracting_edges
                 .iter()
-                .map(|e| self.ghost_edges.get(&e).unwrap_or(&e).id().into())
+                .map(|e| self.ghost_edges.get(e).unwrap_or(e).id().into())
                 .collect::<Vec<Edge>>()
                 .contains(&(v, u).into())
             {
@@ -163,7 +163,7 @@ impl PolyGraph {
         // If all edges are contracted visually
         if !self.contracting_edges.is_empty()
             && self.contracting_edges.iter().fold(true, |acc, e| {
-                let (v, u) = self.ghost_edges.get(&e).unwrap_or(&e).id();
+                let (v, u) = self.ghost_edges.get(e).unwrap_or(e).id();
                 if self.positions.contains_key(&v) && self.positions.contains_key(&u) {
                     acc && self.positions[&v].distance(self.positions[&u]) < 0.08
                 } else {
