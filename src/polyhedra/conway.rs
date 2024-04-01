@@ -67,17 +67,22 @@ impl PolyGraph {
             self.split_vertex(vertex);
         }
         self.recompute_qualities();
-        self.name += "b";
+        self.name += "t";
     }
 
     /// `a` ambo is equivalent to the composition of vertex splitting and edge contraction vefore
     /// applying vertex splitting.
     pub fn ambo(&mut self) {
         let original_edges = self.adjacents.clone();
+        println!("original: {:?}", original_edges);
 
         // Truncate
         self.truncate();
 
+        //self.contract_edges_visually(original_edges);
+        // Animate
+        self.contracting_edges.extend(original_edges);
+        /*
         // Contract original edge set
         for edge in original_edges.iter() {
             self.contract_edge(*edge);
@@ -87,6 +92,7 @@ impl PolyGraph {
         self.ghost_edges = HashMap::new();
         self.name.truncate(self.name.len() - 1);
         self.name += "a";
+        */
     }
 
     //
