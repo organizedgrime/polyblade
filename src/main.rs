@@ -103,8 +103,7 @@ pub fn main() {
                         }
                     });
                 });
-                panel_height = 40.0;
-                //panel_height = gui_context.used_rect().height();
+                panel_height = gui_context.used_rect().height();
             },
         );
 
@@ -113,7 +112,7 @@ pub fn main() {
             y: (panel_height * frame_input.device_pixel_ratio) as i32,
             width: frame_input.viewport.width,
             height: frame_input.viewport.height
-                + (panel_height * frame_input.device_pixel_ratio) as u32,
+                - (panel_height * frame_input.device_pixel_ratio) as u32,
         };
         camera.set_viewport(viewport);
 
