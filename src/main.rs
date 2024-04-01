@@ -102,6 +102,15 @@ pub fn main() {
                         if ui.button("Ambo").clicked() {
                             shape.ambo();
                         }
+                        if ui.button("Bevel").clicked() {
+                            shape.bevel();
+                        }
+                        if ui.button("Expand").clicked() {
+                            shape.expand();
+                        }
+                        if ui.button("Snub").clicked() {
+                            shape.snub();
+                        }
                     });
                 });
                 panel_height = gui_context.used_rect().height();
