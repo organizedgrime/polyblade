@@ -1,5 +1,5 @@
 use super::*;
-use crate::prelude::{WindowScene, HSL};
+use crate::prelude::HSL;
 use std::{
     collections::{HashMap, HashSet},
     ops::Add,
@@ -96,6 +96,7 @@ impl PolyGraph {
             .collect()
     }
 
+    #[allow(dead_code)]
     fn face_normal(&self, face_index: usize) -> Vector3<f32> {
         self.faces[face_index]
             .0
@@ -154,71 +155,6 @@ impl PolyGraph {
         let barycentric = VertexBuffer::new_with_data(context, &polyhedron_barycentric);
 
         (positions, colors, barycentric)
-    }
-
-    pub fn render_schlegel(&mut self, scene: &mut WindowScene, frame_input: &FrameInput) {
-        /*
-        println!(
-            "distances: {:?}",
-            self.points
-                .iter()
-                .map(|p| p.xyz.magnitude())
-                .collect::<Vec<_>>()
-        );
-        */
-        let r = self.face_normal(0) * 1.05;
-        let theta = 2.0 * (1.0 / (2.0_f32.sqrt() * r.magnitude() - 1.0)).atan();
-        scene
-            .camera
-            .set_view(r, vec3(0.0, 0.0, 0.0), vec3(0.0, 1.0, 0.0));
-
-        scene
-            .camera
-            .set_perspective_projection(radians(theta), 0.01, 10.0);
-
-        let (positions, colors, barycentric) = self.triangle_buffers(&scene.context);
-
-        let model = Mat4::from_angle_x(radians(0.0));
-
-        scene.program.use_uniform("model", model);
-        scene.program.use_uniform(
-            "projection",
-            scene.camera.projection() * scene.camera.view(),
-        );
-        scene.program.use_vertex_attribute("position", &positions);
-        scene.program.use_vertex_attribute("color", &colors);
-        scene
-            .program
-            .use_vertex_attribute("barycentric", &barycentric);
-        scene.program.draw_arrays(
-            RenderStates::default(),
-            frame_input.viewport,
-            positions.vertex_count(),
-        );
-    }
-    pub fn render_model(&mut self, scene: &mut WindowScene, frame_input: &FrameInput) {
-        let (positions, colors, barycentric) = self.triangle_buffers(&scene.context);
-        //let program = scene.program.unwrap();
-
-        let time = frame_input.accumulated_time as f32;
-        let model =
-            Mat4::from_angle_y(radians(0.001 * time)) * Mat4::from_angle_x(radians(0.0004 * time));
-
-        scene.program.use_uniform("model", model);
-        scene.program.use_uniform(
-            "projection",
-            scene.camera.projection() * scene.camera.view(),
-        );
-        scene.program.use_vertex_attribute("position", &positions);
-        scene.program.use_vertex_attribute("color", &colors);
-        scene
-            .program
-            .use_vertex_attribute("barycentric", &barycentric);
-        scene.program.draw_arrays(
-            RenderStates::default(),
-            frame_input.viewport,
-            positions.vertex_count(),
-        );
     }
 
     pub fn animate_contraction(&mut self) {

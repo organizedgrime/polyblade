@@ -17,14 +17,32 @@ pub async fn start() -> Result<(), JsValue> {
 
 #[cfg(not(target_arch = "wasm32"))]
 pub fn main() {
-    use polyblade::prelude::*;
-    use std::collections::HashMap;
-    use three_d::renderer::*;
+    use cgmath::{Vector3, Zero};
+    use polyblade::prelude::PolyGraph;
+    use three_d::core::{degrees, radians, vec3, ClearState, Context, Mat4, Program, RenderStates};
+    use three_d::window::{FrameOutput, Window, WindowSettings};
+    use three_d::Camera;
 
-    let mut scenes = HashMap::new();
-    let event_loop = winit::event_loop::EventLoop::new();
-    let camera1 = Camera::new_perspective(
-        Viewport::new_at_origo(1, 1),
+    let window = Window::new(WindowSettings {
+        title: "polyblade".to_string(),
+        #[cfg(not(target_arch = "wasm32"))]
+        max_size: Some((1280, 720)),
+        ..Default::default()
+    })
+    .unwrap();
+
+    // Get the graphics context from the window
+    let context: Context = window.gl();
+    let mut shape = PolyGraph::cube();
+    let program = Program::from_source(
+        &context,
+        include_str!("shaders/basic.vert"),
+        include_str!("shaders/basic.frag"),
+    )
+    .unwrap();
+
+    let mut camera = Camera::new_perspective(
+        three_d::Viewport::new_at_origo(1, 1),
         vec3(0.0, 0.0, 4.0),
         Vector3::zero(),
         vec3(0.0, 1.0, 0.0),
@@ -32,89 +50,32 @@ pub fn main() {
         0.1,
         10.0,
     );
-    let scene1 = WindowScene::new("model", &event_loop, camera1, Srgba::WHITE, "basic");
-    scenes.insert(scene1.window.id(), scene1);
 
-    let camera2 = Camera::new_perspective(
-        Viewport::new_at_origo(1, 1),
-        vec3(0.0, 0.0, 6.0),
-        Vector3::zero(),
-        vec3(0.0, 1.0, 0.0),
-        degrees(170.0),
-        0.1,
-        10.0,
-    );
-    let _scene2 = WindowScene::new("schlegel", &event_loop, camera2, Srgba::WHITE, "schlegel");
-    // scenes.insert(scene2.window.id(), scene2);
+    window.render_loop(move |frame_input| {
+        shape.update();
+        camera.set_viewport(frame_input.viewport);
 
-    let mut shape = PolyGraph::cube();
-    println!("graph:\n{shape}\n");
-    let mut counter = 0;
-    event_loop.run(move |event, _, control_flow| match &event {
-        winit::event::Event::MainEventsCleared => {
-            for (_, scene) in scenes.iter() {
-                scene.window.request_redraw();
-            }
-        }
-        winit::event::Event::RedrawRequested(window_id) => {
-            if let Some(scene) = scenes.get_mut(window_id) {
-                // Open
-                scene.context.make_current().unwrap();
-                let frame_input = scene.frame_input_generator.generate(&scene.context);
-                scene.camera.set_viewport(frame_input.viewport);
-                let color = scene.background.to_linear_srgb();
-                frame_input.screen().clear(ClearState::color_and_depth(
-                    color.x, color.y, color.z, 1.0, 1.0,
-                ));
+        frame_input
+            .screen()
+            // Clear the color and depth of the screen render target
+            .clear(ClearState::color_and_depth(0.8, 0.8, 0.8, 1.0, 1.0))
+            .write(|| {
+                let (positions, colors, barycentric) = shape.triangle_buffers(&context);
+                let time = frame_input.accumulated_time as f32;
+                let model = Mat4::from_angle_y(radians(0.001 * time))
+                    * Mat4::from_angle_x(radians(0.0004 * time));
+                program.use_uniform("model", model);
+                program.use_uniform("projection", camera.projection() * camera.view());
+                program.use_vertex_attribute("position", &positions);
+                program.use_vertex_attribute("color", &colors);
+                program.use_vertex_attribute("barycentric", &barycentric);
+                program.draw_arrays(
+                    RenderStates::default(),
+                    frame_input.viewport,
+                    positions.vertex_count(),
+                );
+            });
 
-                counter += 1;
-                if counter == 2000 {
-                    shape.ambo();
-                    shape.recompute_qualities();
-                    println!("graph:\n{shape}\n");
-                }
-
-                shape.update();
-                //shape2.update();
-                if &scene.title == "model" {
-                    shape.render_model(scene, &frame_input);
-                    //shape2.render_model(scene, &frame_input);
-                } else {
-                    shape.render_schlegel(scene, &frame_input);
-                    //Polyhedron::dodecahedron().render_model(scene, &frame_input);
-                }
-
-                // Close
-                scene.context.swap_buffers().unwrap();
-                control_flow.set_poll();
-                scene.window.request_redraw();
-            }
-        }
-        winit::event::Event::WindowEvent { event, window_id } => {
-            if let Some(scene) = scenes.get_mut(window_id) {
-                scene.frame_input_generator.handle_winit_window_event(event);
-                match event {
-                    winit::event::WindowEvent::Resized(physical_size) => {
-                        scene.context.resize(*physical_size);
-                    }
-                    winit::event::WindowEvent::ScaleFactorChanged { new_inner_size, .. } => {
-                        scene.context.resize(**new_inner_size);
-                    }
-                    winit::event::WindowEvent::CloseRequested => {
-                        if let Some(scene) = scenes.get_mut(window_id) {
-                            scene.context.make_current().unwrap();
-                        }
-
-                        scenes.remove(window_id);
-
-                        if scenes.is_empty() {
-                            control_flow.set_exit();
-                        }
-                    }
-                    _ => (),
-                }
-            }
-        }
-        _ => {}
+        FrameOutput::default()
     });
 }
