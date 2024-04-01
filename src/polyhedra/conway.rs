@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 pub use super::*;
 
 impl PolyGraph {
@@ -21,17 +23,42 @@ impl PolyGraph {
 
     pub fn split_vertex(&mut self, v: VertexId) {
         let original_position = self.positions[&v];
-        let connections: Vec<VertexId> = self.connections(v).into_iter().collect();
+        let expected_size = self.connections(v).len();
+
+        let mut connections = self.connections(v).clone();
+        let mut previous = connections.clone().into_iter().collect::<Vec<_>>()[0];
+        let mut processed = HashSet::<VertexId>::new();
+
+        self.delete(v);
+        self.adjacents();
+        self.distances();
+        //println!("dist: {:#?}", self.dist);
+        println!("conn:{:?}", connections);
 
         let mut new_face = Vec::new();
 
-        'connections: for u in connections {
+        'connections: while processed.len() < expected_size {
+            // closest vertex to the previous which is not itself and is connected
+            let u = self.dist[&previous]
+                .iter()
+                .filter(|(id, _)| {
+                    *id != &previous && connections.contains(id) && !processed.contains(&id)
+                })
+                .min_by(|(_, c), (_, d)| c.cmp(d))
+                .map(|(id, _)| id.clone())
+                .unwrap();
+            println!("u: {u}, d: {}", self.dist[&previous][&u]);
+
             // Insert a new node in the same location
             let new_vertex = self.insert(Some(original_position));
             //
             new_face.push(new_vertex);
             // Reform old connection
             self.connect((u, new_vertex));
+            println!("connecting {u} to {new_vertex}");
+
+            previous = u;
+            processed.insert(u);
 
             // Track the ghost edge and new edge
             let ge: Edge = (v, u).into();
@@ -51,10 +78,10 @@ impl PolyGraph {
 
         // Link all the
         for i in 0..new_face.len() {
-            self.connect((new_face[i], new_face[(i + 1) % new_face.len()]));
+            let x = (new_face[i], new_face[(i + 1) % new_face.len()]);
+            println!("connecting : {:?}", x);
+            self.connect(x);
         }
-
-        self.delete(v);
     }
 
     /// `t` truncate is equivalent to vertex splitting

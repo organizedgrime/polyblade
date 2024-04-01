@@ -96,6 +96,9 @@ pub fn main() {
                     ui.horizontal(|ui| {
                         ui.label("Operations:");
                         //
+                        if ui.button("s0").clicked() {
+                            shape.split_vertex(0);
+                        }
                         if ui.button("Truncate").clicked() {
                             shape.truncate();
                         }
