@@ -78,13 +78,11 @@ impl PolyGraph {
             self.ghost_edges.insert(ge, ne);
         }
 
-        // Link all the
+        // Link all the new nodes together into a new face
         for i in 0..new_face.len() {
             let x = (new_face[i], new_face[(i + 1) % new_face.len()]);
-            println!("connecting : {:?}", x);
             self.connect(x);
         }
-        self.recompute_qualities();
     }
 
     /// `t` truncate is equivalent to vertex splitting
