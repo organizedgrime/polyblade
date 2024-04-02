@@ -303,6 +303,8 @@ impl PolyGraph {
         }
     }
 
+    //pub fn nearest(&)
+
     pub fn recompute_qualities(&mut self) {
         //
         self.adjacents();

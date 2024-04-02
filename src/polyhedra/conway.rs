@@ -21,22 +21,42 @@ impl PolyGraph {
 
     pub fn split_vertex(&mut self, v: VertexId) {
         let original_position = self.positions[&v];
-        let connections: Vec<VertexId> = self.connections(v).into_iter().collect();
+        let mut connections = self.connections(v).clone();
+        let n = connections.len();
+        // Previously processed connection, starts with a seed
+        let mut previous = *connections.iter().collect::<Vec<_>>()[0];
+        let mut new_vertex = 0;
 
-        let mut new_face = Vec::new();
+        // Remove the vertex
+        self.delete(v);
+        // Recompute distances in the absence of the vertex
+        self.adjacents();
+        self.distances();
+        self.faces();
 
-        'connections: for u in connections {
+        'connections: while !connections.is_empty() {
+            // closest vertex to the previous which is not itself and is connected
+            let u = self.dist[&previous]
+                .iter()
+                .filter(|(id, _)| *id != &previous && connections.contains(id))
+                .min_by(|(_, c), (_, d)| c.cmp(d))
+                .map(|(id, _)| *id)
+                .unwrap();
+
             // Insert a new node in the same location
-            let new_vertex = self.insert(Some(original_position));
-            //
-            new_face.push(new_vertex);
+            new_vertex = self.insert(Some(original_position));
             // Reform old connection
             self.connect((u, new_vertex));
+
+            // Track
+            previous = u;
+            connections.remove(&u);
 
             // Track the ghost edge and new edge
             let ge: Edge = (v, u).into();
             let ne: Edge = (new_vertex, u).into();
-            // If there is already a ghost
+
+            // If the ghost of this transaction was the new edge of a previous transaction
             for (_, v) in self.ghost_edges.iter_mut() {
                 if v.id() == ge.id() {
                     // Update its child
@@ -44,17 +64,15 @@ impl PolyGraph {
                     continue 'connections;
                 }
             }
-
             // Track ghost edge directly if one didnt already exist
             self.ghost_edges.insert(ge, ne);
         }
 
-        // Link all the
-        for i in 0..new_face.len() {
-            self.connect((new_face[i], new_face[(i + 1) % new_face.len()]));
+        // Connect all nodes in the new face formed
+        for i in 0..n - 1 {
+            self.connect((new_vertex - i, new_vertex - i - 1));
         }
-
-        self.delete(v);
+        self.connect((new_vertex, new_vertex - n + 1));
     }
 
     /// `t` truncate is equivalent to vertex splitting

@@ -6,7 +6,7 @@ use std::{
 };
 use three_d::*;
 
-const TICK_SPEED: f32 = 200.0;
+const TICK_SPEED: f32 = 100.0;
 
 // Operations
 impl PolyGraph {
@@ -49,7 +49,7 @@ impl PolyGraph {
     fn apply_spring_forces(&mut self) {
         // Natural lengths
         let l_d = self.edge_length * 2.0;
-        let l_a = l_d / 8.0;
+        let l_a = l_d / 9.0;
         let l_n = l_a * 2.0;
 
         // Spring constants
