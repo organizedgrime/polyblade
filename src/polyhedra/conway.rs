@@ -24,28 +24,20 @@ impl PolyGraph {
     pub fn split_vertex(&mut self, v: VertexId) {
         println!("new_split");
         let original_position = self.positions[&v];
-        let expected_size = self.connections(v).len();
 
-        let connections = self.connections(v).clone();
+        let mut connections = self.connections(v).clone();
         let mut previous = connections.clone().into_iter().collect::<Vec<_>>()[0];
-        let mut processed = HashSet::<VertexId>::new();
 
         self.delete(v);
         self.recompute_qualities();
-        //self.adjacents();
-        //self.distances();
-        //println!("dist: {:#?}", self.dist);
-        println!("conn:{:?}", connections);
 
         let mut new_face = Vec::new();
 
-        'connections: while processed.len() < expected_size {
+        'connections: while connections.len() > 0 {
             // closest vertex to the previous which is not itself and is connected
             let u = self.dist[&previous]
                 .iter()
-                .filter(|(id, _)| {
-                    *id != &previous && connections.contains(id) && !processed.contains(id)
-                })
+                .filter(|(id, _)| *id != &previous && connections.contains(id))
                 .min_by(|(_, c), (_, d)| c.cmp(d))
                 .map(|(id, _)| *id)
                 .unwrap();
@@ -60,7 +52,7 @@ impl PolyGraph {
             println!("connecting {u} to {new_vertex}");
 
             previous = u;
-            processed.insert(u);
+            connections.remove(&u);
 
             // Track the ghost edge and new edge
             let ge: Edge = (v, u).into();
