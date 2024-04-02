@@ -26,13 +26,20 @@ impl PolyGraph {
         let original_position = self.positions[&v];
 
         let mut connections = self.connections(v).clone();
-        let mut previous = connections.clone().into_iter().collect::<Vec<_>>()[0];
+        let n = connections.len();
+        // Previously processed connection, starts with a seed
+        let mut previous = connections.iter().collect::<Vec<_>>()[0].clone();
+        let mut nv = 0;
 
+        // Remove the vertex
         self.delete(v);
-        self.recompute_qualities();
+
+        // Recompute distances in the absence of the vertex removed
+        self.adjacents();
+        self.distances();
+        self.faces();
 
         let mut new_face = Vec::new();
-
         'connections: while connections.len() > 0 {
             // closest vertex to the previous which is not itself and is connected
             let u = self.dist[&previous]
@@ -45,11 +52,11 @@ impl PolyGraph {
 
             // Insert a new node in the same location
             let new_vertex = self.insert(Some(original_position));
+            nv = new_vertex;
             //
             new_face.push(new_vertex);
             // Reform old connection
             self.connect((u, new_vertex));
-            println!("connecting {u} to {new_vertex}");
 
             previous = u;
             connections.remove(&u);
@@ -57,7 +64,8 @@ impl PolyGraph {
             // Track the ghost edge and new edge
             let ge: Edge = (v, u).into();
             let ne: Edge = (new_vertex, u).into();
-            // If there is already a ghost
+
+            // If the ghost of this transaction was the new edge of a previous transaction
             for (_, v) in self.ghost_edges.iter_mut() {
                 if v.id() == ge.id() {
                     // Update its child
@@ -65,15 +73,23 @@ impl PolyGraph {
                     continue 'connections;
                 }
             }
-
             // Track ghost edge directly if one didnt already exist
             self.ghost_edges.insert(ge, ne);
         }
 
+        for i in 0..n - 1 {
+            //nv - n;
+            self.connect((nv - i, nv - i - 1));
+            println!("w: {:?}", (nv - i, nv - i - 1));
+        }
+        self.connect((nv, nv - n + 1));
+        println!("w: {:?}", (nv, nv - n + 1));
+
         // Link all the new nodes together into a new face
         for i in 0..new_face.len() {
             let x = (new_face[i], new_face[(i + 1) % new_face.len()]);
-            self.connect(x);
+            println!("z: {:?}", x);
+            //self.connect(x);
         }
     }
 

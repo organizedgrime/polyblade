@@ -98,6 +98,7 @@ pub fn main() {
                         //
                         if ui.button("s0").clicked() {
                             shape.split_vertex(0);
+                            shape.recompute_qualities();
                         }
                         if ui.button("Truncate").clicked() {
                             shape.truncate();
