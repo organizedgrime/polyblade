@@ -1,5 +1,3 @@
-use std::collections::HashSet;
-
 pub use super::*;
 
 impl PolyGraph {
@@ -22,24 +20,20 @@ impl PolyGraph {
     }
 
     pub fn split_vertex(&mut self, v: VertexId) {
-        println!("new_split");
         let original_position = self.positions[&v];
-
         let mut connections = self.connections(v).clone();
         let n = connections.len();
         // Previously processed connection, starts with a seed
         let mut previous = connections.iter().collect::<Vec<_>>()[0].clone();
-        let mut nv = 0;
+        let mut new_vertex = 0;
 
         // Remove the vertex
         self.delete(v);
-
-        // Recompute distances in the absence of the vertex removed
+        // Recompute distances in the absence of the vertex
         self.adjacents();
         self.distances();
         self.faces();
 
-        let mut new_face = Vec::new();
         'connections: while connections.len() > 0 {
             // closest vertex to the previous which is not itself and is connected
             let u = self.dist[&previous]
@@ -48,16 +42,13 @@ impl PolyGraph {
                 .min_by(|(_, c), (_, d)| c.cmp(d))
                 .map(|(id, _)| *id)
                 .unwrap();
-            println!("u: {u}, d: {}", self.dist[&previous][&u]);
 
             // Insert a new node in the same location
-            let new_vertex = self.insert(Some(original_position));
-            nv = new_vertex;
-            //
-            new_face.push(new_vertex);
+            new_vertex = self.insert(Some(original_position));
             // Reform old connection
             self.connect((u, new_vertex));
 
+            // Track
             previous = u;
             connections.remove(&u);
 
@@ -77,20 +68,11 @@ impl PolyGraph {
             self.ghost_edges.insert(ge, ne);
         }
 
+        // Connect all nodes in the new face formed
         for i in 0..n - 1 {
-            //nv - n;
-            self.connect((nv - i, nv - i - 1));
-            println!("w: {:?}", (nv - i, nv - i - 1));
+            self.connect((new_vertex - i, new_vertex - i - 1));
         }
-        self.connect((nv, nv - n + 1));
-        println!("w: {:?}", (nv, nv - n + 1));
-
-        // Link all the new nodes together into a new face
-        for i in 0..new_face.len() {
-            let x = (new_face[i], new_face[(i + 1) % new_face.len()]);
-            println!("z: {:?}", x);
-            //self.connect(x);
-        }
+        self.connect((new_vertex, new_vertex - n + 1));
     }
 
     /// `t` truncate is equivalent to vertex splitting
