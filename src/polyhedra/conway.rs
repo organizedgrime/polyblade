@@ -22,16 +22,18 @@ impl PolyGraph {
     }
 
     pub fn split_vertex(&mut self, v: VertexId) {
+        println!("new_split");
         let original_position = self.positions[&v];
         let expected_size = self.connections(v).len();
 
-        let mut connections = self.connections(v).clone();
+        let connections = self.connections(v).clone();
         let mut previous = connections.clone().into_iter().collect::<Vec<_>>()[0];
         let mut processed = HashSet::<VertexId>::new();
 
         self.delete(v);
-        self.adjacents();
-        self.distances();
+        self.recompute_qualities();
+        //self.adjacents();
+        //self.distances();
         //println!("dist: {:#?}", self.dist);
         println!("conn:{:?}", connections);
 
@@ -42,10 +44,10 @@ impl PolyGraph {
             let u = self.dist[&previous]
                 .iter()
                 .filter(|(id, _)| {
-                    *id != &previous && connections.contains(id) && !processed.contains(&id)
+                    *id != &previous && connections.contains(id) && !processed.contains(id)
                 })
                 .min_by(|(_, c), (_, d)| c.cmp(d))
-                .map(|(id, _)| id.clone())
+                .map(|(id, _)| *id)
                 .unwrap();
             println!("u: {u}, d: {}", self.dist[&previous][&u]);
 
@@ -82,6 +84,7 @@ impl PolyGraph {
             println!("connecting : {:?}", x);
             self.connect(x);
         }
+        self.recompute_qualities();
     }
 
     /// `t` truncate is equivalent to vertex splitting
