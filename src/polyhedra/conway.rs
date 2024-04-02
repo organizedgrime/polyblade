@@ -24,7 +24,7 @@ impl PolyGraph {
         let mut connections = self.connections(v).clone();
         let n = connections.len();
         // Previously processed connection, starts with a seed
-        let mut previous = connections.iter().collect::<Vec<_>>()[0].clone();
+        let mut previous = *connections.iter().collect::<Vec<_>>()[0];
         let mut new_vertex = 0;
 
         // Remove the vertex
@@ -34,7 +34,7 @@ impl PolyGraph {
         self.distances();
         self.faces();
 
-        'connections: while connections.len() > 0 {
+        'connections: while !connections.is_empty() {
             // closest vertex to the previous which is not itself and is connected
             let u = self.dist[&previous]
                 .iter()
