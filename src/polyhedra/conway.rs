@@ -22,7 +22,7 @@ impl PolyGraph {
 
     pub fn split_vertex(&mut self, v: &VertexId) {
         let original_position = self.positions[v];
-        let mut connections: HashSet<usize> = self.connections(v).clone();
+        let mut connections: HashSet<usize> = self.connections(v);
         connections.extend(self.ghost_connections(v));
         let n = connections.len();
         // Previously processed connection, starts with a seed

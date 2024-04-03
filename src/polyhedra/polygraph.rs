@@ -151,7 +151,6 @@ impl PolyGraph {
 
     /// All faces
     pub fn faces(&mut self) {
-        let all_edges = self.adjacents.clone();
         let mut triplets = Vec::<Face>::new();
         let mut cycles = HashSet::<Face>::new();
 
@@ -162,7 +161,7 @@ impl PolyGraph {
                 for y in adj.iter() {
                     if x != y && u < x && x < y {
                         let new_face = Face(vec![*x, *u, *y]);
-                        if all_edges.contains(&(*x, *y).into()) {
+                        if self.adjacents.contains(&(*x, *y).into()) {
                             cycles.insert(new_face);
                         } else {
                             triplets.push(new_face);
@@ -209,12 +208,10 @@ impl PolyGraph {
     }
     /// Neighbors
     pub fn neighbors(&mut self) {
-        let dist = self.dist.clone();
-
         let mut neighbors = HashSet::<Edge>::new();
         for u in self.vertices.iter() {
             for v in self.vertices.iter() {
-                if dist[u][v] == 2 || dist[v][u] == 2 {
+                if self.dist[u][v] == 2 || self.dist[v][u] == 2 {
                     neighbors.insert((u, v).into());
                 }
             }
@@ -268,8 +265,8 @@ impl PolyGraph {
 
     /// Periphery / diameter
     pub fn diameter(&mut self) {
-        let dist = self.dist.clone();
-        if let Some(max) = dist
+        if let Some(max) = self
+            .dist
             .values()
             .flatten()
             .map(|(_, d)| d)
@@ -279,7 +276,7 @@ impl PolyGraph {
             let mut diameter = HashSet::<Edge>::new();
             for u in self.vertices.iter() {
                 for v in self.vertices.iter() {
-                    if &dist[u][v] == max || &dist[v][u] == max {
+                    if &self.dist[u][v] == max || &self.dist[v][u] == max {
                         diameter.insert((u, v).into());
                     }
                 }
