@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 pub use super::*;
 
 impl PolyGraph {
@@ -21,7 +23,8 @@ impl PolyGraph {
 
     pub fn split_vertex(&mut self, v: &VertexId) {
         let original_position = self.positions[v];
-        let mut connections = self.connections(v).clone();
+        let mut connections: HashSet<usize> = self.connections(v).clone();
+        connections.extend(self.ghost_connections(v));
         let n = connections.len();
         // Previously processed connection, starts with a seed
         let mut previous = *connections.iter().collect::<Vec<_>>()[0];

@@ -139,6 +139,11 @@ impl PolyGraph {
             }
         }
 
+        connections
+    }
+
+    pub fn ghost_connections(&self, v: &VertexId) -> HashSet<VertexId> {
+        let mut connections = HashSet::new();
         for (ge, le) in self.ghost_edges.iter() {
             if let Some(u) = ge.other(v) {
                 if self.vertices.contains(&u) {
