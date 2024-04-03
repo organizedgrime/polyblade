@@ -45,7 +45,7 @@ impl PolyGraph {
     /// New with n vertices
     pub fn new_disconnected(vertex_count: usize) -> Self {
         let mut poly = Self {
-            vertices: (0..vertex_count).into_iter().collect(),
+            vertices: (0..vertex_count).collect(),
             adjacency_matrix: (0..vertex_count)
                 .map(|x| (x, (0..vertex_count).map(|y| (y, false)).collect()))
                 .collect(),
@@ -256,8 +256,8 @@ impl PolyGraph {
                     if dist[&i][&k] != u32::MAX && dist[&k][&j] != u32::MAX {
                         let nv = dist[&i][&k] + dist[&k][&j];
                         if dist[&i][&j] > nv || dist[&j][&i] > nv {
-                            dist.get_mut(&i).unwrap().insert(*j, nv);
-                            dist.get_mut(&j).unwrap().insert(*i, nv);
+                            dist.get_mut(i).unwrap().insert(*j, nv);
+                            dist.get_mut(j).unwrap().insert(*i, nv);
                         }
                     }
                 }
