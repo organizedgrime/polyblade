@@ -8,9 +8,8 @@ impl PolyGraph {
         // If this is the ghost edge, find its extant counterpart
         let id = self.ghost_edges.get(&e).unwrap_or(&e).id();
         // Give b all the same connections as a
-        let adj = self.connections(&id.0).clone();
-        for b in adj.into_iter() {
-            self.connect((b, id.1))
+        for b in self.connections(&id.0).iter() {
+            self.connect((b, &id.1))
         }
         // Delete a
         self.delete(&id.0);

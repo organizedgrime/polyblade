@@ -130,16 +130,10 @@ impl PolyGraph {
 
     // Vertices that are connected to a given vertex
     pub fn connections(&self, v: &VertexId) -> HashSet<VertexId> {
-        let mut connections = HashSet::<VertexId>::new();
-        if let Some(list) = self.adjacency_matrix.get(v) {
-            for (other, connected) in list.iter() {
-                if *connected && other != v {
-                    connections.insert(*other);
-                }
-            }
-        }
-
-        connections
+        self.adjacency_matrix[v]
+            .iter()
+            .filter_map(|(k, v)| if *v { Some(*k) } else { None })
+            .collect::<HashSet<usize>>()
     }
 
     pub fn ghost_connections(&self, v: &VertexId) -> HashSet<VertexId> {
