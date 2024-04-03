@@ -215,7 +215,7 @@ impl PolyGraph {
         let mut neighbors = HashSet::<Edge>::new();
         for u in self.vertices.iter() {
             for v in self.vertices.iter() {
-                if dist[&u][&v] == 2 || dist[&v][&u] == 2 {
+                if dist[u][v] == 2 || dist[v][u] == 2 {
                     neighbors.insert((u, v).into());
                 }
             }
@@ -253,9 +253,9 @@ impl PolyGraph {
         for k in self.vertices.iter() {
             for i in self.vertices.iter() {
                 for j in self.vertices.iter() {
-                    if dist[&i][&k] != u32::MAX && dist[&k][&j] != u32::MAX {
-                        let nv = dist[&i][&k] + dist[&k][&j];
-                        if dist[&i][&j] > nv || dist[&j][&i] > nv {
+                    if dist[i][k] != u32::MAX && dist[k][j] != u32::MAX {
+                        let nv = dist[i][k] + dist[k][j];
+                        if dist[i][j] > nv || dist[j][i] > nv {
                             dist.get_mut(i).unwrap().insert(*j, nv);
                             dist.get_mut(j).unwrap().insert(*i, nv);
                         }
@@ -280,7 +280,7 @@ impl PolyGraph {
             let mut diameter = HashSet::<Edge>::new();
             for u in self.vertices.iter() {
                 for v in self.vertices.iter() {
-                    if &dist[&u][&v] == max || &dist[&v][&u] == max {
+                    if &dist[u][v] == max || &dist[v][u] == max {
                         diameter.insert((u, v).into());
                     }
                 }
