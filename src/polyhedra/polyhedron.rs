@@ -175,9 +175,9 @@ impl PolyGraph {
             for e in self.contracting_edges.clone().into_iter() {
                 self.contract_edge(e);
             }
-            self.recompute_qualities();
             self.ghost_edges = HashMap::new();
             self.contracting_edges = HashSet::new();
+            self.recompute_qualities();
             self.name.truncate(self.name.len() - 1);
             self.name += "a";
         }
