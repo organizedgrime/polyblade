@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 pub use super::*;
 
 impl PolyGraph {
@@ -6,22 +8,22 @@ impl PolyGraph {
         // If this is the ghost edge, find its extant counterpart
         let id = self.ghost_edges.get(&e).unwrap_or(&e).id();
         // Give b all the same connections as a
-        let adj = self.connections(id.0).clone();
-        for b in adj.into_iter() {
-            self.connect((b, id.1))
+        for b in self.connections(&id.0).iter() {
+            self.connect((b, &id.1))
         }
         // Delete a
-        self.delete(id.0);
+        self.delete(&id.0);
         for (_, v) in self.ghost_edges.iter_mut() {
-            if let Some(u) = v.other(id.0) {
+            if let Some(u) = v.other(&id.0) {
                 *v = (id.1, u).into();
             }
         }
     }
 
-    pub fn split_vertex(&mut self, v: VertexId) {
-        let original_position = self.positions[&v];
-        let mut connections = self.connections(v).clone();
+    pub fn split_vertex(&mut self, v: &VertexId) {
+        let original_position = self.positions[v];
+        let mut connections: HashSet<usize> = self.connections(v);
+        connections.extend(self.ghost_connections(v));
         let n = connections.len();
         // Previously processed connection, starts with a seed
         let mut previous = *connections.iter().collect::<Vec<_>>()[0];
@@ -53,7 +55,7 @@ impl PolyGraph {
             connections.remove(&u);
 
             // Track the ghost edge and new edge
-            let ge: Edge = (v, u).into();
+            let ge: Edge = (*v, u).into();
             let ne: Edge = (new_vertex, u).into();
 
             // If the ghost of this transaction was the new edge of a previous transaction
@@ -77,8 +79,8 @@ impl PolyGraph {
 
     /// `t` truncate is equivalent to vertex splitting
     pub fn truncate(&mut self) {
-        for vertex in self.vertices() {
-            self.split_vertex(vertex);
+        for v in self.vertices.clone().iter() {
+            self.split_vertex(v);
         }
         self.recompute_qualities();
         self.name += "t";
@@ -137,6 +139,12 @@ mod test {
     use crate::prelude::*;
 
     #[test]
+    fn truncate() {
+        let mut shape = PolyGraph::icosahedron();
+        shape.truncate();
+    }
+
+    #[test]
     fn contract_edge() {
         let mut graph = PolyGraph::new_disconnected(6);
         graph.connect((1, 0));
@@ -148,23 +156,26 @@ mod test {
         graph.connect((3, 5));
         graph.recompute_qualities();
 
-        assert_eq!(graph.vertex_count(), 6);
+        assert_eq!(graph.vertices.len(), 6);
         assert_eq!(graph.adjacents.len(), 5);
 
         graph.contract_edge((1, 3));
         graph.recompute_qualities();
 
         println!("g: {:?}", graph);
-        assert_eq!(graph.vertex_count(), 5);
+        assert_eq!(graph.vertices.len(), 5);
         assert_eq!(graph.adjacents.len(), 4);
 
-        assert_eq!(graph.connections(0), vec![3].into_iter().collect());
-        assert_eq!(graph.connections(2), vec![3].into_iter().collect());
+        assert_eq!(graph.connections(&0), vec![3].into_iter().collect());
+        assert_eq!(graph.connections(&2), vec![3].into_iter().collect());
 
-        assert_eq!(graph.connections(3), vec![0, 2, 4, 5].into_iter().collect());
+        assert_eq!(
+            graph.connections(&3),
+            vec![0, 2, 4, 5].into_iter().collect()
+        );
 
-        assert_eq!(graph.connections(4), vec![3].into_iter().collect());
-        assert_eq!(graph.connections(5), vec![3].into_iter().collect());
+        assert_eq!(graph.connections(&4), vec![3].into_iter().collect());
+        assert_eq!(graph.connections(&5), vec![3].into_iter().collect());
     }
 
     #[test]
@@ -177,14 +188,14 @@ mod test {
         graph.connect((1, 4));
         graph.recompute_qualities();
 
-        assert_eq!(graph.vertex_count(), 5);
+        assert_eq!(graph.vertices.len(), 5);
         assert_eq!(graph.adjacents.len(), 4);
 
-        graph.split_vertex(1);
+        graph.split_vertex(&1);
         graph.recompute_qualities();
 
         println!("g: {:?}", graph);
-        assert_eq!(graph.vertex_count(), 8);
+        assert_eq!(graph.vertices.len(), 8);
         assert_eq!(graph.adjacents.len(), 8);
     }
 }

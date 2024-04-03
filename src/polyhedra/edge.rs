@@ -21,10 +21,10 @@ impl Edge {
         }
     }
 
-    pub fn other(&self, v: VertexId) -> Option<VertexId> {
-        if self.v == v {
+    pub fn other(&self, v: &VertexId) -> Option<VertexId> {
+        if &self.v == v {
             Some(self.u)
-        } else if self.u == v {
+        } else if &self.u == v {
             Some(self.v)
         } else {
             None
@@ -43,6 +43,15 @@ impl From<(VertexId, VertexId)> for Edge {
         Self {
             v: value.0,
             u: value.1,
+        }
+    }
+}
+
+impl From<(&VertexId, &VertexId)> for Edge {
+    fn from(value: (&VertexId, &VertexId)) -> Self {
+        Self {
+            v: *value.0,
+            u: *value.1,
         }
     }
 }

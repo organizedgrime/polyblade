@@ -65,7 +65,7 @@ impl PolyGraph {
 
     fn center(&mut self) {
         let shift = self.positions.values().fold(Vector3::zero(), Vector3::add)
-            / self.vertex_count() as f32;
+            / self.vertices.len() as f32;
 
         for (_, v) in self.positions.iter_mut() {
             *v -= shift;
@@ -175,9 +175,9 @@ impl PolyGraph {
             for e in self.contracting_edges.clone().into_iter() {
                 self.contract_edge(e);
             }
-            self.recompute_qualities();
             self.ghost_edges = HashMap::new();
             self.contracting_edges = HashSet::new();
+            self.recompute_qualities();
             self.name.truncate(self.name.len() - 1);
             self.name += "a";
         }

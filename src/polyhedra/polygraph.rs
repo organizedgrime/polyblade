@@ -14,6 +14,7 @@ pub struct PolyGraph {
     pub name: String,
 
     /// [Actual Graph]
+    pub vertices: HashSet<VertexId>,
     /// Adjacents
     pub adjacency_matrix: HashMap<VertexId, HashMap<VertexId, bool>>,
     /// Edges that have had Vertices split
@@ -44,6 +45,7 @@ impl PolyGraph {
     /// New with n vertices
     pub fn new_disconnected(vertex_count: usize) -> Self {
         let mut poly = Self {
+            vertices: (0..vertex_count).collect(),
             adjacency_matrix: (0..vertex_count)
                 .map(|x| (x, (0..vertex_count).map(|y| (y, false)).collect()))
                 .collect(),
@@ -72,19 +74,6 @@ impl PolyGraph {
         poly
     }
 
-    /// Vertex
-    pub fn vertex_exists(&self, v: &VertexId) -> bool {
-        self.adjacency_matrix.contains_key(v)
-    }
-
-    pub fn vertex_count(&self) -> usize {
-        self.adjacency_matrix.len()
-    }
-
-    pub fn vertices(&self) -> Vec<VertexId> {
-        self.adjacency_matrix.clone().into_keys().collect()
-    }
-
     pub fn connect(&mut self, e: impl Into<Edge>) {
         let (v, u) = e.into().id();
         self.adjacency_matrix.get_mut(&v).unwrap().insert(u, true);
@@ -98,17 +87,14 @@ impl PolyGraph {
     }
 
     pub fn insert(&mut self, pos: Option<Vector3<f32>>) -> VertexId {
-        let existing_vertices = self.vertices();
-        let new_id = self.adjacency_matrix.keys().max().unwrap() + 1;
-
-        // Adjacency matric update
+        let new_id = self.vertices.iter().max().unwrap() + 1;
+        // Adjacency matrix update
         for (_, l) in self.adjacency_matrix.iter_mut() {
             (*l).insert(new_id, false);
         }
-        self.adjacency_matrix.insert(
-            new_id,
-            existing_vertices.into_iter().map(|v| (v, false)).collect(),
-        );
+        self.adjacency_matrix
+            .insert(new_id, self.vertices.iter().map(|v| (*v, false)).collect());
+        self.vertices.insert(new_id);
         // Position and speed
         self.positions.insert(
             new_id,
@@ -119,20 +105,21 @@ impl PolyGraph {
         new_id
     }
 
-    pub fn delete(&mut self, id: usize) {
+    pub fn delete(&mut self, v: &VertexId) {
         for (_, l) in self.adjacency_matrix.iter_mut() {
-            (*l).remove(&id);
+            (*l).remove(v);
         }
-        self.adjacency_matrix.remove(&id);
-        self.positions.remove(&id);
-        self.speeds.remove(&id);
+        self.vertices.remove(v);
+        self.adjacency_matrix.remove(v);
+        self.positions.remove(v);
+        self.speeds.remove(v);
     }
 
     /// Edges of a vertex
-    pub fn edges(&self, v: VertexId) -> Vec<Edge> {
+    pub fn edges(&self, v: &VertexId) -> Vec<Edge> {
         self.connections(v)
             .into_iter()
-            .map(|other| (v, other).into())
+            .map(|other| (*v, other).into())
             .collect()
     }
 
@@ -142,19 +129,21 @@ impl PolyGraph {
     }
 
     // Vertices that are connected to a given vertex
-    pub fn connections(&self, v: usize) -> HashSet<VertexId> {
-        let mut connections = HashSet::<VertexId>::new();
-        if let Some(list) = self.adjacency_matrix.get(&v) {
-            for (other, connected) in list.iter() {
-                if *connected && other != &v {
-                    connections.insert(*other);
-                }
-            }
+    pub fn connections(&self, v: &VertexId) -> HashSet<VertexId> {
+        if let Some(l) = self.adjacency_matrix.get(v) {
+            l.iter()
+                .filter_map(|(k, v)| if *v { Some(*k) } else { None })
+                .collect::<HashSet<usize>>()
+        } else {
+            HashSet::new()
         }
+    }
 
+    pub fn ghost_connections(&self, v: &VertexId) -> HashSet<VertexId> {
+        let mut connections = HashSet::new();
         for (ge, le) in self.ghost_edges.iter() {
             if let Some(u) = ge.other(v) {
-                if self.vertex_exists(&u) {
+                if self.vertices.contains(&u) {
                     connections.insert(le.other(v).unwrap());
                 }
             }
@@ -165,18 +154,17 @@ impl PolyGraph {
 
     /// All faces
     pub fn faces(&mut self) {
-        let all_edges = self.adjacents.clone();
         let mut triplets = Vec::<Face>::new();
         let mut cycles = HashSet::<Face>::new();
 
         // find all the triplets
-        for u in self.vertices() {
+        for u in self.vertices.iter() {
             let adj: HashSet<VertexId> = self.connections(u);
-            for x in adj.clone().into_iter() {
-                for y in adj.clone().into_iter() {
+            for x in adj.iter() {
+                for y in adj.iter() {
                     if x != y && u < x && x < y {
-                        let new_face = Face(vec![x, u, y]);
-                        if all_edges.contains(&(x, y).into()) {
+                        let new_face = Face(vec![*x, *u, *y]);
+                        if self.adjacents.contains(&(*x, *y).into()) {
                             cycles.insert(new_face);
                         } else {
                             triplets.push(new_face);
@@ -190,13 +178,13 @@ impl PolyGraph {
             let triplet = triplets.remove(0);
             let p = triplet.0;
             // for each v adjacent to u_t
-            for v in self.connections(p[p.len() - 1]) {
+            for v in self.connections(&p[p.len() - 1]) {
                 if v > p[1] {
-                    let c = self.connections(v);
+                    let c = self.connections(&v);
                     // if v is not a neighbor of u_2..u_t-1
                     if !p[1..p.len() - 1].iter().any(|vi| c.contains(vi)) {
                         let new_face = Face([p.clone(), vec![v]].concat());
-                        if self.connections(p[0]).contains(&v) {
+                        if self.connections(&p[0]).contains(&v) {
                             //cycles.remo
                             cycles.insert(new_face);
                         } else {
@@ -213,23 +201,20 @@ impl PolyGraph {
 
     /// All edges
     pub fn adjacents(&mut self) {
-        self.adjacents = self
-            .vertices()
-            .into_iter()
-            .flat_map(|v| self.edges(v))
-            .fold(HashSet::<Edge>::new(), |mut acc, e| {
+        self.adjacents = self.vertices.iter().flat_map(|v| self.edges(v)).fold(
+            HashSet::<Edge>::new(),
+            |mut acc, e| {
                 acc.insert(e);
                 acc
-            })
+            },
+        )
     }
     /// Neighbors
     pub fn neighbors(&mut self) {
-        let dist = self.dist.clone();
-
         let mut neighbors = HashSet::<Edge>::new();
-        for u in self.vertices() {
-            for v in self.vertices() {
-                if dist[&u][&v] == 2 || dist[&v][&u] == 2 {
+        for u in self.vertices.iter() {
+            for v in self.vertices.iter() {
+                if self.dist[u][v] == 2 || self.dist[v][u] == 2 {
                     neighbors.insert((u, v).into());
                 }
             }
@@ -240,16 +225,16 @@ impl PolyGraph {
     pub fn distances(&mut self) {
         // let dist be a |V| × |V| array of minimum distances initialized to ∞ (infinity)
         let mut dist: HashMap<VertexId, HashMap<VertexId, u32>> = self
-            .vertices()
-            .into_iter()
+            .vertices
+            .iter()
             .map(|v| {
                 (
-                    v,
-                    self.vertices()
-                        .into_iter()
+                    *v,
+                    self.vertices
+                        .iter()
                         .map(|u| {
                             (
-                                u,
+                                *u,
                                 if u == v {
                                     0
                                 } else if self.adjacents.contains(&(v, u).into()) {
@@ -264,14 +249,14 @@ impl PolyGraph {
             })
             .collect();
 
-        for k in self.vertices() {
-            for i in self.vertices() {
-                for j in self.vertices() {
-                    if dist[&i][&k] != u32::MAX && dist[&k][&j] != u32::MAX {
-                        let nv = dist[&i][&k] + dist[&k][&j];
-                        if dist[&i][&j] > nv || dist[&j][&i] > nv {
-                            dist.get_mut(&i).unwrap().insert(j, nv);
-                            dist.get_mut(&j).unwrap().insert(i, nv);
+        for k in self.vertices.iter() {
+            for i in self.vertices.iter() {
+                for j in self.vertices.iter() {
+                    if dist[i][k] != u32::MAX && dist[k][j] != u32::MAX {
+                        let nv = dist[i][k] + dist[k][j];
+                        if dist[i][j] > nv || dist[j][i] > nv {
+                            dist.get_mut(i).unwrap().insert(*j, nv);
+                            dist.get_mut(j).unwrap().insert(*i, nv);
                         }
                     }
                 }
@@ -283,8 +268,8 @@ impl PolyGraph {
 
     /// Periphery / diameter
     pub fn diameter(&mut self) {
-        let dist = self.dist.clone();
-        if let Some(max) = dist
+        if let Some(max) = self
+            .dist
             .values()
             .flatten()
             .map(|(_, d)| d)
@@ -292,9 +277,9 @@ impl PolyGraph {
             .max()
         {
             let mut diameter = HashSet::<Edge>::new();
-            for u in self.vertices() {
-                for v in self.vertices() {
-                    if &dist[&u][&v] == max || &dist[&v][&u] == max {
+            for u in self.vertices.iter() {
+                for v in self.vertices.iter() {
+                    if &self.dist[u][v] == max || &self.dist[v][u] == max {
                         diameter.insert((u, v).into());
                     }
                 }
@@ -318,7 +303,7 @@ impl PolyGraph {
 
 impl Display for PolyGraph {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut vertices = self.vertices();
+        let mut vertices = self.vertices.iter().collect::<Vec<_>>();
         vertices.sort();
         let mut adjacents = self.adjacents.clone().into_iter().collect::<Vec<_>>();
         adjacents.sort();
@@ -350,21 +335,21 @@ mod test {
         graph.connect((0, 1));
         graph.connect((0, 2));
         graph.connect((1, 2));
-        assert_eq!(graph.connections(0), vec![1, 2].into_iter().collect());
-        assert_eq!(graph.connections(1), vec![0, 2].into_iter().collect());
-        assert_eq!(graph.connections(2), vec![0, 1].into_iter().collect());
-        assert_eq!(graph.connections(3), vec![].into_iter().collect());
+        assert_eq!(graph.connections(&0), vec![1, 2].into_iter().collect());
+        assert_eq!(graph.connections(&1), vec![0, 2].into_iter().collect());
+        assert_eq!(graph.connections(&2), vec![0, 1].into_iter().collect());
+        assert_eq!(graph.connections(&3), vec![].into_iter().collect());
 
         // Disconnect
         graph.disconnect((0, 1));
-        assert_eq!(graph.connections(0), vec![2].into_iter().collect());
-        assert_eq!(graph.connections(1), vec![2].into_iter().collect());
+        assert_eq!(graph.connections(&0), vec![2].into_iter().collect());
+        assert_eq!(graph.connections(&1), vec![2].into_iter().collect());
 
         // Delete
-        graph.delete(1);
-        assert_eq!(graph.connections(0), vec![2].into_iter().collect());
-        assert_eq!(graph.connections(1), vec![].into_iter().collect());
-        assert_eq!(graph.connections(2), vec![0].into_iter().collect());
+        graph.delete(&1);
+        assert_eq!(graph.connections(&0), vec![2].into_iter().collect());
+        assert_eq!(graph.connections(&1), vec![].into_iter().collect());
+        assert_eq!(graph.connections(&2), vec![0].into_iter().collect());
     }
 
     #[test]
