@@ -1,12 +1,9 @@
-use std::fmt::Display;
-
-use serde::{Deserialize, Serialize};
-
 use super::VertexId;
+use std::fmt::Display;
 
 pub type EdgeId = (VertexId, VertexId);
 
-#[derive(Debug, Serialize, Deserialize, Clone, Copy)]
+#[derive(Debug, Clone, Copy)]
 pub struct Edge {
     v: VertexId,
     u: VertexId,

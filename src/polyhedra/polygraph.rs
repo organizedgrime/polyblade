@@ -1,14 +1,13 @@
 pub use super::*;
 use cgmath::{vec3, InnerSpace, Vector3, Zero};
 use rand::random;
-use serde::{Deserialize, Serialize};
 use std::{
     collections::{HashMap, HashSet},
     fmt::Display,
     u32,
 };
 
-#[derive(Debug, Default, Serialize, Deserialize)]
+#[derive(Debug, Default)]
 pub struct PolyGraph {
     /// Conway Polyhedron Notation
     pub name: String,

@@ -1,10 +1,7 @@
+use super::{Edge, VertexId};
 use std::{collections::HashSet, hash::Hash};
 
-use serde::{Deserialize, Serialize};
-
-use super::{Edge, VertexId};
-
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Clone)]
 pub struct Face(pub Vec<VertexId>);
 
 impl std::fmt::Debug for Face {
