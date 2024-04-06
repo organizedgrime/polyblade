@@ -167,6 +167,7 @@ impl Triangle {
             gl::BufferData(
                 gl::ARRAY_BUFFER,
                 (VERTEX_DATA.len() * mem::size_of::<GLfloat>()) as GLsizeiptr,
+                //NULL,
                 mem::transmute(&VERTEX_DATA[0]),
                 gl::STATIC_DRAW,
             );

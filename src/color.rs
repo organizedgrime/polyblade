@@ -1,4 +1,6 @@
-use three_d::{Srgba, Vec4};
+//use three_d::{Srgba, Vec4};
+
+use cgmath::{vec3, Vector3};
 
 #[derive(Debug, Default)]
 pub struct HSL {
@@ -99,6 +101,16 @@ impl HSL {
         )
     }
 
+    pub fn to_rgb_float(&self) -> Vector3<f32> {
+        let rgb = self.to_rgb();
+        vec3(
+            rgb.0 as f32 / 255.0,
+            rgb.1 as f32 / 255.0,
+            rgb.2 as f32 / 255.0,
+        )
+    }
+
+    /*
     pub fn to_srgba(&self) -> Srgba {
         let color = self.to_rgb();
         Srgba::new_opaque(color.0, color.1, color.2)
@@ -108,6 +120,7 @@ impl HSL {
         let color = self.to_rgb();
         Srgba::new_opaque(color.0, color.1, color.2).to_linear_srgb()
     }
+    */
 }
 
 fn percent_to_byte(percent: f64) -> u8 {

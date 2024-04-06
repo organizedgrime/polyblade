@@ -1,10 +1,11 @@
+use cgmath::{InnerSpace, MetricSpace, Vector3, VectorSpace, Zero};
+
 use super::*;
 use crate::prelude::HSL;
 use std::{
     collections::{HashMap, HashSet},
     ops::Add,
 };
-use three_d::*;
 
 const TICK_SPEED: f32 = 100.0;
 
@@ -114,10 +115,7 @@ impl PolyGraph {
         vertices.iter().fold(Vector3::zero(), Vector3::add) / vertices.len() as f32
     }
 
-    pub fn triangle_buffers(
-        &self,
-        context: &Context,
-    ) -> (VertexBuffer, VertexBuffer, VertexBuffer) {
+    pub fn triangle_buffers(&self) -> (Vec<Vector3<f32>>, Vec<Vector3<f32>>, Vec<Vector3<f32>>) {
         let mut polyhedron_xyz = Vec::new();
         let mut polyhedron_colors = Vec::new();
         let mut polyhedron_barycentric = Vec::new();
@@ -147,16 +145,13 @@ impl PolyGraph {
                 1.0,
                 0.5,
             )
-            .to_linear_srgb();
+            .to_rgb_float();
+            //.to_linear_srgb();
             polyhedron_colors.extend(vec![color; face_xyz.len()]);
             polyhedron_xyz.extend(face_xyz);
         }
 
-        let positions = VertexBuffer::new_with_data(context, &polyhedron_xyz);
-        let colors = VertexBuffer::new_with_data(context, &polyhedron_colors);
-        let barycentric = VertexBuffer::new_with_data(context, &polyhedron_barycentric);
-
-        (positions, colors, barycentric)
+        (polyhedron_xyz, polyhedron_colors, polyhedron_barycentric)
     }
 
     pub fn animate_contraction(&mut self) {
