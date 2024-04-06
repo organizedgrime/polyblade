@@ -109,11 +109,12 @@ impl PolyGraph {
             .normalize()
     }
 
-    fn face_xyz_buffer(&self, face_index: usize) -> Vec<Vector3<f32>> {
+    fn face_xyz_buffer(&self, face_index: usize) -> (Vec<Vector3<f32>>, Vec<Vector3<f32>>) {
         let positions = self.face_xyz(face_index);
-        match positions.len() {
-            3 => positions,
-            4 => {
+        let n = positions.len();
+        match n {
+            3 => (positions, vec![vec3(1.0, 1.0, 1.0); 3]),
+            4 => (
                 vec![
                     positions[0],
                     positions[1],
@@ -121,15 +122,18 @@ impl PolyGraph {
                     positions[2],
                     positions[3],
                     positions[0],
-                ]
-            }
+                ],
+                vec![vec3(1.0, 0.0, 1.0); 6],
+            ),
             _ => {
                 let centroid = self.face_centroid(face_index);
                 let n = positions.len();
 
-                (0..n).into_iter().fold(vec![], |acc, i| {
+                let pos = (0..n).into_iter().fold(vec![], |acc, i| {
                     [acc, vec![positions[i], centroid, positions[(i + 1) % n]]].concat()
-                })
+                });
+
+                (pos, vec![vec3(0.0, 1.0, 0.0); n * 3])
             }
         }
     }
@@ -154,7 +158,7 @@ impl PolyGraph {
         let mut polyhedron_tri = Vec::new();
 
         for face_index in 0..self.faces.len() {
-            let face_xyz = self.face_xyz_buffer(face_index);
+            let (face_xyz, face_tri) = self.face_xyz_buffer(face_index);
             let color = HSL::new(
                 (360.0 / (self.faces.len() as f64)) * face_index as f64,
                 360.0 / 1.0,
@@ -169,8 +173,8 @@ impl PolyGraph {
                     Vector3::unit_y(),
                     Vector3::unit_z(),
                 ]);
-                polyhedron_tri.extend(vec![vec3(1.0, 1.0, 1.0); 3]);
             }
+            polyhedron_tri.extend(face_tri);
             polyhedron_xyz.extend(face_xyz);
         }
 
