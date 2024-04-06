@@ -44,7 +44,7 @@ impl Poly {
         self.bsc_vbo.bind_with_data(&bsc);
         shader.enable("bsc", 3);
 
-        self.tri_vbo.bind_with_data(&bsc);
+        self.tri_vbo.bind_with_data(&tri);
         shader.enable("tri", 3);
     }
 
