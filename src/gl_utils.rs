@@ -115,10 +115,11 @@ fn link_program(vs: GLuint, fs: GLuint) -> GLuint {
 
 const VS_SRC: &str = "
 #version 150
-in vec3 position;
+in vec3 xyz;
+in vec3 rgb;
 
 void main() {
-    gl_Position = vec4(position, 1.0);
+    gl_Position = vec4(xyz, 1.0);
 }";
 
 const FS_SRC: &str = "
@@ -137,7 +138,8 @@ pub struct Poly {
     pub fs: GLuint,
     pub program: GLuint,
     pub vao: GLuint,
-    pub vbo: GLuint,
+    pub xyz_vbo: GLuint,
+    pub rgb_vbo: GLuint,
 }
 
 impl Poly {
@@ -147,11 +149,16 @@ impl Poly {
         let program = link_program(vs, fs);
 
         let mut vao = 0;
-        let mut vbo = 0;
+        let mut xyz_vbo = 0;
+        let mut rgb_vbo = 0;
+        //let mut bcs_vbo = 0;
         unsafe {
-            gl::GenVertexArrays(2, &mut vao);
-            gl::GenBuffers(2, &mut vbo);
+            gl::GenVertexArrays(1, &mut vao);
+            gl::GenBuffers(1, &mut xyz_vbo);
+            gl::GenBuffers(1, &mut rgb_vbo);
         }
+
+        println!("va: {vao}, xyz: {xyz_vbo}, rgb: {rgb_vbo}");
 
         Poly {
             pg: PolyGraph::cube(),
@@ -159,36 +166,29 @@ impl Poly {
             fs,
             program,
             vao,
-            vbo,
+            xyz_vbo,
+            rgb_vbo,
         }
     }
 
     pub fn draw(&self) {
-        let (positions, colors, _) = self.pg.triangle_buffers();
-        let draw_len: i32 = positions.len() as i32;
+        let (xyz, rgb, _) = self.pg.triangle_buffers();
+        let draw_len: i32 = xyz.len() as i32;
 
         unsafe {
-            let pos_data: Vec<GLfloat> = mem::transmute(positions);
-            gl::BindVertexArray(self.vao);
-            gl::BindBuffer(gl::ARRAY_BUFFER, self.vbo);
-            gl::BufferData(
-                gl::ARRAY_BUFFER,
-                (pos_data.len() * mem::size_of::<GLfloat>()) as GLsizeiptr,
-                mem::transmute(&pos_data[0]),
-                gl::STATIC_DRAW,
-            );
+            let size = std::mem::size_of::<f32>();
+            let rgb_ptr = mem::transmute(&rgb[0]);
+            let rgb_size = (rgb.len() * size) as GLsizeiptr;
 
-            /*
-            let color_data: Vec<GLfloat> = mem::transmute(colors);
             gl::BindVertexArray(self.vao);
-            gl::BindBuffer(gl::ARRAY_BUFFER, self.vbo);
-            gl::BufferData(
-                gl::ARRAY_BUFFER,
-                (color_data.len() * mem::size_of::<GLfloat>()) as GLsizeiptr,
-                mem::transmute(&color_data[0]),
-                gl::STATIC_DRAW,
-            );
-            */
+            gl::BindBuffer(gl::ARRAY_BUFFER, self.rgb_vbo);
+            gl::BufferData(gl::ARRAY_BUFFER, rgb_size, rgb_ptr, gl::STATIC_DRAW);
+
+            let xyz_ptr = mem::transmute(&xyz[0]);
+            let xyz_size = (xyz.len() * size) as GLsizeiptr;
+            gl::BindVertexArray(self.vao);
+            gl::BindBuffer(gl::ARRAY_BUFFER, self.xyz_vbo);
+            gl::BufferData(gl::ARRAY_BUFFER, xyz_size, xyz_ptr, gl::STATIC_DRAW);
         }
 
         unsafe {
@@ -200,9 +200,9 @@ impl Poly {
             gl::BindFragDataLocation(self.program, 0, c_out_color.as_ptr());
         }
 
-        let c_position = cstr!("position");
+        let c_xyz = cstr!("xyz");
         //let c_color = cstr!("color");
-        let pos_attr = unsafe { gl::GetAttribLocation(self.program, c_position.as_ptr()) };
+        let pos_attr = unsafe { gl::GetAttribLocation(self.program, c_xyz.as_ptr()) };
         //let color_attr = unsafe { gl::GetAttribLocation(self.program, c_color.as_ptr()) };
 
         unsafe {
@@ -240,7 +240,7 @@ impl Drop for Poly {
             gl::DeleteProgram(self.program);
             gl::DeleteShader(self.fs);
             gl::DeleteShader(self.vs);
-            gl::DeleteBuffers(1, &self.vbo);
+            gl::DeleteBuffers(1, &self.xyz_vbo);
             gl::DeleteVertexArrays(1, &self.vao);
         }
     }
