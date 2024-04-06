@@ -4,7 +4,6 @@ use egui_gl_glfw::gl;
 
 pub struct Poly {
     // Graph / Data
-    pub pg: PolyGraph,
     pub vao: Vao,
     pub xyz_vbo: Vbo,
     pub rgb_vbo: Vbo,
@@ -21,7 +20,6 @@ impl Default for Poly {
 impl Poly {
     pub fn new() -> Self {
         Poly {
-            pg: PolyGraph::dodecahedron(),
             vao: Vao::new(),
             xyz_vbo: Vbo::new(),
             rgb_vbo: Vbo::new(),
@@ -30,8 +28,8 @@ impl Poly {
         }
     }
 
-    pub fn prepare(&mut self, shader: &Shader) {
-        let (xyz, rgb, bsc) = self.pg.triangle_buffers();
+    pub fn prepare(&mut self, shape: &PolyGraph, shader: &Shader) {
+        let (xyz, rgb, bsc) = shape.triangle_buffers();
         self.draw_len = xyz.len() as i32;
         self.vao.bind();
         shader.activate();

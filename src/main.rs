@@ -92,7 +92,8 @@ fn main() {
     let start_time = Instant::now();
 
     let shader = Shader::new(VS_SRC, FS_SRC);
-    let mut shape = Poly::new();
+    let mut poly = Poly::new();
+    let mut shape = PolyGraph::cube();
     let quit = false;
     let mut rotating = true;
 
@@ -123,11 +124,12 @@ fn main() {
         let model_rotation =
             Matrix4::from_angle_y(Rad(0.5 * time)) * Matrix4::from_angle_x(Rad(0.7 * time));
 
-        shape.pg.update();
-        shape.prepare(&shader);
+        shape.update();
+
+        poly.prepare(&shape, &shader);
         shader.set_mat4("model", &model_rotation);
         shader.set_mat4("projection", &c);
-        shape.draw();
+        poly.draw();
         unsafe {
             verify!(gl::Disable(gl::DEPTH_TEST));
         }
@@ -139,19 +141,19 @@ fn main() {
                 ui.label("Seeds:");
                 // Buttons to revert to platonic solids
                 if ui.button("Tetrahedron").clicked() {
-                    //shape = PolyGraph::tetrahedron();
+                    shape = PolyGraph::tetrahedron();
                 }
                 if ui.button("Cube").clicked() {
-                    //shape = PolyGraph::cube();
+                    shape = PolyGraph::cube();
                 }
                 if ui.button("Octahedron").clicked() {
-                    //shape = PolyGraph::octahedron();
+                    shape = PolyGraph::octahedron();
                 }
                 if ui.button("Dodecahedron").clicked() {
-                    //shape = PolyGraph::dodecahedron();
+                    shape = PolyGraph::dodecahedron();
                 }
                 if ui.button("Icosahedron").clicked() {
-                    //shape = PolyGraph::icosahedron();
+                    shape = PolyGraph::icosahedron();
                 }
             });
 
@@ -165,19 +167,19 @@ fn main() {
                     //shape.recompute_qualities();
                 }
                 if ui.button("Truncate").clicked() {
-                    shape.pg.truncate();
+                    shape.truncate();
                 }
                 if ui.button("Ambo").clicked() {
-                    //shape.ambo();
+                    shape.ambo();
                 }
                 if ui.button("Bevel").clicked() {
-                    //shape.bevel();
+                    shape.bevel();
                 }
                 if ui.button("Expand").clicked() {
-                    //shape.expand();
+                    shape.expand();
                 }
                 if ui.button("Snub").clicked() {
-                    //shape.snub();
+                    shape.snub();
                 }
             });
         });
