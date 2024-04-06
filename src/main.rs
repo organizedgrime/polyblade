@@ -1,8 +1,8 @@
-use cgmath::{Matrix4, Rad, Zero};
+use cgmath::{Matrix4, Rad};
 use egui::{Checkbox, TopBottomPanel};
 use egui_gl_glfw as egui_backend;
 
-use std::ffi::CStr;
+
 use std::time::Instant;
 
 use egui_backend::egui::{vec2, Pos2, Rect};

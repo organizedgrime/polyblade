@@ -1,7 +1,7 @@
-use std::{ffi::CStr, mem};
+
 
 use cgmath::{Matrix, Matrix4};
-use gl::types::{GLchar, GLenum, GLfloat, GLint, GLuint};
+use gl::types::{GLchar, GLenum, GLint, GLuint};
 use glfw::with_c_str;
 
 use crate::verify;
