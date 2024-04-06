@@ -139,16 +139,24 @@ impl PolyGraph {
                     Vector3::<f32>::unit_y(),
                     Vector3::<f32>::unit_z(),
                 ]);
+                polyhedron_colors.extend(vec![
+                    HSL::new(0.0, 1.0, 0.5).to_rgb_float(),
+                    HSL::new(120.0, 1.0, 0.5).to_rgb_float(),
+                    HSL::new(270.0, 1.0, 0.5).to_rgb_float(),
+                ])
             }
 
+            /*
             let color = HSL::new(
                 (360.0 / (self.faces.len() as f64)) * face_index as f64,
-                1.0,
+                360.0 / 1.0,
                 0.5,
             )
             .to_rgb_float();
             //.to_linear_srgb();
             polyhedron_colors.extend(vec![color; face_xyz.len()]);
+            */
+
             polyhedron_xyz.extend(face_xyz);
         }
 
