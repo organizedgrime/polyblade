@@ -10,6 +10,25 @@ const SCREEN_WIDTH: u32 = 800;
 const SCREEN_HEIGHT: u32 = 600;
 const PIC_WIDTH: i32 = 320;
 const PIC_HEIGHT: i32 = 192;
+const VS_SRC: &str = "
+#version 150
+in vec3 xyz;
+in vec3 rgb;
+out vec3 rrgb;
+
+void main() {
+    gl_Position = vec4(xyz, 1.0);
+    rrgb = rgb;
+}";
+
+const FS_SRC: &str = "
+#version 150
+in vec3 rrgb;
+out vec4 out_color;
+
+void main() {
+    out_color = vec4(rrgb, 1.0);
+}";
 
 use polyblade::prelude::*;
 
@@ -71,7 +90,8 @@ fn main() {
     let mut test_str =
         "A text box to write in. Cut, copy, paste commands are available.".to_owned();
 
-    let triangle = Poly::new();
+    let shader = Shader::new(VS_SRC, FS_SRC);
+    let shape = Poly::new();
     let mut quit = false;
     let mut rotating = true;
 
@@ -85,7 +105,7 @@ fn main() {
             gl::Clear(gl::COLOR_BUFFER_BIT);
         }
 
-        triangle.draw();
+        shape.draw(&shader);
 
         let mut srgba: Vec<Color32> = Vec::new();
         let mut angle = 0f32;

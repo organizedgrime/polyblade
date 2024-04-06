@@ -12,7 +12,7 @@ impl Vbo {
         Self { id }
     }
 
-    fn bind(&self) {
+    pub fn bind(&self) {
         unsafe { verify!(gl::BindBuffer(gl::ARRAY_BUFFER, self.id)) }
     }
 
@@ -32,7 +32,10 @@ impl Vbo {
             }
         }
     }
-    pub fn drop(&mut self) {
+}
+
+impl Drop for Vbo {
+    fn drop(&mut self) {
         unsafe { verify!(gl::DeleteBuffers(1, &self.id)) }
     }
 }

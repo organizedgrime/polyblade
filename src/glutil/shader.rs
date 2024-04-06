@@ -45,6 +45,14 @@ impl Shader {
     }
 }
 
+impl Drop for Shader {
+    fn drop(&mut self) {
+        unsafe {
+            verify!(gl::DeleteProgram(self.id));
+        }
+    }
+}
+
 fn link(vs: GLuint, fs: GLuint) -> GLuint {
     unsafe {
         let program = verify!(gl::CreateProgram());
@@ -68,14 +76,6 @@ fn link(vs: GLuint, fs: GLuint) -> GLuint {
         }
 
         program
-    }
-}
-
-impl Drop for Shader {
-    fn drop(&mut self) {
-        unsafe {
-            verify!(gl::DeleteProgram(self.id));
-        }
     }
 }
 
