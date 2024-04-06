@@ -1,40 +1,6 @@
-// Draws a simple white triangle
-// based on the example from:
-// https://github.com/brendanzab/gl-rs/blob/master/gl/examples/triangle.rs
-
-use egui_gl_glfw::gl;
-use egui_gl_glfw::gl::types::*;
-use std::{mem, ptr, str};
-
-use std::ffi::CString;
-
 use crate::glutil::*;
 use crate::prelude::PolyGraph;
-
-#[allow(unconditional_panic)]
-const fn illegal_null_in_string() {
-    [][0]
-}
-
-#[doc(hidden)]
-pub const fn validate_cstr_contents(bytes: &[u8]) {
-    let mut i = 0;
-    while i < bytes.len() {
-        if bytes[i] == b'\0' {
-            illegal_null_in_string();
-        }
-        i += 1;
-    }
-}
-
-macro_rules! cstr {
-    ( $s:literal ) => {{
-        validate_cstr_contents($s.as_bytes());
-        unsafe { std::mem::transmute::<_, &std::ffi::CStr>(concat!($s, "\0")) }
-    }};
-}
-
-//static VERTEX_DATA: [GLfloat; 9] = [0.0, 0.2, 0.0, 0.5, -0.5, 0.0, -0.5, -0.5, 0.0];
+use egui_gl_glfw::gl;
 
 pub struct Poly {
     // Graph / Data
