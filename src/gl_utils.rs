@@ -8,6 +8,7 @@ use std::{mem, ptr, str};
 
 use std::ffi::CString;
 
+use crate::glutil::*;
 use crate::prelude::PolyGraph;
 
 #[allow(unconditional_panic)]
@@ -133,13 +134,18 @@ void main() {
 //static VERTEX_DATA: [GLfloat; 9] = [0.0, 0.2, 0.0, 0.5, -0.5, 0.0, -0.5, -0.5, 0.0];
 
 pub struct Poly {
+    // Graph / Data
     pub pg: PolyGraph,
+    // Shaders
     pub vs: GLuint,
     pub fs: GLuint,
+
+    // Program
     pub program: GLuint,
-    pub vao: GLuint,
-    pub xyz_vbo: GLuint,
-    pub rgb_vbo: GLuint,
+
+    pub vao: Vao,
+    pub xyz_vbo: Vbo,
+    pub rgb_vbo: Vbo,
 }
 
 impl Poly {
@@ -148,26 +154,14 @@ impl Poly {
         let fs = compile_shader(FS_SRC, gl::FRAGMENT_SHADER);
         let program = link_program(vs, fs);
 
-        let mut vao = 0;
-        let mut xyz_vbo = 0;
-        let mut rgb_vbo = 0;
-        //let mut bcs_vbo = 0;
-        unsafe {
-            gl::GenVertexArrays(1, &mut vao);
-            gl::GenBuffers(1, &mut xyz_vbo);
-            gl::GenBuffers(1, &mut rgb_vbo);
-        }
-
-        println!("va: {vao}, xyz: {xyz_vbo}, rgb: {rgb_vbo}");
-
         Poly {
             pg: PolyGraph::cube(),
             vs,
             fs,
             program,
-            vao,
-            xyz_vbo,
-            rgb_vbo,
+            vao: Vao::new(),
+            xyz_vbo: Vbo::new(),
+            rgb_vbo: Vbo::new(),
         }
     }
 
@@ -175,21 +169,12 @@ impl Poly {
         let (xyz, rgb, _) = self.pg.triangle_buffers();
         let draw_len: i32 = xyz.len() as i32;
 
-        unsafe {
-            let size = std::mem::size_of::<f32>();
-            let rgb_ptr = mem::transmute(&rgb[0]);
-            let rgb_size = (rgb.len() * size) as GLsizeiptr;
+        //let size = std::mem::size_of::<f32>();
+        //let rgb_ptr = mem::transmute(&rgb[0]);
+        //let rgb_size = (rgb.len() * size) as GLsizeiptr;
 
-            gl::BindVertexArray(self.vao);
-            gl::BindBuffer(gl::ARRAY_BUFFER, self.rgb_vbo);
-            gl::BufferData(gl::ARRAY_BUFFER, rgb_size, rgb_ptr, gl::STATIC_DRAW);
-
-            let xyz_ptr = mem::transmute(&xyz[0]);
-            let xyz_size = (xyz.len() * size) as GLsizeiptr;
-            gl::BindVertexArray(self.vao);
-            gl::BindBuffer(gl::ARRAY_BUFFER, self.xyz_vbo);
-            gl::BufferData(gl::ARRAY_BUFFER, xyz_size, xyz_ptr, gl::STATIC_DRAW);
-        }
+        self.vao.bind();
+        self.xyz_vbo.bind_with_data(&xyz);
 
         unsafe {
             gl::UseProgram(self.program);
@@ -207,7 +192,6 @@ impl Poly {
 
         unsafe {
             gl::EnableVertexAttribArray(pos_attr as GLuint);
-            //gl::EnableVertexAttribArray(color_attr as GLuint);
             gl::VertexAttribPointer(
                 pos_attr as GLuint,
                 3,
@@ -217,6 +201,7 @@ impl Poly {
                 ptr::null(),
             );
             /*
+            gl::EnableVertexAttribArray(color_attr as GLuint);
             gl::VertexAttribPointer(
                 color_attr as GLuint,
                 3,
@@ -240,8 +225,9 @@ impl Drop for Poly {
             gl::DeleteProgram(self.program);
             gl::DeleteShader(self.fs);
             gl::DeleteShader(self.vs);
-            gl::DeleteBuffers(1, &self.xyz_vbo);
-            gl::DeleteVertexArrays(1, &self.vao);
+            self.xyz_vbo.drop();
+            self.rgb_vbo.drop();
+            self.vao.drop();
         }
     }
 }

@@ -2,6 +2,7 @@
 
 mod color;
 mod gl_utils;
+mod glutil;
 mod polyhedra;
 
 pub mod prelude {
