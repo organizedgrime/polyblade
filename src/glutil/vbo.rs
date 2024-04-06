@@ -37,6 +37,15 @@ impl Vbo {
             }
         }
     }
+
+    pub fn update_data<T>(&self, data: &[T]) {
+        self.bind();
+        let buf_size = std::mem::size_of_val(data) as GLsizeiptr;
+        unsafe {
+            let data_ptr = std::mem::transmute(&data[0]);
+            verify!(gl::BufferSubData(gl::ARRAY_BUFFER, 0, buf_size, data_ptr));
+        }
+    }
 }
 
 impl Drop for Vbo {

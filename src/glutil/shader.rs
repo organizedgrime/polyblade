@@ -1,6 +1,4 @@
-
-
-use cgmath::{Matrix, Matrix4};
+use cgmath::{Matrix, Matrix4, Vector3};
 use gl::types::{GLchar, GLenum, GLint, GLuint};
 use glfw::with_c_str;
 
@@ -30,16 +28,15 @@ impl Shader {
         with_c_str(name, |n| unsafe {
             id = verify!(gl::GetAttribLocation(self.id, n));
         });
-        unsafe { verify!(gl::EnableVertexAttribArray(id as GLuint)) }
-        let normalized = gl::FALSE;
-        let stride = 0;
         unsafe {
+            verify!(gl::EnableVertexAttribArray(id as GLuint));
             verify!(gl::VertexAttribPointer(
                 id as GLuint,
                 count,
                 gl::FLOAT,
-                normalized,
-                stride,
+                gl::FALSE,
+                0,
+                //std::mem::size_of::<Vector3<f32>>() as GLint * 4,
                 std::ptr::null()
             ))
         }

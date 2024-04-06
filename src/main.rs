@@ -65,6 +65,7 @@ fn main() {
     let mut shape = PolyGraph::cube();
     let quit = false;
     let mut rotating = true;
+    poly.prepare(&shader);
 
     while !window.should_close() {
         egui_input_state.input.time = Some(start_time.elapsed().as_secs_f64());
@@ -95,10 +96,11 @@ fn main() {
 
         shape.update();
 
-        poly.prepare(&shape, &shader);
+        shader.activate();
+        poly.draw(&shape);
         shader.set_mat4("model", &model_rotation);
         shader.set_mat4("projection", &c);
-        poly.draw();
+
         unsafe {
             verify!(gl::Disable(gl::DEPTH_TEST));
         }
