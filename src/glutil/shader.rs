@@ -46,11 +46,11 @@ impl Shader {
         }
     }
 
-    pub fn set_mat4(&self, name: &CStr, mat: &Matrix4<f32>) {
-        unsafe {
-            let id = gl::GetUniformLocation(self.id, name.as_ptr());
+    pub fn set_mat4(&self, name: &str, mat: &Matrix4<f32>) {
+        with_c_str(name, |name| unsafe {
+            let id = gl::GetUniformLocation(self.id, name);
             verify!(gl::UniformMatrix4fv(id as i32, 1, gl::FALSE, mat.as_ptr()));
-        }
+        })
     }
 }
 

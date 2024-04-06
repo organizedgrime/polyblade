@@ -33,11 +33,6 @@ void main() {
 
 use polyblade::prelude::*;
 
-macro_rules! c_str {
-    ($literal:expr) => {
-        unsafe { CStr::from_bytes_with_nul_unchecked(concat!($literal, "\0").as_bytes()) }
-    };
-}
 fn main() {
     let mut glfw = glfw::init(glfw::fail_on_errors).unwrap();
     glfw.window_hint(glfw::WindowHint::ContextVersion(3, 2));
@@ -104,7 +99,7 @@ fn main() {
             Matrix4::from_angle_y(Rad(1.0 * time)) * Matrix4::from_angle_x(Rad(0.0004 * time));
 
         shape.prepare(&shader);
-        shader.set_mat4(c_str!("model"), &model_rotation);
+        shader.set_mat4("model", &model_rotation);
         shape.draw();
 
         TopBottomPanel::bottom("dog").show(&egui_ctx, |ui| {
