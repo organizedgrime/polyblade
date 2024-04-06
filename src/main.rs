@@ -1,4 +1,4 @@
-use cgmath::{Matrix4, Rad};
+use cgmath::{vec3, EuclideanSpace, Matrix4, Point3, Rad, Vector3, Zero};
 use egui::{Checkbox, TopBottomPanel};
 use egui_gl_glfw as egui_backend;
 
@@ -17,9 +17,10 @@ in vec3 bsc;
 out vec3 v_Rgb;
 out vec3 v_Bsc;
 uniform mat4 model;
+uniform mat4 projection;
 
 void main() {
-    gl_Position = model * vec4(xyz, 1.0);
+    gl_Position = projection * model * vec4(xyz, 1.0);
     v_Rgb = rgb;
     v_Bsc = bsc;
 }";
@@ -99,6 +100,18 @@ fn main() {
             gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
         }
 
+        /*
+        let c = Matrix4::look_at_lh(
+            Point3::from_vec(vec3(0.0, 3.0, 0.0)),
+            Point3::from_vec(Vector3::zero()),
+            vec3(0.0, 0.0, 1.0),
+        );
+        */
+        let c = Matrix4::new(
+            2.4142134, 0.0, 0.0, 0.0, 0.0, 2.4142134, 0.0, 0.0, 0.0, 0.0, -1.020202, -1.0, 0.0,
+            0.0, 3.878788, 4.0,
+        );
+
         let time = start_time.elapsed().as_secs_f32();
         let model_rotation =
             Matrix4::from_angle_y(Rad(0.5 * time)) * Matrix4::from_angle_x(Rad(0.7 * time));
@@ -106,7 +119,7 @@ fn main() {
         shape.pg.update();
         shape.prepare(&shader);
         shader.set_mat4("model", &model_rotation);
-        //shader.set_mat4("", &model_rotation);
+        shader.set_mat4("projection", &c);
         shape.draw();
         unsafe {
             verify!(gl::Disable(gl::DEPTH_TEST));

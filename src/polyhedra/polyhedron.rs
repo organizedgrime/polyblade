@@ -100,7 +100,7 @@ impl PolyGraph {
     }
 
     #[allow(dead_code)]
-    fn face_normal(&self, face_index: usize) -> Vector3<f32> {
+    pub fn face_normal(&self, face_index: usize) -> Vector3<f32> {
         self.faces[face_index]
             .0
             .iter()
