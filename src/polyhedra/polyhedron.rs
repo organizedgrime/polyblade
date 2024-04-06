@@ -109,6 +109,26 @@ impl PolyGraph {
             .normalize()
     }
 
+    fn face_xyz_buffer(&self, face_index: usize) -> Vec<Vector3<f32>> {
+        let positions = self.face_xyz(face_index);
+        match positions.len() {
+            3 => positions,
+            4 => {
+                vec![
+                    positions[0],
+                    positions[1],
+                    positions[2],
+                    positions[2],
+                    positions[3],
+                    positions[0],
+                ]
+            }
+            _ => {
+                vec![]
+            }
+        }
+    }
+
     fn face_centroid(&self, face_index: usize) -> Vector3<f32> {
         // All vertices associated with this face
         let vertices: Vec<_> = self.face_xyz(face_index);
@@ -122,8 +142,8 @@ impl PolyGraph {
 
         for face_index in 0..self.faces.len() {
             // Create triangles from the center to each corner
-            let mut face_xyz = Vec::new();
-            let vertices = self.face_xyz(face_index);
+            //let mut face_xyz = Vec::new();
+            //let vertices = self.face_xyz(face_index);
             let _center = self.face_centroid(face_index);
 
             // Construct a triangle
@@ -149,12 +169,18 @@ impl PolyGraph {
                     */
                 }
             */
-            face_xyz.extend(vertices);
+            //face_xyz.extend(vertices);
+            let face_xyz = self.face_xyz_buffer(face_index);
 
             polyhedron_barycentric.extend(vec![
+                Vector3::zero(),
+                Vector3::zero(),
+                Vector3::zero(),
+                /*
                 Vector3::<f32>::unit_x(),
                 Vector3::<f32>::unit_y(),
                 Vector3::<f32>::unit_z(),
+                */
             ]);
 
             let color = HSL::new(
@@ -171,10 +197,8 @@ impl PolyGraph {
 
         /*
         println!(
-            "xyz: {}, rgb: {}, bsc: {}",
-            polyhedron_xyz.len(),
-            polyhedron_colors.len(),
-            polyhedron_barycentric.len()
+            "xyz: {:#?}, rgb: {:#?}, bsc: {:#?}",
+            polyhedron_xyz, polyhedron_colors, polyhedron_barycentric
         );
         */
 

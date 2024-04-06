@@ -21,7 +21,7 @@ impl Default for Poly {
 impl Poly {
     pub fn new() -> Self {
         Poly {
-            pg: PolyGraph::tetrahedron(),
+            pg: PolyGraph::cube(),
             vao: Vao::new(),
             xyz_vbo: Vbo::new(),
             rgb_vbo: Vbo::new(),
@@ -41,8 +41,10 @@ impl Poly {
         self.rgb_vbo.bind_with_data(&rgb);
         shader.enable("rgb", 3);
 
+        /*
         self.xyz_vbo.bind_with_data(&bsc);
         shader.enable("bsc", 3);
+        */
     }
 
     pub fn draw(&self) {

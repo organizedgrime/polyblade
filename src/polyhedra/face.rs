@@ -1,4 +1,4 @@
-use super::{Edge, VertexId};
+use super::{Edge, PolyGraph, VertexId};
 use std::{collections::HashSet, hash::Hash};
 
 #[derive(Clone)]
@@ -34,6 +34,8 @@ impl Face {
             .unwrap();
         [self.0[i..].to_vec(), self.0[..i].to_vec()].concat()
     }
+
+    //pub fn buffers(&self, g: &PolyGraph) -> (Vec<f32>, Vec<f32>, Vec<f32>) {}
 }
 
 impl PartialEq for Face {
