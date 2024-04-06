@@ -3,13 +3,11 @@ use egui_gl_glfw as egui_backend;
 
 use std::time::Instant;
 
-use egui_backend::egui::{vec2, Color32, Image, Pos2, Rect};
+use egui_backend::egui::{vec2, Pos2, Rect};
 use egui_gl_glfw::glfw::Context;
 
 const SCREEN_WIDTH: u32 = 800;
 const SCREEN_HEIGHT: u32 = 600;
-const PIC_WIDTH: i32 = 320;
-const PIC_HEIGHT: i32 = 192;
 const VS_SRC: &str = "
 #version 150
 in vec3 xyz;
@@ -77,22 +75,10 @@ fn main() {
     );
 
     let start_time = Instant::now();
-    let srgba = vec![Color32::BLACK; (PIC_HEIGHT * PIC_WIDTH) as usize];
-
-    let plot_tex_id = painter.new_user_texture(
-        (PIC_WIDTH as usize, PIC_HEIGHT as usize),
-        &srgba,
-        egui::TextureFilter::Linear,
-    );
-
-    let mut sine_shift = 0f32;
-    let mut amplitude = 50f32;
-    let mut test_str =
-        "A text box to write in. Cut, copy, paste commands are available.".to_owned();
 
     let shader = Shader::new(VS_SRC, FS_SRC);
     let shape = Poly::new();
-    let mut quit = false;
+    let quit = false;
     let mut rotating = true;
 
     while !window.should_close() {
@@ -101,31 +87,11 @@ fn main() {
         egui_input_state.pixels_per_point = native_pixels_per_point;
 
         unsafe {
-            gl::ClearColor(0.455, 0.302, 0.663, 1.0);
+            gl::ClearColor(0.8, 0.8, 0.8, 1.0);
             gl::Clear(gl::COLOR_BUFFER_BIT);
         }
 
         shape.draw(&shader);
-
-        let mut srgba: Vec<Color32> = Vec::new();
-        let mut angle = 0f32;
-
-        for y in 0..PIC_HEIGHT {
-            for x in 0..PIC_WIDTH {
-                srgba.push(Color32::BLACK);
-                if y == PIC_HEIGHT - 1 {
-                    let y = amplitude * (angle * std::f32::consts::PI / 180f32 + sine_shift).sin();
-                    let y = PIC_HEIGHT as f32 / 2f32 - y;
-                    srgba[(y as i32 * PIC_WIDTH + x) as usize] = Color32::YELLOW;
-                    angle += 360f32 / PIC_WIDTH as f32;
-                }
-            }
-        }
-        sine_shift += 0.1f32;
-
-        //This updates the previously initialized texture with new data.
-        //If we weren't updating the texture, this call wouldn't be required.
-        painter.update_user_texture_data(&plot_tex_id, &srgba);
 
         TopBottomPanel::bottom("dog").show(&egui_ctx, |ui| {
             //ui.heading(shape.name.clone());
@@ -177,7 +143,7 @@ fn main() {
                 }
             });
         });
-        //egui_ctx.top
+
         let egui::FullOutput {
             platform_output,
             textures_delta,
