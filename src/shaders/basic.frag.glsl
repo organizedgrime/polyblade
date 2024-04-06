@@ -25,7 +25,7 @@ vec3 srgb_from_linear_srgb(vec3 rgb) {
 }
 
 void main() {
-    out_color = vec4(min(vec3(edgeFactor()), v_Rgb), 1.0);
+    out_color = vec4(min(vec3(edgeFactor()), srgb_from_linear_srgb(v_Rgb)), 1.0);
 }
 
 

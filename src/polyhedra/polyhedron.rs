@@ -154,7 +154,7 @@ impl PolyGraph {
     ) {
         let mut polyhedron_xyz = Vec::new();
         let mut polyhedron_colors = Vec::new();
-        let mut polyhedron_barycentric = Vec::new();
+        let mut bsc: Vec<Vector3<f32>> = Vec::new(); 
         let mut polyhedron_tri = Vec::new();
 
         for face_index in 0..self.faces.len() {
@@ -166,32 +166,23 @@ impl PolyGraph {
             )
             .to_rgb_float();
             polyhedron_colors.extend(vec![color; face_xyz.len()]);
-
-            for _ in 0..face_xyz.len() / 3 {
-                polyhedron_barycentric.extend(vec![
-                    Vector3::unit_x(),
-                    Vector3::unit_y(),
-                    Vector3::unit_z(),
-                ]);
-            }
             polyhedron_tri.extend(face_tri);
             polyhedron_xyz.extend(face_xyz);
         }
 
-        /*
-        println!(
-            "xyz: {:#?}, rgb: {:#?}, bsc: {:#?}",
-            polyhedron_xyz.len(),
-            polyhedron_colors.len(),
-            polyhedron_barycentric.len()
-        );
-        */
+        for _ in 0..polyhedron_xyz.len() / 3 {
+            bsc.extend(vec![
+                Vector3::unit_x(),
+                Vector3::unit_y(),
+                Vector3::unit_z(),
+            ]);
+        }
 
         (
             polyhedron_xyz,
             polyhedron_colors,
-            polyhedron_barycentric,
-            polyhedron_tri,
+            bsc,
+            polyhedron_tri
         )
     }
 
