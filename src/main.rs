@@ -1,7 +1,8 @@
-use cgmath::{Matrix4, Rad};
+use cgmath::{Matrix4, Rad, Zero};
 use egui::{Checkbox, TopBottomPanel};
 use egui_gl_glfw as egui_backend;
 
+use std::ffi::CStr;
 use std::time::Instant;
 
 use egui_backend::egui::{vec2, Pos2, Rect};
@@ -14,9 +15,10 @@ const VS_SRC: &str = "
 in vec3 xyz;
 in vec3 rgb;
 out vec3 rrgb;
+uniform mat4 model;
 
 void main() {
-    gl_Position = vec4(xyz, 1.0);
+    gl_Position = model * vec4(xyz, 1.0);
     rrgb = rgb;
 }";
 
@@ -31,6 +33,11 @@ void main() {
 
 use polyblade::prelude::*;
 
+macro_rules! c_str {
+    ($literal:expr) => {
+        unsafe { CStr::from_bytes_with_nul_unchecked(concat!($literal, "\0").as_bytes()) }
+    };
+}
 fn main() {
     let mut glfw = glfw::init(glfw::fail_on_errors).unwrap();
     glfw.window_hint(glfw::WindowHint::ContextVersion(3, 2));
@@ -78,7 +85,6 @@ fn main() {
     let start_time = Instant::now();
 
     let shader = Shader::new(VS_SRC, FS_SRC);
-    let model_id = shader.get_uniform("model");
     let mut shape = Poly::new();
     let quit = false;
     let mut rotating = true;
@@ -93,14 +99,12 @@ fn main() {
             gl::Clear(gl::COLOR_BUFFER_BIT);
         }
 
-        /*
         let time = start_time.elapsed().as_secs_f32();
         let model_rotation =
-            Matrix4::from_angle_y(Rad(0.001 * time)) * Matrix4::from_angle_x(Rad(0.0004 * time));
-        shader.uniform_mat4(model_id, &model_rotation);
-        */
+            Matrix4::from_angle_y(Rad(1.0 * time)) * Matrix4::from_angle_x(Rad(0.0004 * time));
 
         shape.prepare(&shader);
+        shader.set_mat4(c_str!("model"), &model_rotation);
         shape.draw();
 
         TopBottomPanel::bottom("dog").show(&egui_ctx, |ui| {

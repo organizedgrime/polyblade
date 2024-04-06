@@ -1,9 +1,10 @@
+use std::{ffi::CStr, mem};
+
 use cgmath::{Matrix, Matrix4};
 use gl::types::{GLchar, GLenum, GLfloat, GLint, GLuint};
 use glfw::with_c_str;
 
 use crate::verify;
-
 pub struct Shader {
     id: GLuint,
 }
@@ -45,14 +46,11 @@ impl Shader {
         }
     }
 
-    pub fn get_uniform(&self, name: &str) -> GLuint {
-        with_c_str(name, |name| unsafe {
-            verify!(gl::GetUniformLocation(self.id, name) as GLuint)
-        })
-    }
-
-    pub fn uniform_mat4(&self, id: GLuint, mat: &Matrix4<GLfloat>) {
-        unsafe { verify!(gl::UniformMatrix4fv(id as i32, 1, gl::FALSE, mat.as_ptr())) }
+    pub fn set_mat4(&self, name: &CStr, mat: &Matrix4<f32>) {
+        unsafe {
+            let id = gl::GetUniformLocation(self.id, name.as_ptr());
+            verify!(gl::UniformMatrix4fv(id as i32, 1, gl::FALSE, mat.as_ptr()));
+        }
     }
 }
 
