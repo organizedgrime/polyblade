@@ -1,3 +1,4 @@
+use cgmath::{Matrix4, Rad};
 use egui::{Checkbox, TopBottomPanel};
 use egui_gl_glfw as egui_backend;
 
@@ -77,7 +78,8 @@ fn main() {
     let start_time = Instant::now();
 
     let shader = Shader::new(VS_SRC, FS_SRC);
-    let shape = Poly::new();
+    let model_id = shader.get_uniform("model");
+    let mut shape = Poly::new();
     let quit = false;
     let mut rotating = true;
 
@@ -91,7 +93,15 @@ fn main() {
             gl::Clear(gl::COLOR_BUFFER_BIT);
         }
 
-        shape.draw(&shader);
+        /*
+        let time = start_time.elapsed().as_secs_f32();
+        let model_rotation =
+            Matrix4::from_angle_y(Rad(0.001 * time)) * Matrix4::from_angle_x(Rad(0.0004 * time));
+        shader.uniform_mat4(model_id, &model_rotation);
+        */
+
+        shape.prepare(&shader);
+        shape.draw();
 
         TopBottomPanel::bottom("dog").show(&egui_ctx, |ui| {
             //ui.heading(shape.name.clone());

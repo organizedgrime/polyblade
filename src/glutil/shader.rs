@@ -1,4 +1,5 @@
-use gl::types::{GLchar, GLenum, GLint, GLuint};
+use cgmath::{Matrix, Matrix4};
+use gl::types::{GLchar, GLenum, GLfloat, GLint, GLuint};
 use glfw::with_c_str;
 
 use crate::verify;
@@ -20,7 +21,7 @@ impl Shader {
         Shader { id: program }
     }
 
-    pub fn use_program(&self) {
+    pub fn activate(&self) {
         unsafe { verify!(gl::UseProgram(self.id)) }
     }
 
@@ -42,6 +43,16 @@ impl Shader {
                 std::ptr::null()
             ))
         }
+    }
+
+    pub fn get_uniform(&self, name: &str) -> GLuint {
+        with_c_str(name, |name| unsafe {
+            verify!(gl::GetUniformLocation(self.id, name) as GLuint)
+        })
+    }
+
+    pub fn uniform_mat4(&self, id: GLuint, mat: &Matrix4<GLfloat>) {
+        unsafe { verify!(gl::UniformMatrix4fv(id as i32, 1, gl::FALSE, mat.as_ptr())) }
     }
 }
 

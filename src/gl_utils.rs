@@ -42,6 +42,7 @@ pub struct Poly {
     pub vao: Vao,
     pub xyz_vbo: Vbo,
     pub rgb_vbo: Vbo,
+    draw_len: i32,
 }
 
 impl Poly {
@@ -51,28 +52,33 @@ impl Poly {
             vao: Vao::new(),
             xyz_vbo: Vbo::new(),
             rgb_vbo: Vbo::new(),
+            draw_len: 0,
         }
     }
 
-    pub fn draw(&self, shader: &Shader) {
+    pub fn prepare(&mut self, shader: &Shader) {
         let (xyz, rgb, _) = self.pg.triangle_buffers();
-        let draw_len: i32 = xyz.len() as i32;
+        self.draw_len = xyz.len() as i32;
 
         //let size = std::mem::size_of::<f32>();
         //let rgb_ptr = mem::transmute(&rgb[0]);
         //let rgb_size = (rgb.len() * size) as GLsizeiptr;
 
         self.vao.bind();
-        shader.use_program();
+        shader.activate();
         self.xyz_vbo.bind_with_data(&xyz);
         shader.enable("xyz", 3);
 
         self.rgb_vbo.bind_with_data(&rgb);
         shader.enable("rgb", 3);
         //shader.
+    }
 
-        unsafe {
-            gl::DrawArrays(gl::TRIANGLES, 0, draw_len);
+    pub fn draw(&self) {
+        if self.draw_len > 0 {
+            unsafe {
+                gl::DrawArrays(gl::TRIANGLES, 0, self.draw_len);
+            }
         }
     }
 }
