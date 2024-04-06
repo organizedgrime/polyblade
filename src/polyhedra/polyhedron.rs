@@ -1,7 +1,7 @@
 use cgmath::{vec3, InnerSpace, MetricSpace, Vector3, VectorSpace, Zero};
 
 use super::*;
-use crate::prelude::HSL;
+use crate::prelude::{PolyVertex, HSL};
 use std::{
     collections::{HashMap, HashSet},
     ops::Add,
@@ -144,14 +144,7 @@ impl PolyGraph {
         vertices.iter().fold(Vector3::zero(), Vector3::add) / vertices.len() as f32
     }
 
-    pub fn triangle_buffers(
-        &self,
-    ) -> (
-        Vec<Vector3<f32>>,
-        Vec<Vector3<f32>>,
-        Vec<Vector3<f32>>,
-        Vec<Vector3<f32>>,
-    ) {
+    pub fn triangle_buffers(&self) -> Vec<PolyVertex> {
         let mut xyz = Vec::new();
         let mut rgb = Vec::new();
         let mut bsc = Vec::new();
@@ -178,7 +171,16 @@ impl PolyGraph {
             ]);
         }
 
-        (xyz, rgb, bsc, tri)
+        let buffer = (0..xyz.len())
+            .into_iter()
+            .map(|i| PolyVertex {
+                xyz: xyz[i],
+                rgb: rgb[i],
+                bsc: bsc[i],
+                tri: tri[i],
+            })
+            .collect();
+        buffer
     }
 
     pub fn animate_contraction(&mut self) {

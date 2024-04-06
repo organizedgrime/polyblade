@@ -23,7 +23,7 @@ impl Shader {
         unsafe { verify!(gl::UseProgram(self.id)) }
     }
 
-    pub fn enable(&self, name: &str, count: GLint) {
+    pub fn enable(&self, name: &str, count: GLint, stride: GLint, offset: usize) {
         let mut id = 0;
         with_c_str(name, |n| unsafe {
             id = verify!(gl::GetAttribLocation(self.id, n));
@@ -35,9 +35,9 @@ impl Shader {
                 count,
                 gl::FLOAT,
                 gl::FALSE,
-                0,
+                stride,
                 //std::mem::size_of::<Vector3<f32>>() as GLint * 4,
-                std::ptr::null()
+                std::mem::transmute(offset),
             ))
         }
     }

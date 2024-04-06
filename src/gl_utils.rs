@@ -1,14 +1,12 @@
 use crate::glutil::*;
 use crate::prelude::PolyGraph;
+use cgmath::Vector3;
 use egui_gl_glfw::gl;
 
 pub struct Poly {
     // Graph / Data
     pub vao: Vao,
-    pub xyz_vbo: Vbo,
-    pub rgb_vbo: Vbo,
-    pub bsc_vbo: Vbo,
-    pub tri_vbo: Vbo,
+    pub vbo: Vbo,
 }
 
 impl Default for Poly {
@@ -21,35 +19,47 @@ impl Poly {
     pub fn new() -> Self {
         Poly {
             vao: Vao::new(),
-            xyz_vbo: Vbo::new(),
-            rgb_vbo: Vbo::new(),
-            bsc_vbo: Vbo::new(),
-            tri_vbo: Vbo::new(),
+            vbo: Vbo::new(),
         }
     }
 
     pub fn prepare(&self, shader: &Shader) {
         self.vao.bind();
         shader.activate();
-        self.xyz_vbo.bind();
-        shader.enable("xyz", 3);
-        self.rgb_vbo.bind();
-        shader.enable("rgb", 3);
-        self.bsc_vbo.bind();
-        shader.enable("bsc", 3);
-        self.tri_vbo.bind();
-        shader.enable("tri", 3);
+        self.vbo.bind();
+        let stride = std::mem::size_of::<PolyVertex>() as i32;
+        shader.enable(
+            "xyz",
+            3,
+            stride,
+            std::mem::offset_of!(PolyVertex, xyz) as usize,
+        );
+        shader.enable(
+            "rgb",
+            3,
+            stride,
+            std::mem::offset_of!(PolyVertex, rgb) as usize,
+        );
+        shader.enable(
+            "bsc",
+            3,
+            stride,
+            std::mem::offset_of!(PolyVertex, bsc) as usize,
+        );
+        shader.enable(
+            "tri",
+            3,
+            stride,
+            std::mem::offset_of!(PolyVertex, tri) as usize,
+        );
         self.vao.unbind();
     }
 
     pub fn draw(&self, shape: &PolyGraph) {
-        let (xyz, rgb, bsc, tri) = shape.triangle_buffers();
-        let draw_len = xyz.len() as i32;
+        let buffer = shape.triangle_buffers();
+        let draw_len = buffer.len() as i32;
         self.vao.bind();
-        self.xyz_vbo.bind_with_data(&xyz);
-        self.rgb_vbo.bind_with_data(&rgb);
-        self.bsc_vbo.bind_with_data(&bsc);
-        self.tri_vbo.bind_with_data(&tri);
+        self.vbo.bind_with_data(&buffer);
         if draw_len > 0 {
             unsafe {
                 gl::DrawArrays(gl::TRIANGLES, 0, draw_len);
