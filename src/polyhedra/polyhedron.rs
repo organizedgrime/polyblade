@@ -124,14 +124,12 @@ impl PolyGraph {
                 ]
             }
             _ => {
-                let mut xyz = vec![];
                 let centroid = self.face_centroid(face_index);
                 let n = positions.len();
-                for i in 0..n {
-                    xyz.extend(vec![positions[i], centroid, positions[(i + 1) % n]]);
-                }
 
-                xyz
+                (0..n).into_iter().fold(vec![], |acc, i| {
+                    [acc, vec![positions[i], centroid, positions[(i + 1) % n]]].concat()
+                })
             }
         }
     }
