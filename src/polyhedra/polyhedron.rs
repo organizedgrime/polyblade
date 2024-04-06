@@ -166,13 +166,11 @@ impl PolyGraph {
         (
             polyhedron_xyz
                 .into_iter()
-                .map(|v| vec![v.x, v.y, v.z])
-                .flatten()
+                .flat_map(|v| vec![v.x, v.y, v.z])
                 .collect(),
             polyhedron_colors
                 .into_iter()
-                .map(|v| vec![v.x, v.y, v.z])
-                .flatten()
+                .flat_map(|v| vec![v.x, v.y, v.z])
                 .collect(),
             polyhedron_barycentric,
         )

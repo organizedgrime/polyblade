@@ -11,6 +11,12 @@ pub struct Poly {
     draw_len: i32,
 }
 
+impl Default for Poly {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Poly {
     pub fn new() -> Self {
         Poly {

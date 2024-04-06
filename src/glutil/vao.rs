@@ -5,6 +5,12 @@ pub struct Vao {
     id: GLuint,
 }
 
+impl Default for Vao {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Vao {
     pub fn new() -> Self {
         let mut id = 0;

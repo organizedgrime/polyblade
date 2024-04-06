@@ -5,6 +5,12 @@ pub struct Vbo {
     id: GLuint,
 }
 
+impl Default for Vbo {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Vbo {
     pub fn new() -> Self {
         let mut id = 0;
@@ -19,7 +25,7 @@ impl Vbo {
     pub fn bind_with_data<T>(&self, data: &[T]) {
         self.bind();
         let size = std::mem::size_of::<T>();
-        let buf_size = (data.len() * size) as GLsizeiptr;
+        let buf_size = std::mem::size_of_val(data) as GLsizeiptr;
         if !data.is_empty() {
             unsafe {
                 let data_ptr = std::mem::transmute(&data[0]);
