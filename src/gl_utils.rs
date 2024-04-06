@@ -8,6 +8,8 @@ use std::{mem, ptr, str};
 
 use std::ffi::CString;
 
+use crate::prelude::PolyGraph;
+
 #[allow(unconditional_panic)]
 const fn illegal_null_in_string() {
     [][0]
@@ -127,9 +129,10 @@ void main() {
     out_color = vec4(1.0, 1.0, 1.0, 1.0);
 }";
 
-static VERTEX_DATA: [GLfloat; 9] = [0.0, 0.2, 0.0, 0.5, -0.5, 0.0, -0.5, -0.5, 0.0];
+//static VERTEX_DATA: [GLfloat; 9] = [0.0, 0.2, 0.0, 0.5, -0.5, 0.0, -0.5, -0.5, 0.0];
 
-pub struct Triangle {
+pub struct Poly {
+    pub pg: PolyGraph,
     pub vs: GLuint,
     pub fs: GLuint,
     pub program: GLuint,
@@ -137,7 +140,7 @@ pub struct Triangle {
     pub vbo: GLuint,
 }
 
-impl Triangle {
+impl Poly {
     pub fn new() -> Self {
         let vs = compile_shader(VS_SRC, gl::VERTEX_SHADER);
         let fs = compile_shader(FS_SRC, gl::FRAGMENT_SHADER);
@@ -146,11 +149,12 @@ impl Triangle {
         let mut vao = 0;
         let mut vbo = 0;
         unsafe {
-            gl::GenVertexArrays(1, &mut vao);
-            gl::GenBuffers(1, &mut vbo);
+            gl::GenVertexArrays(2, &mut vao);
+            gl::GenBuffers(2, &mut vbo);
         }
 
-        Triangle {
+        Poly {
+            pg: PolyGraph::cube(),
             vs,
             fs,
             program,
@@ -160,17 +164,31 @@ impl Triangle {
     }
 
     pub fn draw(&self) {
-        unsafe {
-            gl::BindVertexArray(self.vao);
+        let (positions, colors, _) = self.pg.triangle_buffers();
+        let draw_len: i32 = positions.len() as i32;
 
+        unsafe {
+            let pos_data: Vec<GLfloat> = mem::transmute(positions);
+            gl::BindVertexArray(self.vao);
             gl::BindBuffer(gl::ARRAY_BUFFER, self.vbo);
             gl::BufferData(
                 gl::ARRAY_BUFFER,
-                (VERTEX_DATA.len() * mem::size_of::<GLfloat>()) as GLsizeiptr,
-                //NULL,
-                mem::transmute(&VERTEX_DATA[0]),
+                (pos_data.len() * mem::size_of::<GLfloat>()) as GLsizeiptr,
+                mem::transmute(&pos_data[0]),
                 gl::STATIC_DRAW,
             );
+
+            /*
+            let color_data: Vec<GLfloat> = mem::transmute(colors);
+            gl::BindVertexArray(self.vao);
+            gl::BindBuffer(gl::ARRAY_BUFFER, self.vbo);
+            gl::BufferData(
+                gl::ARRAY_BUFFER,
+                (color_data.len() * mem::size_of::<GLfloat>()) as GLsizeiptr,
+                mem::transmute(&color_data[0]),
+                gl::STATIC_DRAW,
+            );
+            */
         }
 
         unsafe {
@@ -183,9 +201,13 @@ impl Triangle {
         }
 
         let c_position = cstr!("position");
+        //let c_color = cstr!("color");
         let pos_attr = unsafe { gl::GetAttribLocation(self.program, c_position.as_ptr()) };
+        //let color_attr = unsafe { gl::GetAttribLocation(self.program, c_color.as_ptr()) };
+
         unsafe {
             gl::EnableVertexAttribArray(pos_attr as GLuint);
+            //gl::EnableVertexAttribArray(color_attr as GLuint);
             gl::VertexAttribPointer(
                 pos_attr as GLuint,
                 3,
@@ -194,15 +216,25 @@ impl Triangle {
                 0,
                 ptr::null(),
             );
+            /*
+            gl::VertexAttribPointer(
+                color_attr as GLuint,
+                3,
+                gl::FLOAT,
+                gl::FALSE as GLboolean,
+                0,
+                ptr::null(),
+            );
+            */
         }
 
         unsafe {
-            gl::DrawArrays(gl::TRIANGLES, 0, 3);
+            gl::DrawArrays(gl::TRIANGLES, 0, draw_len);
         }
     }
 }
 
-impl Drop for Triangle {
+impl Drop for Poly {
     fn drop(&mut self) {
         unsafe {
             gl::DeleteProgram(self.program);

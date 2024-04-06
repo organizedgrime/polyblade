@@ -71,7 +71,7 @@ fn main() {
     let mut test_str =
         "A text box to write in. Cut, copy, paste commands are available.".to_owned();
 
-    let triangle = Triangle::new();
+    let triangle = Poly::new();
     let mut quit = false;
     let mut rotating = true;
 
