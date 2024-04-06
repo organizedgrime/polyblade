@@ -154,7 +154,7 @@ impl PolyGraph {
     ) {
         let mut xyz = Vec::new();
         let mut rgb = Vec::new();
-        let mut bsc: Vec<Vector3<f32>> = Vec::new();
+        let mut bsc = Vec::new();
         let mut tri = Vec::new();
 
         for face_index in 0..self.faces.len() {
