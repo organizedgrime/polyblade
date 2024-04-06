@@ -1,7 +1,7 @@
 use crate::glutil::*;
 use crate::prelude::PolyGraph;
 use egui_gl_glfw::gl;
-use cgmath::Vector3;
+
 
 pub struct Poly {
     // Graph / Data

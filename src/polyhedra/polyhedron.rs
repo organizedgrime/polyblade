@@ -129,7 +129,7 @@ impl PolyGraph {
                 let centroid = self.face_centroid(face_index);
                 let n = positions.len();
 
-                let pos = (0..n).into_iter().fold(vec![], |acc, i| {
+                let pos = (0..n).fold(vec![], |acc, i| {
                     [acc, vec![positions[i], centroid, positions[(i + 1) % n]]].concat()
                 });
 

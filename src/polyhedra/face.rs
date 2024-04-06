@@ -1,4 +1,4 @@
-use super::{Edge, PolyGraph, VertexId};
+use super::{Edge, VertexId};
 use std::{collections::HashSet, hash::Hash};
 
 #[derive(Clone)]
