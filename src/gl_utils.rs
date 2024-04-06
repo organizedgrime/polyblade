@@ -41,10 +41,8 @@ impl Poly {
         self.rgb_vbo.bind_with_data(&rgb);
         shader.enable("rgb", 3);
 
-        /*
-        self.xyz_vbo.bind_with_data(&bsc);
+        self.bsc_vbo.bind_with_data(&bsc);
         shader.enable("bsc", 3);
-        */
     }
 
     pub fn draw(&self) {

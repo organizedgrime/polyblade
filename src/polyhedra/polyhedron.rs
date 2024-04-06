@@ -143,7 +143,7 @@ impl PolyGraph {
     pub fn triangle_buffers(&self) -> (Vec<f32>, Vec<f32>, Vec<f32>) {
         let mut polyhedron_xyz = Vec::new();
         let mut polyhedron_colors = Vec::new();
-        //let mut polyhedron_barycentric = Vec::new();
+        let mut polyhedron_barycentric = Vec::new();
 
         for face_index in 0..self.faces.len() {
             let face_xyz = self.face_xyz_buffer(face_index);
@@ -154,13 +154,23 @@ impl PolyGraph {
             )
             .to_rgb_float();
             polyhedron_colors.extend(vec![color; face_xyz.len()]);
+
+            for _ in 0..face_xyz.len() / 3 {
+                polyhedron_barycentric.extend(vec![
+                    Vector3::unit_x(),
+                    Vector3::unit_y(),
+                    Vector3::unit_z(),
+                ]);
+            }
             polyhedron_xyz.extend(face_xyz);
         }
 
         /*
         println!(
             "xyz: {:#?}, rgb: {:#?}, bsc: {:#?}",
-            polyhedron_xyz, polyhedron_colors, polyhedron_barycentric
+            polyhedron_xyz.len(),
+            polyhedron_colors.len(),
+            polyhedron_barycentric.len()
         );
         */
 
@@ -173,12 +183,10 @@ impl PolyGraph {
                 .into_iter()
                 .flat_map(|v| vec![v.x, v.y, v.z])
                 .collect(),
-            vec![], /*
-                    polyhedron_barycentric
-                        .into_iter()
-                        .flat_map(|v| vec![v.x, v.y, v.z])
-                        .collect(),
-                        */
+            polyhedron_barycentric
+                .into_iter()
+                .flat_map(|v| vec![v.x, v.y, v.z])
+                .collect(),
         )
     }
 
