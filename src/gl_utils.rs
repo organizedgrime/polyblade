@@ -219,6 +219,7 @@ impl Poly {
     }
 }
 
+/*
 impl Drop for Poly {
     fn drop(&mut self) {
         unsafe {
@@ -231,3 +232,4 @@ impl Drop for Poly {
         }
     }
 }
+*/

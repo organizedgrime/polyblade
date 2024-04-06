@@ -21,8 +21,10 @@ impl Vao {
     pub fn unbind(&self) {
         unsafe { verify!(gl::BindVertexArray(0)) }
     }
+}
 
-    pub fn drop(&self) {
+impl Drop for Vao {
+    fn drop(&mut self) {
         unsafe { verify!(gl::DeleteVertexArrays(1, &self.id)) }
     }
 }
