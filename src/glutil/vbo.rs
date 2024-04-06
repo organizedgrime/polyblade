@@ -24,7 +24,6 @@ impl Vbo {
 
     pub fn bind_with_data<T>(&self, data: &[T]) {
         self.bind();
-        let size = std::mem::size_of::<T>();
         let buf_size = std::mem::size_of_val(data) as GLsizeiptr;
         if !data.is_empty() {
             unsafe {
