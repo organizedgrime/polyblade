@@ -21,7 +21,7 @@ impl Default for Poly {
 impl Poly {
     pub fn new() -> Self {
         Poly {
-            pg: PolyGraph::cube(),
+            pg: PolyGraph::dodecahedron(),
             vao: Vao::new(),
             xyz_vbo: Vbo::new(),
             rgb_vbo: Vbo::new(),

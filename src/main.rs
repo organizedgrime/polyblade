@@ -145,7 +145,7 @@ fn main() {
                     //shape.recompute_qualities();
                 }
                 if ui.button("Truncate").clicked() {
-                    //shape.truncate();
+                    shape.pg.truncate();
                 }
                 if ui.button("Ambo").clicked() {
                     //shape.ambo();
