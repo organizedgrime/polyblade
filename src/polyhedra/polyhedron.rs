@@ -152,10 +152,10 @@ impl PolyGraph {
         Vec<Vector3<f32>>,
         Vec<Vector3<f32>>,
     ) {
-        let mut polyhedron_xyz = Vec::new();
-        let mut polyhedron_colors = Vec::new();
-        let mut bsc: Vec<Vector3<f32>> = Vec::new(); 
-        let mut polyhedron_tri = Vec::new();
+        let mut xyz = Vec::new();
+        let mut rgb = Vec::new();
+        let mut bsc: Vec<Vector3<f32>> = Vec::new();
+        let mut tri = Vec::new();
 
         for face_index in 0..self.faces.len() {
             let (face_xyz, face_tri) = self.face_xyz_buffer(face_index);
@@ -165,12 +165,12 @@ impl PolyGraph {
                 0.5,
             )
             .to_rgb_float();
-            polyhedron_colors.extend(vec![color; face_xyz.len()]);
-            polyhedron_tri.extend(face_tri);
-            polyhedron_xyz.extend(face_xyz);
+            rgb.extend(vec![color; face_xyz.len()]);
+            tri.extend(face_tri);
+            xyz.extend(face_xyz);
         }
 
-        for _ in 0..polyhedron_xyz.len() / 3 {
+        for _ in 0..xyz.len() / 3 {
             bsc.extend(vec![
                 Vector3::unit_x(),
                 Vector3::unit_y(),
@@ -178,12 +178,7 @@ impl PolyGraph {
             ]);
         }
 
-        (
-            polyhedron_xyz,
-            polyhedron_colors,
-            bsc,
-            polyhedron_tri
-        )
+        (xyz, rgb, bsc, tri)
     }
 
     pub fn animate_contraction(&mut self) {
