@@ -1,8 +1,16 @@
-in vec4 v_color;
-out vec4 fragColor;
-in vec3 vbc;
+#version 150
+in vec3 v_Rgb;
+in vec3 v_Bsc;
+out vec4 out_color;
 
 const float lineWidth = 2.5;
+
+float edgeFactor() {
+	vec3 face = v_Bsc * vec3(0.0, 1.0, 0.0);
+	vec3 r = fwidth(face) * lineWidth;
+	vec3 f = step(r, face);
+	return min(min(f.x, f.y), f.z);
+}
 
 vec3 srgb_from_linear_srgb(vec3 rgb) {
     vec3 a = vec3(0.055, 0.055, 0.055);
@@ -15,14 +23,9 @@ vec3 srgb_from_linear_srgb(vec3 rgb) {
     return mix(lo, hi, select);
 }
 
-float edgeFactor() {
-	vec3 face = vbc * vec3(0.0, 1.0, 0.0);
-	vec3 r = fwidth(face) * lineWidth;
-	vec3 f = step(r, face);
-	return min(min(f.x, f.y), f.z);
+void main() {
+    out_color = vec4(min(vec3(edgeFactor()), v_Rgb), 1.0);
 }
 
-void main() {
-    fragColor = v_color;
-	fragColor.rgb = min(vec3(edgeFactor()), srgb_from_linear_srgb(fragColor.rgb));
-}
+
+

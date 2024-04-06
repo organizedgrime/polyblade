@@ -9,39 +9,8 @@ use egui_gl_glfw::glfw::Context;
 
 const SCREEN_WIDTH: u32 = 800;
 const SCREEN_HEIGHT: u32 = 600;
-const VS_SRC: &str = "
-#version 150
-in vec3 xyz;
-in vec3 rgb;
-in vec3 bsc;
-out vec3 v_Rgb;
-out vec3 v_Bsc;
-uniform mat4 model;
-uniform mat4 projection;
-
-void main() {
-    gl_Position = projection * model * vec4(xyz, 1.0);
-    v_Rgb = rgb;
-    v_Bsc = bsc;
-}";
-
-const FS_SRC: &str = "
-#version 150
-in vec3 v_Rgb;
-in vec3 v_Bsc;
-out vec4 out_color;
-
-const float lineWidth = 2.5;
-float edgeFactor() {
-	vec3 face = v_Bsc * vec3(0.0, 1.0, 0.0);
-	vec3 r = fwidth(face) * lineWidth;
-	vec3 f = step(r, face);
-	return min(min(f.x, f.y), f.z);
-}
-void main() {
-    out_color = vec4(min(vec3(edgeFactor()), v_Rgb), 1.0);
-}
-";
+const VS_SRC: &str = include_str!("./shaders/basic.vert.glsl");
+const FS_SRC: &str = include_str!("./shaders/basic.frag.glsl");
 
 use polyblade::{prelude::*, verify};
 
