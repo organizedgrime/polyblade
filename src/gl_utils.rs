@@ -8,6 +8,7 @@ pub struct Poly {
     pub vao: Vao,
     pub xyz_vbo: Vbo,
     pub rgb_vbo: Vbo,
+    pub bsc_vbo: Vbo,
     draw_len: i32,
 }
 
@@ -24,12 +25,13 @@ impl Poly {
             vao: Vao::new(),
             xyz_vbo: Vbo::new(),
             rgb_vbo: Vbo::new(),
+            bsc_vbo: Vbo::new(),
             draw_len: 0,
         }
     }
 
     pub fn prepare(&mut self, shader: &Shader) {
-        let (xyz, rgb, _) = self.pg.triangle_buffers();
+        let (xyz, rgb, bsc) = self.pg.triangle_buffers();
         self.draw_len = xyz.len() as i32;
         self.vao.bind();
         shader.activate();
@@ -38,6 +40,9 @@ impl Poly {
 
         self.rgb_vbo.bind_with_data(&rgb);
         shader.enable("rgb", 3);
+
+        self.xyz_vbo.bind_with_data(&bsc);
+        shader.enable("bsc", 3);
     }
 
     pub fn draw(&self) {

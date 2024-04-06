@@ -2,7 +2,6 @@ use cgmath::{Matrix4, Rad};
 use egui::{Checkbox, TopBottomPanel};
 use egui_gl_glfw as egui_backend;
 
-
 use std::time::Instant;
 
 use egui_backend::egui::{vec2, Pos2, Rect};
@@ -14,22 +13,36 @@ const VS_SRC: &str = "
 #version 150
 in vec3 xyz;
 in vec3 rgb;
-out vec3 rrgb;
+in vec3 bsc;
+out vec3 v_Rgb;
+out vec3 v_Bsc;
 uniform mat4 model;
 
 void main() {
     gl_Position = model * vec4(xyz, 1.0);
-    rrgb = rgb;
+    v_Rgb = rgb;
+    v_Bsc = bsc;
 }";
 
 const FS_SRC: &str = "
 #version 150
-in vec3 rrgb;
+in vec3 v_Rgb;
+in vec3 v_Bsc;
 out vec4 out_color;
 
+const float lineWidth = 2.5;
+
+float edgeFactor() {
+	vec3 face = v_Bsc * vec3(1.0, 1.0, 1.0);
+	vec3 r = fwidth(face) * lineWidth;
+	vec3 f = step(r, face);
+	return min(min(f.x, f.y), f.z);
+}
+
 void main() {
-    out_color = vec4(rrgb, 1.0);
-}";
+    out_color = vec4(min(vec3(edgeFactor()), v_Rgb), 1.0);
+}
+";
 
 use polyblade::{prelude::*, verify};
 

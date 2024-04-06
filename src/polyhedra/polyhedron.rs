@@ -115,10 +115,10 @@ impl PolyGraph {
         vertices.iter().fold(Vector3::zero(), Vector3::add) / vertices.len() as f32
     }
 
-    pub fn triangle_buffers(&self) -> (Vec<f32>, Vec<f32>, Vec<Vector3<f32>>) {
+    pub fn triangle_buffers(&self) -> (Vec<f32>, Vec<f32>, Vec<f32>) {
         let mut polyhedron_xyz = Vec::new();
         let mut polyhedron_colors = Vec::new();
-        let polyhedron_barycentric = Vec::new();
+        let mut polyhedron_barycentric = Vec::new();
 
         for face_index in 0..self.faces.len() {
             // Create triangles from the center to each corner
@@ -151,6 +151,12 @@ impl PolyGraph {
             */
             face_xyz.extend(vertices);
 
+            polyhedron_barycentric.extend(vec![
+                Vector3::<f32>::unit_x(),
+                Vector3::<f32>::unit_y(),
+                Vector3::<f32>::unit_z(),
+            ]);
+
             let color = HSL::new(
                 (360.0 / (self.faces.len() as f64)) * face_index as f64,
                 360.0 / 1.0,
@@ -163,6 +169,15 @@ impl PolyGraph {
             polyhedron_xyz.extend(face_xyz);
         }
 
+        /*
+        println!(
+            "xyz: {}, rgb: {}, bsc: {}",
+            polyhedron_xyz.len(),
+            polyhedron_colors.len(),
+            polyhedron_barycentric.len()
+        );
+        */
+
         (
             polyhedron_xyz
                 .into_iter()
@@ -172,7 +187,10 @@ impl PolyGraph {
                 .into_iter()
                 .flat_map(|v| vec![v.x, v.y, v.z])
                 .collect(),
-            polyhedron_barycentric,
+            polyhedron_barycentric
+                .into_iter()
+                .flat_map(|v| vec![v.x, v.y, v.z])
+                .collect(),
         )
     }
 
