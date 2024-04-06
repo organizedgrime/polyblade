@@ -120,33 +120,37 @@ impl PolyGraph {
         let mut polyhedron_colors = Vec::new();
         let mut polyhedron_barycentric = Vec::new();
 
-        for face_index in 0..1 {
-            //self.faces.len() {
+        for face_index in 0..self.faces.len() {
             // Create triangles from the center to each corner
             let mut face_xyz = Vec::new();
             let vertices = self.face_xyz(face_index);
             let center = self.face_centroid(face_index);
 
             // Construct a triangle
-            for i in 0..vertices.len() {
-                face_xyz.extend(vec![
-                    vertices[(i + 1) % vertices.len()],
-                    center,
-                    vertices[i],
-                ]);
-                polyhedron_barycentric.extend(vec![
-                    Vector3::<f32>::unit_x(),
-                    Vector3::<f32>::unit_y(),
-                    Vector3::<f32>::unit_z(),
-                ]);
-                polyhedron_colors.extend(vec![
-                    HSL::new(0.0, 1.0, 0.5).to_rgb_float(),
-                    HSL::new(120.0, 1.0, 0.5).to_rgb_float(),
-                    HSL::new(270.0, 1.0, 0.5).to_rgb_float(),
-                ])
-            }
 
             /*
+                for i in 0..vertices.len() {
+                    face_xyz.extend(vec![
+                        vertices[(i + 1) % vertices.len()],
+                        center,
+                        vertices[i],
+                    ]);
+                    polyhedron_barycentric.extend(vec![
+                        Vector3::<f32>::unit_x(),
+                        Vector3::<f32>::unit_y(),
+                        Vector3::<f32>::unit_z(),
+                    ]);
+                    /*
+                    polyhedron_colors.extend(vec![
+                        HSL::new(0.0, 1.0, 0.5).to_rgb_float(),
+                        HSL::new(120.0, 1.0, 0.5).to_rgb_float(),
+                        HSL::new(270.0, 1.0, 0.5).to_rgb_float(),
+                    ])
+                    */
+                }
+            */
+            face_xyz.extend(vertices);
+
             let color = HSL::new(
                 (360.0 / (self.faces.len() as f64)) * face_index as f64,
                 360.0 / 1.0,
@@ -155,7 +159,6 @@ impl PolyGraph {
             .to_rgb_float();
             //.to_linear_srgb();
             polyhedron_colors.extend(vec![color; face_xyz.len()]);
-            */
 
             polyhedron_xyz.extend(face_xyz);
         }

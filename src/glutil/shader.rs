@@ -14,7 +14,6 @@ impl Shader {
         let vertex_shader = compile(vs, gl::VERTEX_SHADER);
         let fragment_shader = compile(fs, gl::FRAGMENT_SHADER);
         let program = link(vertex_shader, fragment_shader);
-        // mark shaders for deletion after program deletion
         unsafe {
             verify!(gl::DeleteShader(fragment_shader));
             verify!(gl::DeleteShader(vertex_shader));

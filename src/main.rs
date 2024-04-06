@@ -31,7 +31,7 @@ void main() {
     out_color = vec4(rrgb, 1.0);
 }";
 
-use polyblade::prelude::*;
+use polyblade::{prelude::*, verify};
 
 fn main() {
     let mut glfw = glfw::init(glfw::fail_on_errors).unwrap();
@@ -90,18 +90,23 @@ fn main() {
         egui_input_state.pixels_per_point = native_pixels_per_point;
 
         unsafe {
+            verify!(gl::Enable(gl::DEPTH_TEST));
             gl::ClearColor(0.8, 0.8, 0.8, 1.0);
-            gl::Clear(gl::COLOR_BUFFER_BIT);
+            gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
         }
 
         let time = start_time.elapsed().as_secs_f32();
         let model_rotation =
-            Matrix4::from_angle_y(Rad(1.0 * time)) * Matrix4::from_angle_x(Rad(0.0004 * time));
+            Matrix4::from_angle_y(Rad(0.5 * time)) * Matrix4::from_angle_x(Rad(0.7 * time));
 
+        shape.pg.update();
         shape.prepare(&shader);
         shader.set_mat4("model", &model_rotation);
+        //shader.set_mat4("", &model_rotation);
         shape.draw();
-
+        unsafe {
+            verify!(gl::Disable(gl::DEPTH_TEST));
+        }
         TopBottomPanel::bottom("dog").show(&egui_ctx, |ui| {
             //ui.heading(shape.name.clone());
             ui.heading("Ctabas");

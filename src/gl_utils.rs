@@ -48,7 +48,7 @@ pub struct Poly {
 impl Poly {
     pub fn new() -> Self {
         Poly {
-            pg: PolyGraph::cube(),
+            pg: PolyGraph::tetrahedron(),
             vao: Vao::new(),
             xyz_vbo: Vbo::new(),
             rgb_vbo: Vbo::new(),
@@ -59,11 +59,6 @@ impl Poly {
     pub fn prepare(&mut self, shader: &Shader) {
         let (xyz, rgb, _) = self.pg.triangle_buffers();
         self.draw_len = xyz.len() as i32;
-
-        //let size = std::mem::size_of::<f32>();
-        //let rgb_ptr = mem::transmute(&rgb[0]);
-        //let rgb_size = (rgb.len() * size) as GLsizeiptr;
-
         self.vao.bind();
         shader.activate();
         self.xyz_vbo.bind_with_data(&xyz);
@@ -71,7 +66,6 @@ impl Poly {
 
         self.rgb_vbo.bind_with_data(&rgb);
         shader.enable("rgb", 3);
-        //shader.
     }
 
     pub fn draw(&self) {
@@ -80,6 +74,7 @@ impl Poly {
                 gl::DrawArrays(gl::TRIANGLES, 0, self.draw_len);
             }
         }
+        self.vao.unbind();
     }
 }
 
