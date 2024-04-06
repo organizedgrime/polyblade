@@ -1,4 +1,4 @@
-use cgmath::{InnerSpace, MetricSpace, Vector3, VectorSpace, Zero};
+use cgmath::{vec3, InnerSpace, MetricSpace, Vector3, VectorSpace, Zero};
 
 use super::*;
 use crate::prelude::HSL;
@@ -140,10 +140,11 @@ impl PolyGraph {
         vertices.iter().fold(Vector3::zero(), Vector3::add) / vertices.len() as f32
     }
 
-    pub fn triangle_buffers(&self) -> (Vec<f32>, Vec<f32>, Vec<f32>) {
+    pub fn triangle_buffers(&self) -> (Vec<f32>, Vec<f32>, Vec<f32>, Vec<f32>) {
         let mut polyhedron_xyz = Vec::new();
         let mut polyhedron_colors = Vec::new();
         let mut polyhedron_barycentric = Vec::new();
+        let mut polyhedron_tri = Vec::new();
 
         for face_index in 0..self.faces.len() {
             let face_xyz = self.face_xyz_buffer(face_index);
@@ -161,6 +162,7 @@ impl PolyGraph {
                     Vector3::unit_y(),
                     Vector3::unit_z(),
                 ]);
+                polyhedron_tri.extend(vec![vec3(1.0, 1.0, 1.0); 3]);
             }
             polyhedron_xyz.extend(face_xyz);
         }
@@ -184,6 +186,10 @@ impl PolyGraph {
                 .flat_map(|v| vec![v.x, v.y, v.z])
                 .collect(),
             polyhedron_barycentric
+                .into_iter()
+                .flat_map(|v| vec![v.x, v.y, v.z])
+                .collect(),
+            polyhedron_tri
                 .into_iter()
                 .flat_map(|v| vec![v.x, v.y, v.z])
                 .collect(),

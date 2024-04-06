@@ -1,12 +1,13 @@
 #version 150
 in vec3 v_Rgb;
 in vec3 v_Bsc;
+in vec3 v_Tri;
 out vec4 out_color;
 
 const float lineWidth = 2.5;
 
 float edgeFactor() {
-	vec3 face = v_Bsc * vec3(0.0, 1.0, 0.0);
+	vec3 face = v_Bsc * v_Tri;
 	vec3 r = fwidth(face) * lineWidth;
 	vec3 f = step(r, face);
 	return min(min(f.x, f.y), f.z);
