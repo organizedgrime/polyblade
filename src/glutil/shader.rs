@@ -1,4 +1,4 @@
-use cgmath::{Matrix, Matrix4, Vector3};
+use cgmath::{Matrix, Matrix4};
 use gl::types::{GLchar, GLenum, GLint, GLuint};
 use glfw::with_c_str;
 

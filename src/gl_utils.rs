@@ -1,6 +1,6 @@
 use crate::glutil::*;
 use crate::prelude::PolyGraph;
-use cgmath::Vector3;
+
 use egui_gl_glfw::gl;
 
 pub struct Poly {
