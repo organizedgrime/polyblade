@@ -21,7 +21,7 @@ pub struct PolyGraph {
 
     /// [Derived Properties]
     /// Faces
-    pub faces: HashMap<FaceId, Face>,
+    pub faces: HashMap<FaceId, HashSet<VertexId>>,
     /// Edge sets
     pub adjacents: HashSet<Edge>,
     pub neighbors: HashSet<Edge>,
@@ -110,10 +110,6 @@ impl PolyGraph {
         for (_, l) in self.adjacency_matrix.iter_mut() {
             (*l).remove(v);
         }
-        for (_, f) in self.faces.iter_mut() {
-            (*f).0 = (*f).0.clone().into_iter().filter(|x| x != v).collect();
-        }
-
         self.vertices.remove(v);
         self.adjacency_matrix.remove(v);
         self.positions.remove(v);
@@ -159,8 +155,8 @@ impl PolyGraph {
 
     /// All faces
     pub fn faces(&mut self) {
-        let mut triplets = Vec::<Face>::new();
-        let mut cycles = HashSet::<Face>::new();
+        let mut triplets = Vec::<Vec<VertexId>>::new();
+        let mut cycles = HashSet::<Vec<VertexId>>::new();
 
         // find all the triplets
         for u in self.vertices.iter() {
@@ -168,7 +164,7 @@ impl PolyGraph {
             for x in adj.iter() {
                 for y in adj.iter() {
                     if x != y && u < x && x < y {
-                        let new_face = Face(vec![*x, *u, *y]);
+                        let new_face = vec![*x, *u, *y];
                         if self.adjacents.contains(&(*x, *y).into()) {
                             cycles.insert(new_face);
                         } else {
@@ -180,15 +176,14 @@ impl PolyGraph {
         }
         // while there are unparsed triplets
         while !triplets.is_empty() && (cycles.len() as i64) < self.face_count() {
-            let triplet = triplets.remove(0);
-            let p = triplet.0;
+            let p = triplets.remove(0);
             // for each v adjacent to u_t
             for v in self.connections(&p[p.len() - 1]) {
                 if v > p[1] {
                     let c = self.connections(&v);
                     // if v is not a neighbor of u_2..u_t-1
                     if !p[1..p.len() - 1].iter().any(|vi| c.contains(vi)) {
-                        let new_face = Face([p.clone(), vec![v]].concat());
+                        let new_face = [p.clone(), vec![v]].concat();
                         if self.connections(&p[0]).contains(&v) {
                             //cycles.remo
                             cycles.insert(new_face);
@@ -201,7 +196,11 @@ impl PolyGraph {
             }
         }
 
-        self.faces = cycles.into_iter().enumerate().collect();
+        self.faces = cycles
+            .into_iter()
+            .enumerate()
+            .map(|(i, c)| (i, c.into_iter().collect()))
+            .collect();
     }
 
     /// All edges
@@ -322,8 +321,7 @@ impl Display for PolyGraph {
                 .fold(String::new(), |acc, e| format!("{e}, {acc}")),
             self.faces.iter().fold(String::new(), |acc, f| format!(
                 "[{}], {acc}",
-                f.1 .0
-                    .iter()
+                f.1.iter()
                     .fold(String::new(), |acc, x| format!("{x}, {acc}"))
             ))
         ))
@@ -375,7 +373,9 @@ mod test {
         graph.faces();
         assert_eq!(
             graph.faces,
-            vec![(0, Face(vec![0, 1, 2]))].into_iter().collect()
+            vec![(0, vec![0, 1, 2].into_iter().collect())]
+                .into_iter()
+                .collect()
         );
     }
 }

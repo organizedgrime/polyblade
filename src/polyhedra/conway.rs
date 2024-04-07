@@ -72,8 +72,7 @@ impl PolyGraph {
 
         println!("faces: {:?}", self.faces);
         if let Some(max_id) = self.faces.keys().max() {
-            self.faces
-                .insert(max_id + 1, Face(connections.into_iter().collect()));
+            self.faces.insert(max_id + 1, connections);
         }
         // Connect all nodes in the new face formed
         for i in 0..n - 1 {

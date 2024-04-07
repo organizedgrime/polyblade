@@ -92,13 +92,12 @@ impl PolyGraph {
     }
 
     fn face_xyz(&self, id: &FaceId) -> Vec<Vector3<f32>> {
-        self.faces[id].0.iter().map(|v| self.positions[v]).collect()
+        self.faces[id].iter().map(|v| self.positions[v]).collect()
     }
 
     #[allow(dead_code)]
     pub fn face_normal(&self, id: &FaceId) -> V3f {
         self.faces[id]
-            .0
             .iter()
             .map(|v| self.positions[v])
             .fold(Vector3::zero(), |acc, v| acc.cross(v))
