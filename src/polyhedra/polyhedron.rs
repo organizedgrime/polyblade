@@ -95,7 +95,6 @@ impl PolyGraph {
         self.faces[id].iter().map(|v| self.positions[v]).collect()
     }
 
-    #[allow(dead_code)]
     pub fn face_normal(&self, id: &FaceId) -> V3f {
         self.faces[id]
             .iter()

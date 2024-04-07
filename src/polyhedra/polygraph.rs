@@ -1,5 +1,6 @@
 pub use super::*;
 use cgmath::{vec3, InnerSpace, Vector3, Zero};
+use indexmap::{IndexMap, IndexSet};
 use rand::random;
 use std::{
     collections::{HashMap, HashSet},
@@ -21,7 +22,7 @@ pub struct PolyGraph {
 
     /// [Derived Properties]
     /// Faces
-    pub faces: HashMap<FaceId, HashSet<VertexId>>,
+    pub faces: HashMap<FaceId, Vec<VertexId>>,
     /// Edge sets
     pub adjacents: HashSet<Edge>,
     pub neighbors: HashSet<Edge>,
@@ -128,6 +129,8 @@ impl PolyGraph {
     pub fn face_count(&mut self) -> i64 {
         2 + self.adjacents.len() as i64 - self.adjacency_matrix.len() as i64
     }
+
+    //pub fn update_()
 
     // Vertices that are connected to a given vertex
     pub fn connections(&self, v: &VertexId) -> HashSet<VertexId> {

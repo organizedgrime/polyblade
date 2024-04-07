@@ -71,9 +71,13 @@ impl PolyGraph {
         }
 
         println!("faces: {:?}", self.faces);
+
+        // Add the new face
         if let Some(max_id) = self.faces.keys().max() {
-            self.faces.insert(max_id + 1, connections);
+            self.faces
+                .insert(max_id + 1, connections.into_iter().collect());
         }
+
         // Connect all nodes in the new face formed
         for i in 0..n - 1 {
             self.connect((new_vertex - i, new_vertex - i - 1));

@@ -136,6 +136,10 @@ fn main() {
 
             ui.horizontal(|ui| {
                 ui.label("Operations:");
+                if ui.button("S0").clicked() {
+                    shape.split_vertex(&shape.vertices.clone().into_iter().min().unwrap());
+                    poly.prepare(&shape, &shader);
+                }
                 if ui.button("Truncate").clicked() {
                     shape.truncate();
                     poly.prepare(&shape, &shader);

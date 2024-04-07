@@ -558,6 +558,7 @@ dependencies = [
  "egui_gl_glfw",
  "gl",
  "glfw",
+ "indexmap",
  "log",
  "rand",
  "wasm-bindgen",
