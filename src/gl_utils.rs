@@ -29,10 +29,10 @@ impl Poly {
         shader.activate();
         self.vao.bind();
         self.vbo.array_bind();
-        shader.enable("xyz", 0, 0);
-        let start = std::mem::size_of::<V3f>() * xyz.len() as usize;
         let s = std::mem::size_of::<V3f>() as usize;
+        let start = s * xyz.len() as usize;
         let stride = (s * 3) as i32;
+        shader.enable("xyz", 0, 0);
         shader.enable("rgb", stride, start + 0);
         shader.enable("bsc", stride, start + s);
         shader.enable("tri", stride, start + s * 2);

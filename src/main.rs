@@ -105,8 +105,7 @@ fn main() {
             verify!(gl::Disable(gl::DEPTH_TEST));
         }
         TopBottomPanel::bottom("dog").show(&egui_ctx, |ui| {
-            //ui.heading(shape.name.clone());
-            ui.heading("Ctabas");
+            ui.heading(shape.name.clone());
             ui.add(Checkbox::new(&mut rotating, "rotating"));
             ui.horizontal(|ui| {
                 ui.label("Seeds:");

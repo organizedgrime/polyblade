@@ -180,8 +180,6 @@ impl PolyGraph {
             ]);
         }
 
-        println!("r: {}, {}, {}", rgb.len(), bsc.len(), tri.len());
-
         let mut buffer = Vec::new();
         for i in 0..rgb.len() {
             buffer.extend(vec![rgb[i], bsc[i], tri[i]]);
