@@ -367,10 +367,12 @@ mod test {
         graph.connect((2, 3));
 
         graph.recompute_qualities();
+        graph.faces();
         assert_eq!(graph.faces.len(), 0);
 
         graph.connect((2, 0));
         graph.recompute_qualities();
+        graph.faces();
         assert_eq!(
             graph.faces,
             vec![(0, Face(vec![0, 1, 2]))].into_iter().collect()
