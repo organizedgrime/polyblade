@@ -1,4 +1,4 @@
-use cgmath::{vec3, EuclideanSpace, Matrix4, Point3, Rad, Vector3, Zero};
+use cgmath::{Matrix4, Rad};
 use egui::{Checkbox, TopBottomPanel};
 use egui_gl_glfw as egui_backend;
 
