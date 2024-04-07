@@ -33,27 +33,28 @@ impl Poly {
 
         shader.enable("xyz", gl::FLOAT, 3, 0, 0);
 
-        let stride = std::mem::size_of::<PolyVertex>() as i32;
+        let s = std::mem::size_of::<V3f>() as usize;
+        let stride = (s * 3) as i32;
         shader.enable(
             "rgb",
             gl::FLOAT,
             3,
             stride,
-            std::mem::offset_of!(PolyVertex, rgb) as usize,
+            s * 0,
         );
         shader.enable(
             "bsc",
             gl::FLOAT,
             3,
             stride,
-            std::mem::offset_of!(PolyVertex, bsc) as usize,
+            s * 1,
         );
         shader.enable(
             "tri",
             gl::FLOAT,
             3,
             stride,
-            std::mem::offset_of!(PolyVertex, tri) as usize,
+            s * 2,
         );
 
         self.vbo.array_data(&[xyz, rgb, bsc, tri].concat());
