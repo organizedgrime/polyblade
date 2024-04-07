@@ -56,6 +56,7 @@ impl PolyGraph {
             ..Default::default()
         };
         poly.recompute_qualities();
+        poly.faces();
         poly
     }
 
@@ -70,6 +71,7 @@ impl PolyGraph {
         }
 
         poly.recompute_qualities();
+        poly.faces();
         poly
     }
 
@@ -300,7 +302,7 @@ impl PolyGraph {
         // Neighbors and diameters rely on distances
         self.neighbors();
         self.diameter();
-        self.faces();
+        //self.faces();
     }
 }
 
