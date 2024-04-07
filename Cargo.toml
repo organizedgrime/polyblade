@@ -11,9 +11,11 @@ path = "src/main.rs"
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
+gl = "0.14"
+glfw = "0.55"
+egui = "0.26"
+egui_gl_glfw = "0.1.1"
 cgmath = {version = "^0.18", features = ["swizzle"] }
-three-d = { version = "^0.16", features = ["egui-gui"] }
-three-d-asset = { version = "0.7", features = [] }
 
 [dev-dependencies]
 

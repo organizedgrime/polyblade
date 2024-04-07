@@ -34,6 +34,8 @@ impl Face {
             .unwrap();
         [self.0[i..].to_vec(), self.0[..i].to_vec()].concat()
     }
+
+    //pub fn buffers(&self, g: &PolyGraph) -> (Vec<f32>, Vec<f32>, Vec<f32>) {}
 }
 
 impl PartialEq for Face {
