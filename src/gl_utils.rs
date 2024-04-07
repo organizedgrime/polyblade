@@ -26,23 +26,17 @@ impl Poly {
     pub fn prepare(&self, shape: &PolyGraph, shader: &Shader) {
         let xyz = shape.xyz_buffer();
         let static_buffer = shape.static_buffer();
-
         shader.activate();
         self.vao.bind();
         self.vbo.array_bind();
-
         shader.enable("xyz", 0, 0);
-        self.vbo.array_data(&xyz);
-        println!("x: {}", xyz.len());
-
+        let start = std::mem::size_of::<V3f>() * xyz.len() as usize;
         let s = std::mem::size_of::<V3f>() as usize;
         let stride = (s * 3) as i32;
-        shader.enable("rgb", stride, 0);
-        shader.enable("bsc", stride, s);
-        shader.enable("tri", stride, s * 2);
-
-        //self.vbo.array_data(&[xyz, static_buffer].concat());
-        self.vbo.array_data(&static_buffer);
+        shader.enable("rgb", stride, start + 0);
+        shader.enable("bsc", stride, start + s);
+        shader.enable("tri", stride, start + s * 2);
+        self.vbo.array_data(&[xyz, static_buffer].concat());
         self.vao.unbind();
     }
 
