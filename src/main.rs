@@ -8,7 +8,7 @@ use egui_backend::egui::{vec2, Pos2, Rect};
 use egui_gl_glfw::glfw::Context;
 
 const SCREEN_WIDTH: u32 = 800;
-const SCREEN_HEIGHT: u32 = 600;
+const SCREEN_HEIGHT: u32 = 900;
 const VS_SRC: &str = include_str!("./shaders/basic.vert.glsl");
 const FS_SRC: &str = include_str!("./shaders/basic.frag.glsl");
 
@@ -104,7 +104,7 @@ fn main() {
         unsafe {
             verify!(gl::Disable(gl::DEPTH_TEST));
         }
-        TopBottomPanel::bottom("dog").show(&egui_ctx, |ui| {
+        TopBottomPanel::bottom("controls").show(&egui_ctx, |ui| {
             ui.heading(shape.name.clone());
             ui.add(Checkbox::new(&mut rotating, "rotating"));
             ui.horizontal(|ui| {

@@ -7,7 +7,7 @@ use std::{
     ops::Add,
 };
 
-const TICK_SPEED: f32 = 100.0;
+const TICK_SPEED: f32 = 200.0;
 
 // Operations
 impl PolyGraph {
