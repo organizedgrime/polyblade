@@ -1,7 +1,7 @@
 use cgmath::{vec3, InnerSpace, MetricSpace, Vector3, VectorSpace, Zero};
 
 use super::*;
-use crate::prelude::{PolyVertex, V3f, HSL};
+use crate::prelude::{V3f, HSL};
 use std::{
     collections::{HashMap, HashSet},
     ops::Add,
@@ -179,6 +179,8 @@ impl PolyGraph {
                 Vector3::unit_z(),
             ]);
         }
+
+        println!("r: {}, {}, {}", rgb.len(), bsc.len(), tri.len());
 
         let mut buffer = Vec::new();
         for i in 0..rgb.len() {

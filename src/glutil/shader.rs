@@ -23,7 +23,7 @@ impl Shader {
         unsafe { verify!(gl::UseProgram(self.id)) }
     }
 
-    pub fn enable(&self, name: &str, p_type: GLenum, count: GLint, stride: GLint, offset: usize) {
+    pub fn enable(&self, name: &str, count: GLint, stride: GLint, offset: usize) {
         let mut id = 0;
         with_c_str(name, |n| unsafe {
             id = verify!(gl::GetAttribLocation(self.id, n));
@@ -33,7 +33,7 @@ impl Shader {
             verify!(gl::VertexAttribPointer(
                 id as GLuint,
                 count,
-                p_type,
+                gl::FLOAT,
                 gl::FALSE,
                 stride,
                 std::mem::transmute(offset),

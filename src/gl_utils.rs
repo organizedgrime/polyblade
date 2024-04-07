@@ -31,40 +31,24 @@ impl Poly {
         shader.activate();
         self.vbo.array_bind();
 
-        shader.enable("xyz", gl::FLOAT, 3, 0, 0);
+        shader.enable("xyz", 3, 0, 0);
+        self.vbo.array_data(&xyz);
+        println!("x: {}", xyz.len());
 
         let s = std::mem::size_of::<V3f>() as usize;
         let stride = (s * 3) as i32;
-        shader.enable(
-            "rgb",
-            gl::FLOAT,
-            3,
-            stride,
-            s * 0,
-        );
-        shader.enable(
-            "bsc",
-            gl::FLOAT,
-            3,
-            stride,
-            s * 1,
-        );
-        shader.enable(
-            "tri",
-            gl::FLOAT,
-            3,
-            stride,
-            s * 2,
-        );
+        shader.enable("rgb", 3, stride, 0);
+        shader.enable("bsc", 3, stride, s);
+        shader.enable("tri", 3, stride, s * 2);
 
-        self.vbo.array_data(&[xyz, static_buffer].concat());
-
+        self.vbo.array_data(&static_buffer);
         self.vao.unbind();
     }
 
     pub fn draw(&self, shape: &PolyGraph) {
         let xyz = shape.xyz_buffer();
         self.vao.bind();
+        self.vbo.array_bind();
         self.vbo.array_sub(&xyz);
         unsafe {
             gl::DrawArrays(gl::TRIANGLES, 0, xyz.len() as i32);
