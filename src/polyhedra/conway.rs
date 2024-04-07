@@ -24,6 +24,7 @@ impl PolyGraph {
         let original_position = self.positions[v];
         let mut connections: HashSet<usize> = self.connections(v);
         connections.extend(self.ghost_connections(v));
+        let new_face = connections.clone();
         let n = connections.len();
         // Previously processed connection, starts with a seed
         let mut previous = *connections.iter().collect::<Vec<_>>()[0];
@@ -73,13 +74,12 @@ impl PolyGraph {
         println!("faces: {:?}", self.faces);
 
         // Add the new face
-        /*
+        ///*
         if let Some(max_id) = self.faces.keys().max() {
             self.faces
-                .insert(max_id + 1, connections.into_iter().collect());
+                .insert(max_id + 1, new_face.into_iter().collect());
         }
-        */
-
+        //*/
         // Connect all nodes in the new face formed
         for i in 0..n - 1 {
             self.connect((new_vertex - i, new_vertex - i - 1));
