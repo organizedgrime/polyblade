@@ -154,7 +154,7 @@ impl PolyGraph {
             .fold(Vec::new(), |acc, i| [acc, self.face_xyz_buffer(i)].concat())
     }
 
-    pub fn static_buffers(&self) -> (Vec<V3f>, Vec<V3f>, Vec<V3f>) {
+    pub fn static_buffer(&self) -> Vec<V3f> {
         let mut rgb = Vec::new();
         let mut bsc = Vec::new();
         let mut tri = Vec::new();
@@ -180,7 +180,12 @@ impl PolyGraph {
             ]);
         }
 
-        (rgb, bsc, tri)
+        let mut buffer = Vec::new();
+        for i in 0..rgb.len() {
+            buffer.extend(vec![rgb[i], bsc[i], tri[i]]);
+        }
+
+        buffer
     }
 
     pub fn animate_contraction(&mut self) {

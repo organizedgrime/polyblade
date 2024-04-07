@@ -25,7 +25,7 @@ impl Poly {
 
     pub fn prepare(&self, shape: &PolyGraph, shader: &Shader) {
         let xyz = shape.xyz_buffer();
-        let (rgb, bsc, tri) = shape.static_buffers();
+        let static_buffer = shape.static_buffer();
 
         self.vao.bind();
         shader.activate();
@@ -57,7 +57,7 @@ impl Poly {
             s * 2,
         );
 
-        self.vbo.array_data(&[xyz, rgb, bsc, tri].concat());
+        self.vbo.array_data(&[xyz, static_buffer].concat());
 
         self.vao.unbind();
     }
