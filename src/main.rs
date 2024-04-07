@@ -61,8 +61,9 @@ fn main() {
     let start_time = Instant::now();
 
     let shader = Shader::new(VS_SRC, FS_SRC);
-    let mut poly = Poly::new();
+    let poly = Poly::new();
     let mut shape = PolyGraph::cube();
+    //shape.recompute_qualities();
     let quit = false;
     let mut rotating = true;
     poly.prepare(&shape, &shader);
@@ -95,7 +96,6 @@ fn main() {
             Matrix4::from_angle_y(Rad(0.5 * time)) * Matrix4::from_angle_x(Rad(0.7 * time));
 
         shape.update();
-
         shader.activate();
         poly.draw(&shape);
         shader.set_mat4("model", &model_rotation);
@@ -113,18 +113,23 @@ fn main() {
                 // Buttons to revert to platonic solids
                 if ui.button("Tetrahedron").clicked() {
                     shape = PolyGraph::tetrahedron();
+                    poly.prepare(&shape, &shader);
                 }
                 if ui.button("Cube").clicked() {
                     shape = PolyGraph::cube();
+                    poly.prepare(&shape, &shader);
                 }
                 if ui.button("Octahedron").clicked() {
                     shape = PolyGraph::octahedron();
+                    poly.prepare(&shape, &shader);
                 }
                 if ui.button("Dodecahedron").clicked() {
                     shape = PolyGraph::dodecahedron();
+                    poly.prepare(&shape, &shader);
                 }
                 if ui.button("Icosahedron").clicked() {
                     shape = PolyGraph::icosahedron();
+                    poly.prepare(&shape, &shader);
                 }
             });
 
@@ -132,25 +137,25 @@ fn main() {
 
             ui.horizontal(|ui| {
                 ui.label("Operations:");
-                //
-                if ui.button("s0").clicked() {
-                    //shape.split_vertex(&0);
-                    //shape.recompute_qualities();
-                }
                 if ui.button("Truncate").clicked() {
                     shape.truncate();
+                    poly.prepare(&shape, &shader);
                 }
                 if ui.button("Ambo").clicked() {
                     shape.ambo();
+                    poly.prepare(&shape, &shader);
                 }
                 if ui.button("Bevel").clicked() {
                     shape.bevel();
+                    poly.prepare(&shape, &shader);
                 }
                 if ui.button("Expand").clicked() {
                     shape.expand();
+                    poly.prepare(&shape, &shader);
                 }
                 if ui.button("Snub").clicked() {
                     shape.snub();
+                    poly.prepare(&shape, &shader);
                 }
             });
         });
