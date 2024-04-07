@@ -21,7 +21,7 @@ pub struct PolyGraph {
 
     /// [Derived Properties]
     /// Faces
-    pub faces: Vec<Face>,
+    pub faces: HashMap<FaceId, Face>,
     /// Edge sets
     pub adjacents: HashSet<Edge>,
     pub neighbors: HashSet<Edge>,
@@ -195,7 +195,7 @@ impl PolyGraph {
             }
         }
 
-        self.faces = cycles.into_iter().collect();
+        self.faces = cycles.into_iter().enumerate().collect();
     }
 
     /// All edges
@@ -316,7 +316,8 @@ impl Display for PolyGraph {
                 .fold(String::new(), |acc, e| format!("{e}, {acc}")),
             self.faces.iter().fold(String::new(), |acc, f| format!(
                 "[{}], {acc}",
-                f.0.iter()
+                f.1 .0
+                    .iter()
                     .fold(String::new(), |acc, x| format!("{x}, {acc}"))
             ))
         ))
@@ -364,6 +365,9 @@ mod test {
 
         graph.connect((2, 0));
         graph.recompute_qualities();
-        assert_eq!(graph.faces, vec![Face(vec![0, 1, 2])]);
+        assert_eq!(
+            graph.faces,
+            vec![(0, Face(vec![0, 1, 2]))].into_iter().collect()
+        );
     }
 }

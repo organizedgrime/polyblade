@@ -91,8 +91,8 @@ impl PolyGraph {
         self.apply_spring_forces();
     }
 
-    fn face_xyz(&self, face_index: usize) -> Vec<Vector3<f32>> {
-        self.faces[face_index]
+    fn face_xyz(&self, id: FaceId) -> Vec<Vector3<f32>> {
+        self.faces[&id]
             .0
             .iter()
             .map(|v| self.positions[v])
@@ -100,8 +100,8 @@ impl PolyGraph {
     }
 
     #[allow(dead_code)]
-    pub fn face_normal(&self, face_index: usize) -> V3f {
-        self.faces[face_index]
+    pub fn face_normal(&self, id: FaceId) -> V3f {
+        self.faces[&id]
             .0
             .iter()
             .map(|v| self.positions[v])
