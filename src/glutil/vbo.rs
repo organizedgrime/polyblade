@@ -18,12 +18,16 @@ impl Vbo {
         Self { id }
     }
 
-    pub fn bind(&self) {
+    pub fn array_bind(&self) {
         unsafe { verify!(gl::BindBuffer(gl::ARRAY_BUFFER, self.id)) }
     }
 
-    pub fn bind_with_data<T>(&self, data: &[T]) {
-        self.bind();
+    pub fn index_bind(&self) {
+        unsafe { verify!(gl::BindBuffer(gl::ELEMENT_ARRAY_BUFFER, self.id)) }
+    }
+
+    pub fn array_data<T>(&self, data: &[T]) {
+        self.array_bind();
         let buf_size = std::mem::size_of_val(data) as GLsizeiptr;
         if !data.is_empty() {
             unsafe {
@@ -38,8 +42,8 @@ impl Vbo {
         }
     }
 
-    pub fn element_data(&self, indices: &[usize]) {
-        self.bind();
+    pub fn index_data(&self, indices: &[usize]) {
+        self.index_bind();
         let buf_size = std::mem::size_of_val(indices) as GLsizeiptr;
         if !indices.is_empty() {
             unsafe {
@@ -54,12 +58,25 @@ impl Vbo {
         }
     }
 
-    pub fn update_data<T>(&self, data: &[T]) {
-        self.bind();
+    pub fn array_sub<T>(&self, data: &[T]) {
+        self.array_bind();
         let buf_size = std::mem::size_of_val(data) as GLsizeiptr;
         unsafe {
             let data_ptr = std::mem::transmute(&data[0]);
             verify!(gl::BufferSubData(gl::ARRAY_BUFFER, 0, buf_size, data_ptr));
+        }
+    }
+    pub fn index_sub<T>(&self, data: &[T]) {
+        self.index_bind();
+        let buf_size = std::mem::size_of_val(data) as GLsizeiptr;
+        unsafe {
+            let data_ptr = std::mem::transmute(&data[0]);
+            verify!(gl::BufferSubData(
+                gl::ELEMENT_ARRAY_BUFFER,
+                0,
+                buf_size,
+                data_ptr
+            ));
         }
     }
 }

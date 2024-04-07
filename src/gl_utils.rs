@@ -6,8 +6,7 @@ use egui_gl_glfw::gl;
 pub struct Poly {
     // Graph / Data
     pub vao: Vao,
-    pub stride_vbo: Vbo,
-    pub xyz_vbo: Vbo,
+    pub vbo: Vbo,
 }
 
 impl Default for Poly {
@@ -20,15 +19,14 @@ impl Poly {
     pub fn new() -> Self {
         Poly {
             vao: Vao::new(),
-            stride_vbo: Vbo::new(),
-            xyz_vbo: Vbo::new(),
+            vbo: Vbo::new(),
         }
     }
 
     pub fn prepare(&self, shader: &Shader) {
         self.vao.bind();
         shader.activate();
-        self.stride_vbo.bind();
+        self.vbo.array_bind();
         let stride = std::mem::size_of::<PolyVertex>() as i32;
         shader.enable(
             "xyz",
@@ -65,7 +63,7 @@ impl Poly {
         let buffer = shape.triangle_buffers();
         let draw_len = buffer.len() as i32;
         self.vao.bind();
-        self.stride_vbo.bind_with_data(&buffer);
+        self.vbo.array_data(&buffer);
         if draw_len > 0 {
             unsafe {
                 gl::DrawArrays(gl::TRIANGLES, 0, draw_len);
