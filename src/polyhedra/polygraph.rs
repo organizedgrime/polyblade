@@ -137,7 +137,7 @@ impl PolyGraph {
     pub fn connections(&self, v: &VertexId) -> HashSet<VertexId> {
         if let Some(l) = self.adjacency_matrix.get(v) {
             l.iter()
-                .filter_map(|(k, v)| if *v { Some(*k) } else { None })
+                .filter_map(|(k, c)| if *c && k != v { Some(*k) } else { None })
                 .collect::<HashSet<usize>>()
         } else {
             HashSet::new()

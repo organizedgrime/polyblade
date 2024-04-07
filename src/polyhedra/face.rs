@@ -6,7 +6,7 @@ pub struct Face(pub Vec<VertexId>);
 
 impl std::fmt::Debug for Face {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_tuple("Face").field(&self.id()).finish()
+        f.debug_tuple("Face").field(&self.0).finish()
     }
 }
 
@@ -23,19 +23,7 @@ impl Face {
         edges
     }
 
-    pub fn id(&self) -> Vec<VertexId> {
-        let i: usize = self
-            .0
-            .clone()
-            .into_iter()
-            .enumerate()
-            .min_by(|(_, a), (_, b)| a.cmp(b))
-            .map(|(index, _)| index)
-            .unwrap();
-        [self.0[i..].to_vec(), self.0[..i].to_vec()].concat()
-    }
-
-    //pub fn buffers(&self, g: &PolyGraph) -> (Vec<f32>, Vec<f32>, Vec<f32>) {}
+    //pub fn replace(&mut self, )
 }
 
 impl PartialEq for Face {

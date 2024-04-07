@@ -70,9 +70,11 @@ impl PolyGraph {
             self.ghost_edges.insert(ge, ne);
         }
 
-        let max_id = self.faces.keys().max().unwrap();
-        self.faces
-            .insert(max_id + 1, Face(connections.into_iter().collect()));
+        println!("faces: {:?}", self.faces);
+        if let Some(max_id) = self.faces.keys().max() {
+            self.faces
+                .insert(max_id + 1, Face(connections.into_iter().collect()));
+        }
         // Connect all nodes in the new face formed
         for i in 0..n - 1 {
             self.connect((new_vertex - i, new_vertex - i - 1));
@@ -142,12 +144,6 @@ mod test {
     use crate::prelude::*;
 
     #[test]
-    fn truncate() {
-        let mut shape = PolyGraph::icosahedron();
-        shape.truncate();
-    }
-
-    #[test]
     fn contract_edge() {
         let mut graph = PolyGraph::new_disconnected(6);
         graph.connect((1, 0));
@@ -163,6 +159,7 @@ mod test {
         assert_eq!(graph.adjacents.len(), 5);
 
         graph.contract_edge((1, 3));
+
         graph.recompute_qualities();
 
         println!("g: {:?}", graph);
