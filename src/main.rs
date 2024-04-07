@@ -138,6 +138,8 @@ fn main() {
                 ui.label("Operations:");
                 if ui.button("S0").clicked() {
                     shape.split_vertex(&shape.vertices.clone().into_iter().min().unwrap());
+                    shape.recompute_qualities();
+                    shape.faces();
                     poly.prepare(&shape, &shader);
                 }
                 if ui.button("Truncate").clicked() {
