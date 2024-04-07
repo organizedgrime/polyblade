@@ -23,18 +23,17 @@ impl Poly {
         }
     }
 
-    pub fn prepare(&self, shader: &Shader) {
+    pub fn prepare(&self, shape: &PolyGraph, shader: &Shader) {
+        let xyz = shape.xyz_buffer();
+        let (rgb, bsc, tri) = shape.static_buffers();
+
         self.vao.bind();
         shader.activate();
         self.vbo.array_bind();
+
+        shader.enable("xyz", gl::FLOAT, 3, 0, 0);
+
         let stride = std::mem::size_of::<PolyVertex>() as i32;
-        shader.enable(
-            "xyz",
-            gl::FLOAT,
-            3,
-            stride,
-            std::mem::offset_of!(PolyVertex, xyz) as usize,
-        );
         shader.enable(
             "rgb",
             gl::FLOAT,
@@ -56,18 +55,18 @@ impl Poly {
             stride,
             std::mem::offset_of!(PolyVertex, tri) as usize,
         );
+
+        self.vbo.array_data(&[xyz, rgb, bsc, tri].concat());
+
         self.vao.unbind();
     }
 
     pub fn draw(&self, shape: &PolyGraph) {
-        let buffer = shape.triangle_buffers();
-        let draw_len = buffer.len() as i32;
+        let xyz = shape.xyz_buffer();
         self.vao.bind();
-        self.vbo.array_data(&buffer);
-        if draw_len > 0 {
-            unsafe {
-                gl::DrawArrays(gl::TRIANGLES, 0, draw_len);
-            }
+        self.vbo.array_sub(&xyz);
+        unsafe {
+            gl::DrawArrays(gl::TRIANGLES, 0, xyz.len() as i32);
         }
         self.vao.unbind();
     }

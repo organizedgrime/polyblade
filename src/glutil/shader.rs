@@ -36,7 +36,6 @@ impl Shader {
                 p_type,
                 gl::FALSE,
                 stride,
-                //std::mem::size_of::<Vector3<f32>>() as GLint * 4,
                 std::mem::transmute(offset),
             ))
         }

@@ -1,7 +1,7 @@
 use cgmath::{vec3, InnerSpace, MetricSpace, Vector3, VectorSpace, Zero};
 
 use super::*;
-use crate::prelude::{PolyVertex, HSL};
+use crate::prelude::{PolyVertex, V3f, HSL};
 use std::{
     collections::{HashMap, HashSet},
     ops::Add,
@@ -100,7 +100,7 @@ impl PolyGraph {
     }
 
     #[allow(dead_code)]
-    pub fn face_normal(&self, face_index: usize) -> Vector3<f32> {
+    pub fn face_normal(&self, face_index: usize) -> V3f {
         self.faces[face_index]
             .0
             .iter()
@@ -109,61 +109,70 @@ impl PolyGraph {
             .normalize()
     }
 
-    fn face_xyz_buffer(&self, face_index: usize) -> (Vec<Vector3<f32>>, Vec<Vector3<f32>>) {
-        let positions = self.face_xyz(face_index);
-        let n = positions.len();
-        match n {
-            3 => (positions, vec![vec3(1.0, 1.0, 1.0); 3]),
-            4 => (
-                vec![
-                    positions[0],
-                    positions[1],
-                    positions[2],
-                    positions[2],
-                    positions[3],
-                    positions[0],
-                ],
-                vec![vec3(1.0, 0.0, 1.0); 6],
-            ),
-            _ => {
-                let centroid = self.face_centroid(face_index);
-                let n = positions.len();
-
-                let pos = (0..n).fold(vec![], |acc, i| {
-                    [acc, vec![positions[i], centroid, positions[(i + 1) % n]]].concat()
-                });
-
-                (pos, vec![vec3(0.0, 1.0, 0.0); n * 3])
-            }
-        }
-    }
-
     fn face_centroid(&self, face_index: usize) -> Vector3<f32> {
         // All vertices associated with this face
         let vertices: Vec<_> = self.face_xyz(face_index);
         vertices.iter().fold(Vector3::zero(), Vector3::add) / vertices.len() as f32
     }
 
-    pub fn triangle_buffers(&self) -> Vec<PolyVertex> {
-        let mut xyz = Vec::new();
+    fn face_xyz_buffer(&self, face_index: usize) -> Vec<V3f> {
+        let positions = self.face_xyz(face_index);
+        let n = positions.len();
+        match n {
+            3 => positions,
+            4 => vec![
+                positions[0],
+                positions[1],
+                positions[2],
+                positions[2],
+                positions[3],
+                positions[0],
+            ],
+            _ => {
+                let centroid = self.face_centroid(face_index);
+                let n = positions.len();
+                (0..n).fold(vec![], |acc, i| {
+                    [acc, vec![positions[i], centroid, positions[(i + 1) % n]]].concat()
+                })
+            }
+        }
+    }
+
+    fn face_tri_buffer(&self, face_index: usize) -> Vec<V3f> {
+        let positions = self.face_xyz(face_index);
+        let n = positions.len();
+        match n {
+            3 => vec![vec3(1.0, 1.0, 1.0); 3],
+            4 => vec![vec3(1.0, 0.0, 1.0); 6],
+            _ => vec![vec3(0.0, 1.0, 0.0); n * 3],
+        }
+    }
+
+    pub fn xyz_buffer(&self) -> Vec<Vector3<f32>> {
+        (0..self.faces.len())
+            .into_iter()
+            .fold(Vec::new(), |acc, i| [acc, self.face_xyz_buffer(i)].concat())
+    }
+
+    pub fn static_buffers(&self) -> (Vec<V3f>, Vec<V3f>, Vec<V3f>) {
         let mut rgb = Vec::new();
         let mut bsc = Vec::new();
         let mut tri = Vec::new();
 
         for face_index in 0..self.faces.len() {
-            let (face_xyz, face_tri) = self.face_xyz_buffer(face_index);
+            //let (face_xyz, face_tri) = self.face_xyz_buffer(face_index);
+            let face_tri = self.face_tri_buffer(face_index);
             let color = HSL::new(
                 (360.0 / (self.faces.len() as f64)) * face_index as f64,
                 360.0 / 1.0,
                 0.5,
             )
             .to_rgb_float();
-            rgb.extend(vec![color; face_xyz.len()]);
+            rgb.extend(vec![color; face_tri.len()]);
             tri.extend(face_tri);
-            xyz.extend(face_xyz);
         }
 
-        for _ in 0..xyz.len() / 3 {
+        for _ in 0..rgb.len() / 3 {
             bsc.extend(vec![
                 Vector3::unit_x(),
                 Vector3::unit_y(),
@@ -171,16 +180,7 @@ impl PolyGraph {
             ]);
         }
 
-        let buffer = (0..xyz.len())
-            .into_iter()
-            .map(|i| PolyVertex {
-                xyz: xyz[i],
-                rgb: rgb[i],
-                bsc: bsc[i],
-                tri: tri[i],
-            })
-            .collect();
-        buffer
+        (rgb, bsc, tri)
     }
 
     pub fn animate_contraction(&mut self) {

@@ -65,7 +65,7 @@ fn main() {
     let mut shape = PolyGraph::cube();
     let quit = false;
     let mut rotating = true;
-    poly.prepare(&shader);
+    poly.prepare(&shape, &shader);
 
     while !window.should_close() {
         egui_input_state.input.time = Some(start_time.elapsed().as_secs_f64());
