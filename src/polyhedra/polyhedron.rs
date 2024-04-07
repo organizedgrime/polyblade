@@ -91,17 +91,13 @@ impl PolyGraph {
         self.apply_spring_forces();
     }
 
-    fn face_xyz(&self, id: FaceId) -> Vec<Vector3<f32>> {
-        self.faces[&id]
-            .0
-            .iter()
-            .map(|v| self.positions[v])
-            .collect()
+    fn face_xyz(&self, id: &FaceId) -> Vec<Vector3<f32>> {
+        self.faces[id].0.iter().map(|v| self.positions[v]).collect()
     }
 
     #[allow(dead_code)]
-    pub fn face_normal(&self, id: FaceId) -> V3f {
-        self.faces[&id]
+    pub fn face_normal(&self, id: &FaceId) -> V3f {
+        self.faces[id]
             .0
             .iter()
             .map(|v| self.positions[v])
@@ -109,14 +105,14 @@ impl PolyGraph {
             .normalize()
     }
 
-    fn face_centroid(&self, face_index: usize) -> Vector3<f32> {
+    fn face_centroid(&self, id: &FaceId) -> Vector3<f32> {
         // All vertices associated with this face
-        let vertices: Vec<_> = self.face_xyz(face_index);
+        let vertices: Vec<_> = self.face_xyz(id);
         vertices.iter().fold(Vector3::zero(), Vector3::add) / vertices.len() as f32
     }
 
-    fn face_xyz_buffer(&self, face_index: usize) -> Vec<V3f> {
-        let positions = self.face_xyz(face_index);
+    fn face_xyz_buffer(&self, id: &FaceId) -> Vec<V3f> {
+        let positions = self.face_xyz(id);
         let n = positions.len();
         match n {
             3 => positions,
@@ -129,7 +125,7 @@ impl PolyGraph {
                 positions[0],
             ],
             _ => {
-                let centroid = self.face_centroid(face_index);
+                let centroid = self.face_centroid(id);
                 let n = positions.len();
                 (0..n).fold(vec![], |acc, i| {
                     [acc, vec![positions[i], centroid, positions[(i + 1) % n]]].concat()
@@ -138,8 +134,8 @@ impl PolyGraph {
         }
     }
 
-    fn face_tri_buffer(&self, face_index: usize) -> Vec<V3f> {
-        let positions = self.face_xyz(face_index);
+    fn face_tri_buffer(&self, id: &FaceId) -> Vec<V3f> {
+        let positions = self.face_xyz(id);
         let n = positions.len();
         match n {
             3 => vec![vec3(1.0, 1.0, 1.0); 3],
@@ -149,7 +145,8 @@ impl PolyGraph {
     }
 
     pub fn xyz_buffer(&self) -> Vec<Vector3<f32>> {
-        (0..self.faces.len())
+        self.faces
+            .keys()
             .into_iter()
             .fold(Vec::new(), |acc, i| [acc, self.face_xyz_buffer(i)].concat())
     }
@@ -159,11 +156,11 @@ impl PolyGraph {
         let mut bsc = Vec::new();
         let mut tri = Vec::new();
 
-        for face_index in 0..self.faces.len() {
+        for id in self.faces.keys() {
             //let (face_xyz, face_tri) = self.face_xyz_buffer(face_index);
-            let face_tri = self.face_tri_buffer(face_index);
+            let face_tri = self.face_tri_buffer(id);
             let color = HSL::new(
-                (360.0 / (self.faces.len() as f64)) * face_index as f64,
+                (360.0 / (self.faces.len() as f64)) * *id as f64,
                 360.0 / 1.0,
                 0.5,
             )

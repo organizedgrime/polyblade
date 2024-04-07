@@ -34,7 +34,7 @@ impl PolyGraph {
         // Recompute distances in the absence of the vertex
         self.adjacents();
         self.distances();
-        self.faces();
+        //self.faces();
 
         'connections: while !connections.is_empty() {
             // closest vertex to the previous which is not itself and is connected
@@ -70,6 +70,9 @@ impl PolyGraph {
             self.ghost_edges.insert(ge, ne);
         }
 
+        let max_id = self.faces.keys().max().unwrap();
+        self.faces
+            .insert(max_id + 1, Face(connections.into_iter().collect()));
         // Connect all nodes in the new face formed
         for i in 0..n - 1 {
             self.connect((new_vertex - i, new_vertex - i - 1));

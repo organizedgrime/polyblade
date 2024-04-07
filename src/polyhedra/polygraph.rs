@@ -108,6 +108,10 @@ impl PolyGraph {
         for (_, l) in self.adjacency_matrix.iter_mut() {
             (*l).remove(v);
         }
+        for (_, f) in self.faces.iter_mut() {
+            (*f).0 = (*f).0.clone().into_iter().filter(|x| x != v).collect();
+        }
+
         self.vertices.remove(v);
         self.adjacency_matrix.remove(v);
         self.positions.remove(v);
