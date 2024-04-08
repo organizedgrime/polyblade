@@ -15,7 +15,7 @@ const FS_SRC: &str = include_str!("./shaders/basic.frag.glsl");
 use polyblade::{prelude::*, verify};
 
 fn main() {
-    let mut glfw = glfw::init(glfw::fail_on_errors).unwrap();
+    let mut glfw = glfw::init(glfw::FAIL_ON_ERRORS).unwrap();
     glfw.window_hint(glfw::WindowHint::ContextVersion(3, 3));
     glfw.window_hint(glfw::WindowHint::OpenGlProfile(
         glfw::OpenGlProfileHint::Core,
