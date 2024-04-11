@@ -4,7 +4,7 @@ use egui_gl_glfw as egui_backend;
 
 use std::time::Instant;
 
-use egui_backend::egui::{vec2, Pos2, Rect};
+use egui_backend::egui::{vec2, Pos2, RawInput, Rect};
 use egui_gl_glfw::glfw::Context;
 
 const SCREEN_WIDTH: u32 = 800;
@@ -48,7 +48,7 @@ fn main() {
     let native_pixels_per_point = window.get_content_scale().0;
 
     let mut egui_input_state = egui_backend::EguiInputState::new(
-        egui::RawInput {
+        RawInput {
             screen_rect: Some(Rect::from_min_size(
                 Pos2::new(0f32, 0f32),
                 vec2(width as f32, height as f32) / native_pixels_per_point,
@@ -178,7 +178,7 @@ fn main() {
         //Since we are custom drawing an OpenGL Triangle we don't need egui to clear the background.
 
         let clipped_shapes = egui_ctx.tessellate(shapes, pixels_per_point);
-        painter.paint_and_update_textures(1.0, &clipped_shapes, &textures_delta);
+        painter.paint_and_update_textures(1.0, &clipped_shapes[..], &textures_delta);
 
         for (_, event) in glfw::flush_messages(&events) {
             match event {

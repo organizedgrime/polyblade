@@ -12,10 +12,13 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 gl = "0.14"
-glfw = "0.55"
-egui = "0.26"
-egui_gl_glfw = "0.1.1"
-cgmath = {version = "^0.18", features = ["swizzle"] }
+glfw = { path = "../glfw-rs/", default-features = false, features = [
+	"glfw-sys",
+	"wayland",
+] }
+egui = "^0.27"
+egui_gl_glfw = { path = "../egui_gl_glfw/" }
+cgmath = { version = "^0.18", features = ["swizzle"] }
 
 [dev-dependencies]
 
