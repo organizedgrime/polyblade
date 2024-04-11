@@ -22,6 +22,7 @@ fn main() {
     ));
     glfw.window_hint(glfw::WindowHint::DoubleBuffer(true));
     glfw.window_hint(glfw::WindowHint::Resizable(false));
+    glfw.window_hint(glfw::WindowHint::ScaleToMonitor(true));
 
     let (mut window, events) = glfw
         .create_window(

@@ -11,23 +11,14 @@ path = "src/main.rs"
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-gl = "0.14"
-glfw = { path = "../glfw-rs/", default-features = false, features = [
-	"glfw-sys",
-	"wayland",
-] }
-egui = "^0.27"
-egui_gl_glfw = { path = "../egui_gl_glfw/" }
+gl = { version = "^0.14" }
+glfw = { version = "^0.55", default-features = false }
+egui = { version = "^0.27" }
+egui_gl_glfw = { path = "../egui_gl_glfw/", default-features = false }
 cgmath = { version = "^0.18", features = ["swizzle"] }
+rand = "^0.7"
 
-[dev-dependencies]
-
-[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-rand = "0.7"
-
-[target.'cfg(target_arch = "wasm32")'.dependencies]
-log = "0.4"
-wasm-bindgen = "0.2"
-wasm-bindgen-futures = "0.4"
-console_error_panic_hook = "0.1"
-console_log = "1"
+[features]
+#default = ["wayland", "x11"]
+wayland = ["egui_gl_glfw/wayland", "glfw/glfw-sys", "glfw/wayland"]
+x11 = []
