@@ -1,198 +1,113 @@
-use cgmath::{Matrix4, Rad};
-use egui::{Checkbox, TopBottomPanel};
-use egui_gl_glfw as egui_backend;
-
-use std::time::Instant;
-
-use egui_backend::egui::{vec2, Pos2, Rect};
-use egui_gl_glfw::glfw::Context;
-
-const SCREEN_WIDTH: u32 = 800;
-const SCREEN_HEIGHT: u32 = 900;
-const VS_SRC: &str = include_str!("./shaders/basic.vert.glsl");
-const FS_SRC: &str = include_str!("./shaders/basic.frag.glsl");
-
-use polyblade::{prelude::*, verify};
+use egui_winit::winit;
+use polyblade::prelude::{create_display, UserEvent};
 
 fn main() {
-    let mut glfw = glfw::init(glfw::FAIL_ON_ERRORS).unwrap();
-    glfw.window_hint(glfw::WindowHint::ContextVersion(3, 3));
-    glfw.window_hint(glfw::WindowHint::OpenGlProfile(
-        glfw::OpenGlProfileHint::Core,
-    ));
-    glfw.window_hint(glfw::WindowHint::DoubleBuffer(true));
-    glfw.window_hint(glfw::WindowHint::Resizable(false));
+    let mut clear_color = [0.1, 0.1, 0.1];
 
-    let (mut window, events) = glfw
-        .create_window(
-            SCREEN_WIDTH,
-            SCREEN_HEIGHT,
-            "Egui in GLFW!",
-            glfw::WindowMode::Windowed,
-        )
-        .expect("Failed to create GLFW window.");
+    let event_loop = winit::event_loop::EventLoopBuilder::<UserEvent>::with_user_event()
+        .build()
+        .unwrap();
+    let (gl_window, gl) = create_display(&event_loop);
+    let gl = std::sync::Arc::new(gl);
 
-    window.set_char_polling(true);
-    window.set_cursor_pos_polling(true);
-    window.set_key_polling(true);
-    window.set_mouse_button_polling(true);
-    window.make_current();
-    glfw.set_swap_interval(glfw::SwapInterval::Sync(1));
+    let mut egui_glow = egui_glow::EguiGlow::new(&event_loop, gl.clone(), None, None);
 
-    gl::load_with(|symbol| window.get_proc_address(symbol) as *const _);
-
-    let mut painter = egui_backend::Painter::new(&mut window);
-    let egui_ctx = egui::Context::default();
-
-    let (width, height) = window.get_framebuffer_size();
-    let native_pixels_per_point = window.get_content_scale().0;
-
-    let mut egui_input_state = egui_backend::EguiInputState::new(
-        egui::RawInput {
-            screen_rect: Some(Rect::from_min_size(
-                Pos2::new(0f32, 0f32),
-                vec2(width as f32, height as f32) / native_pixels_per_point,
-            )),
-            ..Default::default()
-        },
-        native_pixels_per_point,
-    );
-
-    let start_time = Instant::now();
-
-    let shader = Shader::new(VS_SRC, FS_SRC);
-    let poly = Poly::new();
-    let mut shape = PolyGraph::cube();
-    //shape.recompute_qualities();
-    let quit = false;
-    let mut rotating = true;
-    poly.prepare(&shape, &shader);
-
-    while !window.should_close() {
-        egui_input_state.input.time = Some(start_time.elapsed().as_secs_f64());
-        egui_ctx.begin_frame(egui_input_state.input.take());
-        egui_input_state.pixels_per_point = native_pixels_per_point;
-
-        unsafe {
-            verify!(gl::Enable(gl::DEPTH_TEST));
-            gl::ClearColor(0.8, 0.8, 0.8, 1.0);
-            gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
-        }
-
-        /*
-        let c = Matrix4::look_at_lh(
-            Point3::from_vec(vec3(0.0, 3.0, 0.0)),
-            Point3::from_vec(Vector3::zero()),
-            vec3(0.0, 0.0, 1.0),
-        );
-        */
-        let c = Matrix4::new(
-            2.4142134, 0.0, 0.0, 0.0, 0.0, 2.4142134, 0.0, 0.0, 0.0, 0.0, -1.020202, -1.0, 0.0,
-            0.0, 3.878788, 4.0,
-        );
-
-        let time = start_time.elapsed().as_secs_f32();
-        let model_rotation =
-            Matrix4::from_angle_y(Rad(0.5 * time)) * Matrix4::from_angle_x(Rad(0.7 * time));
-
-        shape.update();
-        shader.activate();
-        poly.draw(&shape);
-        shader.set_mat4("model", &model_rotation);
-        shader.set_mat4("projection", &c);
-
-        unsafe {
-            verify!(gl::Disable(gl::DEPTH_TEST));
-        }
-        TopBottomPanel::bottom("controls").show(&egui_ctx, |ui| {
-            ui.heading(shape.name.clone());
-            ui.add(Checkbox::new(&mut rotating, "rotating"));
-            ui.horizontal(|ui| {
-                ui.label("Seeds:");
-                // Buttons to revert to platonic solids
-                if ui.button("Tetrahedron").clicked() {
-                    shape = PolyGraph::tetrahedron();
-                    poly.prepare(&shape, &shader);
-                }
-                if ui.button("Cube").clicked() {
-                    shape = PolyGraph::cube();
-                    poly.prepare(&shape, &shader);
-                }
-                if ui.button("Octahedron").clicked() {
-                    shape = PolyGraph::octahedron();
-                    poly.prepare(&shape, &shader);
-                }
-                if ui.button("Dodecahedron").clicked() {
-                    shape = PolyGraph::dodecahedron();
-                    poly.prepare(&shape, &shader);
-                }
-                if ui.button("Icosahedron").clicked() {
-                    shape = PolyGraph::icosahedron();
-                    poly.prepare(&shape, &shader);
-                }
-            });
-
-            ui.separator();
-
-            ui.horizontal(|ui| {
-                ui.label("Operations:");
-                if ui.button("Truncate").clicked() {
-                    shape.truncate();
-                    poly.prepare(&shape, &shader);
-                }
-                if ui.button("Ambo").clicked() {
-                    shape.ambo();
-                    poly.prepare(&shape, &shader);
-                }
-                if ui.button("Bevel").clicked() {
-                    shape.bevel();
-                    poly.prepare(&shape, &shader);
-                }
-                if ui.button("Expand").clicked() {
-                    shape.expand();
-                    poly.prepare(&shape, &shader);
-                }
-                if ui.button("Snub").clicked() {
-                    shape.snub();
-                    poly.prepare(&shape, &shader);
-                }
-            });
+    let event_loop_proxy = egui::mutex::Mutex::new(event_loop.create_proxy());
+    egui_glow
+        .egui_ctx
+        .set_request_repaint_callback(move |info| {
+            event_loop_proxy
+                .lock()
+                .send_event(UserEvent::Redraw(info.delay))
+                .expect("Cannot send event");
         });
 
-        let egui::FullOutput {
-            platform_output,
-            textures_delta,
-            shapes,
-            pixels_per_point,
-            viewport_output: _,
-        } = egui_ctx.end_frame();
+    let mut repaint_delay = std::time::Duration::MAX;
 
-        //Handle cut, copy text from egui
-        if !platform_output.copied_text.is_empty() {
-            egui_backend::copy_to_clipboard(&mut egui_input_state, platform_output.copied_text);
-        }
+    let _ = event_loop.run(move |event, event_loop_window_target| {
+        let mut redraw = || {
+            let mut quit = false;
 
-        //Note: passing a bg_color to paint_jobs will clear any previously drawn stuff.
-        //Use this only if egui is being used for all drawing and you aren't mixing your own Open GL
-        //drawing calls with it.
-        //Since we are custom drawing an OpenGL Triangle we don't need egui to clear the background.
+            egui_glow.run(gl_window.window(), |egui_ctx| {
+                egui::SidePanel::left("my_side_panel").show(egui_ctx, |ui| {
+                    ui.heading("Hello World!");
+                    if ui.button("Quit").clicked() {
+                        quit = true;
+                    }
+                    ui.color_edit_button_rgb(&mut clear_color);
+                });
+            });
 
-        let clipped_shapes = egui_ctx.tessellate(shapes, pixels_per_point);
-        painter.paint_and_update_textures(1.0, &clipped_shapes, &textures_delta);
+            if quit {
+                event_loop_window_target.exit();
+            } else {
+                event_loop_window_target.set_control_flow(if repaint_delay.is_zero() {
+                    gl_window.window().request_redraw();
+                    winit::event_loop::ControlFlow::Poll
+                } else if let Some(repaint_after_instant) =
+                    std::time::Instant::now().checked_add(repaint_delay)
+                {
+                    winit::event_loop::ControlFlow::WaitUntil(repaint_after_instant)
+                } else {
+                    winit::event_loop::ControlFlow::Wait
+                });
+            }
 
-        for (_, event) in glfw::flush_messages(&events) {
-            match event {
-                glfw::WindowEvent::Close => window.set_should_close(true),
-                _ => {
-                    egui_backend::handle_event(event, &mut egui_input_state);
+            {
+                unsafe {
+                    use glow::HasContext as _;
+                    gl.clear_color(clear_color[0], clear_color[1], clear_color[2], 1.0);
+                    gl.clear(glow::COLOR_BUFFER_BIT);
+                }
+
+                // draw things behind egui here
+
+                egui_glow.paint(gl_window.window());
+
+                // draw things on top of egui here
+
+                gl_window.swap_buffers().unwrap();
+                gl_window.window().set_visible(true);
+            }
+        };
+
+        match event {
+            winit::event::Event::WindowEvent { event, .. } => {
+                use winit::event::WindowEvent;
+                if matches!(event, WindowEvent::CloseRequested | WindowEvent::Destroyed) {
+                    event_loop_window_target.exit();
+                    return;
+                }
+
+                if matches!(event, WindowEvent::RedrawRequested) {
+                    redraw();
+                    return;
+                }
+
+                if let winit::event::WindowEvent::Resized(physical_size) = &event {
+                    gl_window.resize(*physical_size);
+                }
+
+                let event_response = egui_glow.on_window_event(gl_window.window(), &event);
+
+                if event_response.repaint {
+                    gl_window.window().request_redraw();
                 }
             }
-        }
-        window.swap_buffers();
-        glfw.poll_events();
 
-        if quit {
-            break;
+            winit::event::Event::UserEvent(UserEvent::Redraw(delay)) => {
+                repaint_delay = delay;
+            }
+            winit::event::Event::LoopExiting => {
+                egui_glow.destroy();
+            }
+            winit::event::Event::NewEvents(winit::event::StartCause::ResumeTimeReached {
+                ..
+            }) => {
+                gl_window.window().request_redraw();
+            }
+
+            _ => (),
         }
-    }
+    });
 }
