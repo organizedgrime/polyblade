@@ -1,199 +1,191 @@
-use cgmath::{Matrix4, Rad};
-use egui::{Checkbox, TopBottomPanel};
-use egui_gl_glfw as egui_backend;
+use std::fmt::Display;
 
-use std::time::Instant;
+// Entry point for wasm
+#[cfg(target_arch = "wasm32")]
+use wasm_bindgen::prelude::*;
 
-use egui_backend::egui::{vec2, Pos2, RawInput, Rect};
-use egui_gl_glfw::glfw::Context;
+#[cfg(target_arch = "wasm32")]
+#[wasm_bindgen(start)]
+pub async fn start() -> Result<(), JsValue> {
+    console_log::init_with_level(log::Level::Debug).unwrap();
 
-const SCREEN_WIDTH: u32 = 800;
-const SCREEN_HEIGHT: u32 = 900;
-const VS_SRC: &str = include_str!("./shaders/basic.vert.glsl");
-const FS_SRC: &str = include_str!("./shaders/basic.frag.glsl");
+    use log::info;
+    info!("Logging works!");
 
-use polyblade::{prelude::*, verify};
+    std::panic::set_hook(Box::new(console_error_panic_hook::hook));
+    main::run().await;
+    Ok(())
+}
 
-fn main() {
-    let mut glfw = glfw::init(glfw::fail_on_errors).unwrap();
-    glfw.window_hint(glfw::WindowHint::ContextVersion(3, 3));
-    glfw.window_hint(glfw::WindowHint::OpenGlProfile(
-        glfw::OpenGlProfileHint::Core,
-    ));
-    glfw.window_hint(glfw::WindowHint::DoubleBuffer(true));
-    glfw.window_hint(glfw::WindowHint::Resizable(false));
-    glfw.window_hint(glfw::WindowHint::ScaleToMonitor(true));
+#[cfg(not(target_arch = "wasm32"))]
+pub fn main() {
+    use cgmath::{Vector3, Zero};
+    use polyblade::prelude::PolyGraph;
+    use three_d::core::{degrees, radians, vec3, ClearState, Context, Mat4, Program, RenderStates};
+    use three_d::window::{FrameOutput, Window, WindowSettings};
+    use three_d::{Camera, OrbitControl, VertexBuffer, Viewport};
 
-    let (mut window, events) = glfw
-        .create_window(
-            SCREEN_WIDTH,
-            SCREEN_HEIGHT,
-            "Egui in GLFW!",
-            glfw::WindowMode::Windowed,
-        )
-        .expect("Failed to create GLFW window.");
+    let window = Window::new(WindowSettings {
+        title: "polyblade".to_string(),
+        #[cfg(not(target_arch = "wasm32"))]
+        max_size: Some((600, 700)),
+        ..Default::default()
+    })
+    .unwrap();
 
-    window.set_char_polling(true);
-    window.set_cursor_pos_polling(true);
-    window.set_key_polling(true);
-    window.set_mouse_button_polling(true);
-    window.make_current();
-    glfw.set_swap_interval(glfw::SwapInterval::Sync(1));
+    // Get the graphics context from the window
+    let context: Context = window.gl();
+    let mut gui = three_d::GUI::new(&context);
+    let program = Program::from_source(
+        &context,
+        include_str!("shaders/basic.vert.glsl"),
+        include_str!("shaders/basic.frag.glsl"),
+    )
+    .unwrap();
 
-    gl::load_with(|symbol| window.get_proc_address(symbol) as *const _);
-
-    let mut painter = egui_backend::Painter::new(&mut window);
-    let egui_ctx = egui::Context::default();
-
-    let (width, height) = window.get_framebuffer_size();
-    let native_pixels_per_point = window.get_content_scale().0;
-
-    let mut egui_input_state = egui_backend::EguiInputState::new(
-        RawInput {
-            screen_rect: Some(Rect::from_min_size(
-                Pos2::new(0f32, 0f32),
-                vec2(width as f32, height as f32) / native_pixels_per_point,
-            )),
-            ..Default::default()
-        },
-        native_pixels_per_point,
+    let mut camera = Camera::new_perspective(
+        Viewport::new_at_origo(1, 1),
+        vec3(0.0, 0.0, 4.0),
+        Vector3::zero(),
+        vec3(0.0, 1.0, 0.0),
+        degrees(45.0),
+        0.1,
+        10.0,
     );
+    let mut control = OrbitControl::new(vec3(0.0, 0.0, 0.0), 1.0, 1000.0);
+    let mut model_rotation = Mat4::zero();
 
-    let start_time = Instant::now();
-
-    let shader = Shader::new(VS_SRC, FS_SRC);
-    let poly = Poly::new();
     let mut shape = PolyGraph::cube();
-    //shape.recompute_qualities();
-    let quit = false;
     let mut rotating = true;
-    poly.prepare(&shape, &shader);
 
-    while !window.should_close() {
-        egui_input_state.input.time = Some(start_time.elapsed().as_secs_f64());
-        egui_ctx.begin_frame(egui_input_state.input.take());
-        egui_input_state.pixels_per_point = native_pixels_per_point;
+    let mut xyz_buffer = VertexBuffer::new(&context);
+    let mut rgb_buffer = VertexBuffer::new(&context);
+    let mut bsc_buffer = VertexBuffer::new(&context);
+    let mut tri_buffer = VertexBuffer::new(&context);
 
-        unsafe {
-            verify!(gl::Enable(gl::DEPTH_TEST));
-            gl::ClearColor(0.8, 0.8, 0.8, 1.0);
-            gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
-        }
+    let (rgb, bsc, tri) = shape.static_buffer();
+    rgb_buffer.fill(&rgb);
+    bsc_buffer.fill(&bsc);
+    tri_buffer.fill(&tri);
 
-        /*
-        let c = Matrix4::look_at_lh(
-            Point3::from_vec(vec3(0.0, 3.0, 0.0)),
-            Point3::from_vec(Vector3::zero()),
-            vec3(0.0, 0.0, 1.0),
-        );
-        */
-        let c = Matrix4::new(
-            2.4142134, 0.0, 0.0, 0.0, 0.0, 2.4142134, 0.0, 0.0, 0.0, 0.0, -1.020202, -1.0, 0.0,
-            0.0, 3.878788, 4.0,
-        );
-
-        let time = start_time.elapsed().as_secs_f32();
-        let model_rotation =
-            Matrix4::from_angle_y(Rad(0.5 * time)) * Matrix4::from_angle_x(Rad(0.7 * time));
-
+    window.render_loop(move |mut frame_input| {
         shape.update();
-        shader.activate();
-        poly.draw(&shape);
-        shader.set_mat4("model", &model_rotation);
-        shader.set_mat4("projection", &c);
+        xyz_buffer.fill(&shape.xyz_buffer());
 
-        unsafe {
-            verify!(gl::Disable(gl::DEPTH_TEST));
-        }
-        TopBottomPanel::bottom("controls").show(&egui_ctx, |ui| {
-            ui.heading(shape.name.clone());
-            ui.add(Checkbox::new(&mut rotating, "rotating"));
-            ui.horizontal(|ui| {
-                ui.label("Seeds:");
-                // Buttons to revert to platonic solids
-                if ui.button("Tetrahedron").clicked() {
-                    shape = PolyGraph::tetrahedron();
-                    poly.prepare(&shape, &shader);
-                }
-                if ui.button("Cube").clicked() {
-                    shape = PolyGraph::cube();
-                    poly.prepare(&shape, &shader);
-                }
-                if ui.button("Octahedron").clicked() {
-                    shape = PolyGraph::octahedron();
-                    poly.prepare(&shape, &shader);
-                }
-                if ui.button("Dodecahedron").clicked() {
-                    shape = PolyGraph::dodecahedron();
-                    poly.prepare(&shape, &shader);
-                }
-                if ui.button("Icosahedron").clicked() {
-                    shape = PolyGraph::icosahedron();
-                    poly.prepare(&shape, &shader);
-                }
-            });
+        // Gui panel to control the number of cubes and whether or not instancing is turned on.
+        let mut panel_height = 0.0;
+        gui.update(
+            &mut frame_input.events,
+            frame_input.accumulated_time,
+            frame_input.viewport,
+            frame_input.device_pixel_ratio,
+            |gui_context| {
+                use three_d::egui::*;
+                TopBottomPanel::bottom("controls").show(gui_context, |ui| {
+                    use three_d::egui::*;
+                    ui.heading(shape.name.clone());
+                    ui.add(Checkbox::new(&mut rotating, "rotating"));
+                    ui.horizontal(|ui| {
+                        ui.label("Seeds:");
+                        // Buttons to revert to platonic solids
+                        if ui.button("Tetrahedron").clicked() {
+                            shape = PolyGraph::tetrahedron();
+                        }
+                        if ui.button("Cube").clicked() {
+                            shape = PolyGraph::cube();
+                        }
+                        if ui.button("Octahedron").clicked() {
+                            shape = PolyGraph::octahedron();
+                        }
+                        if ui.button("Dodecahedron").clicked() {
+                            shape = PolyGraph::dodecahedron();
+                        }
+                        if ui.button("Icosahedron").clicked() {
+                            shape = PolyGraph::icosahedron();
+                        }
+                    });
 
-            ui.separator();
+                    ui.separator();
 
-            ui.horizontal(|ui| {
-                ui.label("Operations:");
-                if ui.button("Truncate").clicked() {
-                    shape.truncate();
-                    poly.prepare(&shape, &shader);
+                    ui.horizontal(|ui| {
+                        ui.label("Operations:");
+                        //
+                        if ui.button("s0").clicked() {
+                            shape.split_vertex(&0);
+                            shape.recompute_qualities();
+                        }
+                        if ui.button("Truncate").clicked() {
+                            shape.truncate();
+                        }
+                        if ui.button("Ambo").clicked() {
+                            shape.ambo();
+                        }
+                        if ui.button("Bevel").clicked() {
+                            shape.bevel();
+                        }
+                        if ui.button("Expand").clicked() {
+                            shape.expand();
+                        }
+                        if ui.button("Snub").clicked() {
+                            shape.snub();
+                        }
+                    });
+                });
+                panel_height = gui_context.used_rect().height();
+            },
+        );
+
+        let viewport = Viewport {
+            x: 0,
+            y: (panel_height * frame_input.device_pixel_ratio) as i32,
+            width: frame_input.viewport.width,
+            height: frame_input.viewport.height
+                - (panel_height * frame_input.device_pixel_ratio) as u32,
+        };
+        camera.set_viewport(viewport);
+
+        // Camera control must be after the gui update.
+        control.handle_events(&mut camera, &mut frame_input.events);
+
+        frame_input
+            .screen()
+            // Clear the color and depth of the screen render target
+            .clear(ClearState::color_and_depth(0.8, 0.8, 0.8, 1.0, 1.0))
+            .write(|| {
+                if rotating {
+                    let time = frame_input.accumulated_time as f32;
+                    model_rotation = Mat4::from_angle_y(radians(0.001 * time))
+                        * Mat4::from_angle_x(radians(0.0004 * time))
                 }
-                if ui.button("Ambo").clicked() {
-                    shape.ambo();
-                    poly.prepare(&shape, &shader);
-                }
-                if ui.button("Bevel").clicked() {
-                    shape.bevel();
-                    poly.prepare(&shape, &shader);
-                }
-                if ui.button("Expand").clicked() {
-                    shape.expand();
-                    poly.prepare(&shape, &shader);
-                }
-                if ui.button("Snub").clicked() {
-                    shape.snub();
-                    poly.prepare(&shape, &shader);
-                }
-            });
-        });
 
-        let egui::FullOutput {
-            platform_output,
-            textures_delta,
-            shapes,
-            pixels_per_point,
-            viewport_output: _,
-        } = egui_ctx.end_frame();
+                program.use_uniform("model", model_rotation);
+                program.use_uniform("projection", camera.projection() * camera.view());
+                program.use_vertex_attribute("xyz", &xyz_buffer);
+                program.use_vertex_attribute("rgb", &rgb_buffer);
+                program.use_vertex_attribute("bsc", &bsc_buffer);
+                program.use_vertex_attribute("tri", &tri_buffer);
+                program.draw_arrays(
+                    RenderStates::default(),
+                    camera.viewport(),
+                    xyz_buffer.vertex_count(),
+                );
+                return Ok::<(), RenderError>(());
+            })
+            .unwrap()
+            .write(|| gui.render())
+            .unwrap();
 
-        //Handle cut, copy text from egui
-        if !platform_output.copied_text.is_empty() {
-            egui_backend::copy_to_clipboard(&mut egui_input_state, platform_output.copied_text);
-        }
+        FrameOutput::default()
+    });
+}
 
-        //Note: passing a bg_color to paint_jobs will clear any previously drawn stuff.
-        //Use this only if egui is being used for all drawing and you aren't mixing your own Open GL
-        //drawing calls with it.
-        //Since we are custom drawing an OpenGL Triangle we don't need egui to clear the background.
+#[derive(Debug)]
+struct RenderError(String);
 
-        let clipped_shapes = egui_ctx.tessellate(shapes, pixels_per_point);
-        painter.paint_and_update_textures(1.0, &clipped_shapes[..], &textures_delta);
-
-        for (_, event) in glfw::flush_messages(&events) {
-            match event {
-                glfw::WindowEvent::Close => window.set_should_close(true),
-                _ => {
-                    egui_backend::handle_event(event, &mut egui_input_state);
-                }
-            }
-        }
-        window.swap_buffers();
-        glfw.poll_events();
-
-        if quit {
-            break;
-        }
+impl Display for RenderError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(&self.0)
     }
 }
+
+impl std::error::Error for RenderError {}

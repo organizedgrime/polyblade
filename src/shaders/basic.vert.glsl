@@ -1,4 +1,3 @@
-#version 330
 in vec3 xyz;
 in vec3 rgb;
 in vec3 bsc;
@@ -13,6 +12,5 @@ void main() {
     gl_Position = projection * model * vec4(xyz, 1.0);
     v_Rgb = rgb;
     v_Bsc = bsc;
-	v_Tri = tri;
+    v_Tri = tri;
 }
-
