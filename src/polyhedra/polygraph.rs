@@ -222,6 +222,40 @@ impl PolyGraph {
     }
 
     pub fn distances(&mut self) {
+        /*
+         * what if we actually kept around a HashMap<VertexId, usize> that turns vertex ids into
+         * the correct index in the adjacency matrix and related structs?
+         * this would prevent us from needing to use a hashmap / hashset for a lot of this stuff
+         * and come with the added benefit that we can operate over the matrix data in a valid way.
+         * might not be strictly necessary, but worth thinking about
+         */
+
+        // A is the 0-1 adjacency matrix
+        // D is the distance matrix of G
+        // Aij = 1 iff i and j are adjacent in G
+        // O(M(n)log(n))
+        /*
+        fn APD(A: [n x n]) {
+            let n = self.vertices.len();
+            let Z = A * A;
+
+            let B = [n x n] (0-1 matrix)
+                where
+                Bij = 1 iff i != 1 && (Aij = 1 or Zij > 0)
+
+            if Bij = 1 for all i!=j then return D = (2B-A)
+            else
+            let T = APD(B);
+            let X = T * A;
+            return D
+                where
+                Dij = {
+                    2Tij   if Xij >= Tij * degree(j)
+                    2Tij-1 if Xij < Tij * degree(j)
+                }
+        }
+        */
+
         // let dist be a |V| × |V| array of minimum distances initialized to ∞ (infinity)
         let mut dist: HashMap<VertexId, HashMap<VertexId, u32>> = self
             .vertices
