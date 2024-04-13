@@ -1,14 +1,13 @@
 //#![feature(test)]
 
 mod color;
-mod gl_utils;
-mod glutil;
 mod polyhedra;
 
 pub mod prelude {
+    pub type V3f = Vector3<f32>;
+    use cgmath::Vector3;
+
     pub use crate::color::*;
-    pub use crate::gl_utils::*;
-    pub use crate::glutil::*;
     pub use crate::polyhedra::*;
 }
 

@@ -11,13 +11,9 @@ path = "src/main.rs"
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-egui_gl_glfw = { git = "https://github.com/organizedgrime/egui_gl_glfw.git", branch = "patch-1" }
-gl = { version = "0.14" }
-glfw = { version = "0.55", default-features = false }
-egui = { version = "0.27" }
 cgmath = { version = "^0.18", features = ["swizzle"] }
 rand = "^0.7"
-
-[features]
-wayland = ["egui_gl_glfw/wayland", "glfw/glfw-sys", "glfw/wayland"]
-x11 = ["egui_gl_glfw/rwh-06", "glfw/raw-window-handle-v0-6"]
+three-d = { version = "^0.17", default-features = false, features = [
+	"window",
+	"egui-gui",
+] }
