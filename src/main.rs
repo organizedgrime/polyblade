@@ -63,14 +63,19 @@ pub fn main() {
     let mut bsc_buffer = VertexBuffer::new(&context);
     let mut tri_buffer = VertexBuffer::new(&context);
 
-    let (rgb, bsc, tri) = shape.static_buffer();
-    rgb_buffer.fill(&rgb);
-    bsc_buffer.fill(&bsc);
-    tri_buffer.fill(&tri);
+    let mut update_static = true;
 
     window.render_loop(move |mut frame_input| {
         shape.update();
+
         xyz_buffer.fill(&shape.xyz_buffer());
+        if update_static {
+            let (rgb, bsc, tri) = shape.static_buffer();
+            rgb_buffer.fill(&rgb);
+            bsc_buffer.fill(&bsc);
+            tri_buffer.fill(&tri);
+            update_static = false;
+        }
 
         // Gui panel to control the number of cubes and whether or not instancing is turned on.
         let mut panel_height = 0.0;
@@ -90,18 +95,23 @@ pub fn main() {
                         // Buttons to revert to platonic solids
                         if ui.button("Tetrahedron").clicked() {
                             shape = PolyGraph::tetrahedron();
+                            update_static = true;
                         }
                         if ui.button("Cube").clicked() {
                             shape = PolyGraph::cube();
+                            update_static = true;
                         }
                         if ui.button("Octahedron").clicked() {
                             shape = PolyGraph::octahedron();
+                            update_static = true;
                         }
                         if ui.button("Dodecahedron").clicked() {
                             shape = PolyGraph::dodecahedron();
+                            update_static = true;
                         }
                         if ui.button("Icosahedron").clicked() {
                             shape = PolyGraph::icosahedron();
+                            update_static = true;
                         }
                     });
 
@@ -113,21 +123,27 @@ pub fn main() {
                         if ui.button("s0").clicked() {
                             shape.split_vertex(&0);
                             shape.recompute_qualities();
+                            update_static = true;
                         }
                         if ui.button("Truncate").clicked() {
                             shape.truncate();
+                            update_static = true;
                         }
                         if ui.button("Ambo").clicked() {
                             shape.ambo();
+                            update_static = true;
                         }
                         if ui.button("Bevel").clicked() {
                             shape.bevel();
+                            update_static = true;
                         }
                         if ui.button("Expand").clicked() {
                             shape.expand();
+                            update_static = true;
                         }
                         if ui.button("Snub").clicked() {
                             shape.snub();
+                            update_static = true;
                         }
                     });
                 });
