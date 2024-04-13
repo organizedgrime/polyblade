@@ -64,6 +64,8 @@ pub fn main() {
     let mut tri_buffer = VertexBuffer::new(&context);
 
     let mut update_static = true;
+    let mut yrot = 0.0;
+    let mut xrot = 0.0;
 
     window.render_loop(move |mut frame_input| {
         shape.update();
@@ -87,9 +89,8 @@ pub fn main() {
             |gui_context| {
                 use three_d::egui::*;
                 TopBottomPanel::bottom("controls").show(gui_context, |ui| {
-                    use three_d::egui::*;
                     ui.heading(shape.name.clone());
-                    ui.add(Checkbox::new(&mut rotating, "rotating"));
+                    ui.checkbox(&mut rotating, "rotating");
                     ui.horizontal(|ui| {
                         ui.label("Seeds:");
                         // Buttons to revert to platonic solids
@@ -169,11 +170,12 @@ pub fn main() {
             .clear(ClearState::color_and_depth(0.8, 0.8, 0.8, 1.0, 1.0))
             .write(|| {
                 if rotating {
-                    let time = frame_input.accumulated_time as f32;
-                    model_rotation = Mat4::from_angle_y(radians(0.001 * time))
-                        * Mat4::from_angle_x(radians(0.0004 * time))
+                    xrot += 0.0007 * frame_input.elapsed_time as f32;
+                    yrot += 0.0004 * frame_input.elapsed_time as f32;
                 }
 
+                model_rotation =
+                    Mat4::from_angle_y(radians(yrot)) * Mat4::from_angle_x(radians(xrot));
                 program.use_uniform("model", model_rotation);
                 program.use_uniform("projection", camera.projection() * camera.view());
                 program.use_vertex_attribute("xyz", &xyz_buffer);
