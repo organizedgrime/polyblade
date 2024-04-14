@@ -1,5 +1,6 @@
 pub use super::*;
 use cgmath::{vec3, InnerSpace, Vector3, Zero};
+use ndarray::Array;
 use rand::random;
 use std::{
     collections::{HashMap, HashSet},
@@ -254,19 +255,36 @@ impl PolyGraph {
 
         let n = self.vertices.len();
         let mut ids = self.vertices.clone().into_iter().collect::<Vec<_>>();
+        let mut keys = self
+            .adjacency_matrix
+            .clone()
+            .into_keys()
+            .collect::<Vec<_>>();
         ids.sort();
-        println!("ids: {:?}", ids);
-
+        keys.sort();
+        println!("ids: {:?}\nkey: {:?}", ids, keys);
         // Adjacency matrix
-        let mut A = vec![vec![false; n]; n];
-        for i in 0..n {
-            for j in 0..n {
-                if self.adjacency_matrix[&ids[i]][&ids[j]] {
-                    A[i][j] = true;
-                }
-            }
-        }
+        //let mut A = vec![vec![false; n]; n];
+        //let mut A = Array::from_elem((n, n), 0);
 
+        let data = (0..n).into_iter().fold(Vec::new(), |acc, i| {
+            [
+                acc,
+                (0..n)
+                    .into_iter()
+                    .map(|j| {
+                        if i != j && self.adjacency_matrix[&ids[i]][&ids[j]] {
+                            1
+                        } else {
+                            0
+                        }
+                    })
+                    .collect(),
+            ]
+            .concat()
+        });
+
+        let A = Array::from_shape_vec((n, n), data);
         //println!("A: {:#?}", A);
         //println!("AM: {:#?}", self.adjacency_matrix);
 
