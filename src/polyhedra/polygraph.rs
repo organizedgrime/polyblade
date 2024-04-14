@@ -221,6 +221,28 @@ impl PolyGraph {
         self.neighbors = neighbors
     }
 
+    fn APD(A: Vec<Vec<bool>>) {
+        /*
+        let n = self.vertices.len();
+        let Z = A * A;
+
+        let B = [n x n] (0-1 matrix)
+            where
+            Bij = 1 iff i != 1 && (Aij = 1 or Zij > 0)
+
+        if Bij = 1 for all i!=j then return D = (2B-A)
+        else
+        let T = APD(B);
+        let X = T * A;
+        return D
+            where
+            Dij = {
+                2Tij   if Xij >= Tij * degree(j)
+                2Tij-1 if Xij < Tij * degree(j)
+            }
+            */
+    }
+
     pub fn distances(&mut self) {
         /*
          * what if we actually kept around a HashMap<VertexId, usize> that turns vertex ids into
@@ -230,30 +252,30 @@ impl PolyGraph {
          * might not be strictly necessary, but worth thinking about
          */
 
+        let n = self.vertices.len();
+        let mut ids = self.vertices.clone().into_iter().collect::<Vec<_>>();
+        ids.sort();
+        println!("ids: {:?}", ids);
+
+        // Adjacency matrix
+        let mut A = vec![vec![false; n]; n];
+        for i in 0..n {
+            for j in 0..n {
+                if self.adjacency_matrix[&ids[i]][&ids[j]] {
+                    A[i][j] = true;
+                }
+            }
+        }
+
+        //println!("A: {:#?}", A);
+        //println!("AM: {:#?}", self.adjacency_matrix);
+
         // A is the 0-1 adjacency matrix
         // D is the distance matrix of G
         // Aij = 1 iff i and j are adjacent in G
         // O(M(n)log(n))
         /*
-        fn APD(A: [n x n]) {
-            let n = self.vertices.len();
-            let Z = A * A;
-
-            let B = [n x n] (0-1 matrix)
-                where
-                Bij = 1 iff i != 1 && (Aij = 1 or Zij > 0)
-
-            if Bij = 1 for all i!=j then return D = (2B-A)
-            else
-            let T = APD(B);
-            let X = T * A;
-            return D
-                where
-                Dij = {
-                    2Tij   if Xij >= Tij * degree(j)
-                    2Tij-1 if Xij < Tij * degree(j)
-                }
-        }
+        APD(A)
         */
 
         // let dist be a |V| × |V| array of minimum distances initialized to ∞ (infinity)
