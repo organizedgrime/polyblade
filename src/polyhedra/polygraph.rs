@@ -257,6 +257,7 @@ impl PolyGraph {
         ids.sort();
         println!("ids: {:?}", ids);
 
+        /*
         // Adjacency matrix
         let mut A = vec![vec![false; n]; n];
         for i in 0..n {
@@ -266,6 +267,7 @@ impl PolyGraph {
                 }
             }
         }
+        */
 
         //println!("A: {:#?}", A);
         //println!("AM: {:#?}", self.adjacency_matrix);

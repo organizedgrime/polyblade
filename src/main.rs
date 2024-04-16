@@ -23,7 +23,9 @@ pub fn main() {
     use polyblade::prelude::PolyGraph;
     use three_d::core::{degrees, radians, vec3, ClearState, Context, Mat4, Program, RenderStates};
     use three_d::window::{FrameOutput, Window, WindowSettings};
-    use three_d::{Camera, OrbitControl, VertexBuffer, Viewport};
+    use three_d::{
+        AmbientLight, Camera, DirectionalLight, OrbitControl, Srgba, VertexBuffer, Viewport,
+    };
 
     let window = Window::new(WindowSettings {
         title: "polyblade".to_string(),
@@ -53,10 +55,14 @@ pub fn main() {
         10.0,
     );
     let mut control = OrbitControl::new(vec3(0.0, 0.0, 0.0), 1.0, 1000.0);
+    let mut ambient = AmbientLight::new(&context, 0.2, Srgba::WHITE);
+    let mut directional0 = DirectionalLight::new(&context, 1.0, Srgba::RED, &vec3(0.0, -1.0, 0.0));
+
     let mut model_rotation = Mat4::zero();
 
     let mut shape = PolyGraph::cube();
     let mut rotating = true;
+    let mut shadows = true;
 
     let mut xyz_buffer = VertexBuffer::new(&context);
     let mut rgb_buffer = VertexBuffer::new(&context);
@@ -90,7 +96,11 @@ pub fn main() {
                 use three_d::egui::*;
                 TopBottomPanel::bottom("controls").show(gui_context, |ui| {
                     ui.heading(shape.name.clone());
-                    ui.checkbox(&mut rotating, "rotating");
+                    ui.checkbox(&mut rotating, "Rotating");
+                    if ui.checkbox(&mut shadows, "Shadows").clicked() && !shadows {
+                        //ambient.clear_shadow_map();
+                        directional0.clear_shadow_map();
+                    }
                     ui.horizontal(|ui| {
                         ui.label("Seeds:");
                         // Buttons to revert to platonic solids

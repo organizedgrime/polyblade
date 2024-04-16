@@ -162,12 +162,21 @@ impl PolyGraph {
         for face_index in 0..self.faces.len() {
             //let (face_xyz, face_tri) = self.face_xyz_buffer(face_index);
             let face_tri = self.face_tri_buffer(face_index);
-            let color = HSL::new(
-                (360.0 / (self.faces.len() as f64)) * face_index as f64,
-                360.0 / 1.0,
-                0.5,
-            )
-            .to_rgb_float();
+            /*
+            let color = match self.faces[face_index].0.len() {
+                3 => vec3(124.0, 51.0, 234.0),
+                4 => vec3(51.0, 69.0, 234.0),
+                5 => vec3(51.0, 161.0, 234.0),
+                6 => vec3(51.0, 234.0, 121.0),
+                _ => vec3(216.0, 51.0, 234.0),
+            };
+            */
+            let c = self.faces[face_index].0.len() % 6;
+            let h = (360.0 / 6.0) * (c as f64);
+            println!("c: {c}, h: {h}");
+            let color = HSL::new(h, 1.0, 0.5);
+            println!("color: {:?}", color);
+            let color = color.to_rgb_float();
             rgb.extend(vec![color; face_tri.len()]);
             tri.extend(face_tri);
         }
