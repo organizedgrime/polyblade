@@ -27,8 +27,6 @@ pub fn main() {
 
     let window = Window::new(WindowSettings {
         title: "polyblade".to_string(),
-        #[cfg(not(target_arch = "wasm32"))]
-        max_size: Some((600, 700)),
         ..Default::default()
     })
     .unwrap();
