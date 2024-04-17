@@ -273,9 +273,10 @@ impl PolyGraph {
                 }
             }
         }
-        */
 
         let A = Array::from_shape_vec((n, n), data);
+
+        */
         //println!("A: {:#?}", A);
         //println!("AM: {:#?}", self.adjacency_matrix);
 
