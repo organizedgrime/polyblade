@@ -1,4 +1,4 @@
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 
 pub use super::*;
 
@@ -95,8 +95,8 @@ impl PolyGraph {
 
         //self.contract_edges_visually(original_edges);
         // Animate
-        self.contracting_edges.extend(original_edges);
-        /*
+
+        //self.contracting_edges.extend(original_edges);
         // Contract original edge set
         for edge in original_edges.iter() {
             self.contract_edge(*edge);
@@ -106,7 +106,6 @@ impl PolyGraph {
         self.ghost_edges = HashMap::new();
         self.name.truncate(self.name.len() - 1);
         self.name += "a";
-        */
     }
 
     //

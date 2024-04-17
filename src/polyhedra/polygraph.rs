@@ -261,30 +261,22 @@ impl PolyGraph {
             .into_keys()
             .collect::<Vec<_>>();
         ids.sort();
-        keys.sort();
-        println!("ids: {:?}\nkey: {:?}", ids, keys);
-        // Adjacency matrix
-        //let mut A = vec![vec![false; n]; n];
-        //let mut A = Array::from_elem((n, n), 0);
+        println!("ids: {:?}", ids);
 
-        let data = (0..n).into_iter().fold(Vec::new(), |acc, i| {
-            [
-                acc,
-                (0..n)
-                    .into_iter()
-                    .map(|j| {
-                        if i != j && self.adjacency_matrix[&ids[i]][&ids[j]] {
-                            1
-                        } else {
-                            0
-                        }
-                    })
-                    .collect(),
-            ]
-            .concat()
-        });
+        /*
+        // Adjacency matrix
+        let mut A = vec![vec![false; n]; n];
+        for i in 0..n {
+            for j in 0..n {
+                if self.adjacency_matrix[&ids[i]][&ids[j]] {
+                    A[i][j] = true;
+                }
+            }
+        }
 
         let A = Array::from_shape_vec((n, n), data);
+
+        */
         //println!("A: {:#?}", A);
         //println!("AM: {:#?}", self.adjacency_matrix);
 

@@ -57,6 +57,7 @@ pub fn main() {
 
     let mut shape = PolyGraph::cube();
     let mut rotating = true;
+    let mut shadows = true;
 
     let mut xyz_buffer = VertexBuffer::new(&context);
     let mut rgb_buffer = VertexBuffer::new(&context);
@@ -90,7 +91,10 @@ pub fn main() {
                 use three_d::egui::*;
                 TopBottomPanel::bottom("controls").show(gui_context, |ui| {
                     ui.heading(shape.name.clone());
-                    ui.checkbox(&mut rotating, "rotating");
+                    ui.checkbox(&mut rotating, "Rotating");
+                    if ui.checkbox(&mut shadows, "Shadows").clicked() && !shadows {
+                        // TODO
+                    }
                     ui.horizontal(|ui| {
                         ui.label("Seeds:");
                         // Buttons to revert to platonic solids
