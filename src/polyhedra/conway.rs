@@ -24,6 +24,7 @@ impl PolyGraph {
         let original_position = self.positions[v];
         let mut connections: HashSet<usize> = self.connections(v);
         connections.extend(self.ghost_connections(v));
+        connections.remove(v);
         let n = connections.len();
         // Previously processed connection, starts with a seed
         let mut previous = *connections.iter().collect::<Vec<_>>()[0];
@@ -35,6 +36,8 @@ impl PolyGraph {
         self.adjacents();
         self.distances();
         self.faces();
+        println!("v: {v}");
+        println!("p: {previous}");
 
         'connections: while !connections.is_empty() {
             // closest vertex to the previous which is not itself and is connected
