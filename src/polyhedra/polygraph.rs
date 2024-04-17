@@ -1,5 +1,6 @@
 pub use super::*;
 use cgmath::{vec3, InnerSpace, Vector3, Zero};
+use ndarray::Array;
 use rand::random;
 use std::{
     collections::{HashMap, HashSet},
@@ -254,6 +255,11 @@ impl PolyGraph {
 
         let n = self.vertices.len();
         let mut ids = self.vertices.clone().into_iter().collect::<Vec<_>>();
+        let mut keys = self
+            .adjacency_matrix
+            .clone()
+            .into_keys()
+            .collect::<Vec<_>>();
         ids.sort();
         println!("ids: {:?}", ids);
 
@@ -269,6 +275,7 @@ impl PolyGraph {
         }
         */
 
+        let A = Array::from_shape_vec((n, n), data);
         //println!("A: {:#?}", A);
         //println!("AM: {:#?}", self.adjacency_matrix);
 
