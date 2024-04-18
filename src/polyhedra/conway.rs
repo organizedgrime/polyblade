@@ -36,8 +36,6 @@ impl PolyGraph {
         self.adjacents();
         self.distances();
         self.faces();
-        println!("v: {v}");
-        println!("p: {previous}");
 
         'connections: while !connections.is_empty() {
             // closest vertex to the previous which is not itself and is connected

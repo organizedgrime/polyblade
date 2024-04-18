@@ -1,8 +1,9 @@
 pub use super::*;
 use cgmath::{vec3, InnerSpace, Vector3, Zero};
-use ndarray::Array;
+use ndarray::{Array, ArrayBase, Dim, OwnedRepr, RawData, RawDataClone, RawDataMut};
 use rand::random;
 use std::{
+    any::Any,
     collections::{HashMap, HashSet},
     fmt::Display,
     u32,
@@ -40,6 +41,7 @@ pub struct PolyGraph {
     /// Edge length
     pub edge_length: f32,
 }
+pub type Mat = ArrayBase<OwnedRepr<i32>, Dim<[usize; 2]>>;
 
 impl PolyGraph {
     /// New with n vertices
@@ -222,15 +224,59 @@ impl PolyGraph {
         self.neighbors = neighbors
     }
 
-    fn APD(A: Vec<Vec<bool>>) {
-        /*
+    fn aAPD(&self, a: Mat, degrees: Vec<usize>) -> Mat {
         let n = self.vertices.len();
-        let Z = A * A;
+        let z = a.clone() * a.clone();
 
-        let B = [n x n] (0-1 matrix)
-            where
-            Bij = 1 iff i != 1 && (Aij = 1 or Zij > 0)
+        let b = (0..n).into_iter().fold(Vec::new(), |acc, i| {
+            let row = (0..n)
+                .into_iter()
+                .map(|j| {
+                    if i != 1 && (a.get((i, j)).unwrap() == &1 || z.get((i, j)).unwrap() > &0) {
+                        1
+                    } else {
+                        0
+                    }
+                })
+                .collect();
+            [acc, row].concat()
+        });
+        let b = Array::from_shape_vec((n, n), b).unwrap();
 
+        println!("bbbb:{b:?}");
+
+        if (0..n).into_iter().fold(true, |x, i| {
+            x && (0..n)
+                .into_iter()
+                .fold(true, |y, j| y && (i == j || b.get((i, j)).unwrap() == &1))
+        }) {
+            let d: Mat = (2 * b) - a;
+            return d;
+        }
+
+        let t = self.aAPD(b, degrees.clone());
+        let x = t.clone() * a;
+
+        let d = (0..n).into_iter().fold(Vec::new(), |acc, i| {
+            let row = (0..n)
+                .into_iter()
+                .map(|j| {
+                    if x.get((i, j)).unwrap().clone() >= t.get((i, j)).unwrap() * degrees[j] as i32
+                    {
+                        // * degree of j
+                        t.get((i, j)).unwrap() * 2
+                    } else {
+                        t.get((i, j)).unwrap() * 2 - 1
+                    }
+                })
+                .collect();
+
+            [acc, row].concat()
+        });
+        let d = Array::from_shape_vec((n, n), d).unwrap();
+        d
+
+        /*
         if Bij = 1 for all i!=j then return D = (2B-A)
         else
         let T = APD(B);
@@ -256,6 +302,7 @@ impl PolyGraph {
         let n = self.vertices.len();
         let mut ids = self.vertices.clone().into_iter().collect::<Vec<_>>();
         ids.sort();
+        let degrees: Vec<usize> = ids.iter().map(|id| self.connections(id).len()).collect();
         println!("ids: {:?}", ids);
 
         let data = ids.iter().fold(Vec::new(), |acc, i| {
@@ -271,7 +318,14 @@ impl PolyGraph {
                 .collect::<Vec<_>>();
             [acc, pairs].concat()
         });
-        let A = Array::from_shape_vec((n, n), data);
+        let a = Array::from_shape_vec((n, n), data).unwrap();
+        let b = a.clone() * a.clone();
+
+        fn print_type_of<T>(_: &T) {
+            println!("{}", std::any::type_name::<T>())
+        }
+        print_type_of(&a);
+        self.aAPD(a, degrees);
 
         /*
         // Adjacency matrix
