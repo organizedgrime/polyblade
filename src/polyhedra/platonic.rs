@@ -1,5 +1,14 @@
 use super::PolyGraph;
 
+/*
+    // TODO: once conway ops are efficient enough- use this.
+    T = Y3
+    O = aT (ambo tetrahedron)
+    C = jT (join tetrahedron)
+    I = sT (snub tetrahedron)
+    D = gT (gyro tetrahedron)
+*/
+
 // Platonic Solids
 impl PolyGraph {
     pub fn tetrahedron() -> PolyGraph {

@@ -80,7 +80,7 @@ impl PolyGraph {
         self.connect((new_vertex, new_vertex - n + 1));
     }
 
-    /// `t` truncate is equivalent to vertex splitting
+    /// `t` truncate
     pub fn truncate(&mut self) {
         for v in self.vertices.clone().iter() {
             self.split_vertex(v);
@@ -89,8 +89,7 @@ impl PolyGraph {
         self.name += "t";
     }
 
-    /// `a` ambo is equivalent to the composition of vertex splitting and edge contraction vefore
-    /// applying vertex splitting.
+    /// `a` ambo
     pub fn ambo(&mut self) {
         let original_edges = self.adjacents.clone();
         // Truncate
@@ -111,9 +110,7 @@ impl PolyGraph {
         self.name += "a";
     }
 
-    //
-    //fn dual(&mut self) {}
-    /// `b` bevel is equivalent to `ta`
+    /// `b` = `ta`
     pub fn bevel(&mut self) {
         self.truncate();
         self.ambo();
@@ -121,7 +118,7 @@ impl PolyGraph {
         self.name += "b";
     }
 
-    /// `e` expand is equal to `aa`
+    /// `e` = `aa`
     pub fn expand(&mut self) {
         self.ambo();
         self.ambo();
@@ -134,6 +131,14 @@ impl PolyGraph {
         self.expand();
         //self.diagonal_addition();
     }
+
+    // `j` join
+    // `z` zip
+    // `g` gyro
+    // `m` meta = `kj`
+    // `o` ortho = `jj`
+    // `n` needle
+    // `k` kis
 }
 
 #[cfg(test)]
