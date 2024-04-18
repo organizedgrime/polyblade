@@ -188,14 +188,8 @@ impl PolyGraph {
                 .iter()
                 .position(|l| l == &self.faces[face_index].0.len())
                 .unwrap();
-            //.clone();
-
-            println!("l: { }", self.faces[face_index].0.len());
-
             let h = (360.0 / palette_size) * (c as f64 % palette_size);
-            println!("c: {c}, h: {h}");
             let color = HSL::new(h, 1.0, 0.5);
-            println!("color: {:?}", color);
             let color = color.to_rgb_float();
             rgb.extend(vec![color; face_tri.len()]);
             tri.extend(face_tri);

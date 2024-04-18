@@ -255,13 +255,23 @@ impl PolyGraph {
 
         let n = self.vertices.len();
         let mut ids = self.vertices.clone().into_iter().collect::<Vec<_>>();
-        let mut keys = self
-            .adjacency_matrix
-            .clone()
-            .into_keys()
-            .collect::<Vec<_>>();
         ids.sort();
         println!("ids: {:?}", ids);
+
+        let data = ids.iter().fold(Vec::new(), |acc, i| {
+            let pairs = ids
+                .iter()
+                .map(|j| {
+                    if i != j && self.adjacency_matrix[i][j] {
+                        1
+                    } else {
+                        0
+                    }
+                })
+                .collect::<Vec<_>>();
+            [acc, pairs].concat()
+        });
+        let A = Array::from_shape_vec((n, n), data);
 
         /*
         // Adjacency matrix
@@ -274,7 +284,8 @@ impl PolyGraph {
             }
         }
 
-        let A = Array::from_shape_vec((n, n), data);
+
+
 
         */
         //println!("A: {:#?}", A);
