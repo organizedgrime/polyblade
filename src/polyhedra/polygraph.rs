@@ -1,6 +1,6 @@
 pub use super::*;
 use cgmath::{vec3, InnerSpace, Vector3, Zero};
-use ndarray::{Array, ArrayBase, Dim, OwnedRepr, RawData, RawDataClone, RawDataMut};
+use ndarray::{Array, Array2, ArrayBase, Dim, OwnedRepr, RawData, RawDataClone, RawDataMut};
 use rand::random;
 use std::{
     any::Any,
@@ -224,70 +224,51 @@ impl PolyGraph {
         self.neighbors = neighbors
     }
 
-    fn aAPD(&self, a: Mat, degrees: Vec<usize>) -> Mat {
+    fn apd(&self, a: Mat, degrees: Vec<usize>) -> Mat {
+        let xxx = a.clone().into_raw_vec();
+        if xxx.into_iter().fold(true, |acc, x| acc && x == 0) {
+            return a;
+        }
+        println!("a: {a:#?}\n");
+
         let n = self.vertices.len();
         let z = a.clone() * a.clone();
 
-        let b = (0..n).into_iter().fold(Vec::new(), |acc, i| {
-            let row = (0..n)
-                .into_iter()
-                .map(|j| {
-                    if i != 1 && (a.get((i, j)).unwrap() == &1 || z.get((i, j)).unwrap() > &0) {
-                        1
-                    } else {
-                        0
-                    }
-                })
-                .collect();
-            [acc, row].concat()
-        });
-        let b = Array::from_shape_vec((n, n), b).unwrap();
+        let mut b = Array2::from_elem((n, n), 0);
+        for i in 0..n {
+            for j in 0..n {
+                if i != j && (a[[i, j]] == 1 || z[[i, j]] > 0) {
+                    b[[i, j]] = 1;
+                }
+            }
+        }
 
-        println!("bbbb:{b:?}");
-
-        if (0..n).into_iter().fold(true, |x, i| {
-            x && (0..n)
-                .into_iter()
-                .fold(true, |y, j| y && (i == j || b.get((i, j)).unwrap() == &1))
-        }) {
-            let d: Mat = (2 * b) - a;
+        let mut can_exit = true;
+        for i in 0..n {
+            for j in 0..n {
+                if i != j {
+                    can_exit &= b[[i, j]] == 1;
+                }
+            }
+        }
+        if can_exit {
+            let d: Mat = 2 * b - a;
             return d;
         }
 
-        let t = self.aAPD(b, degrees.clone());
+        let t = self.apd(b, degrees.clone());
         let x = t.clone() * a;
+        let mut d = Array2::from_elem((n, n), 0);
+        for i in 0..n {
+            for j in 0..n {
+                d[[i, j]] = t[[i, j]] * 2;
 
-        let d = (0..n).into_iter().fold(Vec::new(), |acc, i| {
-            let row = (0..n)
-                .into_iter()
-                .map(|j| {
-                    if x.get((i, j)).unwrap().clone() >= t.get((i, j)).unwrap() * degrees[j] as i32
-                    {
-                        // * degree of j
-                        t.get((i, j)).unwrap() * 2
-                    } else {
-                        t.get((i, j)).unwrap() * 2 - 1
-                    }
-                })
-                .collect();
-
-            [acc, row].concat()
-        });
-        let d = Array::from_shape_vec((n, n), d).unwrap();
-        d
-
-        /*
-        if Bij = 1 for all i!=j then return D = (2B-A)
-        else
-        let T = APD(B);
-        let X = T * A;
-        return D
-            where
-            Dij = {
-                2Tij   if Xij >= Tij * degree(j)
-                2Tij-1 if Xij < Tij * degree(j)
+                if x[[i, j]] < t[[i, j]] * degrees[j] as i32 {
+                    d[[i, j]] -= 1;
+                }
             }
-            */
+        }
+        d
     }
 
     pub fn distances(&mut self) {
@@ -303,29 +284,19 @@ impl PolyGraph {
         let mut ids = self.vertices.clone().into_iter().collect::<Vec<_>>();
         ids.sort();
         let degrees: Vec<usize> = ids.iter().map(|id| self.connections(id).len()).collect();
-        println!("ids: {:?}", ids);
 
-        let data = ids.iter().fold(Vec::new(), |acc, i| {
-            let pairs = ids
-                .iter()
-                .map(|j| {
-                    if i != j && self.adjacency_matrix[i][j] {
-                        1
-                    } else {
-                        0
-                    }
-                })
-                .collect::<Vec<_>>();
-            [acc, pairs].concat()
-        });
-        let a = Array::from_shape_vec((n, n), data).unwrap();
-        let b = a.clone() * a.clone();
-
-        fn print_type_of<T>(_: &T) {
-            println!("{}", std::any::type_name::<T>())
+        let mut a = Array2::from_elem((n, n), 0);
+        for i in 0..n {
+            for j in 0..n {
+                if i != j && self.adjacency_matrix[&ids[i]][&ids[j]] {
+                    a[[i, j]] = 1;
+                }
+            }
         }
-        print_type_of(&a);
-        self.aAPD(a, degrees);
+
+        //println!("A: {:#?}, deg: {:?}", a, degrees);
+
+        self.apd(a, degrees);
 
         /*
         // Adjacency matrix
