@@ -1,6 +1,6 @@
 pub use super::*;
 use cgmath::{vec3, InnerSpace, Vector3, Zero};
-use ndarray::{Array, Array2, ArrayBase, Dim, OwnedRepr, RawData, RawDataClone, RawDataMut};
+use ndarray::{Array, Array2, ArrayBase, Axis, Dim, OwnedRepr, RawData, RawDataClone, RawDataMut};
 use rand::random;
 use std::{
     any::Any,
@@ -224,7 +224,17 @@ impl PolyGraph {
         self.neighbors = neighbors
     }
 
-    fn apd(&self, a: Mat, degrees: Vec<usize>) -> Mat {
+    fn degree(a: &Mat, id: usize) -> usize {
+        let mut count = 0;
+        for i in 0..a.len_of(Axis(0)) {
+            if a[[id, i]] == 1 {
+                count += 1;
+            }
+        }
+        count
+    }
+
+    fn apd(&self, a: Mat) -> Mat {
         let xxx = a.clone().into_raw_vec();
         if xxx.into_iter().fold(true, |acc, x| acc && x == 0) {
             return a;
@@ -232,8 +242,10 @@ impl PolyGraph {
         println!("a: {a:#?}\n");
 
         let n = self.vertices.len();
+        // Z = A * A
         let z = a.clone() * a.clone();
 
+        // Bij = 1 iff i != j and (Aij = 1 || Zij > 0)
         let mut b = Array2::from_elem((n, n), 0);
         for i in 0..n {
             for j in 0..n {
@@ -256,14 +268,14 @@ impl PolyGraph {
             return d;
         }
 
-        let t = self.apd(b, degrees.clone());
-        let x = t.clone() * a;
+        let t = self.apd(b);
+        let x = t.clone() * a.clone();
         let mut d = Array2::from_elem((n, n), 0);
         for i in 0..n {
             for j in 0..n {
                 d[[i, j]] = t[[i, j]] * 2;
 
-                if x[[i, j]] < t[[i, j]] * degrees[j] as i32 {
+                if x[[i, j]] < t[[i, j]] * Self::degree(&a, j) as i32 {
                     d[[i, j]] -= 1;
                 }
             }
@@ -296,7 +308,7 @@ impl PolyGraph {
 
         //println!("A: {:#?}, deg: {:?}", a, degrees);
 
-        self.apd(a, degrees);
+        self.apd(a);
 
         /*
         // Adjacency matrix
