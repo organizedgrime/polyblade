@@ -53,7 +53,7 @@ pub fn main() {
     let mut control = OrbitControl::new(vec3(0.0, 0.0, 0.0), 1.0, 1000.0);
     let mut model_rotation = Mat4::zero();
 
-    let mut shape = PolyGraph::cube();
+    let mut shape = PolyGraph::tetrahedron();
     let mut rotating = true;
     let mut shadows = true;
 

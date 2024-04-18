@@ -231,6 +231,7 @@ impl PolyGraph {
                 count += 1;
             }
         }
+        println!("degree of {} is {}", id, count);
         count
     }
 
@@ -239,7 +240,7 @@ impl PolyGraph {
         if xxx.into_iter().fold(true, |acc, x| acc && x == 0) {
             return a;
         }
-        println!("a: {a:#?}\n");
+        ////////////////println!("a: {a:#?}\n");
 
         let n = self.vertices.len();
         // Z = A * A
@@ -264,6 +265,7 @@ impl PolyGraph {
             }
         }
         if can_exit {
+            println!("we can exit!");
             let d: Mat = 2 * b - a;
             return d;
         }
@@ -274,7 +276,6 @@ impl PolyGraph {
         for i in 0..n {
             for j in 0..n {
                 d[[i, j]] = t[[i, j]] * 2;
-
                 if x[[i, j]] < t[[i, j]] * Self::degree(&a, j) as i32 {
                     d[[i, j]] -= 1;
                 }
@@ -295,7 +296,6 @@ impl PolyGraph {
         let n = self.vertices.len();
         let mut ids = self.vertices.clone().into_iter().collect::<Vec<_>>();
         ids.sort();
-        let degrees: Vec<usize> = ids.iter().map(|id| self.connections(id).len()).collect();
 
         let mut a = Array2::from_elem((n, n), 0);
         for i in 0..n {
@@ -308,7 +308,7 @@ impl PolyGraph {
 
         //println!("A: {:#?}, deg: {:?}", a, degrees);
 
-        self.apd(a);
+        println!("xxx: {:?}", self.apd(a));
 
         /*
         // Adjacency matrix
