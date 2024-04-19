@@ -1,6 +1,5 @@
 pub use super::*;
 use cgmath::{vec3, InnerSpace, Vector3, Zero};
-use ndarray::{Array, Array2, ArrayBase, Axis, Dim, OwnedRepr, RawData, RawDataClone, RawDataMut};
 use rand::random;
 use std::{
     any::Any,
@@ -8,6 +7,10 @@ use std::{
     fmt::Display,
     u32,
 };
+
+type HashMatrix<V, T> = HashMap<V, HashMap<V, T>>;
+type VertMatrix<T> = HashMatrix<VertexId, T>;
+type VertMap<T> = HashMap<VertexId, T>;
 
 #[derive(Debug, Default)]
 pub struct PolyGraph {
@@ -17,7 +20,7 @@ pub struct PolyGraph {
     /// [Actual Graph]
     pub vertices: HashSet<VertexId>,
     /// Adjacents
-    pub adjacency_matrix: HashMap<VertexId, HashMap<VertexId, bool>>,
+    pub adjacency_matrix: VertMatrix<bool>,
     /// Edges that have had Vertices split
     pub ghost_edges: HashMap<Edge, Edge>,
 
@@ -29,19 +32,18 @@ pub struct PolyGraph {
     pub neighbors: HashSet<Edge>,
     pub diameter: HashSet<Edge>,
     /// Distances between all points
-    pub dist: HashMap<VertexId, HashMap<VertexId, u32>>,
+    pub dist: VertMatrix<u32>,
 
     /// [Render Properties]
     /// Positions in 3D space
-    pub positions: HashMap<VertexId, Vector3<f32>>,
+    pub positions: VertMap<Vector3<f32>>,
     /// Speeds
-    pub speeds: HashMap<VertexId, Vector3<f32>>,
+    pub speeds: VertMap<Vector3<f32>>,
     /// Edges in the process of contracting visually
     pub contracting_edges: HashSet<Edge>,
     /// Edge length
     pub edge_length: f32,
 }
-pub type Mat = ArrayBase<OwnedRepr<i32>, Dim<[usize; 2]>>;
 
 impl PolyGraph {
     /// New with n vertices
@@ -224,117 +226,66 @@ impl PolyGraph {
         self.neighbors = neighbors
     }
 
-    fn degree(a: &Mat, id: usize) -> usize {
-        let mut count = 0;
-        for i in 0..a.len_of(Axis(0)) {
-            if a[[id, i]] == 1 {
-                count += 1;
+    fn extend(v: VertexId, d: usize, dist: VertMatrix<usize>, paths: VertMatrix<usize>) {
+        if d == 1 {
+        } else {
+            /*
+            let n = dist.len();
+            let w_prime = self.queues[v].pop(d-1);
+            while w_prime != None {
+                for x_pprime in w_prime.cor.children:
+                    let x = x_pprime.vertex;
+                if paths[x.id, v.id] == NOT_SEARCHED {
+                    dist[x.id, v.id] = d;
+                    let w = w_prime.vertex;
+                    S[x.id, v.id] = w.id;
+                    x' = T_vertex[x];
+                    x'.cor = x'';
+
+                }
+
+
             }
+            */
         }
-        println!("degree of {} is {}", id, count);
-        count
     }
 
-    fn apd(&self, a: Mat) -> Mat {
-        let xxx = a.clone().into_raw_vec();
-        if xxx.into_iter().fold(true, |acc, x| acc && x == 0) {
-            return a;
+    fn pst(&mut self) {
+        // The element D[i, j] represents the distance from v_i to vj.
+        let mut dist = VertMatrix::<usize>::new();
+        // The element S[i,j] represents the parent of v_i on the shortest path from v_i to a source
+        // vertex v_j.
+        let mut shortest = VertMatrix::<VertexId>::new();
+
+        // let the diagonal elements of S already be initialized to NO_PARENT (-1) and all other
+        // elements to NOT_SEARCHED (0). NO_PARENT means v_i is a source vertex.
+        for i in self.vertices.iter() {
+            dist.insert(*i, self.vertices.iter().map(|j| (*j, 0)).collect());
+            shortest.insert(*i, self.vertices.iter().map(|j| (*j, 0)).collect());
+            shortest.get_mut(i).unwrap().insert(*i, VertexId::MAX);
         }
-        ////////////////println!("a: {a:#?}\n");
 
-        let n = self.vertices.len();
-        // Z = A * A
-        let z = a.clone() * a.clone();
-
-        // Bij = 1 iff i != j and (Aij = 1 || Zij > 0)
-        let mut b = Array2::from_elem((n, n), 0);
-        for i in 0..n {
-            for j in 0..n {
-                if i != j && (a[[i, j]] == 1 || z[[i, j]] > 0) {
-                    b[[i, j]] = 1;
+        /*
+        let verts = self.vertices.clone();
+        let mut depth = 0;
+        while 0 < verts.len() {
+            depth += 1;
+            let v_new = Vec::new();
+            for v in self.vertices {
+                extend(v, depth, dist, shortest);
+                if v.c < n {
+                    v_new.push(v);
                 }
             }
+            verts = v_new;
         }
 
-        let mut can_exit = true;
-        for i in 0..n {
-            for j in 0..n {
-                if i != j {
-                    can_exit &= b[[i, j]] == 1;
-                }
-            }
-        }
-        if can_exit {
-            println!("we can exit!");
-            let d: Mat = 2 * b - a;
-            return d;
-        }
-
-        let t = self.apd(b);
-        let x = t.clone() * a.clone();
-        let mut d = Array2::from_elem((n, n), 0);
-        for i in 0..n {
-            for j in 0..n {
-                d[[i, j]] = t[[i, j]] * 2;
-                if x[[i, j]] < t[[i, j]] * Self::degree(&a, j) as i32 {
-                    d[[i, j]] -= 1;
-                }
-            }
-        }
-        d
+        self.dist = dist;
+        */
     }
 
     pub fn distances(&mut self) {
-        /*
-         * what if we actually kept around a HashMap<VertexId, usize> that turns vertex ids into
-         * the correct index in the adjacency matrix and related structs?
-         * this would prevent us from needing to use a hashmap / hashset for a lot of this stuff
-         * and come with the added benefit that we can operate over the matrix data in a valid way.
-         * might not be strictly necessary, but worth thinking about
-         */
-
-        let n = self.vertices.len();
-        let mut ids = self.vertices.clone().into_iter().collect::<Vec<_>>();
-        ids.sort();
-
-        let mut a = Array2::from_elem((n, n), 0);
-        for i in 0..n {
-            for j in 0..n {
-                if i != j && self.adjacency_matrix[&ids[i]][&ids[j]] {
-                    a[[i, j]] = 1;
-                }
-            }
-        }
-
-        //println!("A: {:#?}, deg: {:?}", a, degrees);
-
-        println!("xxx: {:?}", self.apd(a));
-
-        /*
-        // Adjacency matrix
-        let mut A = vec![vec![false; n]; n];
-        for i in 0..n {
-            for j in 0..n {
-                if self.adjacency_matrix[&ids[i]][&ids[j]] {
-                    A[i][j] = true;
-                }
-            }
-        }
-
-
-
-
-        */
-        //println!("A: {:#?}", A);
-        //println!("AM: {:#?}", self.adjacency_matrix);
-
-        // A is the 0-1 adjacency matrix
-        // D is the distance matrix of G
-        // Aij = 1 iff i and j are adjacent in G
-        // O(M(n)log(n))
-        /*
-        APD(A)
-        */
+        self.pst();
 
         // let dist be a |V| × |V| array of minimum distances initialized to ∞ (infinity)
         let mut dist: HashMap<VertexId, HashMap<VertexId, u32>> = self
