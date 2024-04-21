@@ -5,6 +5,7 @@ use std::{
     any::Any,
     collections::{HashMap, HashSet},
     fmt::Display,
+    rc::Rc,
     u32,
 };
 
@@ -43,6 +44,47 @@ pub struct PolyGraph {
     pub contracting_edges: HashSet<Edge>,
     /// Edge length
     pub edge_length: f32,
+}
+
+pub struct Vertex {
+    id: VertexId,
+    adj: Vec<VertexId>,
+    v_prime: Rc<T_Vertex>,
+    root: Rc<T_Vertex>,
+    c: usize,
+    dqueue: Vec<(T_Vertex, usize)>,
+}
+impl Vertex {
+    pub fn new(v: VertexId, id: VertexId) -> Self {
+        let v_prime = Rc::new(T_Vertex::new(v));
+        Self {
+            id,
+            adj: Vec::new(),
+            v_prime: v_prime.clone(),
+            root: v_prime.clone(),
+            c: 1,
+            dqueue: Vec::new(),
+        }
+    }
+}
+
+#[derive(Clone)]
+pub struct T_Vertex {
+    vertex: Rc<Vertex>,
+    cor: Option<Rc<T_Vertex>>,
+    parent: Option<VertexId>,
+    children: Vec<T_Vertex>,
+}
+
+impl T_Vertex {
+    pub fn new(v: VertexId) -> Self {
+        Self {
+            vertex: Rc::new(Vertex::new(v, v)),
+            cor: None,
+            parent: None,
+            children: Vec::new(),
+        }
+    }
 }
 
 impl PolyGraph {
@@ -226,27 +268,35 @@ impl PolyGraph {
         self.neighbors = neighbors
     }
 
-    fn extend(v: VertexId, d: usize, dist: VertMatrix<usize>, paths: VertMatrix<usize>) {
+    fn extend(v: Vertex, d: usize, &mut dist: VertMatrix<usize>, paths: &mut VertMatrix<usize>) {
         if d == 1 {
         } else {
-            /*
             let n = dist.len();
-            let w_prime = self.queues[v].pop(d-1);
-            while w_prime != None {
-                for x_pprime in w_prime.cor.children:
-                    let x = x_pprime.vertex;
-                if paths[x.id, v.id] == NOT_SEARCHED {
-                    dist[x.id, v.id] = d;
-                    let w = w_prime.vertex;
-                    S[x.id, v.id] = w.id;
-                    x' = T_vertex[x];
-                    x'.cor = x'';
+            while let Some((i, w_prime)) = v
+                .dqueue
+                .iter()
+                .enumerate()
+                .filter(|(i, (v, dx))| *dx == (d - 1))
+                .map(|(i, (v, dx))| (i, v))
+                .last()
+            {
+                // remove it
+                //v.dqueue.
 
+                if let Some(cor) = w_prime.cor {
+                    for x_pprime in cor.children {
+                        let x = x_pprime.vertex;
+
+                        if paths[&x.id][&v.id] == VertexId::MAX {
+                            dist[&x.id][&v.id] = d;
+                            let w = w_prime.vertex;
+                            paths[&x.id][&v.id] = w.id;
+                            let mut x_prime = T_Vertex::new(x.id);
+                            x_prime.cor = Some(Rc::new(x_pprime));
+                        }
+                    }
                 }
-
-
             }
-            */
         }
     }
 
@@ -265,14 +315,13 @@ impl PolyGraph {
             shortest.get_mut(i).unwrap().insert(*i, VertexId::MAX);
         }
 
-        /*
         let verts = self.vertices.clone();
         let mut depth = 0;
         while 0 < verts.len() {
             depth += 1;
             let v_new = Vec::new();
             for v in self.vertices {
-                extend(v, depth, dist, shortest);
+                Self::extend(v, depth, &mut dist, &mut shortest);
                 if v.c < n {
                     v_new.push(v);
                 }
@@ -281,7 +330,6 @@ impl PolyGraph {
         }
 
         self.dist = dist;
-        */
     }
 
     pub fn distances(&mut self) {
