@@ -46,6 +46,7 @@ pub struct PolyGraph {
     pub edge_length: f32,
 }
 
+/*
 #[derive(Clone)]
 pub struct Vertex {
     id: VertexId,
@@ -87,6 +88,7 @@ impl T_Vertex {
         }
     }
 }
+*/
 
 impl PolyGraph {
     /// New with n vertices
@@ -269,6 +271,7 @@ impl PolyGraph {
         self.neighbors = neighbors
     }
 
+    /*
     fn extend(
         &self,
         mut v: Vertex,
@@ -317,49 +320,78 @@ impl PolyGraph {
 
         (dist, paths)
     }
+    */
 
-    fn pst(&mut self) {
-        let n = self.vertices.len();
-        /// Vertex
-        //
-        // d-queues associated w each vertex
-        let dqueues: VertMatrix<usize> = Default::default();
-        // Counters for vertices whos shortest paths have already been obtained
-        let counters: HashMap<VertexId, usize> = self.vertices.iter().map(|v| (*v, 1)).collect();
+    /*
+        fn pst(&mut self) {
+            let n = self.vertices.len();
+            /// Vertex
+            //
+            // d-queues associated w each vertex
+            let mut dqueues: VertMatrix<usize> = Default::default();
+            // Counters for vertices whos shortest paths have already been obtained
+            let mut counters: HashMap<VertexId, usize> =
+                self.vertices.iter().map(|v| (*v, 1)).collect();
 
-        // The element D[i, j] represents the distance from v_i to vj.
-        let mut dist = VertMatrix::<u32>::new();
-        // The element S[i,j] represents the parent of v_i on the shortest path from v_i to a source
-        // vertex v_j.
-        let mut paths = VertMatrix::<VertexId>::new();
+            // The element D[i, j] represents the distance from v_i to vj.
+            let mut dist = VertMatrix::<u32>::new();
+            // The element S[i,j] represents the parent of v_i on the shortest path from v_i to a source
+            // vertex v_j.
+            let mut paths = VertMatrix::<VertexId>::new();
 
-        // let the diagonal elements of S already be initialized to NO_PARENT (-1) and all other
-        // elements to NOT_SEARCHED (0). NO_PARENT means v_i is a source vertex.
-        for i in self.vertices.iter() {
-            dist.insert(*i, self.vertices.iter().map(|j| (*j, 0)).collect());
-            paths.insert(*i, self.vertices.iter().map(|j| (*j, 0)).collect());
-            paths.get_mut(i).unwrap().insert(*i, VertexId::MAX);
-        }
-
-        let mut verts: HashSet<VertexId> = self.vertices.clone();
-        let mut depth = 0;
-        while 0 < verts.len() {
-            depth += 1;
-            let mut v_new = HashSet::new();
-            for v in verts.iter() {
-                //let x = self.extend(v.clone(), depth, dist, paths);
-                if *counters.get(v).unwrap() < n {
-                    v_new.insert(*v);
-                }
+            // let the diagonal elements of S already be initialized to NO_PARENT (-1) and all other
+            // elements to NOT_SEARCHED (0). NO_PARENT means v_i is a source vertex.
+            for i in self.vertices.iter() {
+                dist.insert(*i, self.vertices.iter().map(|j| (*j, 0)).collect());
+                paths.insert(*i, self.vertices.iter().map(|j| (*j, 0)).collect());
+                paths.get_mut(i).unwrap().insert(*i, VertexId::MAX);
             }
-            verts = v_new;
-        }
 
-        self.dist = dist;
-    }
+            /*
+            let extend = move |v: VertexId, d: usize| {
+                if d == 1 {
+                    counters.insert(k, v)
+                } else {
+                }
+            };
+            */
+
+            let mut verts: HashSet<VertexId> = self.vertices.clone();
+            let mut depth = 0;
+            while 0 < verts.len() {
+                depth += 1;
+                let mut v_new = HashSet::new();
+                for v in verts.iter() {
+                    if depth == 1 {
+                        for w in self.connections(v) {
+                            // D[w.id, v.id] = d
+                            dist.get_mut(&w).unwrap().insert(*v, depth);
+                            // S[w.id, v.id] = v.id
+                            paths.get_mut(&w).unwrap().insert(*v, *v);
+
+                            //w'=T_V(w)
+                            //w'.cor = w.root
+                            //cors.insert(w, roots.get(w));
+
+                            // v.c = v.c + 1
+                            *counters.get_mut(v).unwrap() += 1;
+                        }
+                    } else {
+                    }
+
+                    if *counters.get(v).unwrap() < n {
+                        v_new.insert(*v);
+                    }
+                }
+                verts = v_new;
+            }
+
+            self.dist = dist;
+        }
+    */
 
     pub fn distances(&mut self) {
-        self.pst();
+        //self.pst();
 
         // let dist be a |V| × |V| array of minimum distances initialized to ∞ (infinity)
         let mut dist: HashMap<VertexId, HashMap<VertexId, u32>> = self
