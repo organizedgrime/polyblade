@@ -78,16 +78,15 @@ impl PolyGraph {
         self.adjacents.remove(&e.into());
     }
 
-    pub fn insert(&mut self, pos: Option<Vector3<f32>>) -> VertexId {
+    pub fn insert(&mut self) -> VertexId {
         let new_id = self.vertices.iter().max().unwrap() + 1;
         self.vertices.insert(new_id);
         // Position and speed
         self.positions.insert(
             new_id,
-            pos.unwrap_or(Vector3::new(random(), random(), random()).normalize()),
+            Vector3::new(random(), random(), random()).normalize(),
         );
         self.speeds.insert(new_id, Vector3::zero());
-
         new_id
     }
 

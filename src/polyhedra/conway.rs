@@ -43,7 +43,8 @@ impl PolyGraph {
             let u = connections.clone().into_iter().collect::<Vec<_>>()[0];
 
             // Insert a new node in the same location
-            new_vertex = self.insert(Some(original_position));
+            new_vertex = self.insert();
+            self.positions.insert(new_vertex, original_position);
             // Reform old connection
             self.connect((u, new_vertex));
 
