@@ -2,15 +2,10 @@ pub use super::*;
 use cgmath::{vec3, InnerSpace, Vector3, Zero};
 use rand::random;
 use std::{
-    any::Any,
     collections::{HashMap, HashSet},
     fmt::Display,
-    rc::Rc,
     u32,
 };
-
-//type HashMatrix<V, T> = HashMap<V, HashMap<V, T>>;
-//type VertMatrix<T> = HashMatrix<VertexId, T>;
 type VertMap<T> = HashMap<VertexId, T>;
 
 #[derive(Debug, Default)]
@@ -44,50 +39,6 @@ pub struct PolyGraph {
     /// Edge length
     pub edge_length: f32,
 }
-
-/*
-#[derive(Clone)]
-pub struct Vertex {
-    id: VertexId,
-    adj: Vec<Vertex>,
-    v_prime: Rc<T_Vertex>,
-    root: Rc<T_Vertex>,
-    c: usize,
-    dqueue: Vec<(T_Vertex, usize)>,
-}
-impl Vertex {
-    pub fn new(v: VertexId, id: VertexId) -> Self {
-        let v_prime = Rc::new(T_Vertex::new(v));
-        Self {
-            id,
-            adj: Vec::new(),
-            v_prime: v_prime.clone(),
-            root: v_prime.clone(),
-            c: 1,
-            dqueue: Vec::new(),
-        }
-    }
-}
-
-#[derive(Clone)]
-pub struct T_Vertex {
-    vertex: Rc<Vertex>,
-    cor: Option<Rc<T_Vertex>>,
-    parent: Option<VertexId>,
-    children: Vec<T_Vertex>,
-}
-
-impl T_Vertex {
-    pub fn new(v: VertexId) -> Self {
-        Self {
-            vertex: Rc::new(Vertex::new(v, v)),
-            cor: None,
-            parent: None,
-            children: Vec::new(),
-        }
-    }
-}
-*/
 
 impl PolyGraph {
     /// New with n vertices
@@ -154,9 +105,9 @@ impl PolyGraph {
 
     /// Edges of a vertex
     pub fn edges(&self, v: &VertexId) -> Vec<Edge> {
-        self.connections(v)
-            .into_iter()
-            .map(|other| (*v, other).into())
+        self.adjacents
+            .iter()
+            .filter_map(|e| if e.other(v).is_some() { Some(*e) } else { None })
             .collect()
     }
 
