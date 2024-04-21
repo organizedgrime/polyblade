@@ -166,7 +166,6 @@ mod test {
         graph.contract_edge((1, 3));
         graph.recompute_qualities();
 
-        println!("g: {:?}", graph);
         assert_eq!(graph.vertices.len(), 5);
         assert_eq!(graph.adjacents.len(), 4);
 
@@ -198,7 +197,6 @@ mod test {
         graph.split_vertex(&1);
         graph.recompute_qualities();
 
-        println!("g: {:?}", graph);
         assert_eq!(graph.vertices.len(), 8);
         assert_eq!(graph.adjacents.len(), 8);
     }

@@ -144,6 +144,7 @@ impl PolyGraph {
         println!("deleting {v}");
         println!("adjacents {:?}", self.adjacents);
 
+        self.vertices.remove(v);
         self.adjacents = self
             .adjacents
             .clone()
