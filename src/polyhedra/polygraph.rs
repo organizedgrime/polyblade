@@ -46,6 +46,7 @@ pub struct PolyGraph {
     pub edge_length: f32,
 }
 
+#[derive(Clone)]
 pub struct Vertex {
     id: VertexId,
     adj: Vec<VertexId>,
@@ -268,7 +269,12 @@ impl PolyGraph {
         self.neighbors = neighbors
     }
 
-    fn extend(v: Vertex, d: usize, &mut dist: VertMatrix<usize>, paths: &mut VertMatrix<usize>) {
+    fn extend(
+        v: Vertex,
+        d: usize,
+        mut dist: VertMatrix<u32>,
+        mut paths: VertMatrix<usize>,
+    ) -> (VertMatrix<u32>, VertMatrix<usize>) {
         if d == 1 {
         } else {
             let n = dist.len();
@@ -283,46 +289,58 @@ impl PolyGraph {
                 // remove it
                 //v.dqueue.
 
-                if let Some(cor) = w_prime.cor {
-                    for x_pprime in cor.children {
-                        let x = x_pprime.vertex;
+                if let Some(cor) = &w_prime.cor {
+                    for x_pprime in &cor.children {
+                        let x = &x_pprime.vertex;
 
                         if paths[&x.id][&v.id] == VertexId::MAX {
-                            dist[&x.id][&v.id] = d;
-                            let w = w_prime.vertex;
-                            paths[&x.id][&v.id] = w.id;
+                            dist.get_mut(&x.id).unwrap().insert(v.id, d as u32);
+                            //dist[&x.id][&v.id] = d as u32;
+                            let w = &w_prime.vertex;
+                            paths.get_mut(&x.id).unwrap().insert(v.id, w.id);
+                            //paths[&x.id][&v.id] = w.id;
                             let mut x_prime = T_Vertex::new(x.id);
-                            x_prime.cor = Some(Rc::new(x_pprime));
+                            x_prime.cor = Some(Rc::new(x_pprime.clone()));
                         }
                     }
                 }
             }
         }
+
+        (dist, paths)
     }
 
     fn pst(&mut self) {
         // The element D[i, j] represents the distance from v_i to vj.
-        let mut dist = VertMatrix::<usize>::new();
+        let mut dist = VertMatrix::<u32>::new();
         // The element S[i,j] represents the parent of v_i on the shortest path from v_i to a source
         // vertex v_j.
-        let mut shortest = VertMatrix::<VertexId>::new();
+        let mut paths = VertMatrix::<VertexId>::new();
 
         // let the diagonal elements of S already be initialized to NO_PARENT (-1) and all other
         // elements to NOT_SEARCHED (0). NO_PARENT means v_i is a source vertex.
         for i in self.vertices.iter() {
             dist.insert(*i, self.vertices.iter().map(|j| (*j, 0)).collect());
-            shortest.insert(*i, self.vertices.iter().map(|j| (*j, 0)).collect());
-            shortest.get_mut(i).unwrap().insert(*i, VertexId::MAX);
+            paths.insert(*i, self.vertices.iter().map(|j| (*j, 0)).collect());
+            paths.get_mut(i).unwrap().insert(*i, VertexId::MAX);
         }
 
-        let verts = self.vertices.clone();
+        let mut verts: Vec<Vertex> = self
+            .vertices
+            .clone()
+            .into_iter()
+            .map(|vid| Vertex::new(vid, vid))
+            .collect();
+
         let mut depth = 0;
         while 0 < verts.len() {
             depth += 1;
-            let v_new = Vec::new();
-            for v in self.vertices {
-                Self::extend(v, depth, &mut dist, &mut shortest);
-                if v.c < n {
+            let mut v_new = Vec::new();
+            for v in verts.clone().into_iter() {
+                let x = Self::extend(v.clone(), depth, dist, paths);
+                dist = x.0;
+                paths = x.1;
+                if v.c < self.vertices.len() {
                     v_new.push(v);
                 }
             }
