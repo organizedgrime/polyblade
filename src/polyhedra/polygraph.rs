@@ -141,9 +141,6 @@ impl PolyGraph {
     }
 
     pub fn delete(&mut self, v: &VertexId) {
-        println!("deleting {v}");
-        println!("adjacents {:?}", self.adjacents);
-
         self.vertices.remove(v);
         self.adjacents = self
             .adjacents
@@ -151,7 +148,6 @@ impl PolyGraph {
             .into_iter()
             .filter(|e| e.id().0 != *v && e.id().1 != *v)
             .collect();
-        println!("adjacents2 {:?}", self.adjacents);
         self.positions.remove(v);
         self.speeds.remove(v);
     }

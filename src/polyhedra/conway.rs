@@ -9,7 +9,9 @@ impl PolyGraph {
         let id = self.ghost_edges.get(&e).unwrap_or(&e).id();
         // Give b all the same connections as a
         for b in self.connections(&id.0).iter() {
-            self.connect((b, &id.1))
+            if b != &id.1 {
+                self.connect((b, &id.1))
+            }
         }
         // Delete a
         self.delete(&id.0);
@@ -167,6 +169,7 @@ mod test {
         graph.recompute_qualities();
 
         assert_eq!(graph.vertices.len(), 5);
+        println!("adja: {:?}", graph.adjacents);
         assert_eq!(graph.adjacents.len(), 4);
 
         assert_eq!(graph.connections(&0), vec![3].into_iter().collect());
