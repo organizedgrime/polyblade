@@ -49,7 +49,7 @@ pub struct PolyGraph {
 #[derive(Clone)]
 pub struct Vertex {
     id: VertexId,
-    adj: Vec<VertexId>,
+    adj: Vec<Vertex>,
     v_prime: Rc<T_Vertex>,
     root: Rc<T_Vertex>,
     c: usize,
@@ -270,12 +270,20 @@ impl PolyGraph {
     }
 
     fn extend(
-        v: Vertex,
+        &self,
+        mut v: Vertex,
         d: usize,
         mut dist: VertMatrix<u32>,
         mut paths: VertMatrix<usize>,
     ) -> (VertMatrix<u32>, VertMatrix<usize>) {
         if d == 1 {
+            for w in v.adj {
+                dist.get_mut(&w.id).unwrap().insert(v.id, d as u32);
+                paths.get_mut(&w.id).unwrap().insert(v.id, v.id);
+                let mut w_prime = T_Vertex::new(w.id);
+                w_prime.cor = Some(w.root);
+                v.v_prime.children.push(w_prime);
+            }
         } else {
             let n = dist.len();
             while let Some((i, w_prime)) = v
@@ -311,6 +319,14 @@ impl PolyGraph {
     }
 
     fn pst(&mut self) {
+        let n = self.vertices.len();
+        /// Vertex
+        //
+        // d-queues associated w each vertex
+        let dqueues: VertMatrix<usize> = Default::default();
+        // Counters for vertices whos shortest paths have already been obtained
+        let counters: HashMap<VertexId, usize> = self.vertices.iter().map(|v| (*v, 1)).collect();
+
         // The element D[i, j] represents the distance from v_i to vj.
         let mut dist = VertMatrix::<u32>::new();
         // The element S[i,j] represents the parent of v_i on the shortest path from v_i to a source
@@ -325,23 +341,15 @@ impl PolyGraph {
             paths.get_mut(i).unwrap().insert(*i, VertexId::MAX);
         }
 
-        let mut verts: Vec<Vertex> = self
-            .vertices
-            .clone()
-            .into_iter()
-            .map(|vid| Vertex::new(vid, vid))
-            .collect();
-
+        let mut verts: HashSet<VertexId> = self.vertices.clone();
         let mut depth = 0;
         while 0 < verts.len() {
             depth += 1;
-            let mut v_new = Vec::new();
-            for v in verts.clone().into_iter() {
-                let x = Self::extend(v.clone(), depth, dist, paths);
-                dist = x.0;
-                paths = x.1;
-                if v.c < self.vertices.len() {
-                    v_new.push(v);
+            let mut v_new = HashSet::new();
+            for v in verts.iter() {
+                //let x = self.extend(v.clone(), depth, dist, paths);
+                if *counters.get(v).unwrap() < n {
+                    v_new.insert(*v);
                 }
             }
             verts = v_new;
