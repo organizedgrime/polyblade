@@ -9,8 +9,8 @@ use std::{
     u32,
 };
 
-type HashMatrix<V, T> = HashMap<V, HashMap<V, T>>;
-type VertMatrix<T> = HashMatrix<VertexId, T>;
+//type HashMatrix<V, T> = HashMap<V, HashMap<V, T>>;
+//type VertMatrix<T> = HashMatrix<VertexId, T>;
 type VertMap<T> = HashMap<VertexId, T>;
 
 #[derive(Debug, Default)]
@@ -32,7 +32,7 @@ pub struct PolyGraph {
     pub neighbors: HashSet<Edge>,
     pub diameter: HashSet<Edge>,
     /// Distances between all points
-    pub dist: VertMatrix<u32>,
+    pub dist: HashMap<Edge, usize>,
 
     /// [Render Properties]
     /// Positions in 3D space
@@ -239,8 +239,9 @@ impl PolyGraph {
         let mut neighbors = HashSet::<Edge>::new();
         for u in self.vertices.iter() {
             for v in self.vertices.iter() {
-                if self.dist[u][v] == 2 || self.dist[v][u] == 2 {
-                    neighbors.insert((u, v).into());
+                let e: Edge = (v, u).into();
+                if self.dist.get(&e) == Some(&2) {
+                    neighbors.insert(e);
                 }
             }
         }
@@ -409,23 +410,28 @@ impl PolyGraph {
             }
         }
 
-        self.dist = dist;
+        let mut dd = HashMap::new();
+        for v in self.vertices.iter() {
+            for u in self.vertices.iter() {
+                let dvu = dist[&v][&u];
+                if dvu != u32::MAX && dvu != 0 {
+                    let e = (v, u).into();
+                    dd.insert(e, dvu as usize);
+                }
+            }
+        }
+
+        self.dist = dd;
     }
 
     /// Periphery / diameter
     pub fn diameter(&mut self) {
-        if let Some(max) = self
-            .dist
-            .values()
-            .flatten()
-            .map(|(_, d)| d)
-            .filter(|&d| d < &u32::MAX)
-            .max()
-        {
+        if let Some(max) = self.dist.values().max() {
             let mut diameter = HashSet::<Edge>::new();
             for u in self.vertices.iter() {
                 for v in self.vertices.iter() {
-                    if &self.dist[u][v] == max || &self.dist[v][u] == max {
+                    let e: Edge = (u, v).into();
+                    if self.dist.get(&e) == Some(max) {
                         diameter.insert((u, v).into());
                     }
                 }

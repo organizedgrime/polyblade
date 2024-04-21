@@ -40,11 +40,15 @@ impl PolyGraph {
 
         'connections: while !connections.is_empty() {
             // closest vertex to the previous which is not itself and is connected
-            let u = self.dist[&previous]
+            let u = self
+                .dist
                 .iter()
-                .filter(|(id, _)| *id != &previous && connections.contains(id))
-                .min_by(|(_, c), (_, d)| c.cmp(d))
-                .map(|(id, _)| *id)
+                .filter(|(e, d)| {
+                    (e.id().0 == previous || e.id().1 == previous)
+                        && connections.contains(&e.other(&previous).unwrap())
+                })
+                .min_by(|(_, d), (_, d2)| d.cmp(d2))
+                .map(|(e, _)| e.other(&previous).unwrap())
                 .unwrap();
 
             // Insert a new node in the same location
