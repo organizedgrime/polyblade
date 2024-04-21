@@ -427,16 +427,11 @@ impl PolyGraph {
     /// Periphery / diameter
     pub fn diameter(&mut self) {
         if let Some(max) = self.dist.values().max() {
-            let mut diameter = HashSet::<Edge>::new();
-            for u in self.vertices.iter() {
-                for v in self.vertices.iter() {
-                    let e: Edge = (u, v).into();
-                    if self.dist.get(&e) == Some(max) {
-                        diameter.insert((u, v).into());
-                    }
-                }
-            }
-            self.diameter = diameter
+            self.diameter = self
+                .dist
+                .iter()
+                .filter_map(|(e, d)| if d == max { Some(*e) } else { None })
+                .collect();
         }
     }
 
