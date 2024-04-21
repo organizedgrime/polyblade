@@ -33,7 +33,6 @@ impl PolyGraph {
         // Remove the vertex
         self.delete(v);
         // Recompute distances in the absence of the vertex
-        self.adjacents();
         self.distances();
         self.faces();
 

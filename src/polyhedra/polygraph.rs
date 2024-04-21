@@ -20,8 +20,8 @@ pub struct PolyGraph {
 
     /// [Actual Graph]
     pub vertices: HashSet<VertexId>,
-    /// Adjacents
-    pub adjacency_matrix: VertMatrix<bool>,
+    /// Vertices that are adjacent
+    pub adjacents: HashSet<Edge>,
     /// Edges that have had Vertices split
     pub ghost_edges: HashMap<Edge, Edge>,
 
@@ -29,7 +29,6 @@ pub struct PolyGraph {
     /// Faces
     pub faces: Vec<Face>,
     /// Edge sets
-    pub adjacents: HashSet<Edge>,
     pub neighbors: HashSet<Edge>,
     pub diameter: HashSet<Edge>,
     /// Distances between all points
@@ -95,9 +94,6 @@ impl PolyGraph {
     pub fn new_disconnected(vertex_count: usize) -> Self {
         let mut poly = Self {
             vertices: (0..vertex_count).collect(),
-            adjacency_matrix: (0..vertex_count)
-                .map(|x| (x, (0..vertex_count).map(|y| (y, false)).collect()))
-                .collect(),
             positions: (0..vertex_count)
                 .map(|x| (x, vec3(random(), random(), random()).normalize()))
                 .collect(),
@@ -124,25 +120,15 @@ impl PolyGraph {
     }
 
     pub fn connect(&mut self, e: impl Into<Edge>) {
-        let (v, u) = e.into().id();
-        self.adjacency_matrix.get_mut(&v).unwrap().insert(u, true);
-        self.adjacency_matrix.get_mut(&u).unwrap().insert(v, true);
+        self.adjacents.insert(e.into());
     }
 
     pub fn disconnect(&mut self, e: impl Into<Edge>) {
-        let (v, u) = e.into().id();
-        self.adjacency_matrix.get_mut(&v).unwrap().insert(u, false);
-        self.adjacency_matrix.get_mut(&u).unwrap().insert(v, false);
+        self.adjacents.remove(&e.into());
     }
 
     pub fn insert(&mut self, pos: Option<Vector3<f32>>) -> VertexId {
         let new_id = self.vertices.iter().max().unwrap() + 1;
-        // Adjacency matrix update
-        for (_, l) in self.adjacency_matrix.iter_mut() {
-            (*l).insert(new_id, false);
-        }
-        self.adjacency_matrix
-            .insert(new_id, self.vertices.iter().map(|v| (*v, false)).collect());
         self.vertices.insert(new_id);
         // Position and speed
         self.positions.insert(
@@ -155,11 +141,16 @@ impl PolyGraph {
     }
 
     pub fn delete(&mut self, v: &VertexId) {
-        for (_, l) in self.adjacency_matrix.iter_mut() {
-            (*l).remove(v);
-        }
-        self.vertices.remove(v);
-        self.adjacency_matrix.remove(v);
+        println!("deleting {v}");
+        println!("adjacents {:?}", self.adjacents);
+
+        self.adjacents = self
+            .adjacents
+            .clone()
+            .into_iter()
+            .filter(|e| e.id().0 != *v && e.id().1 != *v)
+            .collect();
+        println!("adjacents2 {:?}", self.adjacents);
         self.positions.remove(v);
         self.speeds.remove(v);
     }
@@ -174,18 +165,16 @@ impl PolyGraph {
 
     /// Number of faces
     pub fn face_count(&mut self) -> i64 {
-        2 + self.adjacents.len() as i64 - self.adjacency_matrix.len() as i64
+        2 + self.adjacents.len() as i64 - self.vertices.len() as i64
     }
 
     // Vertices that are connected to a given vertex
     pub fn connections(&self, v: &VertexId) -> HashSet<VertexId> {
-        if let Some(l) = self.adjacency_matrix.get(v) {
-            l.iter()
-                .filter_map(|(k, v)| if *v { Some(*k) } else { None })
-                .collect::<HashSet<usize>>()
-        } else {
-            HashSet::new()
-        }
+        self.adjacents
+            .iter()
+            .filter(|e| e.id().0 == *v || e.id().1 == *v)
+            .map(|e| e.other(v).unwrap())
+            .collect()
     }
 
     pub fn ghost_connections(&self, v: &VertexId) -> HashSet<VertexId> {
@@ -248,16 +237,6 @@ impl PolyGraph {
         self.faces = cycles.into_iter().collect();
     }
 
-    /// All edges
-    pub fn adjacents(&mut self) {
-        self.adjacents = self.vertices.iter().flat_map(|v| self.edges(v)).fold(
-            HashSet::<Edge>::new(),
-            |mut acc, e| {
-                acc.insert(e);
-                acc
-            },
-        )
-    }
     /// Neighbors
     pub fn neighbors(&mut self) {
         let mut neighbors = HashSet::<Edge>::new();
@@ -462,7 +441,6 @@ impl PolyGraph {
 
     pub fn recompute_qualities(&mut self) {
         //
-        self.adjacents();
         self.distances();
         // Neighbors and diameters rely on distances
         self.neighbors();
