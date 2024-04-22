@@ -259,7 +259,7 @@ impl PolyGraph {
         //
         // d-queues associated w each vertex
         // maps from v -> ( maps from d -> u )
-        let mut dqueue: VecDeque<(Edge, usize)> = Default::default();
+        let mut dqueue: VecDeque<Edge> = Default::default();
         //
         let mut children: HashMap<VertexId, Vec<VertexId>> = Default::default();
         // Counters for vertices whos shortest paths have already been obtained
@@ -320,9 +320,8 @@ impl PolyGraph {
                         dist.insert(e, 1);
                         // add w' to v'.children
                         children.entry(v).or_default().push(w);
-                        children.entry(w).or_default().push(v);
                         // v.que.enque(w', 1)
-                        dqueue.push_back((e, 1));
+                        dqueue.push_back(e);
                         // v.c = v.c + 1
                         remaining.remove(&e);
                     }
@@ -330,14 +329,8 @@ impl PolyGraph {
             } else {
                 // w = v.que.deque(d - 1)
                 // while w is not None:
-                'dq: while let Some((e, d)) = dqueue.pop_front() {
+                'dq: while let Some(e) = dqueue.pop_front() {
                     let (w, v) = e.id();
-                    /*
-                    if d != depth - 1 {
-                        dqueue.push_back((e, d));
-                        break;
-                    }
-                    */
                     // for x in w.children
                     for x in children.entry(w).or_default().clone().into_iter() {
                         let e: Edge = (x, v).into();
@@ -346,14 +339,13 @@ impl PolyGraph {
                             dist.insert(e, depth);
                             // add x' to w' children
                             children.entry(w).or_default().push(x);
-                            children.entry(x).or_default().push(w);
                             // v.que.enque(x', d)
-                            dqueue.push_back((e, depth));
+                            dqueue.push_back(e);
                             // v.c = v.c + 1
                             remaining.remove(&e);
                             // if v.c == n: return
                             if remaining.iter().find(|e| e.other(&v).is_some()).is_none() {
-                                continue 'dq;
+                                break 'dq;
                             }
                         }
                     }
@@ -489,19 +481,37 @@ mod test {
     fn pst(mut graph: PolyGraph) {
         let new_dist = graph.dist.clone();
 
+        graph.dist = Default::default();
         graph._floyd();
         let old_dist = graph.dist.clone();
 
-        graph.dist = Default::default();
         //assert_eq!(old_dist, graph.dist);
         assert_eq!(
             old_dist
+                .clone()
                 .into_keys()
                 .collect::<HashSet<_>>()
-                .difference(&new_dist.into_keys().collect::<HashSet<_>>())
+                .difference(&new_dist.clone().into_keys().collect::<HashSet<_>>())
                 .collect::<HashSet<_>>(),
             HashSet::new()
         );
+
+        let o1 = old_dist
+            .clone()
+            .into_iter()
+            .map(|(k, v)| (k.id().0, k.id().1, v))
+            .collect::<HashSet<_>>();
+        let o2 = &new_dist
+            .clone()
+            .into_iter()
+            .map(|(k, v)| (k.id().0, k.id().1, v))
+            .collect::<HashSet<_>>();
+
+        assert_eq!(
+            o1.difference(o2).collect::<HashSet<_>>(),
+            o2.difference(&o1).collect::<HashSet<_>>()
+        );
+        assert_eq!(old_dist, new_dist);
         //println!("nd: {:#?}", graph.dist);
 
         /*
