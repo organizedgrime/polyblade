@@ -274,12 +274,12 @@ impl PolyGraph {
         for i in self.vertices.iter() {
             for j in self.vertices.iter() {
                 if i != j {
-                    let e = (i, j).into();
-                    dist.insert(e, 0);
-                    paths.insert(e, 0);
+                    //let e = (i, j).into();
+                    //dist.insert(e, 0);
+                    //paths.insert(e, 0);
                 }
             }
-            paths.insert((i, i).into(), VertexId::MAX);
+            //paths.insert((i, i).into(), VertexId::MAX);
         }
 
         let mut verts: HashSet<VertexId> = self.vertices.clone();
@@ -291,6 +291,7 @@ impl PolyGraph {
             depth += 1;
             let mut v_new = HashSet::new();
             for v in verts.iter() {
+                /// START EXTEND
                 if depth == 1 {
                     for w in self.connections(v) {
                         let e: Edge = (w, *v).into();
@@ -330,26 +331,29 @@ impl PolyGraph {
 
                         // for x'' in w'.cor.children
                         for xpp in children.get(cors.get(&wp).unwrap()).unwrap().clone() {
-                            let e: Edge = (xpp, *v).into();
-                            if *paths.entry(e).or_insert(0) == 0 {
-                                // D[x.id, v.id] = d;
-                                dist.insert(e, depth);
-                                // S[x.id, v.id] = w.id;
-                                paths.insert(e, wp);
-                                // x' = T_V(x)
-                                // x.cor = x''
-                                cors.insert(xpp, xpp);
-                                // add w' to w' children
-                                children.entry(wp).or_default().push(xpp);
-                                // x'.parent = w'
-                                parents.insert(xpp, wp);
-                                // v.que.enque(x', d)
-                                dqueues.entry(*v).or_default().push((xpp, depth));
-                                // v.c = v.c + 1
-                                let vc = counters.entry(*v).or_insert(1);
-                                *vc += 1;
-                                if *vc == n {
-                                    return;
+                            if xpp != *v {
+                                let e: Edge = (xpp, *v).into();
+                                if *paths.entry(e).or_insert(0) == 0 {
+                                    // D[x.id, v.id] = d;
+                                    dist.insert(e, depth);
+                                    // S[x.id, v.id] = w.id;
+                                    paths.insert(e, wp);
+                                    // x' = T_V(x)
+                                    // x.cor = x''
+                                    cors.insert(xpp, xpp);
+                                    // add w' to w' children
+                                    children.entry(wp).or_default().push(xpp);
+                                    // x'.parent = w'
+                                    parents.insert(xpp, wp);
+                                    // v.que.enque(x', d)
+                                    dqueues.entry(*v).or_default().push((xpp, depth));
+                                    // v.c = v.c + 1
+                                    let vc = counters.entry(*v).or_insert(1);
+                                    *vc += 1;
+                                    if *vc == n {
+                                        self.dist = dist;
+                                        return;
+                                    }
                                 }
                             }
                         }
@@ -357,12 +361,16 @@ impl PolyGraph {
                         // w' = v.que.deque(d-1)
                     }
                 }
-
+                /// END EXTEND
                 if *counters.entry(*v).or_default() < n {
                     v_new.insert(*v);
                 }
             }
             verts = v_new;
+
+            if depth > 14 {
+                break;
+            }
         }
 
         self.dist = dist;
