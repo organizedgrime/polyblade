@@ -283,18 +283,25 @@ impl PolyGraph {
         }
 
         let mut verts: HashSet<VertexId> = self.vertices.clone();
+        // d = 0
         let mut depth = 0;
+        // while 0 < |V|
         while 0 < verts.len() {
             println!("d: {depth}, D: {dist:?}, S: {paths:?}");
             println!("dqueues: {dqueues:?}, children: {children:?}, parents: {parents:?}");
             println!("cors: {cors:?}, roots: {roots:?}");
+            // d = d + 1
             depth += 1;
+            // set an empty set to V_new
             let mut v_new = HashSet::new();
+            // for v in V
             for v in verts.iter() {
-                /// START EXTEND
+                // START EXTEND(v, d, D, S)
                 if depth == 1 {
-                    for w in self.connections(v) {
-                        let e: Edge = (w, *v).into();
+                    //
+                    for e in self.edges(v) {
+                        let w = e.other(v).unwrap();
+                        println!("E(1): {e}");
                         // D[w.id, v.id] = d
                         dist.insert(e, depth);
                         // S[w.id, v.id] = v.id
@@ -310,6 +317,7 @@ impl PolyGraph {
                         dqueues.entry(*v).or_default().push((w, 1));
                         // v.c = v.c + 1
                         *counters.get_mut(v).unwrap() += 1;
+                        println!("dqeuues: {dqueues:?}");
                     }
                 } else {
                     // n = len(D)
@@ -361,11 +369,14 @@ impl PolyGraph {
                         // w' = v.que.deque(d-1)
                     }
                 }
-                /// END EXTEND
+                // END EXTEND
+
                 if *counters.entry(*v).or_default() < n {
                     v_new.insert(*v);
                 }
             }
+
+            println!("updating verts to be {verts:?}");
             verts = v_new;
 
             if depth > 14 {
