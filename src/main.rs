@@ -189,7 +189,7 @@ pub fn main() {
                     camera.viewport(),
                     xyz_buffer.vertex_count(),
                 );
-                return Ok::<(), RenderError>(());
+                Ok::<(), RenderError>(())
             })
             .unwrap()
             .write(|| gui.render())

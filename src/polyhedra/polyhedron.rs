@@ -150,7 +150,6 @@ impl PolyGraph {
 
     pub fn xyz_buffer(&self) -> Vec<Vector3<f32>> {
         (0..self.faces.len())
-            .into_iter()
             .fold(Vec::new(), |acc, i| [acc, self.face_xyz_buffer(i)].concat())
     }
 

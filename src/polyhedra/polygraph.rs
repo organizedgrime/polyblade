@@ -200,7 +200,7 @@ impl PolyGraph {
 
     #[allow(dead_code)]
     pub fn pst(&mut self) {
-        if self.adjacents.len() == 0 {
+        if self.adjacents.is_empty() {
             return;
         }
 
@@ -351,7 +351,7 @@ impl PolyGraph {
         let mut dd = HashMap::new();
         for v in self.vertices.iter() {
             for u in self.vertices.iter() {
-                let dvu = dist[&v][&u];
+                let dvu = dist[v][u];
                 if dvu != u32::MAX && dvu != 0 {
                     let e = (v, u).into();
                     dd.insert(e, dvu as usize);
