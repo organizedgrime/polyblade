@@ -250,7 +250,7 @@ impl PolyGraph {
     */
 
     #[allow(dead_code)]
-    fn pst(&mut self) {
+    pub fn pst(&mut self) {
         let n = self.vertices.len();
 
         // Vertex
@@ -329,34 +329,36 @@ impl PolyGraph {
                     // w = v.que.deque(d - 1)
                     println!("v: {v}, d-1: {}", depth - 1);
                     // while w is not None:
-                    'dq: while let Some((d, w)) =
-                        dqueues.clone().entry(v).or_default().front().clone()
-                    {
-                        if *d != depth - 1 {
-                            break;
-                        } else {
-                            println!("popped front from {v}q");
-                            dqueues.get_mut(&v).unwrap().pop_front();
-                        }
-                        //println!("in dq: {:?}", dqueues.entry(*v));
-                        // for x in w.children
-                        for x in children.entry(*w).or_default().clone().into_iter() {
-                            let e: Edge = (x, v).into();
-                            if remaining.contains(&e) {
-                                // D[x.id, v.id] = d;
-                                dist.insert(e, depth);
-                                // add x' to w' children
-                                children.entry(*w).or_default().push(x);
-                                // v.que.enque(x', d)
-                                dqueues.entry(v).or_default().push_back((depth, x));
-                                // v.c = v.c + 1
-                                remaining.remove(&e);
-                                // if v.c == n: return
-                                if remaining.iter().find(|e| e.other(&v).is_some()).is_none() {
-                                    println!("returning because {v}'s counter was {n}");
-                                    break 'dq;
+                    'dq: loop {
+                        if let Some((d, w)) = dqueues.get_mut(&v).unwrap().pop_front() {
+                            if d != depth - 1 {
+                                dqueues.get_mut(&v).unwrap().push_back((d, w));
+                                dqueues.get_mut(&w).unwrap().push_back((d, v));
+                                break;
+                            }
+                            //println!("in dq: {:?}", dqueues.entry(*v));
+                            // for x in w.children
+                            for x in children.entry(w).or_default().clone().into_iter() {
+                                let e: Edge = (x, v).into();
+                                if remaining.contains(&e) {
+                                    // D[x.id, v.id] = d;
+                                    dist.insert(e, depth);
+                                    // add x' to w' children
+                                    children.entry(w).or_default().push(x);
+                                    // v.que.enque(x', d)
+                                    dqueues.entry(v).or_default().push_back((depth, x));
+                                    dqueues.entry(x).or_default().push_back((depth, v));
+                                    // v.c = v.c + 1
+                                    remaining.remove(&e);
+                                    // if v.c == n: return
+                                    if remaining.iter().find(|e| e.other(&v).is_some()).is_none() {
+                                        println!("returning because {v}'s counter was {n}");
+                                        break 'dq;
+                                    }
                                 }
                             }
+                        } else {
+                            break;
                         }
                     }
                 }
@@ -365,6 +367,7 @@ impl PolyGraph {
             // d = d + 1
             depth += 1;
 
+            println!("@: {:?}", dqueues);
             if remaining.len() == rlen {
                 println!("didnt remove any from remaining");
                 self.dist = dist;
@@ -374,7 +377,7 @@ impl PolyGraph {
         self.dist = dist;
     }
 
-    pub fn distances(&mut self) {
+    pub fn _floyd(&mut self) {
         // let dist be a |V| × |V| array of minimum distances initialized to ∞ (infinity)
         let mut dist: HashMap<VertexId, HashMap<VertexId, u32>> = self
             .vertices
@@ -482,15 +485,9 @@ mod test {
     use crate::prelude::*;
     #[test]
     fn pst() {
-        let mut graph = PolyGraph::octahedron();
-        graph.distances();
+        let mut graph = PolyGraph::dodecahedron();
+        graph._floyd();
         let old_dist = graph.dist.clone();
-        println!(
-            "od: {}",
-            old_dist
-                .iter()
-                .fold(String::new(), |acc, (e, d)| format!("{acc}, [{e}, {d}]"))
-        );
         graph.dist = Default::default();
         // Connect
         graph.pst();

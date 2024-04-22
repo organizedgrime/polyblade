@@ -35,7 +35,7 @@ impl PolyGraph {
         // Remove the vertex
         self.delete(v);
         // Recompute distances in the absence of the vertex
-        self.distances();
+        self.pst();
         self.faces();
 
         'connections: while !connections.is_empty() {
