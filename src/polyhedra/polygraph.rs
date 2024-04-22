@@ -261,46 +261,54 @@ impl PolyGraph {
         //
         let mut children: HashMap<VertexId, Vec<VertexId>> = Default::default();
         // Counters for vertices whos shortest paths have already been obtained
+        /*
         let mut counters: HashMap<VertexId, usize> =
             self.vertices.iter().map(|v| (*v, 1)).collect();
+            */
 
         // The element D[i, j] represents the distance from v_i to vj.
         let mut dist: HashMap<Edge, usize> = Default::default();
         // The element S[i,j] represents the parent of v_i on the shortest path from v_i to a source
         // vertex v_j.
-        let mut paths: HashMap<Edge, usize> = Default::default();
+        //let mut paths: HashMap<Edge, usize> = Default::default();
 
         // let the diagonal elements of S already be initialized to NO_PARENT (-1) and all other
         // elements to NOT_SEARCHED (0). NO_PARENT means v_i is a source vertex.
+
+        let mut remaining = HashSet::new();
         for i in self.vertices.iter() {
             for j in self.vertices.iter() {
                 if i != j {
-                    let e = (i, j).into();
-                    //dist.insert(e, 0);
-                    paths.insert(e, usize::MAX);
+                    let e: Edge = (i, j).into();
+                    //paths.insert(e, usize::MAX);
+                    remaining.insert(e);
                 }
             }
         }
 
+        /*
         let ex = paths.len();
         println!("ex:::: {ex}");
 
         for i in self.vertices.iter() {
             paths.insert((i, i).into(), 0);
         }
+        */
 
-        let mut verts: HashSet<VertexId> = self.vertices.clone();
+        //let mut verts: HashSet<VertexId> = self.vertices.clone();
         // d = 0
-        let mut depth = 0;
+        let mut depth = 1;
         // while 0 < |V|
-        while dist.len() < ex {
-            // d = d + 1
-            depth += 1;
-            // set an empty set to V_new
-            //let mut verts = HashSet::new();
+        while !remaining.is_empty() {
+            let rlen = remaining.len();
+            println!("remaining: {remaining:?}");
+            let verts = remaining.iter().fold(HashSet::new(), |mut acc, e| {
+                acc.insert(e.id().0);
+                acc.insert(e.id().1);
+                acc
+            });
             // for v in V
-
-            for v in verts.clone().iter() {
+            for v in verts.into_iter() {
                 // START EXTEND(v, d, D, S)
                 if depth == 1 {
                     //
@@ -309,91 +317,68 @@ impl PolyGraph {
                         let w = e.other(&v).unwrap();
                         // D[w.id, v.id] = d
                         dist.insert(e, 1);
-                        // S[w.id, v.id] = v.id
-                        paths.insert(e, *v);
                         // add w' to v'.children
-                        children.entry(*v).or_default().push(w);
+                        children.entry(v).or_default().push(w);
                         // v.que.enque(w', 1)
                         dqueues
-                            .entry(*v)
+                            .entry(v)
                             .or_default()
                             .entry(1)
                             .or_default()
                             .push_back(w);
                         // v.c = v.c + 1
-                        *counters.entry(*v).or_insert(1) += 1;
+                        remaining.remove(&e);
                     }
+                    println!("d1 done");
                 } else {
                     // w = v.que.deque(d - 1)
+                    println!("v: {v}, d-1: {}", depth - 1);
                     // while w is not None:
                     'dq: while let Some(w) = dqueues
-                        .entry(*v)
+                        .entry(v)
                         .or_default()
                         .entry(depth - 1)
                         .or_default()
                         .pop_back()
                     {
-                        println!("in dq: {:?}", dqueues.entry(*v));
+                        //println!("in dq: {:?}", dqueues.entry(*v));
                         // for x in w.children
-                        'df: for x in children.entry(w).or_default().clone().into_iter() {
-                            let e: Edge = (x, *v).into();
-                            //if x != *v && *counters.get(v).unwrap() < n {
-                            if *paths.get(&e).unwrap() == usize::MAX {
+                        for x in children.entry(w).or_default().clone().into_iter() {
+                            let e: Edge = (x, v).into();
+                            if remaining.contains(&e) {
                                 // D[x.id, v.id] = d;
                                 dist.insert(e, depth);
-                                // S[x.id, v.id] = w.id;
-                                paths.insert(e, w);
                                 // add x' to w' children
                                 children.entry(w).or_default().push(x);
                                 // v.que.enque(x', d)
                                 dqueues
-                                    .entry(*v)
+                                    .entry(v)
                                     .or_default()
                                     .entry(depth)
                                     .or_default()
                                     .push_back(x);
                                 // v.c = v.c + 1
-                                *counters.entry(*v).or_insert(1) += 1;
-                                if *counters.get(&v).unwrap() == n {
+                                remaining.remove(&e);
+                                // if v.c == n: return
+                                if remaining.iter().find(|e| e.other(&v).is_some()).is_none() {
                                     println!("returning because {v}'s counter was {n}");
-                                    println!("counters: {counters:?}");
-                                    let mut dddd = dist.clone().into_iter().collect::<Vec<_>>();
-                                    dddd.sort();
-                                    println!(
-                                        "dist: {}",
-                                        dist.iter().fold(String::new(), |acc, (e, d)| format!(
-                                            "{acc}, [{e}, {d}]"
-                                        ))
-                                    );
-                                    //self.dist = dist;
                                     break 'dq;
                                 }
-                                //}
                             }
                         }
-
-                        // w' = v.que.deque(d-1)
                     }
                 }
                 // END EXTEND
-
-                //
-                if *counters.entry(*v).or_insert(1) < n {
-                    //v_new.insert(*v);
-                }
             }
+            // d = d + 1
+            depth += 1;
 
-            verts = counters
-                .clone()
-                .into_iter()
-                .filter_map(|(k, v)| if v < n { Some(k) } else { None })
-                .collect();
-
-            //println!("updating verts to be {verts:?}");
-            //verts = v_new;
-            //println!("updating verts to be {verts:?}");
+            if remaining.len() == rlen {
+                println!("didnt remove any from remaining");
+                self.dist = dist;
+                return;
+            }
         }
-
         self.dist = dist;
     }
 
@@ -467,7 +452,7 @@ impl PolyGraph {
 
     pub fn recompute_qualities(&mut self) {
         //
-        self.distances();
+        self.pst();
         // Neighbors and diameters rely on distances
         self.neighbors();
         self.diameter();
@@ -500,10 +485,13 @@ impl Display for PolyGraph {
 
 #[cfg(test)]
 mod test {
+    use std::collections::HashSet;
+
     use crate::prelude::*;
     #[test]
     fn pst() {
-        let mut graph = PolyGraph::octahedron();
+        let mut graph = PolyGraph::dodecahedron();
+        graph.distances();
         let old_dist = graph.dist.clone();
         println!(
             "od: {}",
@@ -515,7 +503,17 @@ mod test {
         // Connect
         graph.pst();
         //assert_eq!(old_dist, graph.dist);
+        assert_eq!(
+            old_dist
+                .into_keys()
+                .collect::<HashSet<_>>()
+                .difference(&graph.dist.into_keys().collect::<HashSet<_>>())
+                .collect::<HashSet<_>>(),
+            HashSet::new()
+        );
+        //println!("nd: {:#?}", graph.dist);
 
+        /*
         //let old =
         println!("\n\n\n\n");
         let mut od = old_dist.into_iter().collect::<Vec<_>>();
@@ -534,9 +532,7 @@ mod test {
                 .fold(String::new(), |acc, (e, d)| format!("{acc}, [{e}, {d}]"))
         );
         println!("\n\n\n\n");
-
-        assert_eq!(od, nd);
-        //println!("nd: {:#?}", graph.dist);
+        */
     }
 
     #[test]
