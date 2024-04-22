@@ -198,57 +198,6 @@ impl PolyGraph {
         self.neighbors = neighbors
     }
 
-    /*
-    fn extend(
-        &self,
-        mut v: Vertex,
-        d: usize,
-        mut dist: VertMatrix<u32>,
-        mut paths: VertMatrix<usize>,
-    ) -> (VertMatrix<u32>, VertMatrix<usize>) {
-        if d == 1 {
-            for w in v.adj {
-                dist.get_mut(&w.id).unwrap().insert(v.id, d as u32);
-                paths.get_mut(&w.id).unwrap().insert(v.id, v.id);
-                let mut w_prime = T_Vertex::new(w.id);
-                w_prime.cor = Some(w.root);
-                v.v_prime.children.push(w_prime);
-            }
-        } else {
-            let n = dist.len();
-            while let Some((i, w_prime)) = v
-                .dqueue
-                .iter()
-                .enumerate()
-                .filter(|(i, (v, dx))| *dx == (d - 1))
-                .map(|(i, (v, dx))| (i, v))
-                .last()
-            {
-                // remove it
-                //v.dqueue.
-
-                if let Some(cor) = &w_prime.cor {
-                    for x_pprime in &cor.children {
-                        let x = &x_pprime.vertex;
-
-                        if paths[&x.id][&v.id] == VertexId::MAX {
-                            dist.get_mut(&x.id).unwrap().insert(v.id, d as u32);
-                            //dist[&x.id][&v.id] = d as u32;
-                            let w = &w_prime.vertex;
-                            paths.get_mut(&x.id).unwrap().insert(v.id, w.id);
-                            //paths[&x.id][&v.id] = w.id;
-                            let mut x_prime = T_Vertex::new(x.id);
-                            x_prime.cor = Some(Rc::new(x_pprime.clone()));
-                        }
-                    }
-                }
-            }
-        }
-
-        (dist, paths)
-    }
-    */
-
     #[allow(dead_code)]
     pub fn pst(&mut self) {
         if self.adjacents.len() == 0 {
@@ -526,28 +475,6 @@ mod test {
             o2.difference(&o1).collect::<HashSet<_>>()
         );
         assert_eq!(old_dist, new_dist);
-        //println!("nd: {:#?}", graph.dist);
-
-        /*
-        //let old =
-        println!("\n\n\n\n");
-        let mut od = old_dist.into_iter().collect::<Vec<_>>();
-        od.sort();
-        let mut nd = graph.dist.into_iter().collect::<Vec<_>>();
-        nd.sort();
-
-        println!(
-            "od: {}",
-            od.iter()
-                .fold(String::new(), |acc, (e, d)| format!("{acc}, [{e}, {d}]"))
-        );
-        println!(
-            "nd: {}",
-            nd.iter()
-                .fold(String::new(), |acc, (e, d)| format!("{acc}, [{e}, {d}]"))
-        );
-        println!("\n\n\n\n");
-        */
     }
 
     #[test]
