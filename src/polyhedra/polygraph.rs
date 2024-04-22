@@ -259,8 +259,6 @@ impl PolyGraph {
                         dqueue.entry(v).or_default().push_back((w, 1));
                         dqueue.entry(w).or_default().push_back((v, 1));
                         // v.c = v.c + 1
-                        //remaining.remove(&e);
-                        println!("decrementing {v} {w}");
                         *counters.get_mut(&v).unwrap() -= 1;
                         //*counters.get_mut(&w).unwrap() -= 1;
                         removed = true;
@@ -276,9 +274,6 @@ impl PolyGraph {
                                 dqueue.get_mut(&v).unwrap().push_back((w, d));
                                 break;
                             }
-                            //let (v, w) = e.id();
-                            //let e: Edge = (v, *w).into();
-
                             // for x in w.children
                             for x in children.get(&w).unwrap().clone().into_iter() {
                                 let e: Edge = (x, v).into();
@@ -292,22 +287,16 @@ impl PolyGraph {
                                     dqueue.get_mut(&v).unwrap().push_back((x, depth));
                                     dqueue.get_mut(&x).unwrap().push_back((v, depth));
                                     // v.c = v.c + 1
-                                    //remaining.remove(&e);
                                     removed = true;
-                                    println!("decrementing {v} {x}");
                                     *counters.get_mut(&v).unwrap() -= 1;
                                     *counters.get_mut(&x).unwrap() -= 1;
                                     // if v.c == n: return
-                                    //if counters.get()
                                     if *counters.get(&x).unwrap() == 0
                                         && *counters.get(&w).unwrap() == 0
                                         && *counters.get(&v).unwrap() == 0
                                     {
                                         break 'dq;
                                     }
-                                    //if remaining.iter().find(|e| e.other(&w).is_some()).is_none() {
-                                    //break 'dq;
-                                    //}
                                 }
                             }
                         } else {
@@ -328,7 +317,7 @@ impl PolyGraph {
                 return;
             }
         }
-        println!("final counters: {counters:?}");
+
         self.dist = dist;
     }
 
