@@ -251,7 +251,9 @@ impl PolyGraph {
 
     #[allow(dead_code)]
     pub fn pst(&mut self) {
-        let n = self.vertices.len();
+        if self.adjacents.len() == 0 {
+            return;
+        }
 
         // Vertex
         //
@@ -301,7 +303,6 @@ impl PolyGraph {
         // while 0 < |V|
         while !remaining.is_empty() {
             let rlen = remaining.len();
-            println!("remaining: {remaining:?}");
             let verts = remaining.iter().fold(HashSet::new(), |mut acc, e| {
                 acc.insert(e.id().0);
                 acc.insert(e.id().1);
@@ -321,13 +322,12 @@ impl PolyGraph {
                         children.entry(v).or_default().push(w);
                         // v.que.enque(w', 1)
                         dqueues.entry(v).or_default().push_back((1, w));
+                        dqueues.entry(w).or_default().push_back((1, v));
                         // v.c = v.c + 1
                         remaining.remove(&e);
                     }
-                    println!("d1 done");
                 } else {
                     // w = v.que.deque(d - 1)
-                    println!("v: {v}, d-1: {}", depth - 1);
                     // while w is not None:
                     'dq: loop {
                         if let Some((d, w)) = dqueues.get_mut(&v).unwrap().pop_front() {
@@ -336,7 +336,6 @@ impl PolyGraph {
                                 dqueues.get_mut(&w).unwrap().push_back((d, v));
                                 break;
                             }
-                            //println!("in dq: {:?}", dqueues.entry(*v));
                             // for x in w.children
                             for x in children.entry(w).or_default().clone().into_iter() {
                                 let e: Edge = (x, v).into();
@@ -352,7 +351,6 @@ impl PolyGraph {
                                     remaining.remove(&e);
                                     // if v.c == n: return
                                     if remaining.iter().find(|e| e.other(&v).is_some()).is_none() {
-                                        println!("returning because {v}'s counter was {n}");
                                         break 'dq;
                                     }
                                 }
@@ -367,9 +365,9 @@ impl PolyGraph {
             // d = d + 1
             depth += 1;
 
-            println!("@: {:?}", dqueues);
             if remaining.len() == rlen {
-                println!("didnt remove any from remaining");
+                println!("didnt remove any from {remaining:?}");
+
                 self.dist = dist;
                 return;
             }
@@ -485,18 +483,19 @@ mod test {
     use crate::prelude::*;
     #[test]
     fn pst() {
-        let mut graph = PolyGraph::dodecahedron();
+        let mut graph = PolyGraph::octahedron();
         graph._floyd();
         let old_dist = graph.dist.clone();
         graph.dist = Default::default();
         // Connect
         graph.pst();
+        let new_dist = graph.dist.clone();
         //assert_eq!(old_dist, graph.dist);
         assert_eq!(
             old_dist
                 .into_keys()
                 .collect::<HashSet<_>>()
-                .difference(&graph.dist.into_keys().collect::<HashSet<_>>())
+                .difference(&new_dist.into_keys().collect::<HashSet<_>>())
                 .collect::<HashSet<_>>(),
             HashSet::new()
         );
