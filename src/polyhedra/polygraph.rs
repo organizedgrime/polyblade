@@ -2,7 +2,7 @@ pub use super::*;
 use cgmath::{vec3, InnerSpace, Vector3, Zero};
 use rand::random;
 use std::{
-    collections::{HashMap, HashSet},
+    collections::{HashMap, HashSet, VecDeque},
     fmt::Display,
     u32,
 };
@@ -254,7 +254,7 @@ impl PolyGraph {
         /// Vertex
         //
         // d-queues associated w each vertex
-        let mut dqueues: HashMap<VertexId, Vec<(VertexId, usize)>> = Default::default();
+        let mut dqueues: HashMap<VertexId, HashMap<usize, VecDeque<VertexId>>> = Default::default();
         let mut children: HashMap<VertexId, Vec<VertexId>> = Default::default();
         let mut parents: HashMap<VertexId, VertexId> = Default::default();
         // Counters for vertices whos shortest paths have already been obtained
@@ -315,7 +315,12 @@ impl PolyGraph {
                         // w'.parent = v'
                         parents.insert(w, *v);
                         // v.que.enque(w', 1)
-                        dqueues.entry(*v).or_default().push((w, 1));
+                        dqueues
+                            .entry(*v)
+                            .or_default()
+                            .entry(1)
+                            .or_default()
+                            .push_back(w);
                         // v.c = v.c + 1
                         *counters.entry(*v).or_insert(1) += 1;
                         println!("dqeuues: {dqueues:?}");
@@ -328,11 +333,9 @@ impl PolyGraph {
                     while let Some(wp) = dqueues
                         .entry(*v)
                         .or_default()
-                        .iter()
-                        .filter(|(_, vd)| *vd == depth - 1)
-                        .collect::<Vec<_>>()
-                        .first()
-                        .map(|(w, _)| w.clone())
+                        .entry(depth - 1)
+                        .or_default()
+                        .pop_back()
                     {
                         // actually finish the dequeuque
                         //vqueue.remove(wp);
@@ -360,7 +363,12 @@ impl PolyGraph {
                                 // x'.parent = w'
                                 parents.insert(xpp, wp);
                                 // v.que.enque(x', d)
-                                dqueues.entry(*v).or_default().push((xpp, depth));
+                                dqueues
+                                    .entry(*v)
+                                    .or_default()
+                                    .entry(depth)
+                                    .or_default()
+                                    .push_back(xpp);
                                 // v.c = v.c + 1
                                 let vc = counters.entry(*v).or_insert(1);
                                 *vc += 1;
