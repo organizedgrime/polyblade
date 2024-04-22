@@ -259,7 +259,7 @@ impl PolyGraph {
         // maps from v -> ( maps from d -> u )
         let mut dqueues: HashMap<VertexId, HashMap<usize, VecDeque<VertexId>>> = Default::default();
         //
-        let mut children: HashMap<VertexId, HashSet<VertexId>> = Default::default();
+        let mut children: HashMap<VertexId, Vec<VertexId>> = Default::default();
         // Counters for vertices whos shortest paths have already been obtained
         let mut counters: HashMap<VertexId, usize> =
             self.vertices.iter().map(|v| (*v, 1)).collect();
@@ -276,26 +276,31 @@ impl PolyGraph {
             for j in self.vertices.iter() {
                 if i != j {
                     let e = (i, j).into();
-                    dist.insert(e, 0);
-                    paths.insert(e, 0);
+                    //dist.insert(e, 0);
+                    paths.insert(e, usize::MAX);
                 }
             }
-            paths.insert((i, i).into(), usize::MAX);
+        }
+
+        let ex = paths.len();
+        println!("ex:::: {ex}");
+
+        for i in self.vertices.iter() {
+            paths.insert((i, i).into(), 0);
         }
 
         let mut verts: HashSet<VertexId> = self.vertices.clone();
         // d = 0
         let mut depth = 0;
         // while 0 < |V|
-        while 0 < verts.len() {
-            println!("d: {depth}, D: {dist:?}, S: {paths:?}");
-            println!("dqueues: {dqueues:?}, children: {children:?}");
+        while dist.len() < ex {
             // d = d + 1
             depth += 1;
             // set an empty set to V_new
-            let mut v_new = HashSet::new();
+            //let mut verts = HashSet::new();
             // for v in V
-            for v in verts.clone().into_iter() {
+
+            for v in verts.clone().iter() {
                 // START EXTEND(v, d, D, S)
                 if depth == 1 {
                     //
@@ -303,76 +308,90 @@ impl PolyGraph {
                         // Connected node
                         let w = e.other(&v).unwrap();
                         // D[w.id, v.id] = d
-                        dist.insert(e, depth);
+                        dist.insert(e, 1);
                         // S[w.id, v.id] = v.id
-                        paths.insert(e, v);
+                        paths.insert(e, *v);
                         // add w' to v'.children
-                        children.entry(v).or_default().insert(w);
+                        children.entry(*v).or_default().push(w);
                         // v.que.enque(w', 1)
                         dqueues
-                            .entry(v)
+                            .entry(*v)
                             .or_default()
                             .entry(1)
                             .or_default()
                             .push_back(w);
                         // v.c = v.c + 1
-                        *counters.entry(v).or_insert(1) += 1;
+                        *counters.entry(*v).or_insert(1) += 1;
                     }
                 } else {
                     // w = v.que.deque(d - 1)
                     // while w is not None:
-                    while let Some(w) = dqueues
-                        .entry(v)
+                    'dq: while let Some(w) = dqueues
+                        .entry(*v)
                         .or_default()
                         .entry(depth - 1)
                         .or_default()
                         .pop_back()
                     {
+                        println!("in dq: {:?}", dqueues.entry(*v));
                         // for x in w.children
-                        for x in children.entry(w).or_default().clone() {
-                            let e: Edge = (x, v).into();
-                            if paths.entry(e).or_insert(0) == &0 {
+                        'df: for x in children.entry(w).or_default().clone().into_iter() {
+                            let e: Edge = (x, *v).into();
+                            //if x != *v && *counters.get(v).unwrap() < n {
+                            if *paths.get(&e).unwrap() == usize::MAX {
                                 // D[x.id, v.id] = d;
                                 dist.insert(e, depth);
                                 // S[x.id, v.id] = w.id;
                                 paths.insert(e, w);
                                 // add x' to w' children
-                                children.entry(w).or_default().insert(x);
+                                children.entry(w).or_default().push(x);
                                 // v.que.enque(x', d)
                                 dqueues
-                                    .entry(v)
+                                    .entry(*v)
                                     .or_default()
                                     .entry(depth)
                                     .or_default()
                                     .push_back(x);
                                 // v.c = v.c + 1
-                                let vc = counters.entry(v).or_insert(1);
-                                *vc += 1;
-                                if *vc == n {
-                                    self.dist = dist;
-                                    return;
+                                *counters.entry(*v).or_insert(1) += 1;
+                                if *counters.get(&v).unwrap() == n {
+                                    println!("returning because {v}'s counter was {n}");
+                                    println!("counters: {counters:?}");
+                                    let mut dddd = dist.clone().into_iter().collect::<Vec<_>>();
+                                    dddd.sort();
+                                    println!(
+                                        "dist: {}",
+                                        dist.iter().fold(String::new(), |acc, (e, d)| format!(
+                                            "{acc}, [{e}, {d}]"
+                                        ))
+                                    );
+                                    //self.dist = dist;
+                                    break 'dq;
                                 }
+                                //}
                             }
                         }
 
-                        // we do this at the top of the loop
                         // w' = v.que.deque(d-1)
                     }
                 }
                 // END EXTEND
 
-                println!("counters: {:?}", counters);
-                if *counters.entry(v).or_insert(1) < n {
-                    v_new.insert(v);
+                //
+                if *counters.entry(*v).or_insert(1) < n {
+                    //v_new.insert(*v);
                 }
             }
 
-            println!("updating verts to be {verts:?}");
-            verts = v_new;
+            verts = counters
+                .clone()
+                .into_iter()
+                .filter_map(|(k, v)| if v < n { Some(k) } else { None })
+                .collect();
 
-            if depth > 4 {
-                //break;
-            }
+            //println!("updating verts to be {verts:?}");
+            //verts = v_new;
+            //println!("updating verts to be {verts:?}");
         }
 
         self.dist = dist;
@@ -486,6 +505,12 @@ mod test {
     fn pst() {
         let mut graph = PolyGraph::octahedron();
         let old_dist = graph.dist.clone();
+        println!(
+            "od: {}",
+            old_dist
+                .iter()
+                .fold(String::new(), |acc, (e, d)| format!("{acc}, [{e}, {d}]"))
+        );
         graph.dist = Default::default();
         // Connect
         graph.pst();
