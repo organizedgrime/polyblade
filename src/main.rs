@@ -124,8 +124,15 @@ pub fn main() {
                         ui.label("Operations:");
                         //
                         if ui.button("s0").clicked() {
-                            shape.split_vertex(&0);
-                            shape.recompute_qualities();
+                            shape.split_vertex(
+                                &shape.vertices.iter().collect::<Vec<_>>()[0].clone(),
+                            );
+                            shape.pst();
+                            // Neighbors and diameters rely on distances
+                            shape.neighbors();
+                            shape.diameter();
+                            //shape.recompute_qualities();
+                            //println!("faces: {:?}", shape.faces);
                             update_static = true;
                         }
                         if ui.button("Truncate").clicked() {

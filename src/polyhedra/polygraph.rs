@@ -52,6 +52,7 @@ impl PolyGraph {
             ..Default::default()
         };
         poly.recompute_qualities();
+        poly.faces();
         poly
     }
 

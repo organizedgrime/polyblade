@@ -27,8 +27,7 @@ impl PolyGraph {
         let mut connections: HashSet<usize> = self.connections(v);
         connections.extend(self.ghost_connections(v));
         connections.remove(v);
-        let n = connections.len();
-        let mut new_vertex = 0;
+        let mut new_guys = Vec::new();
 
         // Remove the vertex
         self.delete(v);
@@ -37,7 +36,8 @@ impl PolyGraph {
             let u = connections.clone().into_iter().collect::<Vec<_>>()[0];
 
             // Insert a new node in the same location
-            new_vertex = self.insert();
+            let new_vertex = self.insert();
+            new_guys.push(new_vertex);
             self.positions.insert(new_vertex, original_position);
             // Reform old connection
             self.connect((u, new_vertex));
@@ -61,11 +61,39 @@ impl PolyGraph {
             self.ghost_edges.insert(ge, ne);
         }
 
-        // Connect all nodes in the new face formed
-        for i in 0..n - 1 {
-            self.connect((new_vertex - i, new_vertex - i - 1));
+        let mut ccc = HashSet::<Edge>::new();
+        for i in 0..self.faces.len() {
+            let face = &mut self.faces[i];
+            if let Some(pos) = face.0.iter().position(|x| x == v) {
+                let flen = face.0.len();
+                let before = face.0[(pos + flen - 1) % flen];
+                let after = face.0[(pos + 1) % flen];
+
+                let be: Edge = (*v, before).into();
+                let ae: Edge = (*v, after).into();
+
+                let gb = self.ghost_edges.get(&be).unwrap();
+                let ga = self.ghost_edges.get(&ae).unwrap();
+
+                println!("removing {v}; {be:?} became {gb:?}");
+                println!("removing {v}; {ae:?} became {ga:?}");
+                let gb = gb.other(&before).unwrap();
+                let ga = ga.other(&after).unwrap();
+
+                face.0.remove(pos);
+                face.0.insert(pos, ga);
+                face.0.insert(pos, gb);
+
+                ccc.insert((ga, gb).into());
+            }
         }
-        self.connect((new_vertex, new_vertex - n + 1));
+
+        for c in ccc.into_iter() {
+            self.connect(c);
+        }
+
+        self.faces.push(Face(new_guys));
+        println!("faces: {:?}", self.faces);
     }
 
     /// `t` truncate
