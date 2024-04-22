@@ -149,8 +149,7 @@ impl PolyGraph {
     }
 
     pub fn xyz_buffer(&self) -> Vec<Vector3<f32>> {
-        (0..self.faces.len())
-            .fold(Vec::new(), |acc, i| [acc, self.face_xyz_buffer(i)].concat())
+        (0..self.faces.len()).fold(Vec::new(), |acc, i| [acc, self.face_xyz_buffer(i)].concat())
     }
 
     pub fn static_buffer(&self) -> (Vec<V3f>, Vec<V3f>, Vec<V3f>) {

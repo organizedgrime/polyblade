@@ -4,7 +4,6 @@ use rand::random;
 use std::{
     collections::{HashMap, HashSet, VecDeque},
     fmt::Display,
-    u32,
 };
 type VertMap<T> = HashMap<VertexId, T>;
 
