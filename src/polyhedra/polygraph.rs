@@ -227,7 +227,6 @@ impl PolyGraph {
         // elements to NOT_SEARCHED (0). NO_PARENT means v_i is a source vertex.
 
         let mut remaining = HashSet::new();
-
         for i in self.vertices.iter() {
             for j in self.vertices.iter() {
                 if i != j {
@@ -257,15 +256,16 @@ impl PolyGraph {
         let mut depth = 1;
         // while 0 < |V|
         loop {
-            if remaining.is_empty() {
+            let verts: HashSet<VertexId> = counters
+                .iter()
+                .filter_map(|(v, c)| if *c == 0 { None } else { Some(*v) })
+                .collect();
+            if verts.is_empty() {
                 break;
             }
-            let rlen = remaining.len();
-            let verts = remaining.iter().fold(HashSet::new(), |mut acc, e| {
-                acc.insert(e.id().0);
-                acc.insert(e.id().1);
-                acc
-            });
+
+            let mut removed = false;
+
             for v in verts.into_iter() {
                 // for v in V
                 // START EXTEND(v, d, D, S)
@@ -287,6 +287,7 @@ impl PolyGraph {
                         println!("decrementing {v} {w}");
                         *counters.get_mut(&v).unwrap() -= 1;
                         //*counters.get_mut(&w).unwrap() -= 1;
+                        removed = true;
                     }
                 } else {
                     // w = v.que.deque(d - 1)
@@ -316,13 +317,21 @@ impl PolyGraph {
                                     dqueue.get_mut(&x).unwrap().push_back((v, depth));
                                     // v.c = v.c + 1
                                     remaining.remove(&e);
+                                    removed = true;
                                     println!("decrementing {v} {x}");
                                     *counters.get_mut(&v).unwrap() -= 1;
                                     *counters.get_mut(&x).unwrap() -= 1;
                                     // if v.c == n: return
-                                    if remaining.iter().find(|e| e.other(&w).is_some()).is_none() {
+                                    //if counters.get()
+                                    if *counters.get(&x).unwrap() == 0
+                                        && *counters.get(&w).unwrap() == 0
+                                        && *counters.get(&v).unwrap() == 0
+                                    {
                                         break 'dq;
                                     }
+                                    //if remaining.iter().find(|e| e.other(&w).is_some()).is_none() {
+                                    //break 'dq;
+                                    //}
                                 }
                             }
                         } else {
@@ -335,7 +344,7 @@ impl PolyGraph {
             // d = d + 1
             depth += 1;
 
-            if remaining.len() == rlen {
+            if !removed {
                 println!("didnt remove any from {remaining:?}");
                 println!("dq {dqueue:?}");
 
