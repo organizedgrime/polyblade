@@ -306,7 +306,8 @@ impl PolyGraph {
                             // for x in w.children
                             for x in children.get(&w).unwrap().clone().into_iter() {
                                 let e: Edge = (x, v).into();
-                                if remaining.contains(&e) {
+                                if x != v && !dist.contains_key(&e) {
+                                    println!("dd: {:?}", dist.get(&e));
                                     // D[x.id, v.id] = d;
                                     dist.insert(e, depth);
                                     // add x' to w' children
@@ -332,6 +333,12 @@ impl PolyGraph {
                                     //if remaining.iter().find(|e| e.other(&w).is_some()).is_none() {
                                     //break 'dq;
                                     //}
+                                } else {
+                                    if x == v {
+                                        println!("asdfasdfas");
+                                    } else {
+                                        println!("ddOT: {:?}", dist.get(&e));
+                                    }
                                 }
                             }
                         } else {
@@ -345,7 +352,7 @@ impl PolyGraph {
             depth += 1;
 
             if !removed {
-                println!("didnt remove any from {remaining:?}");
+                println!("didnt remove any");
                 println!("dq {dqueue:?}");
 
                 self.dist = dist;
