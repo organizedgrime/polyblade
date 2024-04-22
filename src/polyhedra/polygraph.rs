@@ -213,7 +213,7 @@ impl PolyGraph {
         let mut children: HashMap<VertexId, Vec<VertexId>> = Default::default();
         // Counters for vertices whos shortest paths have already been obtained
 
-        let mut counters: HashMap<VertexId, i32> = self.vertices.iter().map(|v| (*v, 1)).collect();
+        let mut counters: HashMap<VertexId, i32> = self.vertices.iter().map(|v| (*v, 0)).collect();
 
         // The element D[i, j] represents the distance from v_i to vj.
         let mut dist: HashMap<Edge, usize> = Default::default();
@@ -284,7 +284,7 @@ impl PolyGraph {
                         remaining.remove(&e);
                         println!("decrementing {v} {w}");
                         *counters.get_mut(&v).unwrap() -= 1;
-                        *counters.get_mut(&w).unwrap() -= 1;
+                        //*counters.get_mut(&w).unwrap() -= 1;
                     }
                 } else {
                     // w = v.que.deque(d - 1)
