@@ -257,7 +257,7 @@ impl PolyGraph {
         //
         // d-queues associated w each vertex
         // maps from v -> ( maps from d -> u )
-        let mut dqueues: HashMap<VertexId, HashMap<usize, VecDeque<VertexId>>> = Default::default();
+        let mut dqueues: HashMap<VertexId, VecDeque<(usize, VertexId)>> = Default::default();
         //
         let mut children: HashMap<VertexId, Vec<VertexId>> = Default::default();
         // Counters for vertices whos shortest paths have already been obtained
@@ -320,12 +320,7 @@ impl PolyGraph {
                         // add w' to v'.children
                         children.entry(v).or_default().push(w);
                         // v.que.enque(w', 1)
-                        dqueues
-                            .entry(v)
-                            .or_default()
-                            .entry(1)
-                            .or_default()
-                            .push_back(w);
+                        dqueues.entry(v).or_default().push_back((1, w));
                         // v.c = v.c + 1
                         remaining.remove(&e);
                     }
@@ -334,29 +329,26 @@ impl PolyGraph {
                     // w = v.que.deque(d - 1)
                     println!("v: {v}, d-1: {}", depth - 1);
                     // while w is not None:
-                    'dq: while let Some(w) = dqueues
-                        .entry(v)
-                        .or_default()
-                        .entry(depth - 1)
-                        .or_default()
-                        .pop_back()
+                    'dq: while let Some((d, w)) =
+                        dqueues.clone().entry(v).or_default().front().clone()
                     {
+                        if *d != depth - 1 {
+                            break;
+                        } else {
+                            println!("popped front from {v}q");
+                            dqueues.get_mut(&v).unwrap().pop_front();
+                        }
                         //println!("in dq: {:?}", dqueues.entry(*v));
                         // for x in w.children
-                        for x in children.entry(w).or_default().clone().into_iter() {
+                        for x in children.entry(*w).or_default().clone().into_iter() {
                             let e: Edge = (x, v).into();
                             if remaining.contains(&e) {
                                 // D[x.id, v.id] = d;
                                 dist.insert(e, depth);
                                 // add x' to w' children
-                                children.entry(w).or_default().push(x);
+                                children.entry(*w).or_default().push(x);
                                 // v.que.enque(x', d)
-                                dqueues
-                                    .entry(v)
-                                    .or_default()
-                                    .entry(depth)
-                                    .or_default()
-                                    .push_back(x);
+                                dqueues.entry(v).or_default().push_back((depth, x));
                                 // v.c = v.c + 1
                                 remaining.remove(&e);
                                 // if v.c == n: return
@@ -490,7 +482,7 @@ mod test {
     use crate::prelude::*;
     #[test]
     fn pst() {
-        let mut graph = PolyGraph::dodecahedron();
+        let mut graph = PolyGraph::octahedron();
         graph.distances();
         let old_dist = graph.dist.clone();
         println!(
