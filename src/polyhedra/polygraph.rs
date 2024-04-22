@@ -272,7 +272,7 @@ impl PolyGraph {
                         //children.entry(w).or_default().push(v);
                         // v.que.enque(w', 1)
                         dqueue.entry(v).or_default().push_back((w, 1));
-                        dqueue.entry(w).or_default().push_back((v, 1));
+                        //dqueue.entry(w).or_default().push_back((v, 1));
                         // v.c = v.c + 1
                         remaining.remove(&e);
                     }
@@ -300,14 +300,13 @@ impl PolyGraph {
                                 //children.entry(x).or_default().push(w);
                                 // v.que.enque(x', d)
                                 dqueue.get_mut(&v).unwrap().push_back((x, depth));
-                                dqueue.get_mut(&x).unwrap().push_back((v, depth));
                                 // v.c = v.c + 1
                                 remaining.remove(&e);
                                 // if v.c == n: return
                                 if remaining.iter().find(|e| e.other(&w).is_some()).is_none() {
-                                    println!("breaking: {e}");
                                     break 'dq;
-                                    //continue 'dq;
+                                } else {
+                                    dqueue.get_mut(&x).unwrap().push_back((v, depth));
                                 }
                             }
                         }
