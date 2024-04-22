@@ -280,35 +280,41 @@ impl PolyGraph {
                     // w = v.que.deque(d - 1)
                     // while w is not None:
                     //remaining[0];
-                    'dq: while let Some((w, d)) = dqueue.clone().get(&v).unwrap().front() {
-                        if *d != depth - 1 {
-                            dqueue.get_mut(&v).unwrap().push_back((*w, *d));
-                            break;
-                        }
-                        dqueue.get_mut(&v).unwrap().pop_front();
-                        //let (v, w) = e.id();
-                        //let e: Edge = (v, *w).into();
+                    'dq: loop {
+                        let vqueue = dqueue.get_mut(&v).unwrap();
+                        if let Some((w, d)) = vqueue.pop_front() {
+                            //'dq: while let Some((w, d)) = dqueue.clone().get(&v).unwrap().front() {
+                            if d != depth - 1 {
+                                dqueue.get_mut(&v).unwrap().push_back((w, d));
+                                break;
+                            }
+                            //let (v, w) = e.id();
+                            //let e: Edge = (v, *w).into();
 
-                        // for x in w.children
-                        for x in children.entry(*w).or_default().clone().into_iter() {
-                            let e: Edge = (x, v).into();
-                            if remaining.contains(&e) {
-                                // D[x.id, v.id] = d;
-                                dist.insert(e, depth);
-                                // add x' to w' children
-                                children.entry(*w).or_default().push(x);
-                                //children.entry(x).or_default().push(w);
-                                // v.que.enque(x', d)
-                                dqueue.get_mut(&v).unwrap().push_back((x, depth));
-                                // v.c = v.c + 1
-                                remaining.remove(&e);
-                                // if v.c == n: return
-                                if remaining.iter().find(|e| e.other(&w).is_some()).is_none() {
-                                    break 'dq;
-                                } else {
-                                    dqueue.get_mut(&x).unwrap().push_back((v, depth));
+                            // for x in w.children
+
+                            for x in children.entry(w).or_default().clone().into_iter() {
+                                let e: Edge = (x, v).into();
+                                if remaining.contains(&e) {
+                                    // D[x.id, v.id] = d;
+                                    dist.insert(e, depth);
+                                    // add x' to w' children
+                                    children.entry(w).or_default().push(x);
+                                    //children.entry(x).or_default().push(w);
+                                    // v.que.enque(x', d)
+                                    dqueue.get_mut(&v).unwrap().push_back((x, depth));
+                                    // v.c = v.c + 1
+                                    remaining.remove(&e);
+                                    // if v.c == n: return
+                                    if remaining.iter().find(|e| e.other(&w).is_some()).is_none() {
+                                        break 'dq;
+                                    } else {
+                                        dqueue.get_mut(&x).unwrap().push_back((v, depth));
+                                    }
                                 }
                             }
+                        } else {
+                            break;
                         }
                     }
                 }
