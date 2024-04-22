@@ -259,7 +259,7 @@ impl PolyGraph {
         //
         // d-queues associated w each vertex
         // maps from v -> ( maps from d -> u )
-        let mut dqueues: HashMap<VertexId, VecDeque<(usize, VertexId)>> = Default::default();
+        let mut dqueue: VecDeque<(Edge, usize)> = Default::default();
         //
         let mut children: HashMap<VertexId, Vec<VertexId>> = Default::default();
         // Counters for vertices whos shortest paths have already been obtained
@@ -309,9 +309,9 @@ impl PolyGraph {
                 acc
             });
             // for v in V
-            for v in verts.into_iter() {
-                // START EXTEND(v, d, D, S)
-                if depth == 1 {
+            // START EXTEND(v, d, D, S)
+            if depth == 1 {
+                for v in verts.into_iter() {
                     //
                     for e in self.edges(&v) {
                         // Connected node
@@ -320,53 +320,52 @@ impl PolyGraph {
                         dist.insert(e, 1);
                         // add w' to v'.children
                         children.entry(v).or_default().push(w);
+                        children.entry(w).or_default().push(v);
                         // v.que.enque(w', 1)
-                        dqueues.entry(v).or_default().push_back((1, w));
-                        dqueues.entry(w).or_default().push_back((1, v));
+                        dqueue.push_back((e, 1));
                         // v.c = v.c + 1
                         remaining.remove(&e);
                     }
-                } else {
-                    // w = v.que.deque(d - 1)
-                    // while w is not None:
-                    'dq: loop {
-                        if let Some((d, w)) = dqueues.get_mut(&v).unwrap().pop_front() {
-                            if d != depth - 1 {
-                                dqueues.get_mut(&v).unwrap().push_back((d, w));
-                                dqueues.get_mut(&w).unwrap().push_back((d, v));
-                                break;
-                            }
-                            // for x in w.children
-                            for x in children.entry(w).or_default().clone().into_iter() {
-                                let e: Edge = (x, v).into();
-                                if remaining.contains(&e) {
-                                    // D[x.id, v.id] = d;
-                                    dist.insert(e, depth);
-                                    // add x' to w' children
-                                    children.entry(w).or_default().push(x);
-                                    // v.que.enque(x', d)
-                                    dqueues.entry(v).or_default().push_back((depth, x));
-                                    dqueues.entry(x).or_default().push_back((depth, v));
-                                    // v.c = v.c + 1
-                                    remaining.remove(&e);
-                                    // if v.c == n: return
-                                    if remaining.iter().find(|e| e.other(&v).is_some()).is_none() {
-                                        break 'dq;
-                                    }
-                                }
-                            }
-                        } else {
-                            break;
+                }
+            } else {
+                // w = v.que.deque(d - 1)
+                // while w is not None:
+                'dq: while let Some((e, d)) = dqueue.pop_front() {
+                    let (w, v) = e.id();
+                    /*
+                    if d != depth - 1 {
+                        dqueue.push_back((e, d));
+                        break;
+                    }
+                    */
+                    // for x in w.children
+                    for x in children.entry(w).or_default().clone().into_iter() {
+                        let e: Edge = (x, v).into();
+                        if remaining.contains(&e) {
+                            // D[x.id, v.id] = d;
+                            dist.insert(e, depth);
+                            // add x' to w' children
+                            children.entry(w).or_default().push(x);
+                            children.entry(x).or_default().push(w);
+                            // v.que.enque(x', d)
+                            dqueue.push_back((e, depth));
+                            // v.c = v.c + 1
+                            remaining.remove(&e);
+                            // if v.c == n: return
+                            //if remaining.iter().find(|e| e.other(&v).is_some()).is_none() {
+                            continue 'dq;
+                            //}
                         }
                     }
                 }
-                // END EXTEND
             }
+            // END EXTEND
             // d = d + 1
             depth += 1;
 
             if remaining.len() == rlen {
                 println!("didnt remove any from {remaining:?}");
+                println!("dq {dqueue:?}");
 
                 self.dist = dist;
                 return;
@@ -479,17 +478,21 @@ impl Display for PolyGraph {
 #[cfg(test)]
 mod test {
     use std::collections::HashSet;
+    use test_case::test_case;
 
     use crate::prelude::*;
-    #[test]
-    fn pst() {
-        let mut graph = PolyGraph::octahedron();
+    #[test_case(PolyGraph::tetrahedron(); "T")]
+    #[test_case(PolyGraph::cube(); "C")]
+    #[test_case(PolyGraph::octahedron(); "O")]
+    #[test_case(PolyGraph::dodecahedron(); "D")]
+    #[test_case(PolyGraph::icosahedron(); "I")]
+    fn pst(mut graph: PolyGraph) {
+        let new_dist = graph.dist.clone();
+
         graph._floyd();
         let old_dist = graph.dist.clone();
+
         graph.dist = Default::default();
-        // Connect
-        graph.pst();
-        let new_dist = graph.dist.clone();
         //assert_eq!(old_dist, graph.dist);
         assert_eq!(
             old_dist
