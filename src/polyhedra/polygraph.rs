@@ -212,10 +212,8 @@ impl PolyGraph {
         //
         let mut children: HashMap<VertexId, Vec<VertexId>> = Default::default();
         // Counters for vertices whos shortest paths have already been obtained
-        /*
-        let mut counters: HashMap<VertexId, usize> =
-            self.vertices.iter().map(|v| (*v, 1)).collect();
-            */
+
+        let mut counters: HashMap<VertexId, i32> = self.vertices.iter().map(|v| (*v, 1)).collect();
 
         // The element D[i, j] represents the distance from v_i to vj.
         let mut dist: HashMap<Edge, usize> = Default::default();
@@ -227,15 +225,21 @@ impl PolyGraph {
         // elements to NOT_SEARCHED (0). NO_PARENT means v_i is a source vertex.
 
         let mut remaining = HashSet::new();
+
         for i in self.vertices.iter() {
             for j in self.vertices.iter() {
                 if i != j {
                     let e: Edge = (i, j).into();
-                    //paths.insert(e, usize::MAX);
-                    remaining.insert(e);
+                    if !remaining.contains(&e) {
+                        *counters.get_mut(&i).unwrap() += 1;
+                        *counters.get_mut(&j).unwrap() += 1;
+                        //paths.insert(e, usize::MAX);
+                        remaining.insert(e);
+                    }
                 }
             }
         }
+        println!("n: {}, ects: {counters:?}", self.vertices.len());
 
         /*
         let ex = paths.len();
@@ -250,7 +254,10 @@ impl PolyGraph {
         // d = 0
         let mut depth = 1;
         // while 0 < |V|
-        while !remaining.is_empty() {
+        loop {
+            if remaining.is_empty() {
+                break;
+            }
             let rlen = remaining.len();
             let verts = remaining.iter().fold(HashSet::new(), |mut acc, e| {
                 acc.insert(e.id().0);
@@ -275,6 +282,9 @@ impl PolyGraph {
                         dqueue.entry(w).or_default().push_back((v, 1));
                         // v.c = v.c + 1
                         remaining.remove(&e);
+                        println!("decrementing {v} {w}");
+                        *counters.get_mut(&v).unwrap() -= 1;
+                        *counters.get_mut(&w).unwrap() -= 1;
                     }
                 } else {
                     // w = v.que.deque(d - 1)
@@ -304,9 +314,12 @@ impl PolyGraph {
                                     dqueue.get_mut(&x).unwrap().push_back((v, depth));
                                     // v.c = v.c + 1
                                     remaining.remove(&e);
+                                    println!("decrementing {v} {x}");
+                                    *counters.get_mut(&v).unwrap() -= 1;
+                                    *counters.get_mut(&x).unwrap() -= 1;
                                     // if v.c == n: return
                                     if remaining.iter().find(|e| e.other(&w).is_some()).is_none() {
-                                        continue 'dq;
+                                        break 'dq;
                                     }
                                 }
                             }
@@ -328,6 +341,7 @@ impl PolyGraph {
                 return;
             }
         }
+        println!("final counters: {counters:?}");
         self.dist = dist;
     }
 
