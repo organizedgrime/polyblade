@@ -259,7 +259,7 @@ impl PolyGraph {
         //
         // d-queues associated w each vertex
         // maps from v -> ( maps from d -> u )
-        let mut dqueue: VecDeque<Edge> = Default::default();
+        let mut dqueue: HashMap<VertexId, VecDeque<(VertexId, usize)>> = Default::default();
         //
         let mut children: HashMap<VertexId, Vec<VertexId>> = Default::default();
         // Counters for vertices whos shortest paths have already been obtained
@@ -308,10 +308,10 @@ impl PolyGraph {
                 acc.insert(e.id().1);
                 acc
             });
-            // for v in V
-            // START EXTEND(v, d, D, S)
-            if depth == 1 {
-                for v in verts.into_iter() {
+            for v in verts.into_iter() {
+                // for v in V
+                // START EXTEND(v, d, D, S)
+                if depth == 1 {
                     //
                     for e in self.edges(&v) {
                         // Connected node
@@ -320,32 +320,46 @@ impl PolyGraph {
                         dist.insert(e, 1);
                         // add w' to v'.children
                         children.entry(v).or_default().push(w);
+                        //children.entry(w).or_default().push(v);
                         // v.que.enque(w', 1)
-                        dqueue.push_back(e);
+                        dqueue.entry(v).or_default().push_back((w, 1));
+                        dqueue.entry(w).or_default().push_back((v, 1));
                         // v.c = v.c + 1
                         remaining.remove(&e);
                     }
-                }
-            } else {
-                // w = v.que.deque(d - 1)
-                // while w is not None:
-                'dq: while let Some(e) = dqueue.pop_front() {
-                    let (w, v) = e.id();
-                    // for x in w.children
-                    for x in children.entry(w).or_default().clone().into_iter() {
-                        let e: Edge = (x, v).into();
-                        if remaining.contains(&e) {
-                            // D[x.id, v.id] = d;
-                            dist.insert(e, depth);
-                            // add x' to w' children
-                            children.entry(w).or_default().push(x);
-                            // v.que.enque(x', d)
-                            dqueue.push_back(e);
-                            // v.c = v.c + 1
-                            remaining.remove(&e);
-                            // if v.c == n: return
-                            if remaining.iter().find(|e| e.other(&v).is_some()).is_none() {
-                                break 'dq;
+                } else {
+                    // w = v.que.deque(d - 1)
+                    // while w is not None:
+                    //remaining[0];
+                    'dq: while let Some((w, d)) = dqueue.clone().get(&v).unwrap().front() {
+                        if *d != depth - 1 {
+                            dqueue.get_mut(&v).unwrap().push_back((*w, *d));
+                            break;
+                        }
+                        dqueue.get_mut(&v).unwrap().pop_front();
+                        //let (v, w) = e.id();
+                        //let e: Edge = (v, *w).into();
+
+                        // for x in w.children
+                        for x in children.entry(*w).or_default().clone().into_iter() {
+                            let e: Edge = (x, v).into();
+                            if remaining.contains(&e) {
+                                // D[x.id, v.id] = d;
+                                dist.insert(e, depth);
+                                // add x' to w' children
+                                children.entry(*w).or_default().push(x);
+                                //children.entry(x).or_default().push(w);
+                                // v.que.enque(x', d)
+                                dqueue.get_mut(&v).unwrap().push_back((x, depth));
+                                dqueue.get_mut(&x).unwrap().push_back((v, depth));
+                                // v.c = v.c + 1
+                                remaining.remove(&e);
+                                // if v.c == n: return
+                                if remaining.iter().find(|e| e.other(&w).is_some()).is_none() {
+                                    println!("breaking: {e}");
+                                    break 'dq;
+                                    //continue 'dq;
+                                }
                             }
                         }
                     }
