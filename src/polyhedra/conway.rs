@@ -1,4 +1,4 @@
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 
 pub use super::*;
 
@@ -9,7 +9,9 @@ impl PolyGraph {
         let id = self.ghost_edges.get(&e).unwrap_or(&e).id();
         // Give b all the same connections as a
         for b in self.connections(&id.0).iter() {
-            self.connect((b, &id.1))
+            if b != &id.1 {
+                self.connect((b, &id.1))
+            }
         }
         // Delete a
         self.delete(&id.0);
@@ -24,34 +26,23 @@ impl PolyGraph {
         let original_position = self.positions[v];
         let mut connections: HashSet<usize> = self.connections(v);
         connections.extend(self.ghost_connections(v));
+        connections.remove(v);
         let n = connections.len();
-        // Previously processed connection, starts with a seed
-        let mut previous = *connections.iter().collect::<Vec<_>>()[0];
         let mut new_vertex = 0;
 
         // Remove the vertex
         self.delete(v);
-        // Recompute distances in the absence of the vertex
-        self.adjacents();
-        self.distances();
-        self.faces();
-
         'connections: while !connections.is_empty() {
             // closest vertex to the previous which is not itself and is connected
-            let u = self.dist[&previous]
-                .iter()
-                .filter(|(id, _)| *id != &previous && connections.contains(id))
-                .min_by(|(_, c), (_, d)| c.cmp(d))
-                .map(|(id, _)| *id)
-                .unwrap();
+            let u = connections.clone().into_iter().collect::<Vec<_>>()[0];
 
             // Insert a new node in the same location
-            new_vertex = self.insert(Some(original_position));
+            new_vertex = self.insert();
+            self.positions.insert(new_vertex, original_position);
             // Reform old connection
             self.connect((u, new_vertex));
 
             // Track
-            previous = u;
             connections.remove(&u);
 
             // Track the ghost edge and new edge
@@ -77,7 +68,7 @@ impl PolyGraph {
         self.connect((new_vertex, new_vertex - n + 1));
     }
 
-    /// `t` truncate is equivalent to vertex splitting
+    /// `t` truncate
     pub fn truncate(&mut self) {
         for v in self.vertices.clone().iter() {
             self.split_vertex(v);
@@ -86,8 +77,7 @@ impl PolyGraph {
         self.name += "t";
     }
 
-    /// `a` ambo is equivalent to the composition of vertex splitting and edge contraction vefore
-    /// applying vertex splitting.
+    /// `a` ambo
     pub fn ambo(&mut self) {
         let original_edges = self.adjacents.clone();
         // Truncate
@@ -95,8 +85,8 @@ impl PolyGraph {
 
         //self.contract_edges_visually(original_edges);
         // Animate
-        self.contracting_edges.extend(original_edges);
-        /*
+
+        //self.contracting_edges.extend(original_edges);
         // Contract original edge set
         for edge in original_edges.iter() {
             self.contract_edge(*edge);
@@ -106,12 +96,9 @@ impl PolyGraph {
         self.ghost_edges = HashMap::new();
         self.name.truncate(self.name.len() - 1);
         self.name += "a";
-        */
     }
 
-    //
-    //fn dual(&mut self) {}
-    /// `b` bevel is equivalent to `ta`
+    /// `b` = `ta`
     pub fn bevel(&mut self) {
         self.truncate();
         self.ambo();
@@ -119,7 +106,7 @@ impl PolyGraph {
         self.name += "b";
     }
 
-    /// `e` expand is equal to `aa`
+    /// `e` = `aa`
     pub fn expand(&mut self) {
         self.ambo();
         self.ambo();
@@ -132,6 +119,14 @@ impl PolyGraph {
         self.expand();
         //self.diagonal_addition();
     }
+
+    // `j` join
+    // `z` zip
+    // `g` gyro
+    // `m` meta = `kj`
+    // `o` ortho = `jj`
+    // `n` needle
+    // `k` kis
 }
 
 #[cfg(test)]
@@ -162,8 +157,8 @@ mod test {
         graph.contract_edge((1, 3));
         graph.recompute_qualities();
 
-        println!("g: {:?}", graph);
         assert_eq!(graph.vertices.len(), 5);
+        println!("adja: {:?}", graph.adjacents);
         assert_eq!(graph.adjacents.len(), 4);
 
         assert_eq!(graph.connections(&0), vec![3].into_iter().collect());
@@ -194,7 +189,6 @@ mod test {
         graph.split_vertex(&1);
         graph.recompute_qualities();
 
-        println!("g: {:?}", graph);
         assert_eq!(graph.vertices.len(), 8);
         assert_eq!(graph.adjacents.len(), 8);
     }

@@ -2,10 +2,10 @@ pub use super::*;
 use cgmath::{vec3, InnerSpace, Vector3, Zero};
 use rand::random;
 use std::{
-    collections::{HashMap, HashSet},
+    collections::{HashMap, HashSet, VecDeque},
     fmt::Display,
-    u32,
 };
+type VertMap<T> = HashMap<VertexId, T>;
 
 #[derive(Debug, Default)]
 pub struct PolyGraph {
@@ -14,8 +14,8 @@ pub struct PolyGraph {
 
     /// [Actual Graph]
     pub vertices: HashSet<VertexId>,
-    /// Adjacents
-    pub adjacency_matrix: HashMap<VertexId, HashMap<VertexId, bool>>,
+    /// Vertices that are adjacent
+    pub adjacents: HashSet<Edge>,
     /// Edges that have had Vertices split
     pub ghost_edges: HashMap<Edge, Edge>,
 
@@ -23,17 +23,16 @@ pub struct PolyGraph {
     /// Faces
     pub faces: Vec<Face>,
     /// Edge sets
-    pub adjacents: HashSet<Edge>,
     pub neighbors: HashSet<Edge>,
     pub diameter: HashSet<Edge>,
     /// Distances between all points
-    pub dist: HashMap<VertexId, HashMap<VertexId, u32>>,
+    pub dist: HashMap<Edge, usize>,
 
     /// [Render Properties]
     /// Positions in 3D space
-    pub positions: HashMap<VertexId, Vector3<f32>>,
+    pub positions: VertMap<Vector3<f32>>,
     /// Speeds
-    pub speeds: HashMap<VertexId, Vector3<f32>>,
+    pub speeds: VertMap<Vector3<f32>>,
     /// Edges in the process of contracting visually
     pub contracting_edges: HashSet<Edge>,
     /// Edge length
@@ -45,9 +44,6 @@ impl PolyGraph {
     pub fn new_disconnected(vertex_count: usize) -> Self {
         let mut poly = Self {
             vertices: (0..vertex_count).collect(),
-            adjacency_matrix: (0..vertex_count)
-                .map(|x| (x, (0..vertex_count).map(|y| (y, false)).collect()))
-                .collect(),
             positions: (0..vertex_count)
                 .map(|x| (x, vec3(random(), random(), random()).normalize()))
                 .collect(),
@@ -74,68 +70,57 @@ impl PolyGraph {
     }
 
     pub fn connect(&mut self, e: impl Into<Edge>) {
-        let (v, u) = e.into().id();
-        self.adjacency_matrix.get_mut(&v).unwrap().insert(u, true);
-        self.adjacency_matrix.get_mut(&u).unwrap().insert(v, true);
+        self.adjacents.insert(e.into());
     }
 
     pub fn disconnect(&mut self, e: impl Into<Edge>) {
-        let (v, u) = e.into().id();
-        self.adjacency_matrix.get_mut(&v).unwrap().insert(u, false);
-        self.adjacency_matrix.get_mut(&u).unwrap().insert(v, false);
+        self.adjacents.remove(&e.into());
     }
 
-    pub fn insert(&mut self, pos: Option<Vector3<f32>>) -> VertexId {
+    pub fn insert(&mut self) -> VertexId {
         let new_id = self.vertices.iter().max().unwrap() + 1;
-        // Adjacency matrix update
-        for (_, l) in self.adjacency_matrix.iter_mut() {
-            (*l).insert(new_id, false);
-        }
-        self.adjacency_matrix
-            .insert(new_id, self.vertices.iter().map(|v| (*v, false)).collect());
         self.vertices.insert(new_id);
         // Position and speed
         self.positions.insert(
             new_id,
-            pos.unwrap_or(Vector3::new(random(), random(), random()).normalize()),
+            Vector3::new(random(), random(), random()).normalize(),
         );
         self.speeds.insert(new_id, Vector3::zero());
-
         new_id
     }
 
     pub fn delete(&mut self, v: &VertexId) {
-        for (_, l) in self.adjacency_matrix.iter_mut() {
-            (*l).remove(v);
-        }
         self.vertices.remove(v);
-        self.adjacency_matrix.remove(v);
+        self.adjacents = self
+            .adjacents
+            .clone()
+            .into_iter()
+            .filter(|e| e.id().0 != *v && e.id().1 != *v)
+            .collect();
         self.positions.remove(v);
         self.speeds.remove(v);
     }
 
     /// Edges of a vertex
     pub fn edges(&self, v: &VertexId) -> Vec<Edge> {
-        self.connections(v)
-            .into_iter()
-            .map(|other| (*v, other).into())
+        self.adjacents
+            .iter()
+            .filter_map(|e| if e.other(v).is_some() { Some(*e) } else { None })
             .collect()
     }
 
     /// Number of faces
     pub fn face_count(&mut self) -> i64 {
-        2 + self.adjacents.len() as i64 - self.adjacency_matrix.len() as i64
+        2 + self.adjacents.len() as i64 - self.vertices.len() as i64
     }
 
     // Vertices that are connected to a given vertex
     pub fn connections(&self, v: &VertexId) -> HashSet<VertexId> {
-        if let Some(l) = self.adjacency_matrix.get(v) {
-            l.iter()
-                .filter_map(|(k, v)| if *v { Some(*k) } else { None })
-                .collect::<HashSet<usize>>()
-        } else {
-            HashSet::new()
-        }
+        self.adjacents
+            .iter()
+            .filter(|e| e.id().0 == *v || e.id().1 == *v)
+            .map(|e| e.other(v).unwrap())
+            .collect()
     }
 
     pub fn ghost_connections(&self, v: &VertexId) -> HashSet<VertexId> {
@@ -198,30 +183,130 @@ impl PolyGraph {
         self.faces = cycles.into_iter().collect();
     }
 
-    /// All edges
-    pub fn adjacents(&mut self) {
-        self.adjacents = self.vertices.iter().flat_map(|v| self.edges(v)).fold(
-            HashSet::<Edge>::new(),
-            |mut acc, e| {
-                acc.insert(e);
-                acc
-            },
-        )
-    }
     /// Neighbors
     pub fn neighbors(&mut self) {
         let mut neighbors = HashSet::<Edge>::new();
         for u in self.vertices.iter() {
             for v in self.vertices.iter() {
-                if self.dist[u][v] == 2 || self.dist[v][u] == 2 {
-                    neighbors.insert((u, v).into());
+                let e: Edge = (v, u).into();
+                if self.dist.get(&e) == Some(&2) {
+                    neighbors.insert(e);
                 }
             }
         }
         self.neighbors = neighbors
     }
 
-    pub fn distances(&mut self) {
+    #[allow(dead_code)]
+    pub fn pst(&mut self) {
+        if self.adjacents.is_empty() {
+            return;
+        }
+
+        let n = self.vertices.len();
+        // Vertex
+        //
+        // d-queues associated w each vertex
+        // maps from v -> ( maps from d -> u )
+        let mut dqueue: HashMap<VertexId, VecDeque<(VertexId, usize)>> = Default::default();
+        //
+        let mut children: HashMap<VertexId, Vec<VertexId>> = Default::default();
+
+        // Counters for vertices whos shortest paths have already been obtained
+        let mut counters: HashMap<VertexId, usize> =
+            self.vertices.iter().map(|v| (*v, n - 1)).collect();
+
+        // The element D[i, j] represents the distance from v_i to vj.
+        let mut dist: HashMap<Edge, usize> = Default::default();
+
+        // d = 0
+        let mut depth = 1;
+        // while 0 < |V|
+        loop {
+            let verts: HashSet<VertexId> = counters
+                .iter()
+                .filter_map(|(v, c)| if *c == 0 { None } else { Some(*v) })
+                .collect();
+            if verts.is_empty() {
+                break;
+            }
+
+            let mut removed = false;
+
+            for v in verts.into_iter() {
+                // for v in V
+                // START EXTEND(v, d, D, S)
+                if depth == 1 {
+                    //
+                    for e in self.edges(&v) {
+                        // Connected node
+                        let w = e.other(&v).unwrap();
+                        // D[w.id, v.id] = d
+                        dist.insert(e, 1);
+                        // add w' to v'.children
+                        children.entry(v).or_default().push(w);
+                        // v.que.enque(w', 1)
+                        dqueue.entry(v).or_default().push_back((w, 1));
+                        dqueue.entry(w).or_default().push_back((v, 1));
+                        // v.c = v.c + 1
+                        *counters.get_mut(&v).unwrap() -= 1;
+                        //*counters.get_mut(&w).unwrap() -= 1;
+                        removed = true;
+                    }
+                } else {
+                    // w = v.que.deque(d - 1)
+                    // while w is not None:
+                    'dq: loop {
+                        let vqueue = dqueue.get_mut(&v).unwrap();
+                        if let Some((w, d)) = vqueue.pop_front() {
+                            if d != depth - 1 {
+                                dqueue.get_mut(&v).unwrap().push_back((w, d));
+                                break;
+                            }
+                            // for x in w.children
+                            for x in children.get(&w).unwrap().clone().into_iter() {
+                                let e: Edge = (x, v).into();
+                                if x != v && !dist.contains_key(&e) {
+                                    // D[x.id, v.id] = d;
+                                    dist.insert(e, depth);
+                                    // add x' to w' children
+                                    children.entry(w).or_default().push(x);
+                                    // v.que.enque(x', d)
+                                    dqueue.get_mut(&v).unwrap().push_back((x, depth));
+                                    dqueue.get_mut(&x).unwrap().push_back((v, depth));
+                                    // v.c = v.c + 1
+                                    removed = true;
+                                    *counters.get_mut(&v).unwrap() -= 1;
+                                    *counters.get_mut(&x).unwrap() -= 1;
+                                    // if v.c == n: return
+                                    if *counters.get(&x).unwrap() == 0
+                                        && *counters.get(&w).unwrap() == 0
+                                        && *counters.get(&v).unwrap() == 0
+                                    {
+                                        break 'dq;
+                                    }
+                                }
+                            }
+                        } else {
+                            break;
+                        }
+                    }
+                }
+            }
+            // END EXTEND
+            // d = d + 1
+            depth += 1;
+
+            if !removed {
+                self.dist = dist;
+                panic!("failed");
+            }
+        }
+
+        self.dist = dist;
+    }
+
+    pub fn _floyd(&mut self) {
         // let dist be a |V| × |V| array of minimum distances initialized to ∞ (infinity)
         let mut dist: HashMap<VertexId, HashMap<VertexId, u32>> = self
             .vertices
@@ -262,28 +347,28 @@ impl PolyGraph {
             }
         }
 
-        self.dist = dist;
+        let mut dd = HashMap::new();
+        for v in self.vertices.iter() {
+            for u in self.vertices.iter() {
+                let dvu = dist[v][u];
+                if dvu != u32::MAX && dvu != 0 {
+                    let e = (v, u).into();
+                    dd.insert(e, dvu as usize);
+                }
+            }
+        }
+
+        self.dist = dd;
     }
 
     /// Periphery / diameter
     pub fn diameter(&mut self) {
-        if let Some(max) = self
-            .dist
-            .values()
-            .flatten()
-            .map(|(_, d)| d)
-            .filter(|&d| d < &u32::MAX)
-            .max()
-        {
-            let mut diameter = HashSet::<Edge>::new();
-            for u in self.vertices.iter() {
-                for v in self.vertices.iter() {
-                    if &self.dist[u][v] == max || &self.dist[v][u] == max {
-                        diameter.insert((u, v).into());
-                    }
-                }
-            }
-            self.diameter = diameter
+        if let Some(max) = self.dist.values().max() {
+            self.diameter = self
+                .dist
+                .iter()
+                .filter_map(|(e, d)| if d == max { Some(*e) } else { None })
+                .collect();
         }
     }
 
@@ -291,8 +376,7 @@ impl PolyGraph {
 
     pub fn recompute_qualities(&mut self) {
         //
-        self.adjacents();
-        self.distances();
+        self.pst();
         // Neighbors and diameters rely on distances
         self.neighbors();
         self.diameter();
@@ -325,7 +409,53 @@ impl Display for PolyGraph {
 
 #[cfg(test)]
 mod test {
+    use std::collections::HashSet;
+    use test_case::test_case;
+
     use crate::prelude::*;
+    #[test_case(PolyGraph::tetrahedron(); "T")]
+    #[test_case(PolyGraph::cube(); "C")]
+    #[test_case(PolyGraph::octahedron(); "O")]
+    #[test_case(PolyGraph::dodecahedron(); "D")]
+    #[test_case(PolyGraph::icosahedron(); "I")]
+    #[test_case({ let mut g = PolyGraph::cube(); g.truncate(); g} ; "tC")]
+    #[test_case({ let mut g = PolyGraph::octahedron(); g.truncate(); g} ; "tO")]
+    #[test_case({ let mut g = PolyGraph::dodecahedron(); g.truncate(); g} ; "tD")]
+    fn pst(mut graph: PolyGraph) {
+        let new_dist = graph.dist.clone();
+
+        graph.dist = Default::default();
+        graph._floyd();
+        let old_dist = graph.dist.clone();
+
+        //assert_eq!(old_dist, graph.dist);
+        assert_eq!(
+            old_dist
+                .clone()
+                .into_keys()
+                .collect::<HashSet<_>>()
+                .difference(&new_dist.clone().into_keys().collect::<HashSet<_>>())
+                .collect::<HashSet<_>>(),
+            HashSet::new()
+        );
+
+        let o1 = old_dist
+            .clone()
+            .into_iter()
+            .map(|(k, v)| (k.id().0, k.id().1, v))
+            .collect::<HashSet<_>>();
+        let o2 = &new_dist
+            .clone()
+            .into_iter()
+            .map(|(k, v)| (k.id().0, k.id().1, v))
+            .collect::<HashSet<_>>();
+
+        assert_eq!(
+            o1.difference(o2).collect::<HashSet<_>>(),
+            o2.difference(&o1).collect::<HashSet<_>>()
+        );
+        assert_eq!(old_dist, new_dist);
+    }
 
     #[test]
     fn basics() {

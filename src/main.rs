@@ -27,8 +27,6 @@ pub fn main() {
 
     let window = Window::new(WindowSettings {
         title: "polyblade".to_string(),
-        #[cfg(not(target_arch = "wasm32"))]
-        max_size: Some((600, 700)),
         ..Default::default()
     })
     .unwrap();
@@ -55,8 +53,9 @@ pub fn main() {
     let mut control = OrbitControl::new(vec3(0.0, 0.0, 0.0), 1.0, 1000.0);
     let mut model_rotation = Mat4::zero();
 
-    let mut shape = PolyGraph::cube();
+    let mut shape = PolyGraph::tetrahedron();
     let mut rotating = true;
+    let mut shadows = true;
 
     let mut xyz_buffer = VertexBuffer::new(&context);
     let mut rgb_buffer = VertexBuffer::new(&context);
@@ -90,7 +89,10 @@ pub fn main() {
                 use three_d::egui::*;
                 TopBottomPanel::bottom("controls").show(gui_context, |ui| {
                     ui.heading(shape.name.clone());
-                    ui.checkbox(&mut rotating, "rotating");
+                    ui.checkbox(&mut rotating, "Rotating");
+                    if ui.checkbox(&mut shadows, "Shadows").clicked() && !shadows {
+                        // TODO
+                    }
                     ui.horizontal(|ui| {
                         ui.label("Seeds:");
                         // Buttons to revert to platonic solids
@@ -187,7 +189,7 @@ pub fn main() {
                     camera.viewport(),
                     xyz_buffer.vertex_count(),
                 );
-                return Ok::<(), RenderError>(());
+                Ok::<(), RenderError>(())
             })
             .unwrap()
             .write(|| gui.render())

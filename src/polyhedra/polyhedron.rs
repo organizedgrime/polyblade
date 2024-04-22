@@ -149,9 +149,7 @@ impl PolyGraph {
     }
 
     pub fn xyz_buffer(&self) -> Vec<Vector3<f32>> {
-        (0..self.faces.len())
-            .into_iter()
-            .fold(Vec::new(), |acc, i| [acc, self.face_xyz_buffer(i)].concat())
+        (0..self.faces.len()).fold(Vec::new(), |acc, i| [acc, self.face_xyz_buffer(i)].concat())
     }
 
     pub fn static_buffer(&self) -> (Vec<V3f>, Vec<V3f>, Vec<V3f>) {
@@ -159,15 +157,38 @@ impl PolyGraph {
         let mut bsc = Vec::new();
         let mut tri = Vec::new();
 
+        let mut polygon_type = self
+            .faces
+            .iter()
+            .fold(HashSet::new(), |mut acc, f| {
+                acc.insert(f.0.len());
+                acc
+            })
+            .into_iter()
+            .collect::<Vec<_>>();
+        polygon_type.sort();
+        polygon_type.reverse();
+
+        let palette_size = 6.0;
         for face_index in 0..self.faces.len() {
             //let (face_xyz, face_tri) = self.face_xyz_buffer(face_index);
             let face_tri = self.face_tri_buffer(face_index);
-            let color = HSL::new(
-                (360.0 / (self.faces.len() as f64)) * face_index as f64,
-                360.0 / 1.0,
-                0.5,
-            )
-            .to_rgb_float();
+            /*
+            let color = match self.faces[face_index].0.len() {
+                3 => vec3(124.0, 51.0, 234.0),
+                4 => vec3(51.0, 69.0, 234.0),
+                5 => vec3(51.0, 161.0, 234.0),
+                6 => vec3(51.0, 234.0, 121.0),
+                _ => vec3(216.0, 51.0, 234.0),
+            };
+            */
+            let c = polygon_type
+                .iter()
+                .position(|l| l == &self.faces[face_index].0.len())
+                .unwrap();
+            let h = (360.0 / palette_size) * (c as f64 % palette_size);
+            let color = HSL::new(h, 1.0, 0.5);
+            let color = color.to_rgb_float();
             rgb.extend(vec![color; face_tri.len()]);
             tri.extend(face_tri);
         }
