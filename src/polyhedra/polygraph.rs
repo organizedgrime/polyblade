@@ -249,73 +249,106 @@ impl PolyGraph {
     }
     */
 
-    /*
-        fn pst(&mut self) {
-            let n = self.vertices.len();
-            /// Vertex
-            //
-            // d-queues associated w each vertex
-            let mut dqueues: VertMatrix<usize> = Default::default();
-            // Counters for vertices whos shortest paths have already been obtained
-            let mut counters: HashMap<VertexId, usize> =
-                self.vertices.iter().map(|v| (*v, 1)).collect();
+    fn pst(&mut self) {
+        let n = self.vertices.len();
+        /// Vertex
+        //
+        // d-queues associated w each vertex
+        let mut dqueues: HashMap<VertexId, Vec<(VertexId, usize)>> = Default::default();
+        let mut children: HashMap<VertexId, Vec<VertexId>> = Default::default();
+        let mut parents: HashMap<VertexId, VertexId> = Default::default();
+        // Counters for vertices whos shortest paths have already been obtained
+        let mut counters: HashMap<VertexId, usize> =
+            self.vertices.iter().map(|v| (*v, 1)).collect();
+        let mut cors: HashMap<VertexId, usize> = Default::default();
+        let mut roots: HashMap<VertexId, VertexId> = Default::default();
 
-            // The element D[i, j] represents the distance from v_i to vj.
-            let mut dist = VertMatrix::<u32>::new();
-            // The element S[i,j] represents the parent of v_i on the shortest path from v_i to a source
-            // vertex v_j.
-            let mut paths = VertMatrix::<VertexId>::new();
+        // The element D[i, j] represents the distance from v_i to vj.
+        let mut dist: HashMap<Edge, usize> = Default::default();
+        // The element S[i,j] represents the parent of v_i on the shortest path from v_i to a source
+        // vertex v_j.
+        let mut paths: HashMap<Edge, usize> = Default::default();
 
-            // let the diagonal elements of S already be initialized to NO_PARENT (-1) and all other
-            // elements to NOT_SEARCHED (0). NO_PARENT means v_i is a source vertex.
-            for i in self.vertices.iter() {
-                dist.insert(*i, self.vertices.iter().map(|j| (*j, 0)).collect());
-                paths.insert(*i, self.vertices.iter().map(|j| (*j, 0)).collect());
-                paths.get_mut(i).unwrap().insert(*i, VertexId::MAX);
-            }
-
-            /*
-            let extend = move |v: VertexId, d: usize| {
-                if d == 1 {
-                    counters.insert(k, v)
-                } else {
-                }
-            };
-            */
-
-            let mut verts: HashSet<VertexId> = self.vertices.clone();
-            let mut depth = 0;
-            while 0 < verts.len() {
-                depth += 1;
-                let mut v_new = HashSet::new();
-                for v in verts.iter() {
-                    if depth == 1 {
-                        for w in self.connections(v) {
-                            // D[w.id, v.id] = d
-                            dist.get_mut(&w).unwrap().insert(*v, depth);
-                            // S[w.id, v.id] = v.id
-                            paths.get_mut(&w).unwrap().insert(*v, *v);
-
-                            //w'=T_V(w)
-                            //w'.cor = w.root
-                            //cors.insert(w, roots.get(w));
-
-                            // v.c = v.c + 1
-                            *counters.get_mut(v).unwrap() += 1;
-                        }
-                    } else {
-                    }
-
-                    if *counters.get(v).unwrap() < n {
-                        v_new.insert(*v);
-                    }
-                }
-                verts = v_new;
-            }
-
-            self.dist = dist;
+        // let the diagonal elements of S already be initialized to NO_PARENT (-1) and all other
+        // elements to NOT_SEARCHED (0). NO_PARENT means v_i is a source vertex.
+        for i in self.vertices.iter() {
+            paths.insert((i, i).into(), VertexId::MAX);
         }
-    */
+
+        let mut verts: HashSet<VertexId> = self.vertices.clone();
+        let mut depth = 0;
+        while 0 < verts.len() {
+            depth += 1;
+            let mut v_new = HashSet::new();
+            for v in verts.iter() {
+                if depth == 1 {
+                    for w in self.connections(v) {
+                        let e: Edge = (w, *v).into();
+                        // D[w.id, v.id] = d
+                        dist.insert(e, depth);
+                        // S[w.id, v.id] = v.id
+                        paths.insert(e, *v);
+                        //w'=T_V(w)
+                        //w'.cor = w.root
+                        cors.insert(w, roots.get(&w).unwrap_or(&w).clone());
+                        // add w' to v'.children
+                        children.entry(*v).or_insert(Vec::new()).push(w);
+                        // w'.parent = v'
+                        parents.insert(w, *v);
+                        // v.que.enque(w', 1)
+                        dqueues.entry(*v).or_insert(Vec::new()).push((w, 1));
+                        // v.c = v.c + 1
+                        *counters.get_mut(v).unwrap() += 1;
+                    }
+                } else {
+                    // n = len(D)
+                    // w' = v.que.deque(d - 1)
+                    let mut vqueue = dqueues.entry(*v).or_insert(Vec::new());
+                    let mut w = vqueue
+                        .iter()
+                        .filter(|(_, vd)| *vd == depth - 1)
+                        .last()
+                        .map(|(w, _)| w.clone());
+                    // while w' is not None:
+                    while let Some(wp) = w {
+                        // actually finish the dequeuque
+                        //vqueue.remove(wp);
+
+                        // for x'' in w'.cor.children
+                        for xpp in children.get(cors.get(&wp).unwrap()).unwrap().clone() {
+                            let e: Edge = (xpp, *v).into();
+                            if *paths.entry(e).or_insert(0) == 0 {
+                                // D[x.id, v.id] = d;
+                                dist.insert(e, depth);
+                                // S[x.id, v.id] = w.id;
+                                paths.insert(e, wp);
+                                // x' = T_V(x)
+                                // x.cor = x''
+                                cors.insert(xpp, xpp);
+                                // add w' to w' children
+                                children.entry(wp).or_insert(Vec::new()).push(xpp);
+                                // x'.parent = w'
+                                parents.insert(xpp, wp);
+                                // v.que.enque(x', d)
+                                dqueues.entry(*v).or_insert(Vec::new()).push((xpp, depth));
+                                // v.c = v.c + 1
+                                let vc = counters.entry(*v).or_insert(1);
+                                *vc += 1;
+                                if *vc == n {
+                                    return;
+                                }
+                            }
+                        }
+
+                        // w' = v.que.deque(d-1)
+                    }
+                }
+            }
+            verts = v_new;
+        }
+
+        self.dist = dist;
+    }
 
     pub fn distances(&mut self) {
         //self.pst();
