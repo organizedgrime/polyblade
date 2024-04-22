@@ -249,19 +249,20 @@ impl PolyGraph {
     }
     */
 
+    #[allow(dead_code)]
     fn pst(&mut self) {
         let n = self.vertices.len();
-        /// Vertex
+
+        // Vertex
         //
         // d-queues associated w each vertex
+        // maps from v -> ( maps from d -> u )
         let mut dqueues: HashMap<VertexId, HashMap<usize, VecDeque<VertexId>>> = Default::default();
-        let mut children: HashMap<VertexId, Vec<VertexId>> = Default::default();
-        let mut parents: HashMap<VertexId, VertexId> = Default::default();
+        //
+        let mut children: HashMap<VertexId, HashSet<VertexId>> = Default::default();
         // Counters for vertices whos shortest paths have already been obtained
         let mut counters: HashMap<VertexId, usize> =
             self.vertices.iter().map(|v| (*v, 1)).collect();
-        //let mut cors: HashMap<VertexId, usize> = Default::default();
-        //let mut roots: HashMap<VertexId, VertexId> = Default::default();
 
         // The element D[i, j] represents the distance from v_i to vj.
         let mut dist: HashMap<Edge, usize> = Default::default();
@@ -279,7 +280,7 @@ impl PolyGraph {
                     paths.insert(e, 0);
                 }
             }
-            paths.insert((i, i).into(), VertexId::MAX);
+            paths.insert((i, i).into(), usize::MAX);
         }
 
         let mut verts: HashSet<VertexId> = self.vertices.clone();
@@ -288,106 +289,81 @@ impl PolyGraph {
         // while 0 < |V|
         while 0 < verts.len() {
             println!("d: {depth}, D: {dist:?}, S: {paths:?}");
-            println!("dqueues: {dqueues:?}, children: {children:?}, parents: {parents:?}");
-            //println!("cors: {cors:?}, roots: {roots:?}");
+            println!("dqueues: {dqueues:?}, children: {children:?}");
             // d = d + 1
             depth += 1;
             // set an empty set to V_new
             let mut v_new = HashSet::new();
             // for v in V
-            for v in verts.clone().iter() {
+            for v in verts.clone().into_iter() {
                 // START EXTEND(v, d, D, S)
                 if depth == 1 {
-                    println!("dv1: {v}, edges: {:?}", self.edges(v));
                     //
-                    for e in self.edges(v) {
-                        let w = e.other(v).unwrap();
-                        println!("E(1): {e}");
+                    for e in self.edges(&v) {
+                        // Connected node
+                        let w = e.other(&v).unwrap();
                         // D[w.id, v.id] = d
                         dist.insert(e, depth);
                         // S[w.id, v.id] = v.id
-                        paths.insert(e, *v);
-                        //w'=T_V(w)
-                        //w'.cor = w.root
-                        //cors.insert(w, roots.entry(w).or_insert(w).clone());
+                        paths.insert(e, v);
                         // add w' to v'.children
-                        children.entry(*v).or_default().push(w);
-                        // w'.parent = v'
-                        parents.insert(w, *v);
+                        children.entry(v).or_default().insert(w);
                         // v.que.enque(w', 1)
                         dqueues
-                            .entry(*v)
+                            .entry(v)
                             .or_default()
                             .entry(1)
                             .or_default()
                             .push_back(w);
                         // v.c = v.c + 1
-                        *counters.entry(*v).or_insert(1) += 1;
-                        println!("dqeuues: {dqueues:?}");
+                        *counters.entry(v).or_insert(1) += 1;
                     }
                 } else {
-                    println!("dn1: {v}: {dqueues:?}");
-                    // n = len(D)
-                    // w' = v.que.deque(d - 1)
-                    // while w' is not None:
-                    while let Some(wp) = dqueues
-                        .entry(*v)
+                    // w = v.que.deque(d - 1)
+                    // while w is not None:
+                    while let Some(w) = dqueues
+                        .entry(v)
                         .or_default()
                         .entry(depth - 1)
                         .or_default()
                         .pop_back()
                     {
-                        // actually finish the dequeuque
-                        //vqueue.remove(wp);
-                        print!("{v}dqueue.rm({wp})");
-                        let l = dqueues.entry(*v).or_default();
-                        print!("dl: {l:?}");
-                        *l = l.clone().into_iter().filter(|(xx, _)| xx != &wp).collect();
-                        println!("dlp: {l:?}");
-
-                        // for x'' in w'.cor.children
-                        //for xpp in children.get(cors.get(&wp).unwrap()).unwrap().clone() {
-                        for xpp in children.entry(wp).or_default().clone() {
-                            //if xpp != *v {
-                            let e: Edge = (xpp, *v).into();
-                            if *paths.entry(e).or_insert(0) == 0 {
+                        // for x in w.children
+                        for x in children.entry(w).or_default().clone() {
+                            let e: Edge = (x, v).into();
+                            if paths.entry(e).or_insert(0) == &0 {
                                 // D[x.id, v.id] = d;
                                 dist.insert(e, depth);
                                 // S[x.id, v.id] = w.id;
-                                paths.insert(e, wp);
-                                // x' = T_V(x)
-                                // x.cor = x''
-                                //cors.insert(xpp, xpp);
-                                // add w' to w' children
-                                children.entry(wp).or_default().push(xpp);
-                                // x'.parent = w'
-                                parents.insert(xpp, wp);
+                                paths.insert(e, w);
+                                // add x' to w' children
+                                children.entry(w).or_default().insert(x);
                                 // v.que.enque(x', d)
                                 dqueues
-                                    .entry(*v)
+                                    .entry(v)
                                     .or_default()
                                     .entry(depth)
                                     .or_default()
-                                    .push_back(xpp);
+                                    .push_back(x);
                                 // v.c = v.c + 1
-                                let vc = counters.entry(*v).or_insert(1);
+                                let vc = counters.entry(v).or_insert(1);
                                 *vc += 1;
                                 if *vc == n {
                                     self.dist = dist;
                                     return;
                                 }
                             }
-                            //}
                         }
 
+                        // we do this at the top of the loop
                         // w' = v.que.deque(d-1)
                     }
                 }
                 // END EXTEND
 
                 println!("counters: {:?}", counters);
-                if *counters.entry(*v).or_insert(1) < n {
-                    v_new.insert(*v);
+                if *counters.entry(v).or_insert(1) < n {
+                    v_new.insert(v);
                 }
             }
 
