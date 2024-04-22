@@ -212,21 +212,13 @@ impl PolyGraph {
         let mut dqueue: HashMap<VertexId, VecDeque<(VertexId, usize)>> = Default::default();
         //
         let mut children: HashMap<VertexId, Vec<VertexId>> = Default::default();
-        // Counters for vertices whos shortest paths have already been obtained
 
+        // Counters for vertices whos shortest paths have already been obtained
         let mut counters: HashMap<VertexId, usize> =
             self.vertices.iter().map(|v| (*v, n - 1)).collect();
 
         // The element D[i, j] represents the distance from v_i to vj.
         let mut dist: HashMap<Edge, usize> = Default::default();
-        // The element S[i,j] represents the parent of v_i on the shortest path from v_i to a source
-        // vertex v_j.
-        //let mut paths: HashMap<Edge, usize> = Default::default();
-
-        // let the diagonal elements of S already be initialized to NO_PARENT (-1) and all other
-        // elements to NOT_SEARCHED (0). NO_PARENT means v_i is a source vertex.
-
-        println!("n: {}, ects: {counters:?}", self.vertices.len());
 
         // d = 0
         let mut depth = 1;
@@ -254,7 +246,6 @@ impl PolyGraph {
                         dist.insert(e, 1);
                         // add w' to v'.children
                         children.entry(v).or_default().push(w);
-                        children.entry(w).or_default().push(v);
                         // v.que.enque(w', 1)
                         dqueue.entry(v).or_default().push_back((w, 1));
                         dqueue.entry(w).or_default().push_back((v, 1));
@@ -266,7 +257,6 @@ impl PolyGraph {
                 } else {
                     // w = v.que.deque(d - 1)
                     // while w is not None:
-                    //remaining[0];
                     'dq: loop {
                         let vqueue = dqueue.get_mut(&v).unwrap();
                         if let Some((w, d)) = vqueue.pop_front() {
@@ -282,7 +272,6 @@ impl PolyGraph {
                                     dist.insert(e, depth);
                                     // add x' to w' children
                                     children.entry(w).or_default().push(x);
-                                    children.entry(x).or_default().push(w);
                                     // v.que.enque(x', d)
                                     dqueue.get_mut(&v).unwrap().push_back((x, depth));
                                     dqueue.get_mut(&x).unwrap().push_back((v, depth));
@@ -310,11 +299,8 @@ impl PolyGraph {
             depth += 1;
 
             if !removed {
-                println!("didnt remove any");
-                println!("dq {dqueue:?}");
-
                 self.dist = dist;
-                return;
+                panic!("failed");
             }
         }
 
