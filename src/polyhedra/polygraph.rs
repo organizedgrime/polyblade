@@ -226,32 +226,8 @@ impl PolyGraph {
         // let the diagonal elements of S already be initialized to NO_PARENT (-1) and all other
         // elements to NOT_SEARCHED (0). NO_PARENT means v_i is a source vertex.
 
-        let mut remaining = HashSet::new();
-        for i in self.vertices.iter() {
-            for j in self.vertices.iter() {
-                if i != j {
-                    let e: Edge = (i, j).into();
-                    if !remaining.contains(&e) {
-                        //*counters.get_mut(&i).unwrap() += 1;
-                        //*counters.get_mut(&j).unwrap() += 1;
-                        //paths.insert(e, usize::MAX);
-                        remaining.insert(e);
-                    }
-                }
-            }
-        }
         println!("n: {}, ects: {counters:?}", self.vertices.len());
 
-        /*
-        let ex = paths.len();
-        println!("ex:::: {ex}");
-
-        for i in self.vertices.iter() {
-            paths.insert((i, i).into(), 0);
-        }
-        */
-
-        //let mut verts: HashSet<VertexId> = self.vertices.clone();
         // d = 0
         let mut depth = 1;
         // while 0 < |V|
@@ -283,7 +259,7 @@ impl PolyGraph {
                         dqueue.entry(v).or_default().push_back((w, 1));
                         dqueue.entry(w).or_default().push_back((v, 1));
                         // v.c = v.c + 1
-                        remaining.remove(&e);
+                        //remaining.remove(&e);
                         println!("decrementing {v} {w}");
                         *counters.get_mut(&v).unwrap() -= 1;
                         //*counters.get_mut(&w).unwrap() -= 1;
@@ -307,7 +283,6 @@ impl PolyGraph {
                             for x in children.get(&w).unwrap().clone().into_iter() {
                                 let e: Edge = (x, v).into();
                                 if x != v && !dist.contains_key(&e) {
-                                    println!("dd: {:?}", dist.get(&e));
                                     // D[x.id, v.id] = d;
                                     dist.insert(e, depth);
                                     // add x' to w' children
@@ -317,7 +292,7 @@ impl PolyGraph {
                                     dqueue.get_mut(&v).unwrap().push_back((x, depth));
                                     dqueue.get_mut(&x).unwrap().push_back((v, depth));
                                     // v.c = v.c + 1
-                                    remaining.remove(&e);
+                                    //remaining.remove(&e);
                                     removed = true;
                                     println!("decrementing {v} {x}");
                                     *counters.get_mut(&v).unwrap() -= 1;
@@ -333,12 +308,6 @@ impl PolyGraph {
                                     //if remaining.iter().find(|e| e.other(&w).is_some()).is_none() {
                                     //break 'dq;
                                     //}
-                                } else {
-                                    if x == v {
-                                        println!("asdfasdfas");
-                                    } else {
-                                        println!("ddOT: {:?}", dist.get(&e));
-                                    }
                                 }
                             }
                         } else {
