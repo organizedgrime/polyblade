@@ -352,9 +352,9 @@ impl PolyGraph {
                             // v.c = v.c + 1
                             remaining.remove(&e);
                             // if v.c == n: return
-                            //if remaining.iter().find(|e| e.other(&v).is_some()).is_none() {
-                            continue 'dq;
-                            //}
+                            if remaining.iter().find(|e| e.other(&v).is_some()).is_none() {
+                                continue 'dq;
+                            }
                         }
                     }
                 }
