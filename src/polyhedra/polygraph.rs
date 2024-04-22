@@ -269,10 +269,10 @@ impl PolyGraph {
                         dist.insert(e, 1);
                         // add w' to v'.children
                         children.entry(v).or_default().push(w);
-                        //children.entry(w).or_default().push(v);
+                        children.entry(w).or_default().push(v);
                         // v.que.enque(w', 1)
                         dqueue.entry(v).or_default().push_back((w, 1));
-                        //dqueue.entry(w).or_default().push_back((v, 1));
+                        dqueue.entry(w).or_default().push_back((v, 1));
                         // v.c = v.c + 1
                         remaining.remove(&e);
                     }
@@ -283,7 +283,6 @@ impl PolyGraph {
                     'dq: loop {
                         let vqueue = dqueue.get_mut(&v).unwrap();
                         if let Some((w, d)) = vqueue.pop_front() {
-                            //'dq: while let Some((w, d)) = dqueue.clone().get(&v).unwrap().front() {
                             if d != depth - 1 {
                                 dqueue.get_mut(&v).unwrap().push_back((w, d));
                                 break;
@@ -292,24 +291,22 @@ impl PolyGraph {
                             //let e: Edge = (v, *w).into();
 
                             // for x in w.children
-
-                            for x in children.entry(w).or_default().clone().into_iter() {
+                            for x in children.get(&w).unwrap().clone().into_iter() {
                                 let e: Edge = (x, v).into();
                                 if remaining.contains(&e) {
                                     // D[x.id, v.id] = d;
                                     dist.insert(e, depth);
                                     // add x' to w' children
                                     children.entry(w).or_default().push(x);
-                                    //children.entry(x).or_default().push(w);
+                                    children.entry(x).or_default().push(w);
                                     // v.que.enque(x', d)
                                     dqueue.get_mut(&v).unwrap().push_back((x, depth));
+                                    dqueue.get_mut(&x).unwrap().push_back((v, depth));
                                     // v.c = v.c + 1
                                     remaining.remove(&e);
                                     // if v.c == n: return
                                     if remaining.iter().find(|e| e.other(&w).is_some()).is_none() {
-                                        break 'dq;
-                                    } else {
-                                        dqueue.get_mut(&x).unwrap().push_back((v, depth));
+                                        continue 'dq;
                                     }
                                 }
                             }
@@ -446,6 +443,9 @@ mod test {
     #[test_case(PolyGraph::octahedron(); "O")]
     #[test_case(PolyGraph::dodecahedron(); "D")]
     #[test_case(PolyGraph::icosahedron(); "I")]
+    #[test_case({ let mut g = PolyGraph::cube(); g.truncate(); g} ; "tC")]
+    #[test_case({ let mut g = PolyGraph::octahedron(); g.truncate(); g} ; "tO")]
+    #[test_case({ let mut g = PolyGraph::dodecahedron(); g.truncate(); g} ; "tD")]
     fn pst(mut graph: PolyGraph) {
         let new_dist = graph.dist.clone();
 

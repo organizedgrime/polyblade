@@ -28,16 +28,10 @@ impl PolyGraph {
         connections.extend(self.ghost_connections(v));
         connections.remove(v);
         let n = connections.len();
-        // Previously processed connection, starts with a seed
-        let mut previous = *connections.iter().collect::<Vec<_>>()[0];
         let mut new_vertex = 0;
 
         // Remove the vertex
         self.delete(v);
-        // Recompute distances in the absence of the vertex
-        self.pst();
-        self.faces();
-
         'connections: while !connections.is_empty() {
             // closest vertex to the previous which is not itself and is connected
             let u = connections.clone().into_iter().collect::<Vec<_>>()[0];
@@ -49,7 +43,6 @@ impl PolyGraph {
             self.connect((u, new_vertex));
 
             // Track
-            previous = u;
             connections.remove(&u);
 
             // Track the ghost edge and new edge
