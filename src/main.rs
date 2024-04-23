@@ -151,10 +151,6 @@ pub fn main() {
                             shape.expand();
                             update_static = true;
                         }
-                        if ui.button("Snub").clicked() {
-                            shape.snub();
-                            update_static = true;
-                        }
                     });
                 });
                 panel_height = gui_context.used_rect().height();

@@ -64,20 +64,8 @@ impl PolyGraph {
                 let before = face.0[(pos + flen - 1) % flen];
                 let after = face.0[(pos + 1) % flen];
 
-                //let be: Edge = (*v, before).into();
-                //let ae: Edge = (*v, after).into();
-
-                //let gb = self.ghost_edges.get(&be).unwrap();
-                //let ga = self.ghost_edges.get(&ae).unwrap();
-
                 let b = transformations.get(&before).unwrap();
                 let a = transformations.get(&after).unwrap();
-                println!("maybe: b{b:?}, a{a:?}");
-
-                //println!("removing b{v}; {be:?} became {gb:?}");
-                //println!("removing a{v}; {ae:?} became {ga:?}");
-                //let gb = gb.other(&before).unwrap();
-                //let ga = ga.other(&after).unwrap();
 
                 face.0.remove(pos);
                 face.0.insert(pos, *a);
@@ -87,8 +75,8 @@ impl PolyGraph {
             }
         }
 
-        for c in ccc.clone().into_iter() {
-            self.connect(c);
+        for c in ccc.iter() {
+            self.connect(*c);
         }
 
         let mut fff = Vec::new();
@@ -108,14 +96,12 @@ impl PolyGraph {
         }
 
         self.faces.push(Face(fff));
-        println!("faces: {:?}", self.faces);
     }
 
     /// `t` truncate
     pub fn truncate(&mut self) {
         for v in self.vertices.clone().iter() {
             self.split_vertex(v);
-            self.ghost_edges = HashMap::new();
         }
         self.recompute_qualities();
         self.name.insert(0, 't');
