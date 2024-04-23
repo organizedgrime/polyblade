@@ -84,15 +84,31 @@ impl PolyGraph {
                 face.0.insert(pos, ga);
                 face.0.insert(pos, gb);
 
-                ccc.insert((ga, gb).into());
+                ccc.insert((gb, ga).into());
             }
         }
 
-        for c in ccc.into_iter() {
+        for c in ccc.clone().into_iter() {
             self.connect(c);
         }
 
-        self.faces.push(Face(new_guys));
+        let mut fff = Vec::new();
+        loop {
+            if ccc.is_empty() {
+                break;
+            }
+            if fff.is_empty() {
+                let random = ccc.iter().collect::<Vec<_>>()[0].id().0;
+                fff.push(random);
+            } else {
+                let l = fff.last().unwrap();
+                let e = ccc.iter().find(|e| e.other(l).is_some()).unwrap().clone();
+                fff.push(e.other(l).unwrap());
+                ccc.remove(&e);
+            }
+        }
+
+        self.faces.push(Face(fff));
         println!("faces: {:?}", self.faces);
     }
 
