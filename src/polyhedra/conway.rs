@@ -23,6 +23,7 @@ impl PolyGraph {
     }
 
     pub fn split_vertex(&mut self, v: &VertexId) {
+        let mut faces = self.faces.clone();
         let original_position = self.positions[v];
         let mut connections: HashSet<usize> = self.connections(v);
         connections.extend(self.ghost_connections(v));
@@ -116,6 +117,7 @@ impl PolyGraph {
     pub fn truncate(&mut self) {
         for v in self.vertices.clone().iter() {
             self.split_vertex(v);
+            self.ghost_edges = HashMap::new();
         }
         self.recompute_qualities();
         self.name += "t";
