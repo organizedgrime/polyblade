@@ -28,17 +28,18 @@ impl PolyGraph {
         connections.extend(self.ghost_connections(v));
         connections.remove(v);
         let mut connections: VecDeque<VertexId> = connections.into_iter().collect();
-        let mut new_guys = Vec::new();
+        let mut transformations: HashMap<VertexId, VertexId> = Default::default();
 
         // Remove the vertex
         self.delete(v);
         'connections: while let Some(u) = connections.pop_front() {
             // Insert a new node in the same location
             let new_vertex = self.insert();
-            new_guys.push(new_vertex);
+            // Update pos
             self.positions.insert(new_vertex, original_position);
             // Reform old connection
             self.connect((u, new_vertex));
+            transformations.insert(u, new_vertex);
 
             // Track the ghost edge and new edge
             let ge: Edge = (*v, u).into();
@@ -63,22 +64,26 @@ impl PolyGraph {
                 let before = face.0[(pos + flen - 1) % flen];
                 let after = face.0[(pos + 1) % flen];
 
-                let be: Edge = (*v, before).into();
-                let ae: Edge = (*v, after).into();
+                //let be: Edge = (*v, before).into();
+                //let ae: Edge = (*v, after).into();
 
-                let gb = self.ghost_edges.get(&be).unwrap();
-                let ga = self.ghost_edges.get(&ae).unwrap();
+                //let gb = self.ghost_edges.get(&be).unwrap();
+                //let ga = self.ghost_edges.get(&ae).unwrap();
 
-                println!("removing {v}; {be:?} became {gb:?}");
-                println!("removing {v}; {ae:?} became {ga:?}");
-                let gb = gb.other(&before).unwrap();
-                let ga = ga.other(&after).unwrap();
+                let b = transformations.get(&before).unwrap();
+                let a = transformations.get(&after).unwrap();
+                println!("maybe: b{b:?}, a{a:?}");
+
+                //println!("removing b{v}; {be:?} became {gb:?}");
+                //println!("removing a{v}; {ae:?} became {ga:?}");
+                //let gb = gb.other(&before).unwrap();
+                //let ga = ga.other(&after).unwrap();
 
                 face.0.remove(pos);
-                face.0.insert(pos, ga);
-                face.0.insert(pos, gb);
+                face.0.insert(pos, *a);
+                face.0.insert(pos, *b);
 
-                ccc.insert((gb, ga).into());
+                ccc.insert((a, b).into());
             }
         }
 
