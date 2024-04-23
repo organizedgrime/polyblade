@@ -1,4 +1,4 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::{HashMap, HashSet, VecDeque};
 
 pub use super::*;
 
@@ -23,28 +23,22 @@ impl PolyGraph {
     }
 
     pub fn split_vertex(&mut self, v: &VertexId) {
-        let mut faces = self.faces.clone();
         let original_position = self.positions[v];
         let mut connections: HashSet<usize> = self.connections(v);
         connections.extend(self.ghost_connections(v));
         connections.remove(v);
+        let mut connections: VecDeque<VertexId> = connections.into_iter().collect();
         let mut new_guys = Vec::new();
 
         // Remove the vertex
         self.delete(v);
-        'connections: while !connections.is_empty() {
-            // closest vertex to the previous which is not itself and is connected
-            let u = connections.clone().into_iter().collect::<Vec<_>>()[0];
-
+        'connections: while let Some(u) = connections.pop_front() {
             // Insert a new node in the same location
             let new_vertex = self.insert();
             new_guys.push(new_vertex);
             self.positions.insert(new_vertex, original_position);
             // Reform old connection
             self.connect((u, new_vertex));
-
-            // Track
-            connections.remove(&u);
 
             // Track the ghost edge and new edge
             let ge: Edge = (*v, u).into();
@@ -63,8 +57,7 @@ impl PolyGraph {
         }
 
         let mut ccc = HashSet::<Edge>::new();
-        for i in 0..self.faces.len() {
-            let face = &mut self.faces[i];
+        for face in self.faces.iter_mut() {
             if let Some(pos) = face.0.iter().position(|x| x == v) {
                 let flen = face.0.len();
                 let before = face.0[(pos + flen - 1) % flen];
