@@ -89,7 +89,7 @@ impl PolyGraph {
                 fff.push(random);
             } else {
                 let l = fff.last().unwrap();
-                let e = ccc.iter().find(|e| e.other(l).is_some()).unwrap().clone();
+                let e = *ccc.iter().find(|e| e.other(l).is_some()).unwrap();
                 fff.push(e.other(l).unwrap());
                 ccc.remove(&e);
             }
