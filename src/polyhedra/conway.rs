@@ -1,4 +1,4 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::{HashMap, HashSet, VecDeque};
 
 pub use super::*;
 
@@ -27,23 +27,19 @@ impl PolyGraph {
         let mut connections: HashSet<usize> = self.connections(v);
         connections.extend(self.ghost_connections(v));
         connections.remove(v);
-        let n = connections.len();
-        let mut new_vertex = 0;
+        let mut connections: VecDeque<VertexId> = connections.into_iter().collect();
+        let mut transformations: HashMap<VertexId, VertexId> = Default::default();
 
         // Remove the vertex
         self.delete(v);
-        'connections: while !connections.is_empty() {
-            // closest vertex to the previous which is not itself and is connected
-            let u = connections.clone().into_iter().collect::<Vec<_>>()[0];
-
+        'connections: while let Some(u) = connections.pop_front() {
             // Insert a new node in the same location
-            new_vertex = self.insert();
+            let new_vertex = self.insert();
+            // Update pos
             self.positions.insert(new_vertex, original_position);
             // Reform old connection
             self.connect((u, new_vertex));
-
-            // Track
-            connections.remove(&u);
+            transformations.insert(u, new_vertex);
 
             // Track the ghost edge and new edge
             let ge: Edge = (*v, u).into();
@@ -61,11 +57,45 @@ impl PolyGraph {
             self.ghost_edges.insert(ge, ne);
         }
 
-        // Connect all nodes in the new face formed
-        for i in 0..n - 1 {
-            self.connect((new_vertex - i, new_vertex - i - 1));
+        let mut ccc = HashSet::<Edge>::new();
+        for face in self.faces.iter_mut() {
+            if let Some(pos) = face.0.iter().position(|x| x == v) {
+                let flen = face.0.len();
+                let before = face.0[(pos + flen - 1) % flen];
+                let after = face.0[(pos + 1) % flen];
+
+                let b = transformations.get(&before).unwrap();
+                let a = transformations.get(&after).unwrap();
+
+                face.0.remove(pos);
+                face.0.insert(pos, *a);
+                face.0.insert(pos, *b);
+
+                ccc.insert((a, b).into());
+            }
         }
-        self.connect((new_vertex, new_vertex - n + 1));
+
+        for c in ccc.iter() {
+            self.connect(*c);
+        }
+
+        let mut fff = Vec::new();
+        loop {
+            if ccc.is_empty() {
+                break;
+            }
+            if fff.is_empty() {
+                let random = ccc.iter().collect::<Vec<_>>()[0].id().0;
+                fff.push(random);
+            } else {
+                let l = fff.last().unwrap();
+                let e = *ccc.iter().find(|e| e.other(l).is_some()).unwrap();
+                fff.push(e.other(l).unwrap());
+                ccc.remove(&e);
+            }
+        }
+
+        self.faces.push(Face(fff));
     }
 
     /// `t` truncate
@@ -74,7 +104,7 @@ impl PolyGraph {
             self.split_vertex(v);
         }
         self.recompute_qualities();
-        self.name += "t";
+        self.name.insert(0, 't');
     }
 
     /// `a` ambo
@@ -94,24 +124,26 @@ impl PolyGraph {
 
         self.recompute_qualities();
         self.ghost_edges = HashMap::new();
-        self.name.truncate(self.name.len() - 1);
-        self.name += "a";
+        self.name.remove(0);
+        self.name.insert(0, 'a');
     }
 
     /// `b` = `ta`
     pub fn bevel(&mut self) {
         self.truncate();
         self.ambo();
-        self.name.truncate(self.name.len() - 2);
-        self.name += "b";
+        self.name.remove(0);
+        self.name.remove(0);
+        self.name.insert(0, 'b');
     }
 
     /// `e` = `aa`
     pub fn expand(&mut self) {
         self.ambo();
         self.ambo();
-        self.name.truncate(self.name.len() - 2);
-        self.name += "e";
+        self.name.remove(0);
+        self.name.remove(0);
+        self.name.insert(0, 'e');
     }
 
     /// `s` snub is applying `e` followed by diagonal addition
