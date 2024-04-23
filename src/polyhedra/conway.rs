@@ -120,7 +120,7 @@ impl PolyGraph {
             self.ghost_edges = HashMap::new();
         }
         self.recompute_qualities();
-        self.name += "t";
+        self.name.insert(0, 't');
     }
 
     /// `a` ambo
@@ -140,24 +140,26 @@ impl PolyGraph {
 
         self.recompute_qualities();
         self.ghost_edges = HashMap::new();
-        self.name.truncate(self.name.len() - 1);
-        self.name += "a";
+        self.name.remove(0);
+        self.name.insert(0, 'a');
     }
 
     /// `b` = `ta`
     pub fn bevel(&mut self) {
         self.truncate();
         self.ambo();
-        self.name.truncate(self.name.len() - 2);
-        self.name += "b";
+        self.name.remove(0);
+        self.name.remove(0);
+        self.name.insert(0, 'b');
     }
 
     /// `e` = `aa`
     pub fn expand(&mut self) {
         self.ambo();
         self.ambo();
-        self.name.truncate(self.name.len() - 2);
-        self.name += "e";
+        self.name.remove(0);
+        self.name.remove(0);
+        self.name.insert(0, 'e');
     }
 
     /// `s` snub is applying `e` followed by diagonal addition
