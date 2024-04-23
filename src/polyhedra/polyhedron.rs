@@ -48,9 +48,10 @@ impl PolyGraph {
     }
 
     fn apply_spring_forces(&mut self) {
+        let diam = *self.dist.values().max().unwrap_or(&1) as f32;
         // Natural lengths
         let l_d = self.edge_length * 2.0;
-        let l_a = l_d / 9.0;
+        let l_a = l_d / (diam * 3.0);
         let l_n = l_a * 2.0;
 
         // Spring constants

@@ -48,7 +48,7 @@ pub fn main() {
         vec3(0.0, 1.0, 0.0),
         degrees(45.0),
         0.1,
-        10.0,
+        100.0,
     );
     let mut control = OrbitControl::new(vec3(0.0, 0.0, 0.0), 1.0, 1000.0);
     let mut model_rotation = Mat4::zero();
