@@ -16,8 +16,6 @@ pub struct PolyGraph {
     pub vertices: HashSet<VertexId>,
     /// Vertices that are adjacent
     pub adjacents: HashSet<Edge>,
-    /// Edges that have had Vertices split
-    pub ghost_edges: HashMap<Edge, Edge>,
 
     /// [Derived Properties]
     /// Faces
@@ -122,19 +120,6 @@ impl PolyGraph {
             .filter(|e| e.id().0 == v || e.id().1 == v)
             .map(|e| e.other(v).unwrap())
             .collect()
-    }
-
-    pub fn ghost_connections(&self, v: VertexId) -> HashSet<VertexId> {
-        let mut connections = HashSet::new();
-        for (ge, le) in self.ghost_edges.iter() {
-            if let Some(u) = ge.other(v) {
-                if self.vertices.contains(&u) {
-                    connections.insert(le.other(v).unwrap());
-                }
-            }
-        }
-
-        connections
     }
 
     /// All faces

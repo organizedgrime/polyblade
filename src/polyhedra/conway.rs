@@ -5,21 +5,14 @@ pub use super::*;
 impl PolyGraph {
     pub fn contract_edge(&mut self, e: impl Into<Edge>) {
         let e: Edge = e.into();
-        // If this is the ghost edge, find its extant counterpart
-        let id = self.ghost_edges.get(&e).unwrap_or(&e).id();
         // Give b all the same connections as a
-        for b in self.connections(id.0).into_iter() {
-            if b != id.1 {
-                self.connect((b, id.1))
+        for b in self.connections(e.v()).into_iter() {
+            if b != e.u() {
+                self.connect((b, e.u()))
             }
         }
         // Delete a
-        self.delete(id.0);
-        for (_, v) in self.ghost_edges.iter_mut() {
-            if let Some(u) = v.other(id.0) {
-                *v = (id.1, u).into();
-            }
-        }
+        self.delete(e.v());
     }
 
     pub fn split_vertex(&mut self, v: VertexId) -> Vec<Edge> {
@@ -99,7 +92,6 @@ impl PolyGraph {
         }
 
         self.recompute_qualities();
-        self.ghost_edges = HashMap::new();
         self.name.remove(0);
         self.name.insert(0, 'a');
     }

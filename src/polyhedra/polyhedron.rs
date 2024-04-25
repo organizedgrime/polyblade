@@ -2,10 +2,7 @@ use cgmath::{vec3, InnerSpace, MetricSpace, Vector3, VectorSpace, Zero};
 
 use super::*;
 use crate::prelude::{V3f, HSL};
-use std::{
-    collections::{HashMap, HashSet},
-    ops::Add,
-};
+use std::{collections::HashSet, ops::Add};
 
 const TICK_SPEED: f32 = 50.0;
 
@@ -13,13 +10,7 @@ const TICK_SPEED: f32 = 50.0;
 impl PolyGraph {
     fn apply_forces(&mut self, edges: HashSet<Edge>, l: f32, k: f32) {
         for (v, u) in edges.into_iter().map(|e| e.id()) {
-            if self
-                .contracting_edges
-                .iter()
-                .map(|e| self.ghost_edges.get(e).unwrap_or(e).id().into())
-                .collect::<Vec<Edge>>()
-                .contains(&(v, u).into())
-            {
+            if self.contracting_edges.contains(&(v, u).into()) {
                 let vp = self.positions[&v];
                 let up = self.positions[&u];
                 let l = vp.distance(up);
@@ -215,9 +206,8 @@ impl PolyGraph {
         // If all edges are contracted visually
         if !self.contracting_edges.is_empty()
             && self.contracting_edges.iter().fold(true, |acc, e| {
-                let (v, u) = self.ghost_edges.get(e).unwrap_or(e).id();
-                if self.positions.contains_key(&v) && self.positions.contains_key(&u) {
-                    acc && self.positions[&v].distance(self.positions[&u]) < 0.08
+                if self.positions.contains_key(&e.v()) && self.positions.contains_key(&e.u()) {
+                    acc && self.positions[&e.v()].distance(self.positions[&e.u()]) < 0.08
                 } else {
                     acc
                 }
@@ -227,7 +217,6 @@ impl PolyGraph {
             for e in self.contracting_edges.clone() {
                 self.contract_edge(e);
             }
-            self.ghost_edges = HashMap::new();
             self.contracting_edges = HashSet::new();
             self.recompute_qualities();
             self.name.truncate(self.name.len() - 1);
