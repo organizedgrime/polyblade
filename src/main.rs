@@ -129,10 +129,6 @@ pub fn main() {
                         if ui.button("s0").clicked() {
                             shape.split_vertex(*shape.vertices.iter().collect::<Vec<_>>()[0]);
                             shape.pst();
-                            // Neighbors and diameters rely on distances
-                            shape.neighbors();
-                            shape.diameter();
-                            //shape.recompute_qualities();
                             update_static = true;
                         }
                         if ui.button("Truncate").clicked() {
@@ -169,7 +165,7 @@ pub fn main() {
         // Camera control must be after the gui update.
         control.handle_events(&mut camera, &mut frame_input.events);
 
-        let color = vec3(60.0, 55.0, 68.0) / 255.0;
+        let color = vec3(0.9, 0.9, 0.9);
         frame_input
             .screen()
             // Clear the color and depth of the screen render target

@@ -1,59 +1,51 @@
 use cgmath::{vec3, InnerSpace, MetricSpace, Vector3, VectorSpace, Zero};
 
 use super::*;
-use crate::prelude::{V3f, HSL};
+use crate::prelude::V3f;
 use std::{collections::HashSet, ops::Add};
 
 const TICK_SPEED: f32 = 100.0;
 
 // Operations
 impl PolyGraph {
-    fn apply_forces(&mut self, edges: HashSet<Edge>, l: f32, k: f32) {
-        for (v, u) in edges.into_iter().map(|e| e.id()) {
-            if self.contracting_edges.contains(&(v, u).into()) {
-                let vp = self.positions[&v];
-                let up = self.positions[&u];
-                let l = vp.distance(up);
-                let f = (self.edge_length / TICK_SPEED * 3.0) / l;
-                *self.positions.get_mut(&v).unwrap() = vp.lerp(up, f);
-                *self.positions.get_mut(&u).unwrap() = up.lerp(vp, f);
-            } else {
-                let diff = self.positions[&v] - self.positions[&u];
-                let dist = diff.magnitude();
-                let distention = l - dist;
-                let restorative_force = k / 2.0 * distention;
-                let f = diff * restorative_force / TICK_SPEED;
-
-                // Add forces
-                *self.speeds.get_mut(&v).unwrap() += f;
-                *self.speeds.get_mut(&u).unwrap() -= f;
-
-                // Apply damping
-                *self.speeds.get_mut(&v).unwrap() *= 0.92;
-                *self.speeds.get_mut(&u).unwrap() *= 0.92;
-
-                *self.positions.get_mut(&v).unwrap() += self.speeds[&v];
-                *self.positions.get_mut(&u).unwrap() += self.speeds[&u];
-            }
-        }
-    }
-
     fn apply_spring_forces(&mut self) {
         let diam = *self.dist.values().max().unwrap_or(&1) as f32;
-        // Natural lengths
-        let l_d = self.edge_length * 2.0;
-        let l_a = l_d / (diam * 3.0);
-        let l_n = l_a * 2.2;
+        let l_diam = self.edge_length * 2.0;
+        for v in self.vertices.iter() {
+            for u in self.vertices.iter() {
+                let e: Edge = (v, u).into();
+                if self.dist.contains_key(&e) {
+                    let d = self.dist[&e] as f32;
+                    let l = l_diam * (d / diam);
+                    let k = 1.0 / d;
+                    if self.contracting_edges.contains(&(v, u).into()) {
+                        let vp = self.positions[&v];
+                        let up = self.positions[&u];
+                        let l = vp.distance(up);
+                        let f = (self.edge_length / TICK_SPEED * 3.0) / l;
+                        *self.positions.get_mut(&v).unwrap() = vp.lerp(up, f);
+                        *self.positions.get_mut(&u).unwrap() = up.lerp(vp, f);
+                    } else {
+                        let diff = self.positions[&v] - self.positions[&u];
+                        let dist = diff.magnitude();
+                        let distention = l - dist;
+                        let restorative_force = k / 2.0 * distention;
+                        let f = diff * restorative_force / TICK_SPEED;
 
-        // Spring constants
-        let k_a = 0.9;
-        let k_n = 0.4;
-        let k_d = 0.3;
+                        // Add forces
+                        *self.speeds.get_mut(&v).unwrap() += f;
+                        *self.speeds.get_mut(&u).unwrap() -= f;
 
-        // Apply!
-        self.apply_forces(self.adjacents.clone(), l_a, k_a);
-        self.apply_forces(self.neighbors.clone(), l_n, k_n);
-        self.apply_forces(self.diameter.clone(), l_d, k_d);
+                        // Apply damping
+                        *self.speeds.get_mut(&v).unwrap() *= 0.92;
+                        *self.speeds.get_mut(&u).unwrap() *= 0.92;
+
+                        *self.positions.get_mut(&v).unwrap() += self.speeds[&v];
+                        *self.positions.get_mut(&u).unwrap() += self.speeds[&u];
+                    }
+                }
+            }
+        }
     }
 
     fn center(&mut self) {
@@ -160,9 +152,9 @@ impl PolyGraph {
         let mut bsc = Vec::new();
         let mut tri = Vec::new();
 
-        for face_index in 0..self.faces.len() {
-            let face_tri = self.face_tri_buffer(face_index);
-            let color = Self::poly_color(self.faces[face_index].len()) / 255.0;
+        for i in 0..self.faces.len() {
+            let face_tri = self.face_tri_buffer(i);
+            let color = Self::poly_color(self.faces[i].len()) / 255.0;
             rgb.extend(vec![color; face_tri.len()]);
             tri.extend(face_tri);
         }
@@ -194,7 +186,7 @@ impl PolyGraph {
                 self.contract_edge(e);
             }
             self.contracting_edges = HashSet::new();
-            self.recompute_qualities();
+            self.pst();
             self.name.truncate(self.name.len() - 1);
             self.name += "a";
         }

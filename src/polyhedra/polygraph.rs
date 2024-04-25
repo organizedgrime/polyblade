@@ -20,9 +20,6 @@ pub struct PolyGraph {
     /// [Derived Properties]
     /// Faces
     pub faces: Vec<Face>,
-    /// Edge sets
-    pub neighbors: HashSet<Edge>,
-    pub diameter: HashSet<Edge>,
     /// Distances between all points
     pub dist: HashMap<Edge, usize>,
 
@@ -49,7 +46,7 @@ impl PolyGraph {
             edge_length: 1.0,
             ..Default::default()
         };
-        poly.recompute_qualities();
+        poly.pst();
         poly.faces();
         poly
     }
@@ -64,7 +61,7 @@ impl PolyGraph {
             }
         }
 
-        poly.recompute_qualities();
+        poly.pst();
         poly.faces();
         poly
     }
@@ -175,20 +172,6 @@ impl PolyGraph {
         }
 
         self.faces = cycles.into_iter().collect();
-    }
-
-    /// Neighbors
-    pub fn neighbors(&mut self) {
-        let mut neighbors = HashSet::<Edge>::new();
-        for u in self.vertices.iter() {
-            for v in self.vertices.iter() {
-                let e: Edge = (v, u).into();
-                if self.dist.get(&e) == Some(&2) {
-                    neighbors.insert(e);
-                }
-            }
-        }
-        self.neighbors = neighbors
     }
 
     pub fn pst(&mut self) {
@@ -353,28 +336,6 @@ impl PolyGraph {
 
         self.dist = dd;
     }
-
-    /// Periphery / diameter
-    pub fn diameter(&mut self) {
-        if let Some(max) = self.dist.values().max() {
-            self.diameter = self
-                .dist
-                .iter()
-                .filter_map(|(&e, d)| if d == max { Some(e) } else { None })
-                .collect();
-        }
-    }
-
-    //pub fn nearest(&)
-
-    pub fn recompute_qualities(&mut self) {
-        //
-        self.pst();
-        // Neighbors and diameters rely on distances
-        self.neighbors();
-        self.diameter();
-        //self.faces();
-    }
 }
 
 impl Display for PolyGraph {
@@ -480,11 +441,11 @@ mod test {
         graph.connect((1, 2));
         graph.connect((2, 3));
 
-        graph.recompute_qualities();
+        graph.pst();
         assert_eq!(graph.faces.len(), 0);
 
         graph.connect((2, 0));
-        graph.recompute_qualities();
+        graph.pst();
         assert_eq!(graph.faces, vec![Face::new(vec![0, 1, 2])]);
     }
 }
