@@ -169,10 +169,13 @@ pub fn main() {
         // Camera control must be after the gui update.
         control.handle_events(&mut camera, &mut frame_input.events);
 
+        let color = vec3(60.0, 55.0, 68.0) / 255.0;
         frame_input
             .screen()
             // Clear the color and depth of the screen render target
-            .clear(ClearState::color_and_depth(0.8, 0.8, 0.8, 1.0, 1.0))
+            .clear(ClearState::color_and_depth(
+                color.x, color.y, color.z, 1.0, 1.0,
+            ))
             .write(|| {
                 if rotating {
                     xrot += 0.0007 * frame_input.elapsed_time as f32;
