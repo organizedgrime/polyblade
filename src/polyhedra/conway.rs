@@ -1,129 +1,118 @@
-use std::collections::{HashMap, HashSet, VecDeque};
+use std::collections::{HashMap, VecDeque};
 
 pub use super::*;
+use std::collections::HashSet;
 
 impl PolyGraph {
     pub fn contract_edge(&mut self, e: impl Into<Edge>) {
         let e: Edge = e.into();
-        // If this is the ghost edge, find its extant counterpart
-        let id = self.ghost_edges.get(&e).unwrap_or(&e).id();
-        // Give b all the same connections as a
-        for b in self.connections(&id.0).iter() {
-            if b != &id.1 {
-                self.connect((b, &id.1))
-            }
+        // Give u all the same connections as v
+        for w in self.connections(e.v()).into_iter() {
+            self.connect((w, e.u()));
         }
         // Delete a
-        self.delete(&id.0);
-        for (_, v) in self.ghost_edges.iter_mut() {
-            if let Some(u) = v.other(&id.0) {
-                *v = (id.1, u).into();
-            }
+        for f in self.faces.iter_mut() {
+            f.replace(e.v(), e.u());
+        }
+
+        self.adjacents = self
+            .adjacents
+            .clone()
+            .into_iter()
+            .map(|f| {
+                if let Some(w) = f.other(e.v()) {
+                    (e.u(), w).into()
+                } else {
+                    f
+                }
+            })
+            .filter(|e| e.v() != e.u())
+            .collect();
+
+        self.delete(e.v());
+    }
+
+    pub fn contract_edges(&mut self, edges: HashSet<Edge>) {
+        for e in edges.into_iter() {
+            self.contract_edge(e);
         }
     }
 
-    pub fn split_vertex(&mut self, v: &VertexId) {
-        let original_position = self.positions[v];
-        let mut connections: HashSet<usize> = self.connections(v);
-        connections.extend(self.ghost_connections(v));
-        connections.remove(v);
-        let mut connections: VecDeque<VertexId> = connections.into_iter().collect();
+    pub fn split_vertex(&mut self, v: VertexId) -> HashSet<Edge> {
+        let original_position = self.positions[&v];
+        let mut connections: VecDeque<VertexId> = self.connections(v).into_iter().collect();
         let mut transformations: HashMap<VertexId, VertexId> = Default::default();
-
+        let mut new_face = Vec::new();
         // Remove the vertex
-        self.delete(v);
-        'connections: while let Some(u) = connections.pop_front() {
+
+        // connect a new node to every existing connection
+        while let Some(u) = connections.pop_front() {
             // Insert a new node in the same location
             let new_vertex = self.insert();
+            // Track it in the new face
+            new_face.push(new_vertex);
             // Update pos
             self.positions.insert(new_vertex, original_position);
             // Reform old connection
             self.connect((u, new_vertex));
+            // track transformation
             transformations.insert(u, new_vertex);
-
-            // Track the ghost edge and new edge
-            let ge: Edge = (*v, u).into();
-            let ne: Edge = (new_vertex, u).into();
-
-            // If the ghost of this transaction was the new edge of a previous transaction
-            for (_, v) in self.ghost_edges.iter_mut() {
-                if v.id() == ge.id() {
-                    // Update its child
-                    *v = ne;
-                    continue 'connections;
-                }
-            }
-            // Track ghost edge directly if one didnt already exist
-            self.ghost_edges.insert(ge, ne);
         }
 
-        let mut ccc = HashSet::<Edge>::new();
-        for face in self.faces.iter_mut() {
-            if let Some(pos) = face.0.iter().position(|x| x == v) {
-                let flen = face.0.len();
-                let before = face.0[(pos + flen - 1) % flen];
-                let after = face.0[(pos + 1) % flen];
+        // track the edges that will compose the new face
+        let mut new_edges = HashSet::new();
 
-                let b = transformations.get(&before).unwrap();
-                let a = transformations.get(&after).unwrap();
+        // upate every face
+        for i in 0..self.faces.len() {
+            // if this face had v in it
+            if let Some(vi) = self.faces[i].iter().position(|&x| x == v) {
+                // indices before and after v in face
+                let vh = (vi + self.faces[i].len() - 1) % self.faces[i].len();
+                let vj = (vi + 1) % self.faces[i].len();
 
-                face.0.remove(pos);
-                face.0.insert(pos, *a);
-                face.0.insert(pos, *b);
+                let b = transformations[&self.faces[i][vh]];
+                let a = transformations[&self.faces[i][vj]];
 
-                ccc.insert((a, b).into());
+                self.faces[i].insert(vi, a);
+                self.faces[i].insert(vi, b);
+
+                let e: Edge = (a, b).into();
+                new_edges.insert(e);
+                self.connect(e);
             }
         }
 
-        for c in ccc.iter() {
-            self.connect(*c);
-        }
+        self.faces.push(new_edges.clone().into());
 
-        let mut fff = Vec::new();
-        loop {
-            if ccc.is_empty() {
-                break;
-            }
-            if fff.is_empty() {
-                let random = ccc.iter().collect::<Vec<_>>()[0].id().0;
-                fff.push(random);
-            } else {
-                let l = fff.last().unwrap();
-                let e = *ccc.iter().find(|e| e.other(l).is_some()).unwrap();
-                fff.push(e.other(l).unwrap());
-                ccc.remove(&e);
-            }
-        }
-
-        self.faces.push(Face(fff));
+        self.delete(v);
+        new_edges
     }
 
     /// `t` truncate
-    pub fn truncate(&mut self) {
-        for v in self.vertices.clone().iter() {
-            self.split_vertex(v);
+    pub fn truncate(&mut self) -> HashSet<Edge> {
+        let mut new_edges = HashSet::new();
+        for v in self.vertices.clone() {
+            new_edges.extend(self.split_vertex(v));
         }
         self.recompute_qualities();
         self.name.insert(0, 't');
+        new_edges
     }
 
     /// `a` ambo
     pub fn ambo(&mut self) {
-        let original_edges = self.adjacents.clone();
         // Truncate
-        self.truncate();
+        let new_edges = &self.truncate();
+        let original_edges: HashSet<Edge> = self
+            .adjacents
+            .clone()
+            .difference(new_edges)
+            .map(Edge::clone)
+            .collect();
 
-        //self.contract_edges_visually(original_edges);
-        // Animate
-
-        //self.contracting_edges.extend(original_edges);
         // Contract original edge set
-        for edge in original_edges.iter() {
-            self.contract_edge(*edge);
-        }
-
+        self.contract_edges(original_edges);
         self.recompute_qualities();
-        self.ghost_edges = HashMap::new();
         self.name.remove(0);
         self.name.insert(0, 'a');
     }
@@ -190,19 +179,15 @@ mod test {
         graph.recompute_qualities();
 
         assert_eq!(graph.vertices.len(), 5);
-        println!("adja: {:?}", graph.adjacents);
         assert_eq!(graph.adjacents.len(), 4);
 
-        assert_eq!(graph.connections(&0), vec![3].into_iter().collect());
-        assert_eq!(graph.connections(&2), vec![3].into_iter().collect());
+        assert_eq!(graph.connections(0), vec![3].into_iter().collect());
+        assert_eq!(graph.connections(2), vec![3].into_iter().collect());
 
-        assert_eq!(
-            graph.connections(&3),
-            vec![0, 2, 4, 5].into_iter().collect()
-        );
+        assert_eq!(graph.connections(3), vec![0, 2, 4, 5].into_iter().collect());
 
-        assert_eq!(graph.connections(&4), vec![3].into_iter().collect());
-        assert_eq!(graph.connections(&5), vec![3].into_iter().collect());
+        assert_eq!(graph.connections(4), vec![3].into_iter().collect());
+        assert_eq!(graph.connections(5), vec![3].into_iter().collect());
     }
 
     #[test]
@@ -218,7 +203,7 @@ mod test {
         assert_eq!(graph.vertices.len(), 5);
         assert_eq!(graph.adjacents.len(), 4);
 
-        graph.split_vertex(&1);
+        graph.split_vertex(1);
         graph.recompute_qualities();
 
         assert_eq!(graph.vertices.len(), 8);

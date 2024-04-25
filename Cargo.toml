@@ -18,6 +18,8 @@ three-d = { version = "^0.17", default-features = false, features = [
 	"window",
 	"egui-gui",
 ] }
+tracing = "0.1.40"
+tracing-subscriber = "0.3.18"
 
 [profile.release]
 debug = true
