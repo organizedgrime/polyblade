@@ -11,7 +11,15 @@ pub struct Face(Vec<VertexId>);
 
 impl std::fmt::Debug for Face {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_tuple("Face").field(&self.id()).finish()
+        let i: usize = self
+            .0
+            .iter()
+            .enumerate()
+            .min_by(|(_, a), (_, b)| a.cmp(b))
+            .map(|(index, _)| index)
+            .unwrap();
+        let id = [self.0[i..].to_vec(), self.0[..i].to_vec()].concat();
+        f.debug_tuple("Face").field(&id).finish()
     }
 }
 
@@ -29,18 +37,6 @@ impl Face {
             edges.insert((self.0[i], self.0[(i + 1) % self.0.len()]).into());
         }
         edges
-    }
-
-    pub fn id(&self) -> Vec<VertexId> {
-        let i: usize = self
-            .0
-            .clone()
-            .into_iter()
-            .enumerate()
-            .min_by(|(_, a), (_, b)| a.cmp(b))
-            .map(|(index, _)| index)
-            .unwrap();
-        [self.0[i..].to_vec(), self.0[..i].to_vec()].concat()
     }
 
     pub fn len(&self) -> usize {

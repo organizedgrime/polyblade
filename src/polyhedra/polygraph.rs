@@ -265,7 +265,7 @@ impl PolyGraph {
                                 break;
                             }
                             // for x in w.children
-                            for x in children.get(&w).unwrap().clone().into_iter() {
+                            for x in children.get(&w).unwrap().clone() {
                                 let e: Edge = (x, v).into();
                                 if x != v && !dist.contains_key(&e) {
                                     // D[x.id, v.id] = d;
@@ -423,7 +423,6 @@ mod test {
     #[test_case({ let mut g = PolyGraph::dodecahedron(); g.truncate(); g} ; "tD")]
     fn pst(mut graph: PolyGraph) {
         let new_dist = graph.dist.clone();
-
         graph.dist = Default::default();
         graph._floyd();
         let old_dist = graph.dist.clone();

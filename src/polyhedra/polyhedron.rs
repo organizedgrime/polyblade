@@ -224,7 +224,7 @@ impl PolyGraph {
             })
         {
             // Contract them in the graph
-            for e in self.contracting_edges.clone().into_iter() {
+            for e in self.contracting_edges.clone() {
                 self.contract_edge(e);
             }
             self.ghost_edges = HashMap::new();

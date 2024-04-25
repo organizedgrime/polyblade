@@ -86,7 +86,7 @@ impl PolyGraph {
 
     /// `t` truncate
     pub fn truncate(&mut self) {
-        for v in self.vertices.clone().into_iter() {
+        for v in self.vertices.clone() {
             self.split_vertex(v);
         }
         self.recompute_qualities();

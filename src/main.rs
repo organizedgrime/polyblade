@@ -88,7 +88,7 @@ pub fn main() {
             |gui_context| {
                 use three_d::egui::*;
                 TopBottomPanel::bottom("controls").show(gui_context, |ui| {
-                    ui.heading(shape.name.clone());
+                    ui.heading(String::from(&shape.name));
                     ui.checkbox(&mut rotating, "Rotating");
                     if ui.checkbox(&mut shadows, "Shadows").clicked() && !shadows {
                         // TODO
