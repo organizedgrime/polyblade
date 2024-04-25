@@ -18,10 +18,10 @@ impl Edge {
         }
     }
 
-    pub fn other(&self, v: &VertexId) -> Option<VertexId> {
-        if &self.v == v {
+    pub fn other(&self, v: VertexId) -> Option<VertexId> {
+        if self.v == v {
             Some(self.u)
-        } else if &self.u == v {
+        } else if self.u == v {
             Some(self.v)
         } else {
             None

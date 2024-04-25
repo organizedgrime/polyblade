@@ -8,15 +8,15 @@ impl PolyGraph {
         // If this is the ghost edge, find its extant counterpart
         let id = self.ghost_edges.get(&e).unwrap_or(&e).id();
         // Give b all the same connections as a
-        for b in self.connections(&id.0).iter() {
-            if b != &id.1 {
-                self.connect((b, &id.1))
+        for b in self.connections(id.0).into_iter() {
+            if b != id.1 {
+                self.connect((b, id.1))
             }
         }
         // Delete a
         self.delete(id.0);
         for (_, v) in self.ghost_edges.iter_mut() {
-            if let Some(u) = v.other(&id.0) {
+            if let Some(u) = v.other(id.0) {
                 *v = (id.1, u).into();
             }
         }
@@ -24,7 +24,7 @@ impl PolyGraph {
 
     pub fn split_vertex(&mut self, v: VertexId) -> HashMap<VertexId, VertexId> {
         let original_position = self.positions[&v];
-        let mut connections: VecDeque<VertexId> = self.connections(&v).into_iter().collect();
+        let mut connections: VecDeque<VertexId> = self.connections(v).into_iter().collect();
         let mut transformations: HashMap<VertexId, VertexId> = Default::default();
         // Remove the vertex
         self.delete(v);
@@ -73,7 +73,7 @@ impl PolyGraph {
                 let random = ccc.iter().collect::<Vec<_>>()[0].id().0;
                 fff.push(random);
             } else {
-                let l = fff.last().unwrap();
+                let l = *fff.last().unwrap();
                 let e = *ccc.iter().find(|e| e.other(l).is_some()).unwrap();
                 fff.push(e.other(l).unwrap());
                 ccc.remove(&e);
@@ -179,16 +179,13 @@ mod test {
         println!("adja: {:?}", graph.adjacents);
         assert_eq!(graph.adjacents.len(), 4);
 
-        assert_eq!(graph.connections(&0), vec![3].into_iter().collect());
-        assert_eq!(graph.connections(&2), vec![3].into_iter().collect());
+        assert_eq!(graph.connections(0), vec![3].into_iter().collect());
+        assert_eq!(graph.connections(2), vec![3].into_iter().collect());
 
-        assert_eq!(
-            graph.connections(&3),
-            vec![0, 2, 4, 5].into_iter().collect()
-        );
+        assert_eq!(graph.connections(3), vec![0, 2, 4, 5].into_iter().collect());
 
-        assert_eq!(graph.connections(&4), vec![3].into_iter().collect());
-        assert_eq!(graph.connections(&5), vec![3].into_iter().collect());
+        assert_eq!(graph.connections(4), vec![3].into_iter().collect());
+        assert_eq!(graph.connections(5), vec![3].into_iter().collect());
     }
 
     #[test]

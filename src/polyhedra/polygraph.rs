@@ -103,7 +103,7 @@ impl PolyGraph {
     }
 
     /// Edges of a vertex
-    pub fn edges(&self, v: &VertexId) -> Vec<Edge> {
+    pub fn edges(&self, v: VertexId) -> Vec<Edge> {
         self.adjacents
             .iter()
             .filter_map(|e| if e.other(v).is_some() { Some(*e) } else { None })
@@ -116,15 +116,15 @@ impl PolyGraph {
     }
 
     // Vertices that are connected to a given vertex
-    pub fn connections(&self, v: &VertexId) -> HashSet<VertexId> {
+    pub fn connections(&self, v: VertexId) -> HashSet<VertexId> {
         self.adjacents
             .iter()
-            .filter(|e| e.id().0 == *v || e.id().1 == *v)
+            .filter(|e| e.id().0 == v || e.id().1 == v)
             .map(|e| e.other(v).unwrap())
             .collect()
     }
 
-    pub fn ghost_connections(&self, v: &VertexId) -> HashSet<VertexId> {
+    pub fn ghost_connections(&self, v: VertexId) -> HashSet<VertexId> {
         let mut connections = HashSet::new();
         for (ge, le) in self.ghost_edges.iter() {
             if let Some(u) = ge.other(v) {
@@ -143,13 +143,13 @@ impl PolyGraph {
         let mut cycles = HashSet::<Face>::new();
 
         // find all the triplets
-        for u in self.vertices.iter() {
+        for &u in self.vertices.iter() {
             let adj: HashSet<VertexId> = self.connections(u);
-            for x in adj.iter() {
-                for y in adj.iter() {
+            for &x in adj.iter() {
+                for &y in adj.iter() {
                     if x != y && u < x && x < y {
-                        let new_face = Face::new(vec![*x, *u, *y]);
-                        if self.adjacents.contains(&(*x, *y).into()) {
+                        let new_face = Face::new(vec![x, u, y]);
+                        if self.adjacents.contains(&(x, y).into()) {
                             cycles.insert(new_face);
                         } else {
                             triplets.push(new_face);
@@ -162,14 +162,14 @@ impl PolyGraph {
         while !triplets.is_empty() && (cycles.len() as i64) < self.face_count() {
             let p = triplets.remove(0);
             // for each v adjacent to u_t
-            for v in self.connections(&p[p.len() - 1]) {
+            for v in self.connections(p[p.len() - 1]) {
                 if v > p[1] {
-                    let c = self.connections(&v);
+                    let c = self.connections(v);
                     // if v is not a neighbor of u_2..u_t-1
                     if !p[1..p.len() - 1].iter().any(|vi| c.contains(vi)) {
                         let mut new_face = p.clone();
                         new_face.push(v);
-                        if self.connections(&p[0]).contains(&v) {
+                        if self.connections(p[0]).contains(&v) {
                             //cycles.remo
                             cycles.insert(new_face);
                         } else {
@@ -239,9 +239,9 @@ impl PolyGraph {
                 // START EXTEND(v, d, D, S)
                 if depth == 1 {
                     //
-                    for e in self.edges(&v) {
+                    for e in self.edges(v) {
                         // Connected node
-                        let w = e.other(&v).unwrap();
+                        let w = e.other(v).unwrap();
                         // D[w.id, v.id] = d
                         dist.insert(e, 1);
                         // add w' to v'.children
@@ -464,21 +464,21 @@ mod test {
         graph.connect((0, 1));
         graph.connect((0, 2));
         graph.connect((1, 2));
-        assert_eq!(graph.connections(&0), vec![1, 2].into_iter().collect());
-        assert_eq!(graph.connections(&1), vec![0, 2].into_iter().collect());
-        assert_eq!(graph.connections(&2), vec![0, 1].into_iter().collect());
-        assert_eq!(graph.connections(&3), vec![].into_iter().collect());
+        assert_eq!(graph.connections(0), vec![1, 2].into_iter().collect());
+        assert_eq!(graph.connections(1), vec![0, 2].into_iter().collect());
+        assert_eq!(graph.connections(2), vec![0, 1].into_iter().collect());
+        assert_eq!(graph.connections(3), vec![].into_iter().collect());
 
         // Disconnect
         graph.disconnect((0, 1));
-        assert_eq!(graph.connections(&0), vec![2].into_iter().collect());
-        assert_eq!(graph.connections(&1), vec![2].into_iter().collect());
+        assert_eq!(graph.connections(0), vec![2].into_iter().collect());
+        assert_eq!(graph.connections(1), vec![2].into_iter().collect());
 
         // Delete
         graph.delete(1);
-        assert_eq!(graph.connections(&0), vec![2].into_iter().collect());
-        assert_eq!(graph.connections(&1), vec![].into_iter().collect());
-        assert_eq!(graph.connections(&2), vec![0].into_iter().collect());
+        assert_eq!(graph.connections(0), vec![2].into_iter().collect());
+        assert_eq!(graph.connections(1), vec![].into_iter().collect());
+        assert_eq!(graph.connections(2), vec![0].into_iter().collect());
     }
 
     #[test]
