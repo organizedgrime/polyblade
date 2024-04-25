@@ -25,6 +25,9 @@ pub fn main() {
     use three_d::window::{FrameOutput, Window, WindowSettings};
     use three_d::{Camera, OrbitControl, VertexBuffer, Viewport};
 
+    // install global collector configured based on RUST_LOG env var.
+    tracing_subscriber::fmt::init();
+
     let window = Window::new(WindowSettings {
         title: "polyblade".to_string(),
         ..Default::default()
@@ -124,8 +127,7 @@ pub fn main() {
                         ui.label("Operations:");
                         //
                         if ui.button("s0").clicked() {
-                            shape
-                                .split_vertex(*shape.vertices.iter().collect::<Vec<_>>()[0]);
+                            shape.split_vertex(*shape.vertices.iter().collect::<Vec<_>>()[0]);
                             shape.pst();
                             // Neighbors and diameters rely on distances
                             shape.neighbors();

@@ -70,7 +70,11 @@ impl PolyGraph {
     }
 
     pub fn connect(&mut self, e: impl Into<Edge>) {
-        self.adjacents.insert(e.into());
+        let e = e.into();
+        if e.v() != e.u() {
+            tracing::info!("connecting: {}", e);
+            self.adjacents.insert(e);
+        }
     }
 
     pub fn disconnect(&mut self, e: impl Into<Edge>) {
@@ -91,18 +95,21 @@ impl PolyGraph {
 
     pub fn delete(&mut self, v: VertexId) {
         self.vertices.remove(&v);
+
         self.adjacents = self
             .adjacents
             .clone()
             .into_iter()
-            .filter(|e| e.id().0 != v && e.id().1 != v)
+            .filter(|e| !e.contains(v))
             .collect();
+
         self.faces = self
             .faces
             .clone()
             .into_iter()
             .map(|face| face.into_iter().filter(|&u| u != v).collect())
             .collect();
+
         self.positions.remove(&v);
         self.speeds.remove(&v);
     }
@@ -122,11 +129,7 @@ impl PolyGraph {
 
     // Vertices that are connected to a given vertex
     pub fn connections(&self, v: VertexId) -> HashSet<VertexId> {
-        self.adjacents
-            .iter()
-            .filter(|e| e.id().0 == v || e.id().1 == v)
-            .map(|e| e.other(v).unwrap())
-            .collect()
+        self.adjacents.iter().filter_map(|e| e.other(v)).collect()
     }
 
     /// All faces
@@ -178,6 +181,7 @@ impl PolyGraph {
 
     /// Neighbors
     pub fn neighbors(&mut self) {
+        tracing::info!("neighbor");
         let mut neighbors = HashSet::<Edge>::new();
         for u in self.vertices.iter() {
             for v in self.vertices.iter() {
@@ -190,8 +194,8 @@ impl PolyGraph {
         self.neighbors = neighbors
     }
 
-    #[allow(dead_code)]
     pub fn pst(&mut self) {
+        tracing::info!("PST");
         if self.adjacents.is_empty() {
             return;
         }
@@ -356,11 +360,12 @@ impl PolyGraph {
 
     /// Periphery / diameter
     pub fn diameter(&mut self) {
+        tracing::info!("diameter");
         if let Some(max) = self.dist.values().max() {
             self.diameter = self
                 .dist
                 .iter()
-                .filter_map(|(e, d)| if d == max { Some(*e) } else { None })
+                .filter_map(|(&e, d)| if d == max { Some(e) } else { None })
                 .collect();
         }
     }

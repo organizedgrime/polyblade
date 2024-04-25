@@ -8,16 +8,34 @@ impl PolyGraph {
         let e: Edge = e.into();
         // Give u all the same connections as v
         for w in self.connections(e.v()).into_iter() {
-            if w != e.u() {
-                self.connect((w, e.u()))
-            }
+            self.connect((w, e.u()));
         }
         // Delete a
+        for f in self.faces.iter_mut() {
+            f.replace(e.v(), e.u());
+        }
+
+        self.adjacents = self
+            .adjacents
+            .clone()
+            .into_iter()
+            .map(|f| {
+                if let Some(w) = f.other(e.v()) {
+                    (e.u(), w).into()
+                } else {
+                    f
+                }
+            })
+            .filter(|e| e.v() != e.u())
+            .collect();
         self.delete(e.v());
+        println!("now adjacents are: {:?}", self.adjacents);
     }
 
     pub fn contract_edges(&mut self, edges: HashSet<Edge>) {
+        tracing::info!("all_edges: {:?}", self.adjacents);
         for e in edges.into_iter() {
+            tracing::info!("contracting: {e}");
             self.contract_edge(e);
         }
     }
@@ -31,18 +49,16 @@ impl PolyGraph {
 
         // connect a new node to every existing connection
         while let Some(u) = connections.pop_front() {
-            if u != v {
-                // Insert a new node in the same location
-                let new_vertex = self.insert();
-                // Track it in the new face
-                new_face.push(new_vertex);
-                // Update pos
-                self.positions.insert(new_vertex, original_position);
-                // Reform old connection
-                self.connect((u, new_vertex));
-                // track transformation
-                transformations.insert(u, new_vertex);
-            }
+            // Insert a new node in the same location
+            let new_vertex = self.insert();
+            // Track it in the new face
+            new_face.push(new_vertex);
+            // Update pos
+            self.positions.insert(new_vertex, original_position);
+            // Reform old connection
+            self.connect((u, new_vertex));
+            // track transformation
+            transformations.insert(u, new_vertex);
         }
 
         // track the edges that will compose the new face
@@ -104,16 +120,10 @@ impl PolyGraph {
 
         // Contract original edge set
         self.contract_edges(original_edges);
+        println!("quality time!");
         self.recompute_qualities();
 
-        let mut c = self.faces.clone();
-        self.faces();
-        let mut d = self.faces.clone();
-
-        c.sort();
-        d.sort();
-
-        assert_eq!(c, d);
+        tracing::info!("{:?}", self.faces);
         self.name.remove(0);
         self.name.insert(0, 'a');
     }
