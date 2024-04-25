@@ -35,7 +35,25 @@ impl Face {
         [self.0[i..].to_vec(), self.0[..i].to_vec()].concat()
     }
 
-    //pub fn buffers(&self, g: &PolyGraph) -> (Vec<f32>, Vec<f32>, Vec<f32>) {}
+    pub fn get(&self, index: usize) -> VertexId {
+        self.0[index % self.0.len()]
+    }
+
+    pub fn len(&self) -> usize {
+        self.0.len()
+    }
+
+    pub fn iter(&self) -> std::slice::Iter<usize> {
+        self.0.iter()
+    }
+
+    pub fn remove(&mut self, index: usize) -> VertexId {
+        self.0.remove(index)
+    }
+
+    pub fn insert(&mut self, index: usize, v: VertexId) {
+        self.0.insert(index, v)
+    }
 }
 
 impl PartialEq for Face {

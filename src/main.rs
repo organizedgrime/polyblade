@@ -124,9 +124,8 @@ pub fn main() {
                         ui.label("Operations:");
                         //
                         if ui.button("s0").clicked() {
-                            shape.split_vertex(
-                                &shape.vertices.iter().collect::<Vec<_>>()[0].clone(),
-                            );
+                            shape
+                                .split_vertex(shape.vertices.iter().collect::<Vec<_>>()[0].clone());
                             shape.pst();
                             // Neighbors and diameters rely on distances
                             shape.neighbors();

@@ -14,7 +14,7 @@ impl PolyGraph {
             }
         }
         // Delete a
-        self.delete(&id.0);
+        self.delete(id.0);
         for (_, v) in self.ghost_edges.iter_mut() {
             if let Some(u) = v.other(&id.0) {
                 *v = (id.1, u).into();
@@ -22,54 +22,39 @@ impl PolyGraph {
         }
     }
 
-    pub fn split_vertex(&mut self, v: &VertexId) {
-        let original_position = self.positions[v];
-        let mut connections: HashSet<usize> = self.connections(v);
-        connections.extend(self.ghost_connections(v));
-        connections.remove(v);
-        let mut connections: VecDeque<VertexId> = connections.into_iter().collect();
+    pub fn split_vertex(&mut self, v: VertexId) -> HashMap<VertexId, VertexId> {
+        let original_position = self.positions[&v];
+        let mut connections: VecDeque<VertexId> = self.connections(&v).into_iter().collect();
         let mut transformations: HashMap<VertexId, VertexId> = Default::default();
-
         // Remove the vertex
         self.delete(v);
-        'connections: while let Some(u) = connections.pop_front() {
-            // Insert a new node in the same location
-            let new_vertex = self.insert();
-            // Update pos
-            self.positions.insert(new_vertex, original_position);
-            // Reform old connection
-            self.connect((u, new_vertex));
-            transformations.insert(u, new_vertex);
-
-            // Track the ghost edge and new edge
-            let ge: Edge = (*v, u).into();
-            let ne: Edge = (new_vertex, u).into();
-
-            // If the ghost of this transaction was the new edge of a previous transaction
-            for (_, v) in self.ghost_edges.iter_mut() {
-                if v.id() == ge.id() {
-                    // Update its child
-                    *v = ne;
-                    continue 'connections;
-                }
+        while let Some(u) = connections.pop_front() {
+            if u != v {
+                // Insert a new node in the same location
+                let new_vertex = self.insert();
+                // Update pos
+                self.positions.insert(new_vertex, original_position);
+                // Reform old connection
+                self.connect((u, new_vertex));
+                // track transformation
+                transformations.insert(u, new_vertex);
             }
-            // Track ghost edge directly if one didnt already exist
-            self.ghost_edges.insert(ge, ne);
         }
 
+        //let new_versions = self.vertices.iter().fold(Hash, f)
         let mut ccc = HashSet::<Edge>::new();
-        for face in self.faces.iter_mut() {
-            if let Some(pos) = face.0.iter().position(|x| x == v) {
-                let flen = face.0.len();
-                let before = face.0[(pos + flen - 1) % flen];
-                let after = face.0[(pos + 1) % flen];
+
+        for f in self.faces.iter_mut() {
+            if let Some(i) = f.iter().position(|x| *x == v) {
+                let before = f.get(i + f.len() - 1);
+                let after = f.get(i + 1);
 
                 let b = transformations.get(&before).unwrap();
                 let a = transformations.get(&after).unwrap();
 
-                face.0.remove(pos);
-                face.0.insert(pos, *a);
-                face.0.insert(pos, *b);
+                f.remove(i);
+                f.insert(i, *a);
+                f.insert(i, *b);
 
                 ccc.insert((a, b).into());
             }
@@ -96,11 +81,12 @@ impl PolyGraph {
         }
 
         self.faces.push(Face(fff));
+        transformations
     }
 
     /// `t` truncate
     pub fn truncate(&mut self) {
-        for v in self.vertices.clone().iter() {
+        for v in self.vertices.clone().into_iter() {
             self.split_vertex(v);
         }
         self.recompute_qualities();
@@ -218,7 +204,7 @@ mod test {
         assert_eq!(graph.vertices.len(), 5);
         assert_eq!(graph.adjacents.len(), 4);
 
-        graph.split_vertex(&1);
+        graph.split_vertex(1);
         graph.recompute_qualities();
 
         assert_eq!(graph.vertices.len(), 8);

@@ -90,16 +90,16 @@ impl PolyGraph {
         new_id
     }
 
-    pub fn delete(&mut self, v: &VertexId) {
-        self.vertices.remove(v);
+    pub fn delete(&mut self, v: VertexId) {
+        self.vertices.remove(&v);
         self.adjacents = self
             .adjacents
             .clone()
             .into_iter()
-            .filter(|e| e.id().0 != *v && e.id().1 != *v)
+            .filter(|e| e.id().0 != v && e.id().1 != v)
             .collect();
-        self.positions.remove(v);
-        self.speeds.remove(v);
+        self.positions.remove(&v);
+        self.speeds.remove(&v);
     }
 
     /// Edges of a vertex
@@ -476,7 +476,7 @@ mod test {
         assert_eq!(graph.connections(&1), vec![2].into_iter().collect());
 
         // Delete
-        graph.delete(&1);
+        graph.delete(1);
         assert_eq!(graph.connections(&0), vec![2].into_iter().collect());
         assert_eq!(graph.connections(&1), vec![].into_iter().collect());
         assert_eq!(graph.connections(&2), vec![0].into_iter().collect());
