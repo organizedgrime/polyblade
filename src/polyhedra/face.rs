@@ -66,7 +66,6 @@ impl Face {
 
 impl From<HashSet<Edge>> for Face {
     fn from(value: HashSet<Edge>) -> Self {
-        println!("creating face out of {value:?}");
         let mut edges: Vec<Edge> = value.into_iter().collect();
         let mut first = false;
         let mut face = vec![edges[0].v()];
@@ -86,7 +85,6 @@ impl From<HashSet<Edge>> for Face {
                 first ^= true;
             }
         }
-        println!("now its {face:?}");
         Self::new(face)
     }
 }

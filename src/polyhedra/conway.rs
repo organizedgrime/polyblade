@@ -28,14 +28,12 @@ impl PolyGraph {
             })
             .filter(|e| e.v() != e.u())
             .collect();
+
         self.delete(e.v());
-        println!("now adjacents are: {:?}", self.adjacents);
     }
 
     pub fn contract_edges(&mut self, edges: HashSet<Edge>) {
-        tracing::info!("all_edges: {:?}", self.adjacents);
         for e in edges.into_iter() {
-            tracing::info!("contracting: {e}");
             self.contract_edge(e);
         }
     }
@@ -68,7 +66,6 @@ impl PolyGraph {
         for i in 0..self.faces.len() {
             // if this face had v in it
             if let Some(vi) = self.faces[i].iter().position(|&x| x == v) {
-                println!("before:[{:?}]", self.faces[i]);
                 // indices before and after v in face
                 let vh = (vi + self.faces[i].len() - 1) % self.faces[i].len();
                 let vj = (vi + 1) % self.faces[i].len();
@@ -76,17 +73,12 @@ impl PolyGraph {
                 let b = transformations[&self.faces[i][vh]];
                 let a = transformations[&self.faces[i][vj]];
 
-                println!("v: {v}");
-
-                println!("v removed: {:?}", self.faces[i]);
                 self.faces[i].insert(vi, a);
                 self.faces[i].insert(vi, b);
-                println!("ab added: {:?}", self.faces[i]);
 
                 let e: Edge = (a, b).into();
                 new_edges.insert(e);
                 self.connect(e);
-                println!("after:[{:?}]", self.faces[i]);
             }
         }
 
@@ -120,10 +112,7 @@ impl PolyGraph {
 
         // Contract original edge set
         self.contract_edges(original_edges);
-        println!("quality time!");
         self.recompute_qualities();
-
-        tracing::info!("{:?}", self.faces);
         self.name.remove(0);
         self.name.insert(0, 'a');
     }
@@ -190,7 +179,6 @@ mod test {
         graph.recompute_qualities();
 
         assert_eq!(graph.vertices.len(), 5);
-        println!("adja: {:?}", graph.adjacents);
         assert_eq!(graph.adjacents.len(), 4);
 
         assert_eq!(graph.connections(0), vec![3].into_iter().collect());

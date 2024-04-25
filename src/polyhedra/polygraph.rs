@@ -72,7 +72,6 @@ impl PolyGraph {
     pub fn connect(&mut self, e: impl Into<Edge>) {
         let e = e.into();
         if e.v() != e.u() {
-            tracing::info!("connecting: {}", e);
             self.adjacents.insert(e);
         }
     }
@@ -168,7 +167,6 @@ impl PolyGraph {
                             //cycles.remo
                             cycles.insert(new_face);
                         } else {
-                            //println!("lengthened: {:?}", new_face);
                             triplets.push(new_face);
                         }
                     }
@@ -181,7 +179,6 @@ impl PolyGraph {
 
     /// Neighbors
     pub fn neighbors(&mut self) {
-        tracing::info!("neighbor");
         let mut neighbors = HashSet::<Edge>::new();
         for u in self.vertices.iter() {
             for v in self.vertices.iter() {
@@ -195,7 +192,6 @@ impl PolyGraph {
     }
 
     pub fn pst(&mut self) {
-        tracing::info!("PST");
         if self.adjacents.is_empty() {
             return;
         }
@@ -360,7 +356,6 @@ impl PolyGraph {
 
     /// Periphery / diameter
     pub fn diameter(&mut self) {
-        tracing::info!("diameter");
         if let Some(max) = self.dist.values().max() {
             self.diameter = self
                 .dist

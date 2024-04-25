@@ -133,7 +133,6 @@ pub fn main() {
                             shape.neighbors();
                             shape.diameter();
                             //shape.recompute_qualities();
-                            //println!("faces: {:?}", shape.faces);
                             update_static = true;
                         }
                         if ui.button("Truncate").clicked() {
