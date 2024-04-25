@@ -129,10 +129,6 @@ pub fn main() {
                         if ui.button("s0").clicked() {
                             shape.split_vertex(*shape.vertices.iter().collect::<Vec<_>>()[0]);
                             shape.pst();
-                            // Neighbors and diameters rely on distances
-                            shape.neighbors();
-                            shape.diameter();
-                            //shape.recompute_qualities();
                             update_static = true;
                         }
                         if ui.button("Truncate").clicked() {
