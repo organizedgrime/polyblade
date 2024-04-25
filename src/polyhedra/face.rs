@@ -34,7 +34,7 @@ impl Face {
                 .0
                 .clone()
                 .into_iter()
-                .filter_map(|x| if x == old { Some(new) } else { Some(x) })
+                .map(|x| if x == old { new } else { x })
                 .collect();
         }
     }
