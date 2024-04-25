@@ -22,7 +22,7 @@ impl PolyGraph {
         }
     }
 
-    pub fn split_vertex(&mut self, v: VertexId) -> HashMap<VertexId, VertexId> {
+    pub fn split_vertex(&mut self, v: VertexId) -> Vec<Edge> {
         let original_position = self.positions[&v];
         let mut connections: VecDeque<VertexId> = self.connections(v).into_iter().collect();
         let mut transformations: HashMap<VertexId, VertexId> = Default::default();
@@ -44,7 +44,7 @@ impl PolyGraph {
         }
 
         // track the edges that will compose the new face
-        let mut new_face = Vec::new();
+        let mut new_edges = Vec::new();
 
         // upate every face
         for i in 0..self.faces.len() {
@@ -62,37 +62,40 @@ impl PolyGraph {
                 self.faces[i].insert(vi, b);
 
                 let e: Edge = (a, b).into();
-                new_face.push(e);
+                new_edges.push(e);
                 self.connect(e);
             }
         }
 
-        self.faces.push(new_face.into());
-        transformations
+        self.faces.push(new_edges.clone().into());
+        new_edges
     }
 
     /// `t` truncate
-    pub fn truncate(&mut self) {
+    pub fn truncate(&mut self) -> Vec<Edge> {
+        let mut new_edges = Vec::new();
         for v in self.vertices.clone() {
-            self.split_vertex(v);
+            new_edges.extend(self.split_vertex(v));
         }
         self.recompute_qualities();
         self.name.insert(0, 't');
+        new_edges
     }
 
     /// `a` ambo
     pub fn ambo(&mut self) {
-        let original_edges = self.adjacents.clone();
         // Truncate
-        self.truncate();
+        let new_edges = self.truncate();
 
         //self.contract_edges_visually(original_edges);
         // Animate
 
         //self.contracting_edges.extend(original_edges);
         // Contract original edge set
-        for edge in original_edges.iter() {
-            self.contract_edge(*edge);
+        for e in self.adjacents.clone() {
+            if !new_edges.contains(&e) {
+                self.contract_edge(e);
+            }
         }
 
         self.recompute_qualities();
