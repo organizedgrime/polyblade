@@ -46,8 +46,8 @@ impl PolyGraph {
 
         for f in self.faces.iter_mut() {
             if let Some(i) = f.iter().position(|x| *x == v) {
-                let before = f.get(i + f.len() - 1);
-                let after = f.get(i + 1);
+                let before = f[(i + f.len() - 1) % f.len()];
+                let after = f[(i + 1) % f.len()];
 
                 let b = transformations.get(&before).unwrap();
                 let a = transformations.get(&after).unwrap();
@@ -80,7 +80,7 @@ impl PolyGraph {
             }
         }
 
-        self.faces.push(Face(fff));
+        self.faces.push(Face::new(fff));
         transformations
     }
 

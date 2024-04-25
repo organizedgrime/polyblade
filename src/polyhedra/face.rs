@@ -1,8 +1,13 @@
 use super::{Edge, VertexId};
-use std::{collections::HashSet, hash::Hash};
+use std::{
+    collections::HashSet,
+    hash::Hash,
+    ops::{Index, IndexMut},
+    slice::SliceIndex,
+};
 
 #[derive(Clone)]
-pub struct Face(pub Vec<VertexId>);
+pub struct Face(Vec<VertexId>);
 
 impl std::fmt::Debug for Face {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -11,6 +16,9 @@ impl std::fmt::Debug for Face {
 }
 
 impl Face {
+    pub fn new(vertices: Vec<VertexId>) -> Self {
+        Self(vertices)
+    }
     pub fn contains(&self, other: &Face) -> bool {
         other.0.iter().all(|v| self.0.contains(v))
     }
@@ -35,10 +43,6 @@ impl Face {
         [self.0[i..].to_vec(), self.0[..i].to_vec()].concat()
     }
 
-    pub fn get(&self, index: usize) -> VertexId {
-        self.0[index % self.0.len()]
-    }
-
     pub fn len(&self) -> usize {
         self.0.len()
     }
@@ -53,6 +57,31 @@ impl Face {
 
     pub fn insert(&mut self, index: usize, v: VertexId) {
         self.0.insert(index, v)
+    }
+
+    pub fn push(&mut self, value: VertexId) {
+        self.0.push(value)
+    }
+}
+
+impl<Idx> Index<Idx> for Face
+where
+    Idx: SliceIndex<[usize]>,
+{
+    type Output = Idx::Output;
+
+    #[inline(always)]
+    fn index(&self, index: Idx) -> &Self::Output {
+        self.0.index(index)
+    }
+}
+impl<Idx> IndexMut<Idx> for Face
+where
+    Idx: SliceIndex<[usize], Output = usize>,
+{
+    #[inline]
+    fn index_mut(&mut self, index: Idx) -> &mut Self::Output {
+        self.0.index_mut(index)
     }
 }
 

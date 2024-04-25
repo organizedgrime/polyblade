@@ -94,16 +94,13 @@ impl PolyGraph {
 
     fn face_xyz(&self, face_index: usize) -> Vec<Vector3<f32>> {
         self.faces[face_index]
-            .0
             .iter()
             .map(|v| self.positions[v])
             .collect()
     }
 
-    #[allow(dead_code)]
     pub fn face_normal(&self, face_index: usize) -> V3f {
         self.faces[face_index]
-            .0
             .iter()
             .map(|v| self.positions[v])
             .fold(Vector3::zero(), |acc, v| acc.cross(v))
@@ -162,7 +159,7 @@ impl PolyGraph {
             .faces
             .iter()
             .fold(HashSet::new(), |mut acc, f| {
-                acc.insert(f.0.len());
+                acc.insert(f.len());
                 acc
             })
             .into_iter()
@@ -185,7 +182,7 @@ impl PolyGraph {
             */
             let c = polygon_type
                 .iter()
-                .position(|l| l == &self.faces[face_index].0.len())
+                .position(|l| l == &self.faces[face_index].len())
                 .unwrap();
             let h = (360.0 / palette_size) * (c as f64 % palette_size);
             let color = HSL::new(h, 1.0, 0.5);

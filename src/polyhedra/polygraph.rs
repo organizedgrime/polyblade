@@ -148,7 +148,7 @@ impl PolyGraph {
             for x in adj.iter() {
                 for y in adj.iter() {
                     if x != y && u < x && x < y {
-                        let new_face = Face(vec![*x, *u, *y]);
+                        let new_face = Face::new(vec![*x, *u, *y]);
                         if self.adjacents.contains(&(*x, *y).into()) {
                             cycles.insert(new_face);
                         } else {
@@ -160,15 +160,15 @@ impl PolyGraph {
         }
         // while there are unparsed triplets
         while !triplets.is_empty() && (cycles.len() as i64) < self.face_count() {
-            let triplet = triplets.remove(0);
-            let p = triplet.0;
+            let p = triplets.remove(0);
             // for each v adjacent to u_t
             for v in self.connections(&p[p.len() - 1]) {
                 if v > p[1] {
                     let c = self.connections(&v);
                     // if v is not a neighbor of u_2..u_t-1
                     if !p[1..p.len() - 1].iter().any(|vi| c.contains(vi)) {
-                        let new_face = Face([p.clone(), vec![v]].concat());
+                        let mut new_face = p.clone();
+                        new_face.push(v);
                         if self.connections(&p[0]).contains(&v) {
                             //cycles.remo
                             cycles.insert(new_face);
@@ -401,8 +401,7 @@ impl Display for PolyGraph {
                 .fold(String::new(), |acc, e| format!("{e}, {acc}")),
             self.faces.iter().fold(String::new(), |acc, f| format!(
                 "[{}], {acc}",
-                f.0.iter()
-                    .fold(String::new(), |acc, x| format!("{x}, {acc}"))
+                f.iter().fold(String::new(), |acc, x| format!("{x}, {acc}"))
             ))
         ))
     }
@@ -495,6 +494,6 @@ mod test {
 
         graph.connect((2, 0));
         graph.recompute_qualities();
-        assert_eq!(graph.faces, vec![Face(vec![0, 1, 2])]);
+        assert_eq!(graph.faces, vec![Face::new(vec![0, 1, 2])]);
     }
 }
