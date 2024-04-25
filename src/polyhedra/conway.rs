@@ -28,6 +28,8 @@ impl PolyGraph {
         let mut transformations: HashMap<VertexId, VertexId> = Default::default();
         // Remove the vertex
         self.delete(v);
+
+        // connect a new node to every existing connection
         while let Some(u) = connections.pop_front() {
             if u != v {
                 // Insert a new node in the same location
@@ -41,7 +43,8 @@ impl PolyGraph {
             }
         }
 
-        let mut ccc = HashSet::<Edge>::new();
+        // track the edges that will compose the new face
+        let mut new_face = Vec::new();
 
         // upate every face
         for i in 0..self.faces.len() {
@@ -59,28 +62,12 @@ impl PolyGraph {
                 self.faces[i].insert(vi, b);
 
                 let e: Edge = (a, b).into();
-                ccc.insert(e);
-                self.connect(e)
+                new_face.push(e);
+                self.connect(e);
             }
         }
 
-        let mut fff = Vec::new();
-        loop {
-            if ccc.is_empty() {
-                break;
-            }
-            if fff.is_empty() {
-                let random = ccc.iter().collect::<Vec<_>>()[0].id().0;
-                fff.push(random);
-            } else {
-                let l = *fff.last().unwrap();
-                let e = *ccc.iter().find(|e| e.other(l).is_some()).unwrap();
-                fff.push(e.other(l).unwrap());
-                ccc.remove(&e);
-            }
-        }
-
-        self.faces.push(Face::new(fff));
+        self.faces.push(new_face.into());
         transformations
     }
 

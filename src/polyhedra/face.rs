@@ -9,20 +9,6 @@ use std::{
 #[derive(Clone)]
 pub struct Face(Vec<VertexId>);
 
-impl std::fmt::Debug for Face {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let i: usize = self
-            .0
-            .iter()
-            .enumerate()
-            .min_by(|(_, a), (_, b)| a.cmp(b))
-            .map(|(index, _)| index)
-            .unwrap();
-        let id = [self.0[i..].to_vec(), self.0[..i].to_vec()].concat();
-        f.debug_tuple("Face").field(&id).finish()
-    }
-}
-
 impl Face {
     pub fn new(vertices: Vec<VertexId>) -> Self {
         Self(vertices)
@@ -57,6 +43,20 @@ impl Face {
 
     pub fn push(&mut self, value: VertexId) {
         self.0.push(value)
+    }
+}
+
+impl From<Vec<Edge>> for Face {
+    fn from(mut value: Vec<Edge>) -> Self {
+        let mut face = vec![value[0].v()];
+        while !value.is_empty() {
+            let prev = *face.last().unwrap();
+            let i = value.iter().position(|e| e.contains(prev)).unwrap();
+            let next = value[i].other(prev).unwrap();
+            face.push(next);
+            value.remove(i);
+        }
+        Self::new(face)
     }
 }
 
@@ -95,5 +95,19 @@ impl Hash for Face {
         for edge in edges {
             edge.hash(state);
         }
+    }
+}
+
+impl std::fmt::Debug for Face {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let i: usize = self
+            .0
+            .iter()
+            .enumerate()
+            .min_by(|(_, a), (_, b)| a.cmp(b))
+            .map(|(index, _)| index)
+            .unwrap();
+        let id = [self.0[i..].to_vec(), self.0[..i].to_vec()].concat();
+        f.debug_tuple("Face").field(&id).finish()
     }
 }
