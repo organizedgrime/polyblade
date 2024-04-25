@@ -26,14 +26,16 @@ impl PolyGraph {
         let original_position = self.positions[&v];
         let mut connections: VecDeque<VertexId> = self.connections(v).into_iter().collect();
         let mut transformations: HashMap<VertexId, VertexId> = Default::default();
+        let mut new_face = Vec::new();
         // Remove the vertex
-        self.delete(v);
 
         // connect a new node to every existing connection
         while let Some(u) = connections.pop_front() {
             if u != v {
                 // Insert a new node in the same location
                 let new_vertex = self.insert();
+                // Track it in the new face
+                new_face.push(new_vertex);
                 // Update pos
                 self.positions.insert(new_vertex, original_position);
                 // Reform old connection
@@ -50,6 +52,7 @@ impl PolyGraph {
         for i in 0..self.faces.len() {
             // if this face had v in it
             if let Some(vi) = self.faces[i].iter().position(|&x| x == v) {
+                println!("before:[{:?}]", self.faces[i]);
                 // indices before and after v in face
                 let vh = (vi + self.faces[i].len() - 1) % self.faces[i].len();
                 let vj = (vi + 1) % self.faces[i].len();
@@ -57,17 +60,23 @@ impl PolyGraph {
                 let b = transformations[&self.faces[i][vh]];
                 let a = transformations[&self.faces[i][vj]];
 
-                self.faces[i].remove(vi);
+                println!("v: {v}");
+
+                println!("v removed: {:?}", self.faces[i]);
                 self.faces[i].insert(vi, a);
                 self.faces[i].insert(vi, b);
+                println!("ab added: {:?}", self.faces[i]);
 
                 let e: Edge = (a, b).into();
                 new_edges.insert(e);
                 self.connect(e);
+                println!("after:[{:?}]", self.faces[i]);
             }
         }
 
         self.faces.push(new_edges.clone().into());
+
+        self.delete(v);
         new_edges
     }
 
@@ -96,6 +105,15 @@ impl PolyGraph {
         // Contract original edge set
         self.contract_edges(original_edges);
         self.recompute_qualities();
+
+        let mut c = self.faces.clone();
+        self.faces();
+        let mut d = self.faces.clone();
+
+        c.sort();
+        d.sort();
+
+        assert_eq!(c, d);
         self.name.remove(0);
         self.name.insert(0, 'a');
     }

@@ -84,6 +84,8 @@ impl PolyGraph {
     }
 
     fn face_xyz(&self, face_index: usize) -> Vec<Vector3<f32>> {
+        //println!("face:{:?}", self.faces[face_index]);
+        //println!("vertices:{:?}", self.vertices);
         self.faces[face_index]
             .iter()
             .map(|v| self.positions[v])

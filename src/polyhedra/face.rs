@@ -4,9 +4,10 @@ use std::{
     hash::Hash,
     ops::{Index, IndexMut},
     slice::SliceIndex,
+    vec::IntoIter,
 };
 
-#[derive(Clone)]
+#[derive(Clone, PartialOrd, Ord)]
 pub struct Face(Vec<VertexId>);
 
 impl Face {
@@ -52,15 +53,27 @@ impl Face {
 
 impl From<HashSet<Edge>> for Face {
     fn from(value: HashSet<Edge>) -> Self {
+        println!("creating face out of {value:?}");
         let mut edges: Vec<Edge> = value.into_iter().collect();
+        let mut first = false;
         let mut face = vec![edges[0].v()];
         while !edges.is_empty() {
-            let prev = *face.last().unwrap();
-            let i = edges.iter().position(|e| e.contains(prev)).unwrap();
-            let next = edges[i].other(prev).unwrap();
-            face.push(next);
-            edges.remove(i);
+            let v = if first {
+                *face.first().unwrap()
+            } else {
+                *face.last().unwrap()
+            };
+            if let Some(i) = edges.iter().position(|e| e.contains(v)) {
+                let next = edges[i].other(v).unwrap();
+                if !face.contains(&next) {
+                    face.push(next);
+                }
+                edges.remove(i);
+            } else {
+                first ^= true;
+            }
         }
+        println!("now its {face:?}");
         Self::new(face)
     }
 }
@@ -83,6 +96,25 @@ where
     #[inline]
     fn index_mut(&mut self, index: Idx) -> &mut Self::Output {
         self.0.index_mut(index)
+    }
+}
+
+impl IntoIterator for Face {
+    type Item = VertexId;
+    type IntoIter = IntoIter<VertexId>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.0.into_iter()
+    }
+}
+
+impl FromIterator<VertexId> for Face {
+    fn from_iter<I: IntoIterator<Item = VertexId>>(iter: I) -> Self {
+        let mut c = Face::new(vec![]);
+        for i in iter {
+            c.0.push(i);
+        }
+        c
     }
 }
 

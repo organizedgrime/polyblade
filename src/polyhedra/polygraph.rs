@@ -65,6 +65,7 @@ impl PolyGraph {
         }
 
         poly.recompute_qualities();
+        poly.faces();
         poly
     }
 
@@ -95,6 +96,12 @@ impl PolyGraph {
             .clone()
             .into_iter()
             .filter(|e| e.id().0 != v && e.id().1 != v)
+            .collect();
+        self.faces = self
+            .faces
+            .clone()
+            .into_iter()
+            .map(|face| face.into_iter().filter(|&u| u != v).collect())
             .collect();
         self.positions.remove(&v);
         self.speeds.remove(&v);
@@ -366,7 +373,7 @@ impl PolyGraph {
         // Neighbors and diameters rely on distances
         self.neighbors();
         self.diameter();
-        self.faces();
+        //self.faces();
     }
 }
 
