@@ -4,7 +4,7 @@ use super::*;
 use crate::prelude::{V3f, HSL};
 use std::{collections::HashSet, ops::Add};
 
-const TICK_SPEED: f32 = 50.0;
+const TICK_SPEED: f32 = 200.0;
 
 // Operations
 impl PolyGraph {
@@ -42,13 +42,13 @@ impl PolyGraph {
         let diam = *self.dist.values().max().unwrap_or(&1) as f32;
         // Natural lengths
         let l_d = self.edge_length * 2.0;
-        let l_a = l_d / (diam * 3.0);
-        let l_n = l_a * 2.0;
+        let l_a = l_d / (diam * 15.0);
+        let l_n = l_a * 3.2;
 
         // Spring constants
         let k_a = 0.9;
         let k_n = 0.4;
-        let k_d = 0.3;
+        let k_d = 0.9;
 
         // Apply!
         self.apply_forces(self.adjacents.clone(), l_a, k_a);

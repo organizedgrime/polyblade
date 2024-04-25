@@ -50,15 +50,16 @@ impl Face {
     }
 }
 
-impl From<Vec<Edge>> for Face {
-    fn from(mut value: Vec<Edge>) -> Self {
-        let mut face = vec![value[0].v()];
-        while !value.is_empty() {
+impl From<HashSet<Edge>> for Face {
+    fn from(value: HashSet<Edge>) -> Self {
+        let mut edges: Vec<Edge> = value.into_iter().collect();
+        let mut face = vec![edges[0].v()];
+        while !edges.is_empty() {
             let prev = *face.last().unwrap();
-            let i = value.iter().position(|e| e.contains(prev)).unwrap();
-            let next = value[i].other(prev).unwrap();
+            let i = edges.iter().position(|e| e.contains(prev)).unwrap();
+            let next = edges[i].other(prev).unwrap();
             face.push(next);
-            value.remove(i);
+            edges.remove(i);
         }
         Self::new(face)
     }

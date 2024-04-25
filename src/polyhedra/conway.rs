@@ -1,21 +1,28 @@
 use std::collections::{HashMap, VecDeque};
 
 pub use super::*;
+use std::collections::HashSet;
 
 impl PolyGraph {
     pub fn contract_edge(&mut self, e: impl Into<Edge>) {
         let e: Edge = e.into();
-        // Give b all the same connections as a
-        for b in self.connections(e.v()).into_iter() {
-            if b != e.u() {
-                self.connect((b, e.u()))
+        // Give u all the same connections as v
+        for w in self.connections(e.v()).into_iter() {
+            if w != e.u() {
+                self.connect((w, e.u()))
             }
         }
         // Delete a
         self.delete(e.v());
     }
 
-    pub fn split_vertex(&mut self, v: VertexId) -> Vec<Edge> {
+    pub fn contract_edges(&mut self, edges: HashSet<Edge>) {
+        for e in edges.into_iter() {
+            self.contract_edge(e);
+        }
+    }
+
+    pub fn split_vertex(&mut self, v: VertexId) -> HashSet<Edge> {
         let original_position = self.positions[&v];
         let mut connections: VecDeque<VertexId> = self.connections(v).into_iter().collect();
         let mut transformations: HashMap<VertexId, VertexId> = Default::default();
@@ -37,7 +44,7 @@ impl PolyGraph {
         }
 
         // track the edges that will compose the new face
-        let mut new_edges = Vec::new();
+        let mut new_edges = HashSet::new();
 
         // upate every face
         for i in 0..self.faces.len() {
@@ -55,7 +62,7 @@ impl PolyGraph {
                 self.faces[i].insert(vi, b);
 
                 let e: Edge = (a, b).into();
-                new_edges.push(e);
+                new_edges.insert(e);
                 self.connect(e);
             }
         }
@@ -65,8 +72,8 @@ impl PolyGraph {
     }
 
     /// `t` truncate
-    pub fn truncate(&mut self) -> Vec<Edge> {
-        let mut new_edges = Vec::new();
+    pub fn truncate(&mut self) -> HashSet<Edge> {
+        let mut new_edges = HashSet::new();
         for v in self.vertices.clone() {
             new_edges.extend(self.split_vertex(v));
         }
@@ -78,19 +85,16 @@ impl PolyGraph {
     /// `a` ambo
     pub fn ambo(&mut self) {
         // Truncate
-        let new_edges = self.truncate();
+        let new_edges = &self.truncate();
+        let original_edges: HashSet<Edge> = self
+            .adjacents
+            .clone()
+            .difference(new_edges)
+            .map(Edge::clone)
+            .collect();
 
-        //self.contract_edges_visually(original_edges);
-        // Animate
-
-        //self.contracting_edges.extend(original_edges);
         // Contract original edge set
-        for e in self.adjacents.clone() {
-            if !new_edges.contains(&e) {
-                self.contract_edge(e);
-            }
-        }
-
+        self.contract_edges(original_edges);
         self.recompute_qualities();
         self.name.remove(0);
         self.name.insert(0, 'a');
