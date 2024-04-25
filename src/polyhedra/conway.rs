@@ -41,27 +41,27 @@ impl PolyGraph {
             }
         }
 
-        //let new_versions = self.vertices.iter().fold(Hash, f)
         let mut ccc = HashSet::<Edge>::new();
 
-        for f in self.faces.iter_mut() {
-            if let Some(i) = f.iter().position(|x| *x == v) {
-                let before = f[(i + f.len() - 1) % f.len()];
-                let after = f[(i + 1) % f.len()];
+        // upate every face
+        for i in 0..self.faces.len() {
+            // if this face had v in it
+            if let Some(vi) = self.faces[i].iter().position(|&x| x == v) {
+                // indices before and after v in face
+                let vh = (vi + self.faces[i].len() - 1) % self.faces[i].len();
+                let vj = (vi + 1) % self.faces[i].len();
 
-                let b = transformations.get(&before).unwrap();
-                let a = transformations.get(&after).unwrap();
+                let b = transformations[&self.faces[i][vh]];
+                let a = transformations[&self.faces[i][vj]];
 
-                f.remove(i);
-                f.insert(i, *a);
-                f.insert(i, *b);
+                self.faces[i].remove(vi);
+                self.faces[i].insert(vi, a);
+                self.faces[i].insert(vi, b);
 
-                ccc.insert((a, b).into());
+                let e: Edge = (a, b).into();
+                ccc.insert(e);
+                self.connect(e)
             }
-        }
-
-        for c in ccc.iter() {
-            self.connect(*c);
         }
 
         let mut fff = Vec::new();
