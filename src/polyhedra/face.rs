@@ -27,12 +27,16 @@ impl Face {
     }
 
     pub fn replace(&mut self, old: VertexId, new: VertexId) {
-        self.0 = self
-            .0
-            .clone()
-            .into_iter()
-            .filter_map(|x| if x == old { Some(new) } else { Some(x) })
-            .collect();
+        if self.0.contains(&new) && self.0.contains(&old) {
+            self.remove(self.0.iter().position(|&x| x == old).unwrap());
+        } else {
+            self.0 = self
+                .0
+                .clone()
+                .into_iter()
+                .filter_map(|x| if x == old { Some(new) } else { Some(x) })
+                .collect();
+        }
     }
 
     pub fn is_empty(&self) -> bool {
