@@ -23,3 +23,10 @@ tracing-subscriber = "0.3.18"
 
 [profile.release]
 debug = true
+
+[dev-dependencies]
+divan = "0.1.14"
+
+[[bench]]
+name = "distance"
+harness = false
