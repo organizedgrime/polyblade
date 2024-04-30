@@ -6,8 +6,8 @@ use iced::{Color, Rectangle};
 #[repr(C)]
 pub struct Uniforms {
     model_mat: glam::Mat4,
-    view_projection_mat: glam::Vec4,
-    normal_mat: glam::Vec4,
+    view_projection_mat: glam::Mat4,
+    normal_mat: glam::Mat4,
 }
 
 #[derive(Copy, Default, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]

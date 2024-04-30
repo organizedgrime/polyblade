@@ -54,18 +54,22 @@ impl Pipeline {
             usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
             mapped_at_creation: false,
         });
+        println!("uniform: {uniform:?}");
         let frag_uniform = device.create_buffer(&wgpu::BufferDescriptor {
             label: Some("FragUniforms buf"),
             size: std::mem::size_of::<FragUniforms>() as u64,
             usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
             mapped_at_creation: false,
         });
+        println!("fraguniform: {frag_uniform:?}");
+
         let light_uniform = device.create_buffer(&wgpu::BufferDescriptor {
             label: Some("LightUniforms buf"),
             size: std::mem::size_of::<LightUniforms>() as u64,
             usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
             mapped_at_creation: false,
         });
+        println!("lightuniform: {light_uniform:?}");
 
         // Uniform layout for Vertex Shader
         let uniform_layout = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
@@ -73,7 +77,7 @@ impl Pipeline {
             entries: &[
                 wgpu::BindGroupLayoutEntry {
                     binding: 0,
-                    visibility: wgpu::ShaderStages::VERTEX_FRAGMENT,
+                    visibility: wgpu::ShaderStages::VERTEX,
                     ty: wgpu::BindingType::Buffer {
                         ty: wgpu::BufferBindingType::Uniform,
                         has_dynamic_offset: false,
@@ -83,7 +87,7 @@ impl Pipeline {
                 },
                 wgpu::BindGroupLayoutEntry {
                     binding: 1,
-                    visibility: wgpu::ShaderStages::VERTEX_FRAGMENT,
+                    visibility: wgpu::ShaderStages::FRAGMENT,
                     ty: wgpu::BindingType::Buffer {
                         ty: wgpu::BufferBindingType::Uniform,
                         has_dynamic_offset: false,
@@ -93,7 +97,7 @@ impl Pipeline {
                 },
                 wgpu::BindGroupLayoutEntry {
                     binding: 2,
-                    visibility: wgpu::ShaderStages::VERTEX_FRAGMENT,
+                    visibility: wgpu::ShaderStages::FRAGMENT,
                     ty: wgpu::BindingType::Buffer {
                         ty: wgpu::BufferBindingType::Uniform,
                         has_dynamic_offset: false,
