@@ -1,5 +1,6 @@
 mod camera;
 mod pipeline;
+pub mod transforms;
 
 use camera::Camera;
 use pipeline::Pipeline;
@@ -16,11 +17,14 @@ use glam::Vec3;
 use rand::Rng;
 use std::cmp::Ordering;
 use std::iter;
+use std::ops::Sub;
+use std::time::Instant;
 
 pub const MAX: u32 = 500;
 
 #[derive(Clone)]
 pub struct Scene {
+    pub start: Instant,
     pub size: f32,
     pub cube: Cube,
     pub camera: Camera,
@@ -30,6 +34,7 @@ pub struct Scene {
 impl Scene {
     pub fn new() -> Self {
         let mut scene = Self {
+            start: Instant::now(),
             size: 0.2,
             cube: Cube::default(),
             camera: Camera::default(),
@@ -54,7 +59,13 @@ impl<Message> shader::Program<Message> for Scene {
         _cursor: mouse::Cursor,
         bounds: Rectangle,
     ) -> Self::Primitive {
-        Primitive::new(&self.cube, &self.camera, bounds, self.light_color)
+        Primitive::new(
+            self.start,
+            &self.cube,
+            &self.camera,
+            bounds,
+            self.light_color,
+        )
     }
 }
 
@@ -65,19 +76,27 @@ pub struct Primitive {
     uniforms: pipeline::Uniforms,
     frag_uniforms: pipeline::FragUniforms,
     light_uniforms: pipeline::LightUniforms,
+    start: Instant,
 }
 
 impl Primitive {
-    pub fn new(cube: &Cube, camera: &Camera, bounds: Rectangle, light_color: Color) -> Self {
+    pub fn new(
+        start: Instant,
+        cube: &Cube,
+        camera: &Camera,
+        bounds: Rectangle,
+        light_color: Color,
+    ) -> Self {
         let uniforms = pipeline::Uniforms::default();
         let frag_uniforms = pipeline::FragUniforms::default();
-        let light_uniforms = pipeline::LightUniforms::default();
+        let light_uniforms = pipeline::LightUniforms::new(light_color, light_color);
 
         Self {
             cube: cube::Raw::from_cube(cube),
             uniforms,
             frag_uniforms,
             light_uniforms,
+            start,
         }
     }
 }
@@ -108,6 +127,7 @@ impl shader::Primitive for Primitive {
             &self.frag_uniforms,
             &self.light_uniforms,
             &self.cube,
+            Instant::now() - self.start,
         );
     }
 
@@ -125,12 +145,4 @@ impl shader::Primitive for Primitive {
         //render primitive
         pipeline.render(target, encoder, viewport);
     }
-}
-
-fn rnd_origin() -> Vec3 {
-    Vec3::new(
-        rand::thread_rng().gen_range(-4.0..4.0),
-        rand::thread_rng().gen_range(-4.0..4.0),
-        rand::thread_rng().gen_range(-4.0..2.0),
-    )
 }

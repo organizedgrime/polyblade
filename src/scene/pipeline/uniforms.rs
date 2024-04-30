@@ -48,14 +48,14 @@ impl FragUniforms {
 }
 
 impl LightUniforms {
-    pub fn new(camera: &Camera, bounds: Rectangle, light_color: Color) -> Self {
+    pub fn new(light_color: Color, specular_color: Color) -> Self {
         Self {
             color: glam::Vec4::from(light_color.into_linear()),
-            specular_color: todo!(),
-            ambient_intensity: todo!(),
-            diffuse_intensity: todo!(),
-            specular_intensity: todo!(),
-            specular_shininess: todo!(),
+            specular_color: glam::Vec4::from(light_color.into_linear()),
+            ambient_intensity: 0.1,
+            diffuse_intensity: 0.6,
+            specular_intensity: 0.3,
+            specular_shininess: 30.0,
         }
     }
 }
