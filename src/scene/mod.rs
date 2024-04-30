@@ -24,7 +24,6 @@ pub struct Scene {
     pub size: f32,
     pub cubes: Vec<Cube>,
     pub camera: Camera,
-    pub show_depth_buffer: bool,
     pub light_color: Color,
 }
 
@@ -34,7 +33,6 @@ impl Scene {
             size: 0.2,
             cubes: vec![],
             camera: Camera::default(),
-            show_depth_buffer: false,
             light_color: Color::WHITE,
         };
 
@@ -88,13 +86,7 @@ impl<Message> shader::Program<Message> for Scene {
         _cursor: mouse::Cursor,
         bounds: Rectangle,
     ) -> Self::Primitive {
-        Primitive::new(
-            &self.cubes,
-            &self.camera,
-            bounds,
-            self.show_depth_buffer,
-            self.light_color,
-        )
+        Primitive::new(&self.cubes, &self.camera, bounds, self.light_color)
     }
 }
 
@@ -103,17 +95,10 @@ impl<Message> shader::Program<Message> for Scene {
 pub struct Primitive {
     cubes: Vec<cube::Raw>,
     uniforms: pipeline::Uniforms,
-    show_depth_buffer: bool,
 }
 
 impl Primitive {
-    pub fn new(
-        cubes: &[Cube],
-        camera: &Camera,
-        bounds: Rectangle,
-        show_depth_buffer: bool,
-        light_color: Color,
-    ) -> Self {
+    pub fn new(cubes: &[Cube], camera: &Camera, bounds: Rectangle, light_color: Color) -> Self {
         let uniforms = pipeline::Uniforms::new(camera, bounds, light_color);
 
         Self {
@@ -122,7 +107,6 @@ impl Primitive {
                 .map(cube::Raw::from_cube)
                 .collect::<Vec<cube::Raw>>(),
             uniforms,
-            show_depth_buffer,
         }
     }
 }
@@ -167,13 +151,7 @@ impl shader::Primitive for Primitive {
         let pipeline = storage.get::<Pipeline>().unwrap();
 
         //render primitive
-        pipeline.render(
-            target,
-            encoder,
-            viewport,
-            self.cubes.len() as u32,
-            self.show_depth_buffer,
-        );
+        pipeline.render(target, encoder, viewport, self.cubes.len() as u32);
     }
 }
 
@@ -184,4 +162,3 @@ fn rnd_origin() -> Vec3 {
         rand::thread_rng().gen_range(-4.0..2.0),
     )
 }
-
