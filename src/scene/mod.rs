@@ -63,15 +63,21 @@ impl<Message> shader::Program<Message> for Scene {
 pub struct Primitive {
     cube: cube::Raw,
     uniforms: pipeline::Uniforms,
+    frag_uniforms: pipeline::FragUniforms,
+    light_uniforms: pipeline::LightUniforms,
 }
 
 impl Primitive {
     pub fn new(cube: &Cube, camera: &Camera, bounds: Rectangle, light_color: Color) -> Self {
         let uniforms = pipeline::Uniforms::default();
+        let frag_uniforms = pipeline::FragUniforms::default();
+        let light_uniforms = pipeline::LightUniforms::default();
 
         Self {
             cube: cube::Raw::from_cube(cube),
             uniforms,
+            frag_uniforms,
+            light_uniforms,
         }
     }
 }
@@ -94,7 +100,15 @@ impl shader::Primitive for Primitive {
         let pipeline = storage.get_mut::<Pipeline>().unwrap();
 
         //upload data to GPU
-        pipeline.update(device, queue, target_size, &self.uniforms, &self.cube);
+        pipeline.update(
+            device,
+            queue,
+            target_size,
+            &self.uniforms,
+            &self.frag_uniforms,
+            &self.light_uniforms,
+            &self.cube,
+        );
     }
 
     fn render(
