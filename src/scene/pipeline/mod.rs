@@ -14,14 +14,16 @@ use crate::wgpu::util::DeviceExt;
 
 use iced::{Rectangle, Size};
 
+use self::uniforms::{FragUniforms, LightUniforms};
+
 const SKY_TEXTURE_SIZE: u32 = 128;
 
 pub struct Pipeline {
     pipeline: wgpu::RenderPipeline,
     vertices: wgpu::Buffer,
-    cubes: Buffer,
+    cube: Buffer,
     uniforms: wgpu::Buffer,
-    uniform_bind_group: wgpu::BindGroup,
+    uniform_groups: Vec<wgpu::BindGroup>,
 }
 
 impl Pipeline {
@@ -41,43 +43,66 @@ impl Pipeline {
         //cube instance data
         let cubes_buffer = Buffer::new(
             device,
-            "cubes instance buffer",
+            "Polyhedron instance buffer",
             std::mem::size_of::<cube::Raw>() as u64,
             wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::COPY_DST,
         );
 
-        //uniforms for all cubes
         let uniforms = device.create_buffer(&wgpu::BufferDescriptor {
-            label: Some("cubes uniform buffer"),
+            label: Some("Uniforms buf"),
             size: std::mem::size_of::<Uniforms>() as u64,
             usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
             mapped_at_creation: false,
         });
-
-        //depth buffer
-        let depth_texture = device.create_texture(&wgpu::TextureDescriptor {
-            label: Some("cubes depth texture"),
-            size: wgpu::Extent3d {
-                width: target_size.width,
-                height: target_size.height,
-                depth_or_array_layers: 1,
-            },
-            mip_level_count: 1,
-            sample_count: 1,
-            dimension: wgpu::TextureDimension::D2,
-            format: wgpu::TextureFormat::Depth32Float,
-            usage: wgpu::TextureUsages::RENDER_ATTACHMENT | wgpu::TextureUsages::TEXTURE_BINDING,
-            view_formats: &[],
+        let frag_uniforms = device.create_buffer(&wgpu::BufferDescriptor {
+            label: Some("FragUniforms buf"),
+            size: std::mem::size_of::<FragUniforms>() as u64,
+            usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
+            mapped_at_creation: false,
+        });
+        let light_uniforms = device.create_buffer(&wgpu::BufferDescriptor {
+            label: Some("LightUniforms buf"),
+            size: std::mem::size_of::<LightUniforms>() as u64,
+            usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
+            mapped_at_creation: false,
         });
 
-        let depth_view = depth_texture.create_view(&wgpu::TextureViewDescriptor::default());
-
-        let uniform_bind_group_layout =
+        // Uniform layout for Vertex Shader
+        let uniform_layout = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+            label: Some("Uniforms bgl"),
+            entries: &[wgpu::BindGroupLayoutEntry {
+                binding: 0,
+                visibility: wgpu::ShaderStages::VERTEX_FRAGMENT,
+                ty: wgpu::BindingType::Buffer {
+                    ty: wgpu::BufferBindingType::Uniform,
+                    has_dynamic_offset: false,
+                    min_binding_size: None,
+                },
+                count: None,
+            }],
+        });
+        // Uniform layout for Fragment Shader
+        let frag_uniform_layout =
             device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
-                label: Some("cubes uniform bind group layout"),
+                label: Some("FragUniforms bgl"),
                 entries: &[wgpu::BindGroupLayoutEntry {
-                    binding: 0,
-                    visibility: wgpu::ShaderStages::VERTEX_FRAGMENT,
+                    binding: 1,
+                    visibility: wgpu::ShaderStages::FRAGMENT,
+                    ty: wgpu::BindingType::Buffer {
+                        ty: wgpu::BufferBindingType::Uniform,
+                        has_dynamic_offset: false,
+                        min_binding_size: None,
+                    },
+                    count: None,
+                }],
+            });
+        // Uniform layout for Lighting
+        let light_uniform_layout =
+            device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+                label: Some("LightUniforms bgl"),
+                entries: &[wgpu::BindGroupLayoutEntry {
+                    binding: 2,
+                    visibility: wgpu::ShaderStages::FRAGMENT,
                     ty: wgpu::BindingType::Buffer {
                         ty: wgpu::BufferBindingType::Uniform,
                         has_dynamic_offset: false,
@@ -87,30 +112,46 @@ impl Pipeline {
                 }],
             });
 
-        let uniform_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
-            label: Some("cubes uniform bind group"),
-            layout: &uniform_bind_group_layout,
+        let uniform_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
+            label: Some("Uniforms bg"),
+            layout: &uniform_layout,
             entries: &[wgpu::BindGroupEntry {
                 binding: 0,
                 resource: uniforms.as_entire_binding(),
             }],
         });
+        let frag_uniform_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
+            label: Some("FragUniforms bg"),
+            layout: &frag_uniform_layout,
+            entries: &[wgpu::BindGroupEntry {
+                binding: 1,
+                resource: frag_uniforms.as_entire_binding(),
+            }],
+        });
+        let light_uniform_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
+            label: Some("LightUniforms bg"),
+            layout: &light_uniform_layout,
+            entries: &[wgpu::BindGroupEntry {
+                binding: 2,
+                resource: light_uniforms.as_entire_binding(),
+            }],
+        });
 
         let layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
-            label: Some("cubes pipeline layout"),
-            bind_group_layouts: &[&uniform_bind_group_layout],
+            label: Some("Polyhedron layout"),
+            bind_group_layouts: &[&uniform_layout, &frag_uniform_layout, &light_uniform_layout],
             push_constant_ranges: &[],
         });
 
         let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
-            label: Some("cubes shader"),
+            label: Some("Polyhedron shader"),
             source: wgpu::ShaderSource::Wgsl(std::borrow::Cow::Borrowed(include_str!(
                 "../../shaders/shader.wgsl"
             ))),
         });
 
         let pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
-            label: Some("cubes pipeline"),
+            label: Some("Polyhedron Pipeline"),
             layout: Some(&layout),
             vertex: wgpu::VertexState {
                 module: &shader,
@@ -155,9 +196,9 @@ impl Pipeline {
 
         Self {
             pipeline,
-            cubes: cubes_buffer,
+            cube: cubes_buffer,
             uniforms,
-            uniform_bind_group,
+            uniform_groups: vec![uniform_group, frag_uniform_group, light_uniform_group],
             vertices,
         }
     }
@@ -168,18 +209,13 @@ impl Pipeline {
         queue: &wgpu::Queue,
         target_size: Size<u32>,
         uniforms: &Uniforms,
-        num_cubes: usize,
-        cubes: &[cube::Raw],
+        cube: &cube::Raw,
     ) {
         // update uniforms
         queue.write_buffer(&self.uniforms, 0, bytemuck::bytes_of(uniforms));
 
-        //resize cubes vertex buffer if cubes amount changed
-        let new_size = num_cubes * std::mem::size_of::<cube::Raw>();
-        self.cubes.resize(device, new_size as u64);
-
         //always write new cube data since they are constantly rotating
-        queue.write_buffer(&self.cubes.raw, 0, bytemuck::cast_slice(cubes));
+        queue.write_buffer(&self.cube.raw, 0, bytemuck::bytes_of(cube));
     }
 
     pub fn render(
@@ -187,7 +223,6 @@ impl Pipeline {
         target: &wgpu::TextureView,
         encoder: &mut wgpu::CommandEncoder,
         viewport: Rectangle<u32>,
-        num_cubes: u32,
     ) {
         {
             let mut pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
@@ -207,10 +242,12 @@ impl Pipeline {
 
             pass.set_scissor_rect(viewport.x, viewport.y, viewport.width, viewport.height);
             pass.set_pipeline(&self.pipeline);
-            pass.set_bind_group(0, &self.uniform_bind_group, &[]);
+            pass.set_bind_group(0, &self.uniform_groups[0], &[]);
+            pass.set_bind_group(1, &self.uniform_groups[1], &[]);
+            pass.set_bind_group(2, &self.uniform_groups[2], &[]);
             pass.set_vertex_buffer(0, self.vertices.slice(..));
-            pass.set_vertex_buffer(1, self.cubes.raw.slice(..));
-            pass.draw(0..36, 0..num_cubes);
+            pass.set_vertex_buffer(1, self.cube.raw.slice(..));
+            pass.draw(0..36, 0..1);
         }
     }
 }

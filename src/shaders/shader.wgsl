@@ -3,7 +3,6 @@ struct Uniforms {
     view_project_mat: mat4x4<f32>,
     normal_mat: mat4x4<f32>,
 };
-
 @binding(0) @group(0) var<uniform> uniforms : Uniforms;
 
 struct Output {
@@ -15,7 +14,7 @@ struct Output {
 @vertex
 fn vs_main(@location(0) position: vec4<f32>, @location(1) normal: vec4<f32>) -> Output {
     var output: Output;
-    let m_position: vec4<f32> = uniforms.model_mat * pos;
+    let m_position: vec4<f32> = uniforms.model_mat * position;
     output.v_position = m_position;
     output.v_normal = uniforms.normal_mat * normal;
     output.position = uniforms.view_project_mat * m_position;
