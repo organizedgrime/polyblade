@@ -1,27 +1,25 @@
+use std::f32::consts::PI;
+
 use crate::scene::pipeline::Vertex;
 use crate::wgpu;
 
-use glam::{vec2, vec3, Vec3};
+use glam::{vec2, vec3, Mat4, Quat, Vec3};
 use rand::{thread_rng, Rng};
 
 /// A single instance of a cube.
 #[derive(Debug, Clone)]
 pub struct Cube {
-    pub rotation: glam::Quat,
+    pub rotation: Mat4,
     pub position: Vec3,
     pub size: f32,
-    rotation_dir: f32,
-    rotation_axis: glam::Vec3,
 }
 
 impl Default for Cube {
     fn default() -> Self {
         Self {
-            rotation: glam::Quat::IDENTITY,
+            rotation: glam::Mat4::ZERO,
             position: glam::Vec3::ZERO,
             size: 0.1,
-            rotation_dir: 1.0,
-            rotation_axis: glam::Vec3::Y,
         }
     }
 }
@@ -31,23 +29,14 @@ impl Cube {
         let rnd = thread_rng().gen_range(0.0..=1.0f32);
 
         Self {
-            rotation: glam::Quat::IDENTITY,
+            rotation: glam::Mat4::IDENTITY,
             position: origin + Vec3::new(0.1, 0.1, 0.1),
             size,
-            rotation_dir: if rnd <= 0.5 { -1.0 } else { 1.0 },
-            rotation_axis: if rnd <= 0.33 {
-                glam::Vec3::Y
-            } else if rnd <= 0.66 {
-                glam::Vec3::X
-            } else {
-                glam::Vec3::Z
-            },
         }
     }
 
     pub fn update(&mut self, size: f32, time: f32) {
-        self.rotation =
-            glam::Quat::from_axis_angle(self.rotation_axis, time / 2.0 * self.rotation_dir);
+        self.rotation = Mat4::from_rotation_x(time / PI) * Mat4::from_rotation_y(time / PI * 1.1);
         self.size = size;
     }
 }
@@ -55,7 +44,8 @@ impl Cube {
 #[derive(Clone, Copy, bytemuck::Pod, bytemuck::Zeroable, Debug)]
 #[repr(C)]
 pub struct Raw {
-    transformation: glam::Mat4,
+    // todo fix
+    pub(crate) transformation: glam::Mat4,
     normal: glam::Mat3,
     _padding: [f32; 3],
 }
@@ -85,12 +75,8 @@ impl Raw {
 impl Raw {
     pub fn from_cube(cube: &Cube) -> Raw {
         Raw {
-            transformation: glam::Mat4::from_scale_rotation_translation(
-                glam::vec3(cube.size, cube.size, cube.size),
-                cube.rotation,
-                cube.position,
-            ),
-            normal: glam::Mat3::from_quat(cube.rotation),
+            transformation: cube.rotation,
+            normal: glam::Mat3::from_quat(Quat::IDENTITY),
             _padding: [0.0; 3],
         }
     }

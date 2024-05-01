@@ -16,11 +16,13 @@ fn main() -> iced::Result {
 #[derive(Debug, Clone)]
 enum Message {
     Tick(Instant),
+    Rotate(bool),
 }
 
 struct Polyblade {
     start: Instant,
     scene: Scene,
+    rotating: bool,
 }
 
 impl Application for Polyblade {
@@ -38,6 +40,7 @@ impl Application for Polyblade {
             Self {
                 start: Instant::now(),
                 scene: Scene::new(),
+                rotating: true,
             },
             Command::none(),
         )
@@ -48,6 +51,9 @@ impl Application for Polyblade {
             Message::Tick(time) => {
                 self.scene.update(time - self.start);
             }
+            Message::Rotate(rotating) => {
+                self.rotating = rotating;
+            }
         }
 
         Command::none()
@@ -56,7 +62,9 @@ impl Application for Polyblade {
     fn view(&self) -> Element<'_, Self::Message> {
         let shader = shader(&self.scene).width(Length::Fill).height(Length::Fill);
 
-        container(column![shader].align_items(Alignment::Center))
+        let ui = row![checkbox("Rotating", self.rotating).on_toggle(Message::Rotate)];
+
+        container(column![shader, ui].align_items(Alignment::Center))
             .width(Length::Fill)
             .height(Length::Fill)
             .center_x()

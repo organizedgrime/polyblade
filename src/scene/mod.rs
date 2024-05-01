@@ -60,7 +60,7 @@ impl<Message> shader::Program<Message> for Scene {
         _cursor: mouse::Cursor,
         _bounds: Rectangle,
     ) -> Self::Primitive {
-        Primitive::new(self.start, &self.cube, &self.camera)
+        Primitive::new(&self.cube, &self.camera)
     }
 }
 
@@ -69,15 +69,13 @@ impl<Message> shader::Program<Message> for Scene {
 pub struct Primitive {
     cube: cube::Raw,
     camera: Camera,
-    start: Instant,
 }
 
 impl Primitive {
-    pub fn new(start: Instant, cube: &Cube, camera: &Camera) -> Self {
+    pub fn new(cube: &Cube, camera: &Camera) -> Self {
         Self {
             cube: cube::Raw::from_cube(cube),
             camera: *camera,
-            start,
         }
     }
 }
@@ -99,12 +97,8 @@ impl shader::Primitive for Primitive {
 
         let pipeline = storage.get_mut::<Pipeline>().unwrap();
 
-        //self.uniforms.model_mat = ;
-        let dt = Instant::now() - self.start;
-
         // update uniform buffer
-        let dt = 2.0 * dt.as_secs_f32();
-        let model_mat = Mat4::from_rotation_x(dt / PI) * Mat4::from_rotation_y(dt / PI * 1.1);
+        let model_mat = self.cube.transformation;
         let view_projection_mat = self.camera.build_view_proj_mat(bounds);
         let normal_mat = (model_mat.inverse()).transpose();
 
