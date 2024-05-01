@@ -5,9 +5,9 @@ use iced::{Color, Rectangle};
 #[derive(Copy, Default, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]
 #[repr(C)]
 pub struct Uniforms {
-    model_mat: glam::Mat4,
-    view_projection_mat: glam::Mat4,
-    normal_mat: glam::Mat4,
+    pub(crate) model_mat: glam::Mat4,
+    pub(crate) view_projection_mat: glam::Mat4,
+    pub(crate) normal_mat: glam::Mat4,
 }
 
 #[derive(Copy, Default, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]
@@ -28,16 +28,6 @@ pub struct LightUniforms {
     specular_shininess: f32,
 }
 
-impl Uniforms {
-    pub fn new(camera: &Camera) -> Self {
-        //let camera_proj = camera.build_view_proj_matrix(bounds);
-        Self {
-            model_mat: todo!(),
-            view_projection_mat: todo!(),
-            normal_mat: todo!(),
-        }
-    }
-}
 impl FragUniforms {
     pub fn new() -> Self {
         Self {

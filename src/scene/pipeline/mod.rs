@@ -15,16 +15,12 @@ use crate::wgpu::util::DeviceExt;
 
 use iced::{Color, Rectangle, Size};
 
-use super::transforms;
-
 pub struct Pipeline {
     pipeline: wgpu::RenderPipeline,
     vertices: wgpu::Buffer,
     cube: Buffer,
     uniform: wgpu::Buffer,
     uniform_group: wgpu::BindGroup,
-    view_mat: Mat4,
-    project_mat: Mat4,
 }
 
 impl Pipeline {
@@ -61,11 +57,7 @@ impl Pipeline {
             usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
             mapped_at_creation: false,
         });
-        let camera_position: glam::Vec3 = (3.0, 1.5, 3.0).into();
-        let look_direction = (0.0, 0.0, 0.0).into();
-        let up_direction = Vec3::new(0.0, 1.0, 0.0);
-        let (view_mat, project_mat, _) =
-            transforms::create_view_projection(camera_position, look_direction, up_direction, 1.0);
+        let camera_position: Vec3 = (0.0, 0.0, 0.0).into();
         let light_position: &[f32; 3] = camera_position.as_ref();
         let eye_position: &[f32; 3] = camera_position.as_ref();
         queue.write_buffer(&frag_uniform, 0, bytemuck::cast_slice(light_position));
@@ -80,7 +72,10 @@ impl Pipeline {
         queue.write_buffer(
             &light_uniform,
             0,
-            bytemuck::cast_slice(&[LightUniforms::new(Color::WHITE, Color::WHITE)]),
+            bytemuck::cast_slice(&[LightUniforms::new(
+                Color::new(1.0, 0.0, 0.0, 1.0),
+                Color::new(0.0, 1.0, 0.0, 1.0),
+            )]),
         );
 
         // Uniform layout for Vertex Shader
@@ -196,8 +191,6 @@ impl Pipeline {
             uniform,
             uniform_group,
             vertices,
-            project_mat,
-            view_mat,
         }
     }
 
@@ -207,31 +200,9 @@ impl Pipeline {
         queue: &wgpu::Queue,
         _target_size: Size<u32>,
         uniforms: &Uniforms,
-        frag_uniforms: &FragUniforms,
-        light_uniforms: &LightUniforms,
         cube: &cube::Raw,
-        dt: std::time::Duration,
     ) {
-        // update uniform buffer
-        let dt = 1.0 * dt.as_secs_f32();
-        let model_mat = transforms::create_transforms(
-            [0.0, 0.0, 0.0],
-            [dt.sin(), dt.cos(), 0.0],
-            [1.0, 1.0, 1.0],
-        );
-        let view_project_mat = self.project_mat * self.view_mat;
-
-        let normal_mat = (model_mat.inverse()).transpose();
-
-        let model_ref: &[f32; 16] = model_mat.as_ref();
-        let view_projection_ref: &[f32; 16] = view_project_mat.as_ref();
-        let normal_ref: &[f32; 16] = normal_mat.as_ref();
-
         queue.write_buffer(&self.uniform, 0, bytemuck::bytes_of(uniforms));
-
-        queue.write_buffer(&self.uniform, 0, bytemuck::cast_slice(model_ref));
-        //queue.write_buffer(&self.uniform, 64, bytemuck::cast_slice(view_projection_ref));
-        queue.write_buffer(&self.uniform, 128, bytemuck::cast_slice(normal_ref));
         // update uniforms
         //queue.write_buffer(&self.frag_uniform, 0, bytemuck::bytes_of(frag_uniforms));
         //queue.write_buffer(&self.light_uniform, 0, bytemuck::bytes_of(light_uniforms));

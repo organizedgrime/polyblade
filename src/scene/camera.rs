@@ -1,4 +1,3 @@
-
 use glam::{mat4, vec3, vec4};
 use iced::Rectangle;
 
@@ -33,17 +32,12 @@ pub const OPENGL_TO_WGPU_MATRIX: glam::Mat4 = mat4(
 );
 
 impl Camera {
-    pub fn build_view_proj_matrix(&self, bounds: Rectangle) -> glam::Mat4 {
+    pub fn build_view_proj_mat(&self, bounds: Rectangle) -> glam::Mat4 {
         //TODO looks distorted without padding; base on surface texture size instead?
         let aspect_ratio = bounds.width / (bounds.height + 150.0);
 
         let view = glam::Mat4::look_at_rh(self.eye, self.target, self.up);
-        let proj = glam::Mat4::perspective_rh(
-            self.fov_y,
-            aspect_ratio,
-            self.near,
-            self.far,
-        );
+        let proj = glam::Mat4::perspective_rh(self.fov_y, aspect_ratio, self.near, self.far);
 
         OPENGL_TO_WGPU_MATRIX * proj * view
     }
@@ -52,4 +46,3 @@ impl Camera {
         glam::Vec4::from((self.eye, 0.0))
     }
 }
-

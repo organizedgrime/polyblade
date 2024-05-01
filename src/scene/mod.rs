@@ -1,7 +1,7 @@
 mod camera;
 mod pipeline;
-pub mod transforms;
 
+use bytemuck::Zeroable;
 use camera::Camera;
 use pipeline::Pipeline;
 
@@ -13,7 +13,7 @@ use iced::time::Duration;
 use iced::widget::shader;
 use iced::{Color, Rectangle, Size};
 
-use glam::Vec3;
+use glam::{Mat4, Vec3};
 use rand::Rng;
 use std::cmp::Ordering;
 use std::iter;
@@ -59,13 +59,7 @@ impl<Message> shader::Program<Message> for Scene {
         _cursor: mouse::Cursor,
         bounds: Rectangle,
     ) -> Self::Primitive {
-        Primitive::new(
-            self.start,
-            &self.cube,
-            &self.camera,
-            bounds,
-            self.light_color,
-        )
+        Primitive::new(self.start, &self.cube, &self.camera, bounds)
     }
 }
 
@@ -73,29 +67,15 @@ impl<Message> shader::Program<Message> for Scene {
 #[derive(Debug)]
 pub struct Primitive {
     cube: cube::Raw,
-    uniforms: pipeline::Uniforms,
-    frag_uniforms: pipeline::FragUniforms,
-    light_uniforms: pipeline::LightUniforms,
+    view_projection_mat: Mat4,
     start: Instant,
 }
 
 impl Primitive {
-    pub fn new(
-        start: Instant,
-        cube: &Cube,
-        camera: &Camera,
-        bounds: Rectangle,
-        light_color: Color,
-    ) -> Self {
-        let uniforms = pipeline::Uniforms::default();
-        let frag_uniforms = pipeline::FragUniforms::default();
-        let light_uniforms = pipeline::LightUniforms::new(light_color, light_color);
-
+    pub fn new(start: Instant, cube: &Cube, camera: &Camera, bounds: Rectangle) -> Self {
         Self {
             cube: cube::Raw::from_cube(cube),
-            uniforms,
-            frag_uniforms,
-            light_uniforms,
+            view_projection_mat: camera.build_view_proj_mat(bounds),
             start,
         }
     }
@@ -118,17 +98,25 @@ impl shader::Primitive for Primitive {
 
         let pipeline = storage.get_mut::<Pipeline>().unwrap();
 
+        //self.uniforms.model_mat = ;
+        let dt = Instant::now() - self.start;
+
+        // update uniform buffer
+        let dt = 1.0 * dt.as_secs_f32();
+        let model_mat = Mat4::from_rotation_x(dt.sin())
+            * Mat4::from_rotation_y(dt.cos())
+            * Mat4::from_rotation_z(0.0)
+            * Mat4::from_translation(Vec3::zeroed());
+        let normal_mat = (model_mat.inverse()).transpose();
+
+        let uniforms = pipeline::Uniforms {
+            model_mat,
+            view_projection_mat: self.view_projection_mat,
+            normal_mat,
+        };
+
         //upload data to GPU
-        pipeline.update(
-            device,
-            queue,
-            target_size,
-            &self.uniforms,
-            &self.frag_uniforms,
-            &self.light_uniforms,
-            &self.cube,
-            Instant::now() - self.start,
-        );
+        pipeline.update(device, queue, target_size, &uniforms, &self.cube);
     }
 
     fn render(
