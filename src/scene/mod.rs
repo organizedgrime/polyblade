@@ -13,9 +13,10 @@ use iced::time::Duration;
 use iced::widget::shader;
 use iced::{Color, Rectangle, Size};
 
-use glam::{Mat4, Vec3};
+use glam::{vec3, vec4, Mat4, Vec3, Vec4};
 use rand::Rng;
 use std::cmp::Ordering;
+use std::f32::consts::PI;
 use std::iter;
 use std::ops::Sub;
 use std::time::Instant;
@@ -67,6 +68,7 @@ impl<Message> shader::Program<Message> for Scene {
 #[derive(Debug)]
 pub struct Primitive {
     cube: cube::Raw,
+    camera_pos: Vec4,
     view_projection_mat: Mat4,
     start: Instant,
 }
@@ -75,6 +77,7 @@ impl Primitive {
     pub fn new(start: Instant, cube: &Cube, camera: &Camera, bounds: Rectangle) -> Self {
         Self {
             cube: cube::Raw::from_cube(cube),
+            camera_pos: camera.position(),
             view_projection_mat: camera.build_view_proj_mat(bounds),
             start,
         }
@@ -102,11 +105,8 @@ impl shader::Primitive for Primitive {
         let dt = Instant::now() - self.start;
 
         // update uniform buffer
-        let dt = 1.0 * dt.as_secs_f32();
-        let model_mat = Mat4::from_rotation_x(dt.sin())
-            * Mat4::from_rotation_y(dt.cos())
-            * Mat4::from_rotation_z(0.0)
-            * Mat4::from_translation(Vec3::zeroed());
+        let dt = 2.0 * dt.as_secs_f32();
+        let model_mat = Mat4::from_rotation_x(dt / PI) * Mat4::from_rotation_y(dt / PI * 1.1);
         let normal_mat = (model_mat.inverse()).transpose();
 
         let uniforms = pipeline::Uniforms {
@@ -115,8 +115,20 @@ impl shader::Primitive for Primitive {
             normal_mat,
         };
 
+        let frag_uniforms = pipeline::FragUniforms {
+            light_position: self.camera_pos,
+            eye_position: self.camera_pos + vec4(1.0, 1.0, 1.0, 0.0),
+        };
+
         //upload data to GPU
-        pipeline.update(device, queue, target_size, &uniforms, &self.cube);
+        pipeline.update(
+            device,
+            queue,
+            target_size,
+            &uniforms,
+            &frag_uniforms,
+            &self.cube,
+        );
     }
 
     fn render(

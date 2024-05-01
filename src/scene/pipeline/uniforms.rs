@@ -13,8 +13,8 @@ pub struct Uniforms {
 #[derive(Copy, Default, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]
 #[repr(C)]
 pub struct FragUniforms {
-    light_position: glam::Vec4,
-    eye_position: glam::Vec4,
+    pub(crate) light_position: glam::Vec4,
+    pub(crate) eye_position: glam::Vec4,
 }
 
 #[derive(Copy, Default, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]

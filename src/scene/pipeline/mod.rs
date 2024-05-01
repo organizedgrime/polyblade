@@ -20,6 +20,7 @@ pub struct Pipeline {
     vertices: wgpu::Buffer,
     cube: Buffer,
     uniform: wgpu::Buffer,
+    frag_uniform: wgpu::Buffer,
     uniform_group: wgpu::BindGroup,
 }
 
@@ -57,12 +58,6 @@ impl Pipeline {
             usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
             mapped_at_creation: false,
         });
-        let camera_position: Vec3 = (0.0, 0.0, 0.0).into();
-        let light_position: &[f32; 3] = camera_position.as_ref();
-        let eye_position: &[f32; 3] = camera_position.as_ref();
-        queue.write_buffer(&frag_uniform, 0, bytemuck::cast_slice(light_position));
-        queue.write_buffer(&frag_uniform, 16, bytemuck::cast_slice(eye_position));
-
         let light_uniform = device.create_buffer(&wgpu::BufferDescriptor {
             label: Some("LightUniforms buf"),
             size: std::mem::size_of::<LightUniforms>() as u64,
@@ -189,6 +184,7 @@ impl Pipeline {
             pipeline,
             cube: cubes_buffer,
             uniform,
+            frag_uniform,
             uniform_group,
             vertices,
         }
@@ -200,11 +196,12 @@ impl Pipeline {
         queue: &wgpu::Queue,
         _target_size: Size<u32>,
         uniforms: &Uniforms,
+        frag_uniforms: &FragUniforms,
         cube: &cube::Raw,
     ) {
         queue.write_buffer(&self.uniform, 0, bytemuck::bytes_of(uniforms));
         // update uniforms
-        //queue.write_buffer(&self.frag_uniform, 0, bytemuck::bytes_of(frag_uniforms));
+        queue.write_buffer(&self.frag_uniform, 0, bytemuck::bytes_of(frag_uniforms));
         //queue.write_buffer(&self.light_uniform, 0, bytemuck::bytes_of(light_uniforms));
 
         //always write new cube data since they are constantly rotating
