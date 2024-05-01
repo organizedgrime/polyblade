@@ -58,9 +58,9 @@ impl<Message> shader::Program<Message> for Scene {
         &self,
         _state: &Self::State,
         _cursor: mouse::Cursor,
-        bounds: Rectangle,
+        _bounds: Rectangle,
     ) -> Self::Primitive {
-        Primitive::new(self.start, &self.cube, &self.camera, bounds)
+        Primitive::new(self.start, &self.cube, &self.camera)
     }
 }
 
@@ -68,17 +68,15 @@ impl<Message> shader::Program<Message> for Scene {
 #[derive(Debug)]
 pub struct Primitive {
     cube: cube::Raw,
-    camera_pos: Vec4,
-    view_projection_mat: Mat4,
+    camera: Camera,
     start: Instant,
 }
 
 impl Primitive {
-    pub fn new(start: Instant, cube: &Cube, camera: &Camera, bounds: Rectangle) -> Self {
+    pub fn new(start: Instant, cube: &Cube, camera: &Camera) -> Self {
         Self {
             cube: cube::Raw::from_cube(cube),
-            camera_pos: camera.position(),
-            view_projection_mat: camera.build_view_proj_mat(bounds),
+            camera: *camera,
             start,
         }
     }
@@ -90,7 +88,7 @@ impl shader::Primitive for Primitive {
         format: wgpu::TextureFormat,
         device: &wgpu::Device,
         queue: &wgpu::Queue,
-        _bounds: Rectangle,
+        bounds: Rectangle,
         target_size: Size<u32>,
         _scale_factor: f32,
         storage: &mut shader::Storage,
@@ -107,17 +105,18 @@ impl shader::Primitive for Primitive {
         // update uniform buffer
         let dt = 2.0 * dt.as_secs_f32();
         let model_mat = Mat4::from_rotation_x(dt / PI) * Mat4::from_rotation_y(dt / PI * 1.1);
+        let view_projection_mat = self.camera.build_view_proj_mat(bounds);
         let normal_mat = (model_mat.inverse()).transpose();
 
         let uniforms = pipeline::Uniforms {
             model_mat,
-            view_projection_mat: self.view_projection_mat,
+            view_projection_mat,
             normal_mat,
         };
 
         let frag_uniforms = pipeline::FragUniforms {
-            light_position: self.camera_pos,
-            eye_position: self.camera_pos + vec4(1.0, 1.0, 1.0, 0.0),
+            light_position: self.camera.position(),
+            eye_position: self.camera.position() + vec4(1.0, 1.0, 1.0, 0.0),
         };
 
         //upload data to GPU

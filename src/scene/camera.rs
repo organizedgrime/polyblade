@@ -1,7 +1,7 @@
 use glam::{mat4, vec3, vec4};
 use iced::Rectangle;
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Debug, Clone)]
 pub struct Camera {
     eye: glam::Vec3,
     target: glam::Vec3,
