@@ -62,7 +62,10 @@ impl Application for Polyblade {
     fn view(&self) -> Element<'_, Self::Message> {
         let shader = shader(&self.scene).width(Length::Fill).height(Length::Fill);
 
-        let ui = row![checkbox("Rotating", self.rotating).on_toggle(Message::Rotate)].padding(10);
+        let ui = column![
+            row![checkbox("Rotating", self.rotating).on_toggle(Message::Rotate)].padding(10)
+        ]
+        .padding(10);
 
         container(column![shader, ui].align_items(Alignment::Center))
             .width(Length::Fill)
