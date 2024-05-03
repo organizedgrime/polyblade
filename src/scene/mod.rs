@@ -34,9 +34,9 @@ pub struct Scene {
 
 impl Scene {
     pub fn new() -> Self {
-        let mut scene = Self {
+        let scene = Self {
             start: Instant::now(),
-            size: 0.2,
+            size: 1.0,
             cube: Cube::default(),
             camera: Camera::default(),
             light_color: Color::WHITE,
@@ -110,7 +110,7 @@ impl shader::Primitive for Primitive {
 
         let frag_uniforms = pipeline::FragUniforms {
             light_position: self.camera.position(),
-            eye_position: self.camera.position() + vec4(1.0, 1.0, 1.0, 0.0),
+            eye_position: self.camera.position() + vec4(2.0, 2.0, 1.0, 0.0),
         };
 
         //upload data to GPU
