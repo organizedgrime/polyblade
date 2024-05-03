@@ -16,6 +16,8 @@ iced_aw = { version = "0.8.0", default-features = false, features = [
 ] }
 image = { version = "0.24.9" }
 rand = "^0.8.5"
+strum = "0.26.2"
+strum_macros = "0.26.2"
 
 
 [dev-dependencies]

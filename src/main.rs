@@ -1,47 +1,18 @@
+mod message;
 mod scene;
-
+use message::*;
 use scene::Scene;
 
 use iced::executor;
 use iced::time::Instant;
 use iced::widget::shader::wgpu;
-use iced::widget::{button, checkbox, column, container, row, shader, slider, text};
+use iced::widget::{button, checkbox, column, container, row, shader, slider, text, Text};
 use iced::window;
 use iced::{Alignment, Application, Color, Command, Element, Length, Subscription, Theme};
+use strum::IntoEnumIterator;
 
 fn main() -> iced::Result {
     Polyblade::run(iced::Settings::default())
-}
-
-#[derive(Debug, Clone)]
-enum ConwayMessage {
-    // 1
-    Seed,
-    Dual,
-    // 2
-    Join,
-    Ambo,
-    // 3
-    Kis,
-    Needle,
-    Zip,
-    Truncate,
-    // 4
-    Ortho,
-    Expand,
-    // 5
-    Gyro,
-    Snub,
-    // 6
-    Meta,
-    Bevel,
-}
-
-#[derive(Debug, Clone)]
-enum Message {
-    Tick(Instant),
-    Rotate(bool),
-    Conway(ConwayMessage),
 }
 
 struct Polyblade {
@@ -92,11 +63,15 @@ impl Application for Polyblade {
 
         let ui = column![
             //row![checkbox("Rotating", self.rotating).on_toggle(Message::Rotate)].padding(10)
-            row![
-                checkbox("Rotating", self.rotating).on_toggle(Message::Rotate),
-                button("").on_press(Message::Conway(ConwayMessage::Kis))
-            ]
-            .padding(10)
+            row![checkbox("Rotating", self.rotating).on_toggle(Message::Rotate),].padding(10),
+            ConwayMessage::iter()
+                .fold(row![], |row, conway_message| {
+                    row.push(
+                        button(Text::new(conway_message.to_string()))
+                            .on_press(Message::Conway(conway_message)),
+                    )
+                })
+                .spacing(10)
         ]
         .padding(10);
 
