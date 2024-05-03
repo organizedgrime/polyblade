@@ -1,4 +1,5 @@
 mod message;
+mod polyhedra;
 mod scene;
 use iced::alignment::{Horizontal, Vertical};
 use iced_aw::{card, modal, Card};

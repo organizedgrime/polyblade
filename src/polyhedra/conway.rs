@@ -152,7 +152,7 @@ impl PolyGraph {
 
 #[cfg(test)]
 mod test {
-    use crate::prelude::*;
+    use crate::polyhedra::PolyGraph;
 
     #[test]
     fn truncate() {

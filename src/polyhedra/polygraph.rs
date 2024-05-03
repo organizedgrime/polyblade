@@ -1,5 +1,5 @@
 pub use super::*;
-use cgmath::{vec3, InnerSpace, Vector3, Zero};
+use glam::{vec3, Vec3};
 use rand::random;
 use std::{
     collections::{HashMap, HashSet, VecDeque},
@@ -25,9 +25,9 @@ pub struct PolyGraph {
 
     /// [Render Properties]
     /// Positions in 3D space
-    pub positions: VertMap<Vector3<f32>>,
+    pub positions: VertMap<Vec3>,
     /// Speeds
-    pub speeds: VertMap<Vector3<f32>>,
+    pub speeds: VertMap<Vec3>,
     /// Edges in the process of contracting visually
     pub contracting_edges: HashSet<Edge>,
     /// Edge length
@@ -42,7 +42,7 @@ impl PolyGraph {
             positions: (0..vertex_count)
                 .map(|x| (x, vec3(random(), random(), random()).normalize()))
                 .collect(),
-            speeds: (0..vertex_count).map(|x| (x, Vector3::zero())).collect(),
+            speeds: (0..vertex_count).map(|x| (x, Vec3::ZERO)).collect(),
             edge_length: 1.0,
             ..Default::default()
         };
@@ -81,11 +81,9 @@ impl PolyGraph {
         let new_id = self.vertices.iter().max().unwrap() + 1;
         self.vertices.insert(new_id);
         // Position and speed
-        self.positions.insert(
-            new_id,
-            Vector3::new(random(), random(), random()).normalize(),
-        );
-        self.speeds.insert(new_id, Vector3::zero());
+        self.positions
+            .insert(new_id, Vec3::new(random(), random(), random()).normalize());
+        self.speeds.insert(new_id, Vec3::ZERO);
         new_id
     }
 
@@ -362,10 +360,10 @@ impl Display for PolyGraph {
 
 #[cfg(test)]
 mod test {
+    use crate::polyhedra::{Face, PolyGraph};
     use std::collections::HashSet;
     use test_case::test_case;
 
-    use crate::prelude::*;
     #[test_case(PolyGraph::tetrahedron(); "T")]
     #[test_case(PolyGraph::cube(); "C")]
     #[test_case(PolyGraph::octahedron(); "O")]

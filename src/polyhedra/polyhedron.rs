@@ -1,7 +1,5 @@
-use cgmath::{vec3, InnerSpace, MetricSpace, Vector3, VectorSpace, Zero};
-
 use super::*;
-use crate::prelude::V3f;
+use glam::{vec3, Vec3};
 use std::{collections::HashSet, ops::Add};
 
 const TICK_SPEED: f32 = 100.0;
@@ -27,7 +25,7 @@ impl PolyGraph {
                         *self.positions.get_mut(&u).unwrap() = up.lerp(vp, f);
                     } else {
                         let diff = self.positions[&v] - self.positions[&u];
-                        let dist = diff.magnitude();
+                        let dist = diff.length();
                         let distention = l - dist;
                         let restorative_force = k / 2.0 * distention;
                         let f = diff * restorative_force / TICK_SPEED;
@@ -49,8 +47,8 @@ impl PolyGraph {
     }
 
     fn center(&mut self) {
-        let shift = self.positions.values().fold(Vector3::zero(), Vector3::add)
-            / self.vertices.len() as f32;
+        let shift =
+            self.positions.values().fold(Vec3::ZERO, |a, &b| a + b) / self.vertices.len() as f32;
 
         for (_, v) in self.positions.iter_mut() {
             *v -= shift;
@@ -58,13 +56,12 @@ impl PolyGraph {
     }
 
     fn resize(&mut self) {
-        let mean_magnitude = self
+        let mean_length = self
             .positions
             .values()
-            .map(|p| p.magnitude())
+            .map(|p| p.length())
             .fold(0.0, f32::max);
-        let distance = mean_magnitude - 1.0;
-
+        let distance = mean_length - 1.0;
         self.edge_length -= distance / TICK_SPEED;
     }
 
@@ -75,28 +72,28 @@ impl PolyGraph {
         self.apply_spring_forces();
     }
 
-    fn face_xyz(&self, face_index: usize) -> Vec<Vector3<f32>> {
+    fn face_xyz(&self, face_index: usize) -> Vec<Vec3> {
         self.faces[face_index]
             .iter()
             .map(|v| self.positions[v])
             .collect()
     }
 
-    pub fn face_normal(&self, face_index: usize) -> V3f {
+    pub fn face_normal(&self, face_index: usize) -> Vec3 {
         self.faces[face_index]
             .iter()
             .map(|v| self.positions[v])
-            .fold(Vector3::zero(), |acc, v| acc.cross(v))
+            .fold(Vec3::ZERO, |acc, v| acc.cross(v))
             .normalize()
     }
 
-    fn face_centroid(&self, face_index: usize) -> Vector3<f32> {
+    fn face_centroid(&self, face_index: usize) -> Vec3 {
         // All vertices associated with this face
         let vertices: Vec<_> = self.face_xyz(face_index);
-        vertices.iter().fold(Vector3::zero(), Vector3::add) / vertices.len() as f32
+        vertices.iter().fold(Vec3::ZERO, |a, &b| a + b) / vertices.len() as f32
     }
 
-    fn face_xyz_buffer(&self, face_index: usize) -> Vec<V3f> {
+    fn face_xyz_buffer(&self, face_index: usize) -> Vec<Vec3> {
         let positions = self.face_xyz(face_index);
         let n = positions.len();
         match n {
@@ -119,7 +116,7 @@ impl PolyGraph {
         }
     }
 
-    fn face_tri_buffer(&self, face_index: usize) -> Vec<V3f> {
+    fn face_tri_buffer(&self, face_index: usize) -> Vec<Vec3> {
         let positions = self.face_xyz(face_index);
         let n = positions.len();
         match n {
@@ -129,11 +126,11 @@ impl PolyGraph {
         }
     }
 
-    pub fn xyz_buffer(&self) -> Vec<Vector3<f32>> {
+    pub fn xyz_buffer(&self) -> Vec<Vec3> {
         (0..self.faces.len()).fold(Vec::new(), |acc, i| [acc, self.face_xyz_buffer(i)].concat())
     }
 
-    pub fn poly_color(n: usize) -> V3f {
+    pub fn poly_color(n: usize) -> Vec3 {
         let colors = vec![
             vec3(72.0, 132.0, 90.0),
             vec3(163.0, 186.0, 112.0),
@@ -147,7 +144,7 @@ impl PolyGraph {
         colors[n % colors.len()]
     }
 
-    pub fn static_buffer(&self) -> (Vec<V3f>, Vec<V3f>, Vec<V3f>) {
+    pub fn static_buffer(&self) -> (Vec<Vec3>, Vec<Vec3>, Vec<Vec3>) {
         let mut rgb = Vec::new();
         let mut bsc = Vec::new();
         let mut tri = Vec::new();
@@ -160,11 +157,7 @@ impl PolyGraph {
         }
 
         for _ in 0..rgb.len() / 3 {
-            bsc.extend(vec![
-                Vector3::unit_x(),
-                Vector3::unit_y(),
-                Vector3::unit_z(),
-            ]);
+            bsc.extend(vec![Vec3::X, Vec3::Y, Vec3::Z]);
         }
 
         (rgb, bsc, tri)
