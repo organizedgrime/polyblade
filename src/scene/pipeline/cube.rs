@@ -87,151 +87,187 @@ impl Raw {
             Vertex {
                 position: vec3(-0.5, -0.5, -0.5),
                 normal: vec3(0.0, 0.0, -1.0),
+                color: vec3(0.0, 0.0, 1.0),
             },
             Vertex {
                 position: vec3(0.5, -0.5, -0.5),
                 normal: vec3(0.0, 0.0, -1.0),
+                color: vec3(0.0, 0.0, 1.0),
             },
             Vertex {
                 position: vec3(0.5, 0.5, -0.5),
                 normal: vec3(0.0, 0.0, -1.0),
+                color: vec3(0.0, 0.0, 1.0),
             },
             Vertex {
                 position: vec3(0.5, 0.5, -0.5),
                 normal: vec3(0.0, 0.0, -1.0),
+                color: vec3(0.0, 0.0, 1.0),
             },
             Vertex {
                 position: vec3(-0.5, 0.5, -0.5),
                 normal: vec3(0.0, 0.0, -1.0),
+                color: vec3(0.0, 0.0, 1.0),
             },
             Vertex {
                 position: vec3(-0.5, -0.5, -0.5),
                 normal: vec3(0.0, 0.0, -1.0),
+                color: vec3(0.0, 0.0, 1.0),
             },
             //face 2
             Vertex {
                 position: vec3(-0.5, -0.5, 0.5),
                 normal: vec3(0.0, 0.0, 1.0),
+                color: vec3(0.0, 1.0, 0.0),
             },
             Vertex {
                 position: vec3(0.5, -0.5, 0.5),
                 normal: vec3(0.0, 0.0, 1.0),
+                color: vec3(0.0, 1.0, 0.0),
             },
             Vertex {
                 position: vec3(0.5, 0.5, 0.5),
                 normal: vec3(0.0, 0.0, 1.0),
+                color: vec3(0.0, 1.0, 0.0),
             },
             Vertex {
                 position: vec3(0.5, 0.5, 0.5),
                 normal: vec3(0.0, 0.0, 1.0),
+                color: vec3(0.0, 1.0, 0.0),
             },
             Vertex {
                 position: vec3(-0.5, 0.5, 0.5),
                 normal: vec3(0.0, 0.0, 1.0),
+                color: vec3(0.0, 1.0, 0.0),
             },
             Vertex {
                 position: vec3(-0.5, -0.5, 0.5),
                 normal: vec3(0.0, 0.0, 1.0),
+                color: vec3(0.0, 1.0, 0.0),
             },
             //face 3
             Vertex {
                 position: vec3(-0.5, 0.5, 0.5),
                 normal: vec3(-1.0, 0.0, 0.0),
+                color: vec3(1.0, 0.0, 0.0),
             },
             Vertex {
                 position: vec3(-0.5, 0.5, -0.5),
                 normal: vec3(-1.0, 0.0, 0.0),
+                color: vec3(1.0, 0.0, 0.0),
             },
             Vertex {
                 position: vec3(-0.5, -0.5, -0.5),
                 normal: vec3(-1.0, 0.0, 0.0),
+                color: vec3(1.0, 0.0, 0.0),
             },
             Vertex {
                 position: vec3(-0.5, -0.5, -0.5),
                 normal: vec3(-1.0, 0.0, 0.0),
+                color: vec3(1.0, 0.0, 0.0),
             },
             Vertex {
                 position: vec3(-0.5, -0.5, 0.5),
                 normal: vec3(-1.0, 0.0, 0.0),
+                color: vec3(1.0, 0.0, 0.0),
             },
             Vertex {
                 position: vec3(-0.5, 0.5, 0.5),
                 normal: vec3(-1.0, 0.0, 0.0),
+                color: vec3(1.0, 0.0, 0.0),
             },
             //face 4
             Vertex {
                 position: vec3(0.5, 0.5, 0.5),
                 normal: vec3(1.0, 0.0, 0.0),
+                color: vec3(0.0, 0.0, 1.0),
             },
             Vertex {
                 position: vec3(0.5, 0.5, -0.5),
                 normal: vec3(1.0, 0.0, 0.0),
+                color: vec3(0.0, 0.0, 1.0),
             },
             Vertex {
                 position: vec3(0.5, -0.5, -0.5),
                 normal: vec3(1.0, 0.0, 0.0),
+                color: vec3(0.0, 0.0, 1.0),
             },
             Vertex {
                 position: vec3(0.5, -0.5, -0.5),
                 normal: vec3(1.0, 0.0, 0.0),
+                color: vec3(0.0, 0.0, 1.0),
             },
             Vertex {
                 position: vec3(0.5, -0.5, 0.5),
                 normal: vec3(1.0, 0.0, 0.0),
+                color: vec3(0.0, 0.0, 1.0),
             },
             Vertex {
                 position: vec3(0.5, 0.5, 0.5),
                 normal: vec3(1.0, 0.0, 0.0),
+                color: vec3(0.0, 0.0, 1.0),
             },
             //face 5
             Vertex {
                 position: vec3(-0.5, -0.5, -0.5),
                 normal: vec3(0.0, -1.0, 0.0),
+                color: vec3(0.0, 1.0, 0.0),
             },
             Vertex {
                 position: vec3(0.5, -0.5, -0.5),
                 normal: vec3(0.0, -1.0, 0.0),
+                color: vec3(0.0, 1.0, 0.0),
             },
             Vertex {
                 position: vec3(0.5, -0.5, 0.5),
                 normal: vec3(0.0, -1.0, 0.0),
+                color: vec3(0.0, 1.0, 0.0),
             },
             Vertex {
                 position: vec3(0.5, -0.5, 0.5),
                 normal: vec3(0.0, -1.0, 0.0),
+                color: vec3(0.0, 1.0, 0.0),
             },
             Vertex {
                 position: vec3(-0.5, -0.5, 0.5),
                 normal: vec3(0.0, -1.0, 0.0),
+                color: vec3(0.0, 1.0, 0.0),
             },
             Vertex {
                 position: vec3(-0.5, -0.5, -0.5),
                 normal: vec3(0.0, -1.0, 0.0),
+                color: vec3(0.0, 1.0, 0.0),
             },
             //face 6
             Vertex {
                 position: vec3(-0.5, 0.5, -0.5),
                 normal: vec3(0.0, 1.0, 0.0),
+                color: vec3(1.0, 0.0, 0.0),
             },
             Vertex {
                 position: vec3(0.5, 0.5, -0.5),
                 normal: vec3(0.0, 1.0, 0.0),
+                color: vec3(1.0, 0.0, 0.0),
             },
             Vertex {
                 position: vec3(0.5, 0.5, 0.5),
                 normal: vec3(0.0, 1.0, 0.0),
+                color: vec3(1.0, 0.0, 0.0),
             },
             Vertex {
                 position: vec3(0.5, 0.5, 0.5),
                 normal: vec3(0.0, 1.0, 0.0),
+                color: vec3(1.0, 0.0, 0.0),
             },
             Vertex {
                 position: vec3(-0.5, 0.5, 0.5),
                 normal: vec3(0.0, 1.0, 0.0),
+                color: vec3(1.0, 0.0, 0.0),
             },
             Vertex {
                 position: vec3(-0.5, 0.5, -0.5),
                 normal: vec3(0.0, 1.0, 0.0),
+                color: vec3(1.0, 0.0, 0.0),
             },
         ]
     }

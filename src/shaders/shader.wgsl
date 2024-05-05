@@ -9,14 +9,17 @@ struct Output {
     @builtin(position) position: vec4<f32>,
     @location(0) v_position: vec4<f32>,
     @location(1) v_normal: vec4<f32>,
+    @location(2) v_color: vec4<f32>,
 };
 
 @vertex
-fn vs_main(@location(0) position: vec4<f32>, @location(1) normal: vec4<f32>) -> Output {
+fn vs_main(@location(0) position: vec4<f32>, @location(1) normal: vec4<f32>, @location(2) color: vec4<f32>) -> Output {
     var output: Output;
     let m_position: vec4<f32> = uniforms.model_mat * position;
     output.v_position = m_position;
     output.v_normal = uniforms.normal_mat * normal;
+    output.v_color = color;
+
     output.position = uniforms.view_project_mat * m_position;
     return output;
 }
@@ -38,7 +41,7 @@ struct LightUniforms {
 @binding(2) @group(0) var<uniform> light_uniforms : LightUniforms;
 
 @fragment
-fn fs_main(@location(0) v_position: vec4<f32>, @location(1) v_normal: vec4<f32>) -> @location(0) vec4<f32> {
+fn fs_main(@location(0) v_position: vec4<f32>, @location(1) v_normal: vec4<f32>, @location(2) v_color: vec4<f32>) -> @location(0) vec4<f32> {
     let N: vec3<f32> = normalize(v_normal.xyz);
     let L: vec3<f32> = normalize(frag_uniforms.light_position.xyz - v_position.xyz);
     let V: vec3<f32> = normalize(frag_uniforms.eye_position.xyz - v_position.xyz);
@@ -46,5 +49,6 @@ fn fs_main(@location(0) v_position: vec4<f32>, @location(1) v_normal: vec4<f32>)
     let diffuse: f32 = light_uniforms.diffuse_intensity * max(dot(N, L), 0.0);
     let specular: f32 = light_uniforms.specular_intensity * pow(max(dot(N, H), 0.0), light_uniforms.specular_shininess);
     let ambient: f32 = light_uniforms.ambient_intensity;
-    return light_uniforms.color * (ambient + diffuse) + light_uniforms.specular_color * specular;
+    let reflection_color = light_uniforms.color * (ambient + diffuse) + light_uniforms.specular_color * specular;
+    return v_color / 2.0 + reflection_color;
 }
