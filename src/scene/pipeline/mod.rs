@@ -13,7 +13,7 @@ use vertex::Vertex;
 use crate::wgpu;
 use crate::wgpu::util::DeviceExt;
 
-use iced::{Color, Rectangle, Size};
+use iced::{widget::shader::wgpu::RenderPassDepthStencilAttachment, Color, Rectangle, Size};
 
 pub struct Pipeline {
     pipeline: wgpu::RenderPipeline,
@@ -22,6 +22,9 @@ pub struct Pipeline {
     uniform: wgpu::Buffer,
     frag_uniform: wgpu::Buffer,
     uniform_group: wgpu::BindGroup,
+    depth_texture_size: Size<u32>,
+    depth_view: wgpu::TextureView,
+    depth_pipeline: DepthPipeline,
 }
 
 impl Pipeline {
@@ -31,6 +34,7 @@ impl Pipeline {
         format: wgpu::TextureFormat,
         target_size: Size<u32>,
     ) -> Self {
+        //let format = wgpu::TextureFormat::Depth24PlusStencil8;
         //vertices of one cube
         let vertices = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("cubes vertex buffer"),
@@ -68,10 +72,27 @@ impl Pipeline {
             &light_uniform,
             0,
             bytemuck::cast_slice(&[LightUniforms::new(
-                Color::new(1.0, 0.0, 0.0, 1.0),
-                Color::new(0.0, 1.0, 0.0, 1.0),
+                Color::new(1.0, 1.0, 1.0, 1.0),
+                Color::new(1.0, 1.0, 1.0, 1.0),
             )]),
         );
+
+        //depth buffer
+        let depth_texture = device.create_texture(&wgpu::TextureDescriptor {
+            label: Some("Depth texture"),
+            size: wgpu::Extent3d {
+                width: target_size.width,
+                height: target_size.height,
+                depth_or_array_layers: 1,
+            },
+            mip_level_count: 1,
+            sample_count: 1,
+            dimension: wgpu::TextureDimension::D2,
+            format: wgpu::TextureFormat::Depth32Float,
+            usage: wgpu::TextureUsages::RENDER_ATTACHMENT | wgpu::TextureUsages::TEXTURE_BINDING,
+            view_formats: &[],
+        });
+        let depth_view = depth_texture.create_view(&wgpu::TextureViewDescriptor::default());
 
         // Uniform layout for Vertex Shader
         let uniform_layout = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
@@ -151,7 +172,13 @@ impl Pipeline {
                 buffers: &[Vertex::desc(), cube::Raw::desc()],
             },
             primitive: wgpu::PrimitiveState::default(),
-            depth_stencil: None,
+            depth_stencil: Some(wgpu::DepthStencilState {
+                format: wgpu::TextureFormat::Depth32Float,
+                depth_write_enabled: true,
+                depth_compare: wgpu::CompareFunction::Less,
+                stencil: wgpu::StencilState::default(),
+                bias: wgpu::DepthBiasState::default(),
+            }),
             multisample: wgpu::MultisampleState {
                 count: 1,
                 mask: !0,
@@ -180,6 +207,12 @@ impl Pipeline {
             multiview: None,
         });
 
+        let depth_pipeline = DepthPipeline::new(
+            device,
+            format,
+            depth_texture.create_view(&wgpu::TextureViewDescriptor::default()),
+        );
+
         Self {
             pipeline,
             cube: cubes_buffer,
@@ -187,18 +220,49 @@ impl Pipeline {
             frag_uniform,
             uniform_group,
             vertices,
+            depth_view,
+            depth_texture_size: target_size,
+            depth_pipeline,
+        }
+    }
+
+    fn update_depth_texture(&mut self, device: &wgpu::Device, size: Size<u32>) {
+        if self.depth_texture_size.height != size.height
+            || self.depth_texture_size.width != size.width
+        {
+            let text = device.create_texture(&wgpu::TextureDescriptor {
+                label: Some("cubes depth texture"),
+                size: wgpu::Extent3d {
+                    width: size.width,
+                    height: size.height,
+                    depth_or_array_layers: 1,
+                },
+                mip_level_count: 1,
+                sample_count: 1,
+                dimension: wgpu::TextureDimension::D2,
+                format: wgpu::TextureFormat::Depth32Float,
+                usage: wgpu::TextureUsages::RENDER_ATTACHMENT
+                    | wgpu::TextureUsages::TEXTURE_BINDING,
+                view_formats: &[],
+            });
+
+            self.depth_view = text.create_view(&wgpu::TextureViewDescriptor::default());
+            self.depth_texture_size = size;
+
+            self.depth_pipeline.update(device, &text);
         }
     }
 
     pub fn update(
         &mut self,
-        _device: &wgpu::Device,
+        device: &wgpu::Device,
         queue: &wgpu::Queue,
-        _target_size: Size<u32>,
+        target_size: Size<u32>,
         uniforms: &Uniforms,
         frag_uniforms: &FragUniforms,
         cube: &cube::Raw,
     ) {
+        self.update_depth_texture(device, target_size);
         queue.write_buffer(&self.uniform, 0, bytemuck::bytes_of(uniforms));
         // update uniforms
         queue.write_buffer(&self.frag_uniform, 0, bytemuck::bytes_of(frag_uniforms));
@@ -225,7 +289,14 @@ impl Pipeline {
                         store: wgpu::StoreOp::Store,
                     },
                 })],
-                depth_stencil_attachment: None,
+                depth_stencil_attachment: Some(RenderPassDepthStencilAttachment {
+                    view: &self.depth_view,
+                    depth_ops: Some(wgpu::Operations {
+                        load: wgpu::LoadOp::Clear(1.0),
+                        store: wgpu::StoreOp::Store,
+                    }),
+                    stencil_ops: None,
+                }),
                 timestamp_writes: None,
                 occlusion_query_set: None,
             });
@@ -237,5 +308,132 @@ impl Pipeline {
             pass.set_vertex_buffer(1, self.cube.raw.slice(..));
             pass.draw(0..36, 0..1);
         }
+    }
+}
+
+struct DepthPipeline {
+    pipeline: wgpu::RenderPipeline,
+    bind_group_layout: wgpu::BindGroupLayout,
+    bind_group: wgpu::BindGroup,
+    sampler: wgpu::Sampler,
+    depth_view: wgpu::TextureView,
+}
+
+impl DepthPipeline {
+    pub fn new(
+        device: &wgpu::Device,
+        format: wgpu::TextureFormat,
+        depth_texture: wgpu::TextureView,
+    ) -> Self {
+        let sampler = device.create_sampler(&wgpu::SamplerDescriptor {
+            label: Some("cubes.depth_pipeline.sampler"),
+            ..Default::default()
+        });
+
+        let bind_group_layout = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+            label: Some("cubes.depth_pipeline.bind_group_layout"),
+            entries: &[
+                wgpu::BindGroupLayoutEntry {
+                    binding: 0,
+                    visibility: wgpu::ShaderStages::FRAGMENT,
+                    ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::NonFiltering),
+                    count: None,
+                },
+                wgpu::BindGroupLayoutEntry {
+                    binding: 1,
+                    visibility: wgpu::ShaderStages::FRAGMENT,
+                    ty: wgpu::BindingType::Texture {
+                        sample_type: wgpu::TextureSampleType::Float { filterable: false },
+                        view_dimension: wgpu::TextureViewDimension::D2,
+                        multisampled: false,
+                    },
+                    count: None,
+                },
+            ],
+        });
+
+        let bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
+            label: Some("cubes.depth_pipeline.bind_group"),
+            layout: &bind_group_layout,
+            entries: &[
+                wgpu::BindGroupEntry {
+                    binding: 0,
+                    resource: wgpu::BindingResource::Sampler(&sampler),
+                },
+                wgpu::BindGroupEntry {
+                    binding: 1,
+                    resource: wgpu::BindingResource::TextureView(&depth_texture),
+                },
+            ],
+        });
+
+        let layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
+            label: Some("cubes.depth_pipeline.layout"),
+            bind_group_layouts: &[&bind_group_layout],
+            push_constant_ranges: &[],
+        });
+
+        let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
+            label: Some("cubes.depth_pipeline.shader"),
+            source: wgpu::ShaderSource::Wgsl(std::borrow::Cow::Borrowed(include_str!(
+                "../../shaders/depth.wgsl"
+            ))),
+        });
+
+        let pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
+            label: Some("cubes.depth_pipeline.pipeline"),
+            layout: Some(&layout),
+            vertex: wgpu::VertexState {
+                module: &shader,
+                entry_point: "vs_main",
+                buffers: &[],
+            },
+            primitive: wgpu::PrimitiveState::default(),
+            depth_stencil: Some(wgpu::DepthStencilState {
+                format: wgpu::TextureFormat::Depth32Float,
+                depth_write_enabled: false,
+                depth_compare: wgpu::CompareFunction::Less,
+                stencil: wgpu::StencilState::default(),
+                bias: wgpu::DepthBiasState::default(),
+            }),
+            multisample: wgpu::MultisampleState::default(),
+            fragment: Some(wgpu::FragmentState {
+                module: &shader,
+                entry_point: "fs_main",
+                targets: &[Some(wgpu::ColorTargetState {
+                    format,
+                    blend: Some(wgpu::BlendState::REPLACE),
+                    write_mask: wgpu::ColorWrites::ALL,
+                })],
+            }),
+            multiview: None,
+        });
+
+        Self {
+            pipeline,
+            bind_group_layout,
+            bind_group,
+            sampler,
+            depth_view: depth_texture,
+        }
+    }
+
+    pub fn update(&mut self, device: &wgpu::Device, depth_texture: &wgpu::Texture) {
+        self.depth_view = depth_texture.create_view(&wgpu::TextureViewDescriptor::default());
+
+        self.bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
+            label: Some("cubes.depth_pipeline.bind_group"),
+            layout: &self.bind_group_layout,
+            entries: &[
+                wgpu::BindGroupEntry {
+                    binding: 0,
+                    resource: wgpu::BindingResource::Sampler(&self.sampler),
+                },
+                wgpu::BindGroupEntry {
+                    binding: 1,
+                    resource: wgpu::BindingResource::TextureView(&self.depth_view),
+                },
+            ],
+        });
     }
 }
