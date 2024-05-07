@@ -1,41 +1,40 @@
 use std::f32::consts::PI;
 
-use crate::scene::pipeline::Vertex;
 use crate::wgpu;
+use crate::{polyhedra::PolyGraph, scene::pipeline::Vertex};
 
 use glam::{vec2, vec3, Mat4, Quat, Vec3};
 use rand::{thread_rng, Rng};
 
 /// A single instance of a cube.
 #[derive(Debug, Clone)]
-pub struct Cube {
+pub struct Hedron {
+    pub pg: PolyGraph,
     pub rotation: Mat4,
-    pub position: Vec3,
     pub size: f32,
 }
 
-impl Default for Cube {
+impl Default for Hedron {
     fn default() -> Self {
         Self {
+            pg: PolyGraph::dodecahedron(),
             rotation: glam::Mat4::ZERO,
-            position: glam::Vec3::ZERO,
             size: 0.1,
         }
     }
 }
 
-impl Cube {
-    pub fn new(size: f32, origin: Vec3) -> Self {
-        let rnd = thread_rng().gen_range(0.0..=1.0f32);
-
+impl Hedron {
+    pub fn new(pg: PolyGraph, size: f32) -> Self {
         Self {
+            pg,
             rotation: glam::Mat4::IDENTITY,
-            position: origin + Vec3::new(0.1, 0.1, 0.1),
             size,
         }
     }
 
     pub fn update(&mut self, size: f32, time: f32) {
+        self.pg.update();
         self.rotation = Mat4::from_rotation_x(time / PI) * Mat4::from_rotation_y(time / PI * 1.1);
         self.size = size;
     }
@@ -73,202 +72,28 @@ impl Raw {
 }
 
 impl Raw {
-    pub fn from_cube(cube: &Cube) -> Raw {
+    pub fn from_cube(cube: &Hedron) -> Raw {
         Raw {
             transformation: cube.rotation,
             normal: glam::Mat3::from_quat(Quat::IDENTITY),
             _padding: [0.0; 3],
         }
     }
+}
 
-    pub fn vertices() -> [Vertex; 36] {
-        [
-            //face 1
-            Vertex {
-                position: vec3(-0.5, -0.5, -0.5),
-                normal: vec3(0.0, 0.0, -1.0),
-                color: vec3(0.0, 0.0, 1.0),
-            },
-            Vertex {
-                position: vec3(0.5, -0.5, -0.5),
-                normal: vec3(0.0, 0.0, -1.0),
-                color: vec3(0.0, 0.0, 1.0),
-            },
-            Vertex {
-                position: vec3(0.5, 0.5, -0.5),
-                normal: vec3(0.0, 0.0, -1.0),
-                color: vec3(0.0, 0.0, 1.0),
-            },
-            Vertex {
-                position: vec3(0.5, 0.5, -0.5),
-                normal: vec3(0.0, 0.0, -1.0),
-                color: vec3(0.0, 0.0, 1.0),
-            },
-            Vertex {
-                position: vec3(-0.5, 0.5, -0.5),
-                normal: vec3(0.0, 0.0, -1.0),
-                color: vec3(0.0, 0.0, 1.0),
-            },
-            Vertex {
-                position: vec3(-0.5, -0.5, -0.5),
-                normal: vec3(0.0, 0.0, -1.0),
-                color: vec3(0.0, 0.0, 1.0),
-            },
-            //face 2
-            Vertex {
-                position: vec3(-0.5, -0.5, 0.5),
-                normal: vec3(0.0, 0.0, 1.0),
-                color: vec3(0.0, 1.0, 0.0),
-            },
-            Vertex {
-                position: vec3(0.5, -0.5, 0.5),
-                normal: vec3(0.0, 0.0, 1.0),
-                color: vec3(0.0, 1.0, 0.0),
-            },
-            Vertex {
-                position: vec3(0.5, 0.5, 0.5),
-                normal: vec3(0.0, 0.0, 1.0),
-                color: vec3(0.0, 1.0, 0.0),
-            },
-            Vertex {
-                position: vec3(0.5, 0.5, 0.5),
-                normal: vec3(0.0, 0.0, 1.0),
-                color: vec3(0.0, 1.0, 0.0),
-            },
-            Vertex {
-                position: vec3(-0.5, 0.5, 0.5),
-                normal: vec3(0.0, 0.0, 1.0),
-                color: vec3(0.0, 1.0, 0.0),
-            },
-            Vertex {
-                position: vec3(-0.5, -0.5, 0.5),
-                normal: vec3(0.0, 0.0, 1.0),
-                color: vec3(0.0, 1.0, 0.0),
-            },
-            //face 3
-            Vertex {
-                position: vec3(-0.5, 0.5, 0.5),
-                normal: vec3(-1.0, 0.0, 0.0),
-                color: vec3(1.0, 0.0, 0.0),
-            },
-            Vertex {
-                position: vec3(-0.5, 0.5, -0.5),
-                normal: vec3(-1.0, 0.0, 0.0),
-                color: vec3(1.0, 0.0, 0.0),
-            },
-            Vertex {
-                position: vec3(-0.5, -0.5, -0.5),
-                normal: vec3(-1.0, 0.0, 0.0),
-                color: vec3(1.0, 0.0, 0.0),
-            },
-            Vertex {
-                position: vec3(-0.5, -0.5, -0.5),
-                normal: vec3(-1.0, 0.0, 0.0),
-                color: vec3(1.0, 0.0, 0.0),
-            },
-            Vertex {
-                position: vec3(-0.5, -0.5, 0.5),
-                normal: vec3(-1.0, 0.0, 0.0),
-                color: vec3(1.0, 0.0, 0.0),
-            },
-            Vertex {
-                position: vec3(-0.5, 0.5, 0.5),
-                normal: vec3(-1.0, 0.0, 0.0),
-                color: vec3(1.0, 0.0, 0.0),
-            },
-            //face 4
-            Vertex {
-                position: vec3(0.5, 0.5, 0.5),
-                normal: vec3(1.0, 0.0, 0.0),
-                color: vec3(0.0, 0.0, 1.0),
-            },
-            Vertex {
-                position: vec3(0.5, 0.5, -0.5),
-                normal: vec3(1.0, 0.0, 0.0),
-                color: vec3(0.0, 0.0, 1.0),
-            },
-            Vertex {
-                position: vec3(0.5, -0.5, -0.5),
-                normal: vec3(1.0, 0.0, 0.0),
-                color: vec3(0.0, 0.0, 1.0),
-            },
-            Vertex {
-                position: vec3(0.5, -0.5, -0.5),
-                normal: vec3(1.0, 0.0, 0.0),
-                color: vec3(0.0, 0.0, 1.0),
-            },
-            Vertex {
-                position: vec3(0.5, -0.5, 0.5),
-                normal: vec3(1.0, 0.0, 0.0),
-                color: vec3(0.0, 0.0, 1.0),
-            },
-            Vertex {
-                position: vec3(0.5, 0.5, 0.5),
-                normal: vec3(1.0, 0.0, 0.0),
-                color: vec3(0.0, 0.0, 1.0),
-            },
-            //face 5
-            Vertex {
-                position: vec3(-0.5, -0.5, -0.5),
-                normal: vec3(0.0, -1.0, 0.0),
-                color: vec3(0.0, 1.0, 0.0),
-            },
-            Vertex {
-                position: vec3(0.5, -0.5, -0.5),
-                normal: vec3(0.0, -1.0, 0.0),
-                color: vec3(0.0, 1.0, 0.0),
-            },
-            Vertex {
-                position: vec3(0.5, -0.5, 0.5),
-                normal: vec3(0.0, -1.0, 0.0),
-                color: vec3(0.0, 1.0, 0.0),
-            },
-            Vertex {
-                position: vec3(0.5, -0.5, 0.5),
-                normal: vec3(0.0, -1.0, 0.0),
-                color: vec3(0.0, 1.0, 0.0),
-            },
-            Vertex {
-                position: vec3(-0.5, -0.5, 0.5),
-                normal: vec3(0.0, -1.0, 0.0),
-                color: vec3(0.0, 1.0, 0.0),
-            },
-            Vertex {
-                position: vec3(-0.5, -0.5, -0.5),
-                normal: vec3(0.0, -1.0, 0.0),
-                color: vec3(0.0, 1.0, 0.0),
-            },
-            //face 6
-            Vertex {
-                position: vec3(-0.5, 0.5, -0.5),
-                normal: vec3(0.0, 1.0, 0.0),
-                color: vec3(1.0, 0.0, 0.0),
-            },
-            Vertex {
-                position: vec3(0.5, 0.5, -0.5),
-                normal: vec3(0.0, 1.0, 0.0),
-                color: vec3(1.0, 0.0, 0.0),
-            },
-            Vertex {
-                position: vec3(0.5, 0.5, 0.5),
-                normal: vec3(0.0, 1.0, 0.0),
-                color: vec3(1.0, 0.0, 0.0),
-            },
-            Vertex {
-                position: vec3(0.5, 0.5, 0.5),
-                normal: vec3(0.0, 1.0, 0.0),
-                color: vec3(1.0, 0.0, 0.0),
-            },
-            Vertex {
-                position: vec3(-0.5, 0.5, 0.5),
-                normal: vec3(0.0, 1.0, 0.0),
-                color: vec3(1.0, 0.0, 0.0),
-            },
-            Vertex {
-                position: vec3(-0.5, 0.5, -0.5),
-                normal: vec3(0.0, 1.0, 0.0),
-                color: vec3(1.0, 0.0, 0.0),
-            },
-        ]
+impl Hedron {
+    pub fn vertices(&self) -> Vec<Vertex> {
+        let (rgb, bsc, tri) = self.pg.static_buffer();
+        let ver = self.pg.xyz_buffer();
+        let mut x = Vec::new();
+
+        for i in 0..ver.len() {
+            x.push(Vertex {
+                position: ver[i],
+                normal: bsc[i],
+                color: rgb[i],
+            });
+        }
+        x
     }
 }

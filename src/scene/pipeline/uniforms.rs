@@ -28,20 +28,11 @@ pub struct LightUniforms {
     specular_shininess: f32,
 }
 
-impl FragUniforms {
-    pub fn new() -> Self {
-        Self {
-            light_position: todo!(),
-            eye_position: todo!(),
-        }
-    }
-}
-
 impl LightUniforms {
     pub fn new(light_color: Color, specular_color: Color) -> Self {
         Self {
             color: glam::Vec4::from(light_color.into_linear()),
-            specular_color: glam::Vec4::from(light_color.into_linear()),
+            specular_color: glam::Vec4::from(specular_color.into_linear()),
             ambient_intensity: 0.1,
             diffuse_intensity: 0.6,
             specular_intensity: 0.3,

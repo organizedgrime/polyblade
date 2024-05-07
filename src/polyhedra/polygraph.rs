@@ -7,7 +7,7 @@ use std::{
 };
 type VertMap<T> = HashMap<VertexId, T>;
 
-#[derive(Debug, Default)]
+#[derive(Debug, Clone, Default)]
 pub struct PolyGraph {
     /// Conway Polyhedron Notation
     pub name: String,

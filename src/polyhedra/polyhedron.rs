@@ -2,7 +2,7 @@ use super::*;
 use glam::{vec3, Vec3};
 use std::{collections::HashSet, ops::Add};
 
-const TICK_SPEED: f32 = 100.0;
+const TICK_SPEED: f32 = 200.0;
 
 // Operations
 impl PolyGraph {
@@ -66,6 +66,7 @@ impl PolyGraph {
     }
 
     pub fn update(&mut self) {
+        println!("updating!");
         self.center();
         self.resize();
         self.animate_contraction();

@@ -6,7 +6,7 @@ use camera::Camera;
 use pipeline::Pipeline;
 
 use crate::wgpu;
-use pipeline::cube::{self, Cube};
+use pipeline::cube::{self, Hedron};
 
 use iced::mouse;
 use iced::time::Duration;
@@ -27,7 +27,7 @@ pub const MAX: u32 = 500;
 pub struct Scene {
     pub start: Instant,
     pub size: f32,
-    pub cube: Cube,
+    pub cube: Hedron,
     pub camera: Camera,
     pub light_color: Color,
 }
@@ -37,7 +37,7 @@ impl Scene {
         let scene = Self {
             start: Instant::now(),
             size: 1.0,
-            cube: Cube::default(),
+            cube: Hedron::default(),
             camera: Camera::default(),
             light_color: Color::WHITE,
         };
@@ -67,14 +67,14 @@ impl<Message> shader::Program<Message> for Scene {
 /// A collection of `Cube`s that can be rendered.
 #[derive(Debug)]
 pub struct Primitive {
-    cube: cube::Raw,
+    cube: Hedron,
     camera: Camera,
 }
 
 impl Primitive {
-    pub fn new(cube: &Cube, camera: &Camera) -> Self {
+    pub fn new(cube: &Hedron, camera: &Camera) -> Self {
         Self {
-            cube: cube::Raw::from_cube(cube),
+            cube: cube.clone(),
             camera: *camera,
         }
     }
@@ -92,13 +92,20 @@ impl shader::Primitive for Primitive {
         storage: &mut shader::Storage,
     ) {
         if !storage.has::<Pipeline>() {
-            storage.store(Pipeline::new(device, queue, format, target_size));
+            storage.store(Pipeline::new(
+                device,
+                queue,
+                format,
+                target_size,
+                &self.cube,
+            ));
         }
 
         let pipeline = storage.get_mut::<Pipeline>().unwrap();
 
         // update uniform buffer
-        let model_mat = self.cube.transformation;
+        let raw_cube = cube::Raw::from_cube(&self.cube);
+        let model_mat = raw_cube.transformation;
         let view_projection_mat = self.camera.build_view_proj_mat(bounds);
         let normal_mat = (model_mat.inverse()).transpose();
 

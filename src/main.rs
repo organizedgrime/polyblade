@@ -4,6 +4,7 @@ mod scene;
 use iced::alignment::{Horizontal, Vertical};
 use iced_aw::{card, modal, Card};
 use message::*;
+use polyhedra::PolyGraph;
 use scene::Scene;
 
 use iced::executor;
@@ -60,9 +61,27 @@ impl Application for Polyblade {
             Message::CloseAlert => {
                 self.show_alert = false;
             }
-            Message::Conway(_) => {
-                self.show_alert = true;
-            }
+            Message::Conway(conway) => match conway {
+                ConwayMessage::Seed => {
+                    self.scene.cube.pg = PolyGraph::cube();
+                }
+
+                ConwayMessage::Truncate => {
+                    self.scene.cube.pg.truncate();
+                    self.scene.cube.pg.pst();
+                }
+                ConwayMessage::Ambo => {
+                    self.scene.cube.pg.ambo();
+                    self.scene.cube.pg.pst();
+                }
+                ConwayMessage::Bevel => {
+                    self.scene.cube.pg.bevel();
+                    self.scene.cube.pg.pst();
+                }
+                _ => {
+                    self.show_alert = true;
+                }
+            },
         }
 
         Command::none()
