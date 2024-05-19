@@ -4,6 +4,7 @@ mod buffer;
 mod uniforms;
 mod vertex;
 
+use bytemuck::Zeroable;
 use glam::{Mat4, Vec3};
 pub use uniforms::{FragUniforms, LightUniforms, Uniforms};
 

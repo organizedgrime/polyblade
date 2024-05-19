@@ -1,19 +1,20 @@
 mod message;
 mod polyhedra;
 mod scene;
+use iced::advanced::mouse;
 use iced::alignment::{Horizontal, Vertical};
 use iced_aw::{card, modal, Card};
 use message::*;
 use polyhedra::PolyGraph;
 use scene::Scene;
 
-use iced::executor;
 use iced::time::Instant;
-use iced::widget::shader::wgpu;
+use iced::widget::shader::{wgpu, Program};
 use iced::widget::{
     button, checkbox, column, container, row, shader, slider, text, Button, Row, Text,
 };
 use iced::window;
+use iced::{executor, Rectangle};
 use iced::{Alignment, Application, Color, Command, Element, Length, Subscription, Theme};
 use strum::IntoEnumIterator;
 
@@ -51,9 +52,9 @@ impl Application for Polyblade {
     }
 
     fn update(&mut self, message: Self::Message) -> Command<Self::Message> {
-        match message {
+        match message.clone() {
             Message::Tick(time) => {
-                self.scene.update(time - self.start);
+                self.scene.updatee(time - self.start);
             }
             Message::Rotate(rotating) => {
                 self.rotating = rotating;
@@ -83,6 +84,8 @@ impl Application for Polyblade {
                 }
             },
         }
+
+        if let Message::Conway(_) = message {}
 
         Command::none()
     }

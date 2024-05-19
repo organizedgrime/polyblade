@@ -45,7 +45,7 @@ impl Scene {
         scene
     }
 
-    pub fn update(&mut self, time: Duration) {
+    pub fn updatee(&mut self, time: Duration) {
         self.cube.update(self.size, time.as_secs_f32());
     }
 }
