@@ -21,8 +21,8 @@ impl PolyGraph {
                         let up = self.positions[&u];
                         let l = vp.distance(up);
                         let f = (self.edge_length / TICK_SPEED * 3.0) / l;
-                        *self.positions.get_mut(&v).unwrap() = vp.lerp(up, f);
-                        *self.positions.get_mut(&u).unwrap() = up.lerp(vp, f);
+                        *self.positions.get_mut(v).unwrap() = vp.lerp(up, f);
+                        *self.positions.get_mut(u).unwrap() = up.lerp(vp, f);
                     } else {
                         let diff = self.positions[&v] - self.positions[&u];
                         let dist = diff.length();
@@ -31,15 +31,15 @@ impl PolyGraph {
                         let f = diff * restorative_force / TICK_SPEED;
 
                         // Add forces
-                        *self.speeds.get_mut(&v).unwrap() += f;
-                        *self.speeds.get_mut(&u).unwrap() -= f;
+                        *self.speeds.get_mut(v).unwrap() += f;
+                        *self.speeds.get_mut(u).unwrap() -= f;
 
                         // Apply damping
-                        *self.speeds.get_mut(&v).unwrap() *= 0.92;
-                        *self.speeds.get_mut(&u).unwrap() *= 0.92;
+                        *self.speeds.get_mut(v).unwrap() *= 0.92;
+                        *self.speeds.get_mut(u).unwrap() *= 0.92;
 
-                        *self.positions.get_mut(&v).unwrap() += self.speeds[&v];
-                        *self.positions.get_mut(&u).unwrap() += self.speeds[&u];
+                        *self.positions.get_mut(v).unwrap() += self.speeds[&v];
+                        *self.positions.get_mut(u).unwrap() += self.speeds[&u];
                     }
                 }
             }
@@ -133,15 +133,13 @@ impl PolyGraph {
     }
 
     pub fn poly_color(n: usize) -> Vec3 {
-        let colors = vec![
-            vec3(72.0, 132.0, 90.0),
+        let colors = [vec3(72.0, 132.0, 90.0),
             vec3(163.0, 186.0, 112.0),
             vec3(51.0, 81.0, 69.0),
             vec3(254.0, 240.0, 134.0),
             vec3(95.0, 155.0, 252.0),
             vec3(244.0, 164.0, 231.0),
-            vec3(170.0, 137.0, 190.0),
-        ];
+            vec3(170.0, 137.0, 190.0)];
 
         colors[n % colors.len()]
     }

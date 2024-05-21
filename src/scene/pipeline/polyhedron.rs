@@ -40,7 +40,7 @@ impl Raw {
 impl Raw {
     pub fn from_pg(rotation: &Mat4) -> Self {
         Self {
-            transformation: rotation.clone(),
+            transformation: *rotation,
             normal: Mat3::from_quat(Quat::IDENTITY),
             _padding: [0.0; 3],
         }

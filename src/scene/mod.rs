@@ -35,16 +35,16 @@ pub struct Scene {
 
 impl Scene {
     pub fn new() -> Self {
-        let scene = Self {
+        
+
+        Self {
             start: Instant::now(),
             size: 1.0,
             rotation: Mat4::IDENTITY,
             polyhedron: PolyGraph::dodecahedron(),
             camera: Camera::default(),
             light_color: Color::WHITE,
-        };
-
-        scene
+        }
     }
 
     pub fn update2(&mut self, time: Duration) {
@@ -80,7 +80,7 @@ impl Primitive {
     pub fn new(pg: &PolyGraph, rotation: &Mat4, camera: &Camera) -> Self {
         Self {
             polyhedron: pg.clone(),
-            rotation: rotation.clone(),
+            rotation: *rotation,
             camera: *camera,
         }
     }
