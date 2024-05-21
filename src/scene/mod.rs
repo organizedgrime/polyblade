@@ -36,7 +36,7 @@ impl Scene {
             start: Instant::now(),
             size: 1.0,
             rotation: Mat4::IDENTITY,
-            polyhedron: PolyGraph::dodecahedron(),
+            polyhedron: PolyGraph::octahedron(),
             camera: Camera::default(),
             light_color: Color::WHITE,
         }

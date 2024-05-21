@@ -16,7 +16,7 @@ use iced::{widget::shader::wgpu::RenderPassDepthStencilAttachment, Color, Rectan
 
 pub struct Pipeline {
     pipeline: wgpu::RenderPipeline,
-    vertices: wgpu::Buffer,
+    vertices: Buffer,
     polyhedron: Buffer,
     uniform: wgpu::Buffer,
     frag_uniform: wgpu::Buffer,
@@ -37,15 +37,15 @@ impl Pipeline {
     ) -> Self {
         //let format = wgpu::TextureFormat::Depth24PlusStencil8;
         //vertices of one cube
-        let vertices = device.create_buffer(&wgpu::BufferDescriptor {
-            label: Some("cubes vertex buffer"),
-            size: 1000000,
-            usage: wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::COPY_DST,
-            mapped_at_creation: false,
-        });
+        let vertices = Buffer::new(
+            device,
+            "Polyhedron vertex buffer",
+            1000000,
+            wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::COPY_DST,
+        );
 
         //cube instance data
-        let cubes_buffer = Buffer::new(
+        let polyhedron_buffer = Buffer::new(
             device,
             "Polyhedron instance buffer",
             std::mem::size_of::<polyhedron::Raw>() as u64,
@@ -217,7 +217,7 @@ impl Pipeline {
 
         Self {
             pipeline,
-            polyhedron: cubes_buffer,
+            polyhedron: polyhedron_buffer,
             uniform,
             frag_uniform,
             uniform_group,
@@ -267,8 +267,11 @@ impl Pipeline {
         rotation: &Mat4,
     ) {
         self.update_depth_texture(device, target_size);
+
+        self.vertices
+            .resize(device, polyhedron.vertices2().len() as u64);
         queue.write_buffer(
-            &self.vertices,
+            &self.vertices.raw,
             0,
             bytemuck::cast_slice(&polyhedron.vertices2()),
         );
@@ -279,6 +282,8 @@ impl Pipeline {
 
         //always write new cube data since they are constantly rotating
         let cube = polyhedron::Raw::from_pg(rotation);
+        self.polyhedron
+            .resize(device, polyhedron.vertices2().len() as u64);
         queue.write_buffer(&self.polyhedron.raw, 0, bytemuck::bytes_of(&cube));
     }
 
@@ -314,7 +319,7 @@ impl Pipeline {
             pass.set_scissor_rect(viewport.x, viewport.y, viewport.width, viewport.height);
             pass.set_pipeline(&self.pipeline);
             pass.set_bind_group(0, &self.uniform_group, &[]);
-            pass.set_vertex_buffer(0, self.vertices.slice(..));
+            pass.set_vertex_buffer(0, self.vertices.raw.slice(..));
             pass.set_vertex_buffer(1, self.polyhedron.raw.slice(..));
             pass.draw(0..self.vertex_count, 0..1);
         }
