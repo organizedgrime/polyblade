@@ -2,19 +2,16 @@ mod message;
 mod polyhedra;
 mod scene;
 
-
 use iced_aw::{card, modal};
 use message::*;
 use polyhedra::PolyGraph;
 use scene::Scene;
 
+use iced::executor;
 use iced::time::Instant;
-use iced::widget::shader::{wgpu};
-use iced::widget::{
-    button, checkbox, column, container, row, shader, Row, Text,
-};
+use iced::widget::shader::wgpu;
+use iced::widget::{button, checkbox, column, container, row, shader, Row, Text};
 use iced::window;
-use iced::{executor};
 use iced::{Alignment, Application, Command, Element, Length, Subscription, Theme};
 use strum::IntoEnumIterator;
 

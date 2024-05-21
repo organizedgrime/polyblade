@@ -1,10 +1,7 @@
-
-
 use crate::wgpu;
 use crate::{polyhedra::PolyGraph, scene::pipeline::Vertex};
 
 use glam::{Mat3, Mat4, Quat};
-
 
 #[derive(Clone, Copy, bytemuck::Pod, bytemuck::Zeroable, Debug)]
 #[repr(C)]

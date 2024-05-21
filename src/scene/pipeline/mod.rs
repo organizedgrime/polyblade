@@ -4,13 +4,11 @@ mod buffer;
 mod uniforms;
 mod vertex;
 
-
-use glam::{Mat4};
+use glam::Mat4;
 pub use uniforms::{FragUniforms, LightUniforms, Uniforms};
 
 use buffer::Buffer;
 use vertex::Vertex;
-
 
 use crate::{polyhedra::PolyGraph, wgpu};
 

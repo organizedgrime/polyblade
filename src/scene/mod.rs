@@ -1,7 +1,6 @@
 mod camera;
 mod pipeline;
 
-
 use camera::Camera;
 use pipeline::Pipeline;
 
@@ -15,9 +14,7 @@ use iced::{Color, Rectangle, Size};
 
 use glam::{vec4, Mat4};
 
-
 use std::f32::consts::PI;
-
 
 use std::time::Instant;
 
@@ -35,8 +32,6 @@ pub struct Scene {
 
 impl Scene {
     pub fn new() -> Self {
-        
-
         Self {
             start: Instant::now(),
             size: 1.0,

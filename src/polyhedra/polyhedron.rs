@@ -1,6 +1,6 @@
 use super::*;
 use glam::{vec3, Vec3};
-use std::{collections::HashSet};
+use std::collections::HashSet;
 
 const TICK_SPEED: f32 = 200.0;
 
@@ -133,13 +133,15 @@ impl PolyGraph {
     }
 
     pub fn poly_color(n: usize) -> Vec3 {
-        let colors = [vec3(72.0, 132.0, 90.0),
+        let colors = [
+            vec3(72.0, 132.0, 90.0),
             vec3(163.0, 186.0, 112.0),
             vec3(51.0, 81.0, 69.0),
             vec3(254.0, 240.0, 134.0),
             vec3(95.0, 155.0, 252.0),
             vec3(244.0, 164.0, 231.0),
-            vec3(170.0, 137.0, 190.0)];
+            vec3(170.0, 137.0, 190.0),
+        ];
 
         colors[n % colors.len()]
     }

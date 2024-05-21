@@ -1,6 +1,4 @@
-
-
-use iced::{Color};
+use iced::Color;
 
 #[derive(Copy, Default, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]
 #[repr(C)]
