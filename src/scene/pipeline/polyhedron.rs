@@ -53,7 +53,7 @@ impl PolyGraph {
         for i in 0..ver.len() {
             x.push(Vertex {
                 position: ver[i],
-                normal: bsc[i],
+                normal: ver[i].normalize(),
                 color: rgb[i],
             });
         }
