@@ -54,7 +54,7 @@ impl Application for Polyblade {
     fn update(&mut self, message: Self::Message) -> Command<Self::Message> {
         match message.clone() {
             Message::Tick(time) => {
-                self.scene.updatee(time - self.start);
+                self.scene.update2(time - self.start);
             }
             Message::Rotate(rotating) => {
                 self.rotating = rotating;
@@ -64,20 +64,19 @@ impl Application for Polyblade {
             }
             Message::Conway(conway) => match conway {
                 ConwayMessage::Seed => {
-                    self.scene.cube.pg = PolyGraph::cube();
+                    self.scene.polyhedron = PolyGraph::cube();
                 }
-
                 ConwayMessage::Truncate => {
-                    self.scene.cube.pg.truncate();
-                    self.scene.cube.pg.pst();
+                    self.scene.polyhedron.truncate();
+                    self.scene.polyhedron.pst();
                 }
                 ConwayMessage::Ambo => {
-                    self.scene.cube.pg.ambo();
-                    self.scene.cube.pg.pst();
+                    self.scene.polyhedron.ambo();
+                    self.scene.polyhedron.pst();
                 }
                 ConwayMessage::Bevel => {
-                    self.scene.cube.pg.bevel();
-                    self.scene.cube.pg.pst();
+                    self.scene.polyhedron.bevel();
+                    self.scene.polyhedron.pst();
                 }
                 _ => {
                     self.show_alert = true;

@@ -5,6 +5,7 @@ use bytemuck::Zeroable;
 use camera::Camera;
 use pipeline::Pipeline;
 
+use crate::polyhedra::PolyGraph;
 use crate::wgpu;
 use pipeline::cube::{self, Hedron};
 
@@ -27,7 +28,8 @@ pub const MAX: u32 = 500;
 pub struct Scene {
     pub start: Instant,
     pub size: f32,
-    pub cube: Hedron,
+    pub rotation: Mat4,
+    pub polyhedron: PolyGraph,
     pub camera: Camera,
     pub light_color: Color,
 }
@@ -37,7 +39,8 @@ impl Scene {
         let scene = Self {
             start: Instant::now(),
             size: 1.0,
-            cube: Hedron::default(),
+            rotation: Mat4::IDENTITY,
+            polyhedron: PolyGraph::dodecahedron(),
             camera: Camera::default(),
             light_color: Color::WHITE,
         };
@@ -45,8 +48,10 @@ impl Scene {
         scene
     }
 
-    pub fn updatee(&mut self, time: Duration) {
-        self.cube.update(self.size, time.as_secs_f32());
+    pub fn update2(&mut self, time: Duration) {
+        self.polyhedron.update();
+        let time = time.as_secs_f32();
+        self.rotation = Mat4::from_rotation_x(time / PI) * Mat4::from_rotation_y(time / PI * 1.1);
     }
 }
 
@@ -60,21 +65,23 @@ impl<Message> shader::Program<Message> for Scene {
         _cursor: mouse::Cursor,
         _bounds: Rectangle,
     ) -> Self::Primitive {
-        Primitive::new(&self.cube, &self.camera)
+        Primitive::new(&self.polyhedron, &self.rotation, &self.camera)
     }
 }
 
 /// A collection of `Cube`s that can be rendered.
 #[derive(Debug)]
 pub struct Primitive {
-    cube: Hedron,
+    polyhedron: PolyGraph,
+    rotation: Mat4,
     camera: Camera,
 }
 
 impl Primitive {
-    pub fn new(cube: &Hedron, camera: &Camera) -> Self {
+    pub fn new(pg: &PolyGraph, rotation: &Mat4, camera: &Camera) -> Self {
         Self {
-            cube: cube.clone(),
+            polyhedron: pg.clone(),
+            rotation: rotation.clone(),
             camera: *camera,
         }
     }
@@ -97,15 +104,14 @@ impl shader::Primitive for Primitive {
                 queue,
                 format,
                 target_size,
-                &self.cube,
+                &self.polyhedron,
             ));
         }
 
         let pipeline = storage.get_mut::<Pipeline>().unwrap();
 
         // update uniform buffer
-        let raw_cube = cube::Raw::from_cube(&self.cube);
-        let model_mat = raw_cube.transformation;
+        let model_mat = self.rotation;
         let view_projection_mat = self.camera.build_view_proj_mat(bounds);
         let normal_mat = (model_mat.inverse()).transpose();
 
@@ -127,7 +133,8 @@ impl shader::Primitive for Primitive {
             target_size,
             &uniforms,
             &frag_uniforms,
-            &self.cube,
+            &self.polyhedron,
+            &self.rotation,
         );
     }
 

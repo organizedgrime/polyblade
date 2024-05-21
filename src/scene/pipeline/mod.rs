@@ -11,8 +11,8 @@ pub use uniforms::{FragUniforms, LightUniforms, Uniforms};
 use buffer::Buffer;
 use vertex::Vertex;
 
-use crate::wgpu;
 use crate::wgpu::util::DeviceExt;
+use crate::{polyhedra::PolyGraph, wgpu};
 
 use iced::{widget::shader::wgpu::RenderPassDepthStencilAttachment, Color, Rectangle, Size};
 
@@ -21,7 +21,7 @@ use self::cube::Hedron;
 pub struct Pipeline {
     pipeline: wgpu::RenderPipeline,
     vertices: wgpu::Buffer,
-    cube: Buffer,
+    polyhedron: Buffer,
     uniform: wgpu::Buffer,
     frag_uniform: wgpu::Buffer,
     uniform_group: wgpu::BindGroup,
@@ -37,7 +37,7 @@ impl Pipeline {
         queue: &wgpu::Queue,
         format: wgpu::TextureFormat,
         target_size: Size<u32>,
-        cube: &Hedron,
+        polyhedron: &PolyGraph,
     ) -> Self {
         //let format = wgpu::TextureFormat::Depth24PlusStencil8;
         //vertices of one cube
@@ -221,7 +221,7 @@ impl Pipeline {
 
         Self {
             pipeline,
-            cube: cubes_buffer,
+            polyhedron: cubes_buffer,
             uniform,
             frag_uniform,
             uniform_group,
@@ -229,7 +229,7 @@ impl Pipeline {
             depth_view,
             depth_texture_size: target_size,
             depth_pipeline,
-            vertex_count: cube.vertices().len() as u32,
+            vertex_count: polyhedron.vertices2().len() as u32,
         }
     }
 
@@ -267,18 +267,23 @@ impl Pipeline {
         target_size: Size<u32>,
         uniforms: &Uniforms,
         frag_uniforms: &FragUniforms,
-        cube: &Hedron,
+        polyhedron: &PolyGraph,
+        rotation: &Mat4,
     ) {
         self.update_depth_texture(device, target_size);
-        queue.write_buffer(&self.vertices, 0, bytemuck::cast_slice(&cube.vertices()));
+        queue.write_buffer(
+            &self.vertices,
+            0,
+            bytemuck::cast_slice(&polyhedron.vertices2()),
+        );
         queue.write_buffer(&self.uniform, 0, bytemuck::bytes_of(uniforms));
         // update uniforms
         queue.write_buffer(&self.frag_uniform, 0, bytemuck::bytes_of(frag_uniforms));
         //queue.write_buffer(&self.light_uniform, 0, bytemuck::bytes_of(light_uniforms));
 
         //always write new cube data since they are constantly rotating
-        let cube = cube::Raw::from_cube(cube);
-        queue.write_buffer(&self.cube.raw, 0, bytemuck::bytes_of(&cube));
+        let cube = cube::Raw::from_pg(rotation);
+        queue.write_buffer(&self.polyhedron.raw, 0, bytemuck::bytes_of(&cube));
     }
 
     pub fn render(
@@ -314,7 +319,7 @@ impl Pipeline {
             pass.set_pipeline(&self.pipeline);
             pass.set_bind_group(0, &self.uniform_group, &[]);
             pass.set_vertex_buffer(0, self.vertices.slice(..));
-            pass.set_vertex_buffer(1, self.cube.raw.slice(..));
+            pass.set_vertex_buffer(1, self.polyhedron.raw.slice(..));
             pass.draw(0..self.vertex_count, 0..1);
         }
     }

@@ -3,7 +3,7 @@ use std::f32::consts::PI;
 use crate::wgpu;
 use crate::{polyhedra::PolyGraph, scene::pipeline::Vertex};
 
-use glam::{vec2, vec3, Mat4, Quat, Vec3};
+use glam::{vec2, vec3, Mat3, Mat4, Quat, Vec3};
 use rand::{thread_rng, Rng};
 
 /// A single instance of a cube.
@@ -72,6 +72,14 @@ impl Raw {
 }
 
 impl Raw {
+    pub fn from_pg(rotation: &Mat4) -> Self {
+        Self {
+            transformation: rotation.clone(),
+            normal: Mat3::from_quat(Quat::IDENTITY),
+            _padding: [0.0; 3],
+        }
+    }
+
     pub fn from_cube(cube: &Hedron) -> Raw {
         Raw {
             transformation: cube.rotation,
@@ -81,10 +89,10 @@ impl Raw {
     }
 }
 
-impl Hedron {
-    pub fn vertices(&self) -> Vec<Vertex> {
-        let (rgb, bsc, tri) = self.pg.static_buffer();
-        let ver = self.pg.xyz_buffer();
+impl PolyGraph {
+    pub fn vertices2(&self) -> Vec<Vertex> {
+        let (rgb, bsc, tri) = self.static_buffer();
+        let ver = self.xyz_buffer();
         let mut x = Vec::new();
 
         for i in 0..ver.len() {
