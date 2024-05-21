@@ -1,6 +1,6 @@
 use super::*;
 use glam::{vec3, Vec3};
-use std::{collections::HashSet, ops::Add};
+use std::{collections::HashSet};
 
 const TICK_SPEED: f32 = 200.0;
 

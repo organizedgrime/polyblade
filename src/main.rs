@@ -1,21 +1,21 @@
 mod message;
 mod polyhedra;
 mod scene;
-use iced::advanced::mouse;
-use iced::alignment::{Horizontal, Vertical};
-use iced_aw::{card, modal, Card};
+
+
+use iced_aw::{card, modal};
 use message::*;
 use polyhedra::PolyGraph;
 use scene::Scene;
 
 use iced::time::Instant;
-use iced::widget::shader::{wgpu, Program};
+use iced::widget::shader::{wgpu};
 use iced::widget::{
-    button, checkbox, column, container, row, shader, slider, text, Button, Row, Text,
+    button, checkbox, column, container, row, shader, Row, Text,
 };
 use iced::window;
-use iced::{executor, Rectangle};
-use iced::{Alignment, Application, Color, Command, Element, Length, Subscription, Theme};
+use iced::{executor};
+use iced::{Alignment, Application, Command, Element, Length, Subscription, Theme};
 use strum::IntoEnumIterator;
 
 fn main() -> iced::Result {

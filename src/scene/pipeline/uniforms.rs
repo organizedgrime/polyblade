@@ -1,6 +1,6 @@
-use crate::scene::Camera;
 
-use iced::{Color, Rectangle};
+
+use iced::{Color};
 
 #[derive(Copy, Default, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]
 #[repr(C)]

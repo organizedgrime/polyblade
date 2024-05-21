@@ -4,14 +4,14 @@ mod buffer;
 mod uniforms;
 mod vertex;
 
-use bytemuck::Zeroable;
-use glam::{Mat4, Vec3};
+
+use glam::{Mat4};
 pub use uniforms::{FragUniforms, LightUniforms, Uniforms};
 
 use buffer::Buffer;
 use vertex::Vertex;
 
-use crate::wgpu::util::DeviceExt;
+
 use crate::{polyhedra::PolyGraph, wgpu};
 
 use iced::{widget::shader::wgpu::RenderPassDepthStencilAttachment, Color, Rectangle, Size};

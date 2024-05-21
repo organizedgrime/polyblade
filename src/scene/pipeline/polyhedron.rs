@@ -1,10 +1,10 @@
-use std::f32::consts::PI;
+
 
 use crate::wgpu;
 use crate::{polyhedra::PolyGraph, scene::pipeline::Vertex};
 
-use glam::{vec2, vec3, Mat3, Mat4, Quat, Vec3};
-use rand::{thread_rng, Rng};
+use glam::{Mat3, Mat4, Quat};
+
 
 #[derive(Clone, Copy, bytemuck::Pod, bytemuck::Zeroable, Debug)]
 #[repr(C)]
@@ -49,7 +49,7 @@ impl Raw {
 
 impl PolyGraph {
     pub fn vertices2(&self) -> Vec<Vertex> {
-        let (rgb, bsc, tri) = self.static_buffer();
+        let (rgb, bsc, _tri) = self.static_buffer();
         let ver = self.xyz_buffer();
         let mut x = Vec::new();
 

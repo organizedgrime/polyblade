@@ -1,7 +1,7 @@
 mod camera;
 mod pipeline;
 
-use bytemuck::Zeroable;
+
 use camera::Camera;
 use pipeline::Pipeline;
 
@@ -13,12 +13,12 @@ use iced::time::Duration;
 use iced::widget::shader;
 use iced::{Color, Rectangle, Size};
 
-use glam::{vec3, vec4, Mat4, Vec3, Vec4};
-use rand::Rng;
-use std::cmp::Ordering;
+use glam::{vec4, Mat4};
+
+
 use std::f32::consts::PI;
-use std::iter;
-use std::ops::Sub;
+
+
 use std::time::Instant;
 
 pub const MAX: u32 = 500;
