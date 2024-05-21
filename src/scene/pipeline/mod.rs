@@ -16,8 +16,6 @@ use crate::{polyhedra::PolyGraph, wgpu};
 
 use iced::{widget::shader::wgpu::RenderPassDepthStencilAttachment, Color, Rectangle, Size};
 
-use self::cube::Hedron;
-
 pub struct Pipeline {
     pipeline: wgpu::RenderPipeline,
     vertices: wgpu::Buffer,

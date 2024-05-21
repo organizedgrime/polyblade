@@ -7,7 +7,6 @@ use pipeline::Pipeline;
 
 use crate::polyhedra::PolyGraph;
 use crate::wgpu;
-use pipeline::cube::{self, Hedron};
 
 use iced::mouse;
 use iced::time::Duration;
