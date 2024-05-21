@@ -1,4 +1,4 @@
-pub mod cube;
+pub mod polyhedron;
 
 mod buffer;
 mod uniforms;
@@ -50,7 +50,7 @@ impl Pipeline {
         let cubes_buffer = Buffer::new(
             device,
             "Polyhedron instance buffer",
-            std::mem::size_of::<cube::Raw>() as u64,
+            std::mem::size_of::<polyhedron::Raw>() as u64,
             wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::COPY_DST,
         );
 
@@ -173,7 +173,7 @@ impl Pipeline {
             vertex: wgpu::VertexState {
                 module: &shader,
                 entry_point: "vs_main",
-                buffers: &[Vertex::desc(), cube::Raw::desc()],
+                buffers: &[Vertex::desc(), polyhedron::Raw::desc()],
             },
             primitive: wgpu::PrimitiveState::default(),
             depth_stencil: Some(wgpu::DepthStencilState {
@@ -280,7 +280,7 @@ impl Pipeline {
         //queue.write_buffer(&self.light_uniform, 0, bytemuck::bytes_of(light_uniforms));
 
         //always write new cube data since they are constantly rotating
-        let cube = cube::Raw::from_pg(rotation);
+        let cube = polyhedron::Raw::from_pg(rotation);
         queue.write_buffer(&self.polyhedron.raw, 0, bytemuck::bytes_of(&cube));
     }
 
