@@ -133,18 +133,22 @@ pub fn main() {
                         }
                         if ui.button("Truncate").clicked() {
                             shape.truncate();
+                            shape.pst();
                             update_static = true;
                         }
                         if ui.button("Ambo").clicked() {
                             shape.ambo();
+                            shape.pst();
                             update_static = true;
                         }
                         if ui.button("Bevel").clicked() {
                             shape.bevel();
+                            shape.pst();
                             update_static = true;
                         }
                         if ui.button("Expand").clicked() {
                             shape.expand();
+                            shape.pst();
                             update_static = true;
                         }
                     });

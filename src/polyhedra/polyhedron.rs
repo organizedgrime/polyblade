@@ -2,9 +2,12 @@ use cgmath::{vec3, InnerSpace, MetricSpace, Vector3, VectorSpace, Zero};
 
 use super::*;
 use crate::prelude::V3f;
-use std::{collections::HashSet, ops::Add};
+use std::{
+    collections::{HashMap, HashSet},
+    ops::Add,
+};
 
-const TICK_SPEED: f32 = 100.0;
+const TICK_SPEED: f32 = 275.0;
 
 // Operations
 impl PolyGraph {
@@ -152,9 +155,16 @@ impl PolyGraph {
         let mut bsc = Vec::new();
         let mut tri = Vec::new();
 
+        let face_lengths: HashMap<usize, usize> =
+            self.faces.iter().fold(HashMap::new(), |mut acc, f| {
+                acc.insert(f.len(), acc.len());
+                acc
+            });
+
         for i in 0..self.faces.len() {
             let face_tri = self.face_tri_buffer(i);
-            let color = Self::poly_color(self.faces[i].len()) / 255.0;
+            let n = face_lengths.get(&self.faces[i].len()).unwrap();
+            let color = Self::poly_color(*n) / 255.0;
             rgb.extend(vec![color; face_tri.len()]);
             tri.extend(face_tri);
         }
