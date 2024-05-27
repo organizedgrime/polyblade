@@ -8,7 +8,7 @@ use glam::Mat4;
 pub use uniforms::{FragUniforms, LightUniforms, Uniforms};
 
 use buffer::Buffer;
-use vertex::Vertex;
+pub use vertex::Vertex;
 
 use crate::{polyhedra::PolyGraph, wgpu};
 
@@ -225,7 +225,7 @@ impl Pipeline {
             depth_view,
             depth_texture_size: target_size,
             depth_pipeline,
-            vertex_count: polyhedron.vertices2().len() as u32,
+            vertex_count: polyhedron.vertices().len() as u32,
         }
     }
 
@@ -269,11 +269,11 @@ impl Pipeline {
         self.update_depth_texture(device, target_size);
 
         self.vertices
-            .resize(device, polyhedron.vertices2().len() as u64);
+            .resize(device, polyhedron.vertices().len() as u64);
         queue.write_buffer(
             &self.vertices.raw,
             0,
-            bytemuck::cast_slice(&polyhedron.vertices2()),
+            bytemuck::cast_slice(&polyhedron.vertices()),
         );
         queue.write_buffer(&self.uniform, 0, bytemuck::bytes_of(uniforms));
         // update uniforms
@@ -283,7 +283,7 @@ impl Pipeline {
         //always write new cube data since they are constantly rotating
         let cube = polyhedron::Raw::from_pg(rotation);
         self.polyhedron
-            .resize(device, polyhedron.vertices2().len() as u64);
+            .resize(device, polyhedron.vertices().len() as u64);
         queue.write_buffer(&self.polyhedron.raw, 0, bytemuck::bytes_of(&cube));
     }
 

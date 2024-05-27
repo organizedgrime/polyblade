@@ -1,11 +1,12 @@
 use crate::wgpu;
+use glam::Vec3;
 
 #[derive(Debug, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
 #[repr(C)]
 pub struct Vertex {
-    pub position: glam::Vec3,
-    pub normal: glam::Vec3,
-    pub color: glam::Vec3,
+    pub position: Vec3,
+    pub normal: Vec3,
+    pub color: Vec3,
 }
 
 impl Vertex {

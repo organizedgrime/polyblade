@@ -6,6 +6,7 @@ use pipeline::Pipeline;
 
 use crate::polyhedra::PolyGraph;
 use crate::wgpu;
+pub use pipeline::*;
 
 use iced::mouse;
 use iced::time::Duration;

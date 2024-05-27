@@ -43,20 +43,3 @@ impl Raw {
         }
     }
 }
-
-impl PolyGraph {
-    pub fn vertices2(&self) -> Vec<Vertex> {
-        let (rgb, bsc, _tri) = self.static_buffer();
-        let ver = self.xyz_buffer();
-        let mut x = Vec::new();
-
-        for i in 0..ver.len() {
-            x.push(Vertex {
-                position: ver[i],
-                normal: ver[i].normalize(),
-                color: rgb[i],
-            });
-        }
-        x
-    }
-}

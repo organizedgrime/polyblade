@@ -1,6 +1,8 @@
+use crate::scene::Vertex;
+
 use super::*;
 use glam::{vec3, Vec3};
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 
 const TICK_SPEED: f32 = 200.0;
 
@@ -73,7 +75,7 @@ impl PolyGraph {
         self.apply_spring_forces();
     }
 
-    fn face_xyz(&self, face_index: usize) -> Vec<Vec3> {
+    fn face_positions(&self, face_index: usize) -> Vec<Vec3> {
         self.faces[face_index]
             .iter()
             .map(|v| self.positions[v])
@@ -90,12 +92,12 @@ impl PolyGraph {
 
     fn face_centroid(&self, face_index: usize) -> Vec3 {
         // All vertices associated with this face
-        let vertices: Vec<_> = self.face_xyz(face_index);
+        let vertices: Vec<_> = self.face_positions(face_index);
         vertices.iter().fold(Vec3::ZERO, |a, &b| a + b) / vertices.len() as f32
     }
 
-    fn face_xyz_buffer(&self, face_index: usize) -> Vec<Vec3> {
-        let positions = self.face_xyz(face_index);
+    fn face_triangle_positions(&self, face_index: usize) -> Vec<Vec3> {
+        let positions = self.face_positions(face_index);
         let n = positions.len();
         match n {
             3 => positions,
@@ -118,7 +120,7 @@ impl PolyGraph {
     }
 
     fn face_tri_buffer(&self, face_index: usize) -> Vec<Vec3> {
-        let positions = self.face_xyz(face_index);
+        let positions = self.face_positions(face_index);
         let n = positions.len();
         match n {
             3 => vec![vec3(1.0, 1.0, 1.0); 3],
@@ -127,8 +129,10 @@ impl PolyGraph {
         }
     }
 
-    pub fn xyz_buffer(&self) -> Vec<Vec3> {
-        (0..self.faces.len()).fold(Vec::new(), |acc, i| [acc, self.face_xyz_buffer(i)].concat())
+    pub fn positions(&self) -> Vec<Vec3> {
+        (0..self.faces.len()).fold(Vec::new(), |acc, i| {
+            [acc, self.face_triangle_positions(i)].concat()
+        })
     }
 
     pub fn poly_color(n: usize) -> Vec3 {
@@ -145,23 +149,33 @@ impl PolyGraph {
         colors[n % colors.len()]
     }
 
-    pub fn static_buffer(&self) -> (Vec<Vec3>, Vec<Vec3>, Vec<Vec3>) {
-        let mut rgb = Vec::new();
-        let mut bsc = Vec::new();
-        let mut tri = Vec::new();
+    pub fn vertices(&self) -> Vec<Vertex> {
+        let mut vertices = Vec::new();
+        let positions = self.positions();
+        let barycentric = vec![Vec3::X, Vec3::Y, Vec3::Z];
+
+        let color_indices = self.faces.iter().fold(HashMap::new(), |mut acc, f| {
+            if !acc.contains_key(&f.len()) {
+                acc.insert(f.len(), acc.len());
+            }
+            acc
+        });
 
         for i in 0..self.faces.len() {
-            let face_tri = self.face_tri_buffer(i);
-            let color = Self::poly_color(self.faces[i].len()) / 255.0;
-            rgb.extend(vec![color; face_tri.len()]);
-            tri.extend(face_tri);
+            let color =
+                Self::poly_color(color_indices.get(&self.faces[i].len()).unwrap().clone()) / 255.0;
+            let positions = self.face_triangle_positions(i);
+
+            for j in 0..positions.len() {
+                vertices.push(Vertex {
+                    position: positions[j],
+                    normal: barycentric[j % barycentric.len()],
+                    color,
+                });
+            }
         }
 
-        for _ in 0..rgb.len() / 3 {
-            bsc.extend(vec![Vec3::X, Vec3::Y, Vec3::Z]);
-        }
-
-        (rgb, bsc, tri)
+        vertices
     }
 
     pub fn animate_contraction(&mut self) {
