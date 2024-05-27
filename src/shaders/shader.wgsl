@@ -45,7 +45,7 @@ struct LightUniforms {
 fn edge_factor(v_barycentric: vec3<f32>) -> vec3<f32> {
     let line_width = 2.0;
     let face: vec3<f32> = v_barycentric; // * v_Tri;
-    let r: vec3<f32> = fwidth(face) * line_width;
+    let r: vec3<f32> = fwidthFine(face) * line_width;
     let f: vec3<f32> = step(r, face);
     return vec3(min(min(f.x, f.y), f.z));
 }
