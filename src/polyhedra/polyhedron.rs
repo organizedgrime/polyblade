@@ -168,10 +168,10 @@ impl PolyGraph {
             let positions = self.face_triangle_positions(i);
 
             for j in 0..positions.len() {
-                let _barycentric = barycentric[j % barycentric.len()];
                 vertices.push(Vertex {
                     position: positions[j].clone(),
                     normal: positions[j].normalize(),
+                    barycentric: barycentric[j % barycentric.len()],
                     color,
                 });
             }

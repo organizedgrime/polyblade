@@ -6,18 +6,20 @@ use glam::Vec3;
 pub struct Vertex {
     pub position: Vec3,
     pub normal: Vec3,
+    pub barycentric: Vec3,
     pub color: Vec3,
 }
 
 impl Vertex {
-    const ATTRIBS: [wgpu::VertexAttribute; 3] = wgpu::vertex_attr_array![
-        //position
+    const ATTRIBS: [wgpu::VertexAttribute; 4] = wgpu::vertex_attr_array![
+        // position
         0 => Float32x3,
-        //normal
+        // normal
         1 => Float32x3,
-        //color
+        // barycentric
         2 => Float32x3,
-
+        // color
+        3 => Float32x3,
     ];
 
     pub fn desc<'a>() -> wgpu::VertexBufferLayout<'a> {
