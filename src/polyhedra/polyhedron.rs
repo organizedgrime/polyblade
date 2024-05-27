@@ -179,6 +179,10 @@ impl PolyGraph {
         vertices
     }
 
+    pub fn buffer_size(&self) -> u64 {
+        std::mem::size_of::<Vertex>() as u64 * self.vertices().len() as u64
+    }
+
     pub fn animate_contraction(&mut self) {
         // If all edges are contracted visually
         if !self.contracting_edges.is_empty()

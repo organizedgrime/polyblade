@@ -33,19 +33,17 @@ impl Pipeline {
         queue: &wgpu::Queue,
         format: wgpu::TextureFormat,
         target_size: Size<u32>,
-        polyhedron: &PolyGraph,
+        polygraph: &PolyGraph,
     ) -> Self {
-        //let format = wgpu::TextureFormat::Depth24PlusStencil8;
-        //vertices of one cube
         let vertices = Buffer::new(
             device,
             "Polyhedron vertex buffer",
-            1000000,
+            polygraph.buffer_size(),
             wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::COPY_DST,
         );
 
         //cube instance data
-        let polyhedron_buffer = Buffer::new(
+        let polyhedron = Buffer::new(
             device,
             "Polyhedron instance buffer",
             std::mem::size_of::<polyhedron::Raw>() as u64,
@@ -217,7 +215,7 @@ impl Pipeline {
 
         Self {
             pipeline,
-            polyhedron: polyhedron_buffer,
+            polyhedron,
             uniform,
             frag_uniform,
             uniform_group,
@@ -225,7 +223,7 @@ impl Pipeline {
             depth_view,
             depth_texture_size: target_size,
             depth_pipeline,
-            vertex_count: polyhedron.vertices().len() as u32,
+            vertex_count: polygraph.vertices().len() as u32,
         }
     }
 
@@ -267,15 +265,17 @@ impl Pipeline {
         rotation: &Mat4,
     ) {
         self.update_depth_texture(device, target_size);
-
-        queue.write_buffer(
-            &self.vertices.raw,
-            0,
-            bytemuck::cast_slice(&vec![0; 100000][..]),
-        );
-
-        self.vertices
-            .resize(device, polyhedron.vertices().len() as u64);
+        if self.vertices.raw.size() != polyhedron.buffer_size() {
+            println!(
+                "size changed: os: {} bs: {}, vc: {}",
+                self.vertices.raw.size(),
+                polyhedron.buffer_size(),
+                polyhedron.vertices.len()
+            );
+            //self.vertices.raw.destroy();
+            self.vertices.resize(device, polyhedron.buffer_size());
+            self.vertex_count = polyhedron.vertices().len() as u32;
+        }
         queue.write_buffer(
             &self.vertices.raw,
             0,
