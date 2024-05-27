@@ -10,16 +10,24 @@ struct Output {
     @location(0) v_position: vec4<f32>,
     @location(1) v_normal: vec4<f32>,
     @location(2) v_barycentric: vec4<f32>,
-    @location(3) v_color: vec4<f32>,
+    @location(3) v_sides: vec4<f32>,
+    @location(4) v_color: vec4<f32>,
 };
 
 @vertex
-fn vs_main(@location(0) position: vec4<f32>, @location(1) normal: vec4<f32>, @location(2) barycentric: vec4<f32>, @location(3) color: vec4<f32>) -> Output {
+fn vs_main(
+    @location(0) position: vec4<f32>,
+    @location(1) normal: vec4<f32>,
+    @location(2) barycentric: vec4<f32>,
+    @location(3) sides: vec4<f32>,
+    @location(4) color: vec4<f32>,
+) -> Output {
     var output: Output;
     let m_position: vec4<f32> = uniforms.model_mat * position;
     output.v_position = m_position;
     output.v_normal = uniforms.normal_mat * normal;
     output.v_barycentric = barycentric;
+    output.v_sides = sides;
     output.v_color = color;
 
     output.position = uniforms.view_project_mat * m_position;
@@ -42,16 +50,22 @@ struct LightUniforms {
 };
 @binding(2) @group(0) var<uniform> light_uniforms : LightUniforms;
 
-fn edge_factor(v_barycentric: vec3<f32>) -> vec3<f32> {
+fn edge_factor(v_barycentric: vec3<f32>, v_sides: vec3<f32>) -> vec3<f32> {
     let line_width = 2.0;
-    let face: vec3<f32> = v_barycentric; // * v_Tri;
+    let face: vec3<f32> = v_barycentric * v_sides;
     let r: vec3<f32> = fwidthFine(face) * line_width;
     let f: vec3<f32> = step(r, face);
     return vec3(min(min(f.x, f.y), f.z));
 }
 
 @fragment
-fn fs_main(@location(0) v_position: vec4<f32>, @location(1) v_normal: vec4<f32>, @location(2) v_barycentric: vec4<f32>, @location(3) v_color: vec4<f32>) -> @location(0) vec4<f32> {
+fn fs_main(
+    @location(0) v_position: vec4<f32>,
+    @location(1) v_normal: vec4<f32>,
+    @location(2) v_barycentric: vec4<f32>,
+    @location(3) v_sides: vec4<f32>,
+    @location(4) v_color: vec4<f32>,
+) -> @location(0) vec4<f32> {
     let N: vec3<f32> = normalize(v_normal.xyz);
     let L: vec3<f32> = normalize(frag_uniforms.light_position.xyz - v_position.xyz);
     let V: vec3<f32> = normalize(frag_uniforms.eye_position.xyz - v_position.xyz);
@@ -62,5 +76,5 @@ fn fs_main(@location(0) v_position: vec4<f32>, @location(1) v_normal: vec4<f32>,
     let reflection_color = light_uniforms.color * (ambient + diffuse) + light_uniforms.specular_color * specular;
     let reduced = v_color.xyz * 0.5;
     let lit_color = vec4(reduced, 1.0) + reflection_color * 0.5;
-    return vec4(min(edge_factor(v_barycentric.xyz), lit_color.xyz), 1.0);
+    return vec4(min(edge_factor(v_barycentric.xyz, v_sides.xyz), lit_color.xyz), 1.0);
 }

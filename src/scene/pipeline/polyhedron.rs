@@ -15,14 +15,14 @@ pub struct Raw {
 impl Raw {
     const ATTRIBS: [wgpu::VertexAttribute; 7] = wgpu::vertex_attr_array![
         //cube transformation matrix
-        4 => Float32x4,
         5 => Float32x4,
         6 => Float32x4,
         7 => Float32x4,
+        8 => Float32x4,
         //normal rotation matrix
-        8 => Float32x3,
         9 => Float32x3,
         10 => Float32x3,
+        11 => Float32x3,
     ];
 
     pub fn desc<'a>() -> wgpu::VertexBufferLayout<'a> {

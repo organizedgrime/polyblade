@@ -119,7 +119,7 @@ impl PolyGraph {
         }
     }
 
-    fn face_tri_buffer(&self, face_index: usize) -> Vec<Vec3> {
+    fn face_sides_buffer(&self, face_index: usize) -> Vec<Vec3> {
         let positions = self.face_positions(face_index);
         let n = positions.len();
         match n {
@@ -135,7 +135,7 @@ impl PolyGraph {
         })
     }
 
-    pub fn poly_color(n: usize) -> Vec3 {
+    pub fn poly_color(n: &usize) -> Vec3 {
         let colors = [
             vec3(72.0, 132.0, 90.0),
             vec3(163.0, 186.0, 112.0),
@@ -146,7 +146,7 @@ impl PolyGraph {
             vec3(170.0, 137.0, 190.0),
         ];
 
-        colors[n % colors.len()]
+        colors[n % colors.len()] / 255.0
     }
 
     pub fn vertices(&self) -> Vec<Vertex> {
@@ -161,14 +161,15 @@ impl PolyGraph {
         });
 
         for i in 0..self.faces.len() {
-            let color =
-                Self::poly_color(color_indices.get(&self.faces[i].len()).unwrap().clone()) / 255.0;
+            let color = Self::poly_color(color_indices.get(&self.faces[i].len()).unwrap());
+            let sides = self.face_sides_buffer(i);
             let positions = self.face_triangle_positions(i);
 
             for j in 0..positions.len() {
                 vertices.push(Vertex {
                     position: positions[j].clone(),
                     normal: positions[j].normalize(),
+                    sides: sides[j],
                     barycentric: barycentric[j % barycentric.len()],
                     color,
                 });

@@ -7,19 +7,22 @@ pub struct Vertex {
     pub position: Vec3,
     pub normal: Vec3,
     pub barycentric: Vec3,
+    pub sides: Vec3,
     pub color: Vec3,
 }
 
 impl Vertex {
-    const ATTRIBS: [wgpu::VertexAttribute; 4] = wgpu::vertex_attr_array![
+    const ATTRIBS: [wgpu::VertexAttribute; 5] = wgpu::vertex_attr_array![
         // position
         0 => Float32x3,
         // normal
         1 => Float32x3,
         // barycentric
         2 => Float32x3,
-        // color
+        // sides
         3 => Float32x3,
+        // color
+        4 => Float32x3,
     ];
 
     pub fn desc<'a>() -> wgpu::VertexBufferLayout<'a> {
