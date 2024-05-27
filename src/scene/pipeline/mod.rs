@@ -273,6 +273,7 @@ impl Pipeline {
             0,
             bytemuck::cast_slice(&vec![0; 100000][..]),
         );
+
         self.vertices
             .resize(device, polyhedron.vertices().len() as u64);
         queue.write_buffer(

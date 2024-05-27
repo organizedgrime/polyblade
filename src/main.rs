@@ -60,8 +60,20 @@ impl Application for Polyblade {
                 self.show_alert = false;
             }
             Message::Conway(conway) => match conway {
-                ConwayMessage::Seed => {
+                ConwayMessage::Tetrahedron => {
+                    self.scene.polyhedron = PolyGraph::tetrahedron();
+                }
+                ConwayMessage::Cube => {
                     self.scene.polyhedron = PolyGraph::cube();
+                }
+                ConwayMessage::Octahedron => {
+                    self.scene.polyhedron = PolyGraph::octahedron();
+                }
+                ConwayMessage::Dodecahedron => {
+                    self.scene.polyhedron = PolyGraph::dodecahedron();
+                }
+                ConwayMessage::Icosahedron => {
+                    self.scene.polyhedron = PolyGraph::icosahedron();
                 }
                 ConwayMessage::Truncate => {
                     self.scene.polyhedron.truncate();

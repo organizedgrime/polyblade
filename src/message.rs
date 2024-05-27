@@ -13,7 +13,11 @@ pub enum Message {
 #[derive(Debug, Clone, EnumIter, Display)]
 pub enum ConwayMessage {
     // 1
-    Seed,
+    Tetrahedron,
+    Cube,
+    Octahedron,
+    Dodecahedron,
+    Icosahedron,
     Dual,
     // 2
     Join,
