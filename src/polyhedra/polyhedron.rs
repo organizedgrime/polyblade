@@ -164,12 +164,14 @@ impl PolyGraph {
         for i in 0..self.faces.len() {
             let color =
                 Self::poly_color(color_indices.get(&self.faces[i].len()).unwrap().clone()) / 255.0;
+            let normal = self.face_normal(i);
             let positions = self.face_triangle_positions(i);
 
             for j in 0..positions.len() {
+                let _barycentric = barycentric[j % barycentric.len()];
                 vertices.push(Vertex {
-                    position: positions[j],
-                    normal: barycentric[j % barycentric.len()],
+                    position: positions[j].clone(),
+                    normal: positions[j].normalize(),
                     color,
                 });
             }
