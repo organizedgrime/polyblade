@@ -151,7 +151,6 @@ impl PolyGraph {
 
     pub fn vertices(&self) -> Vec<Vertex> {
         let mut vertices = Vec::new();
-        let positions = self.positions();
         let barycentric = vec![Vec3::X, Vec3::Y, Vec3::Z];
 
         let color_indices = self.faces.iter().fold(HashMap::new(), |mut acc, f| {
@@ -164,7 +163,6 @@ impl PolyGraph {
         for i in 0..self.faces.len() {
             let color =
                 Self::poly_color(color_indices.get(&self.faces[i].len()).unwrap().clone()) / 255.0;
-            let normal = self.face_normal(i);
             let positions = self.face_triangle_positions(i);
 
             for j in 0..positions.len() {
