@@ -268,6 +268,11 @@ impl Pipeline {
     ) {
         self.update_depth_texture(device, target_size);
 
+        queue.write_buffer(
+            &self.vertices.raw,
+            0,
+            bytemuck::cast_slice(&vec![0; 100000][..]),
+        );
         self.vertices
             .resize(device, polyhedron.vertices().len() as u64);
         queue.write_buffer(
@@ -282,8 +287,6 @@ impl Pipeline {
 
         //always write new cube data since they are constantly rotating
         let cube = polyhedron::Raw::from_pg(rotation);
-        self.polyhedron
-            .resize(device, polyhedron.vertices().len() as u64);
         queue.write_buffer(&self.polyhedron.raw, 0, bytemuck::bytes_of(&cube));
     }
 
