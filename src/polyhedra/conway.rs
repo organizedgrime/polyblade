@@ -94,7 +94,6 @@ impl PolyGraph {
         for v in self.vertices.clone() {
             new_edges.extend(self.split_vertex(v));
         }
-        self.pst();
         self.name.insert(0, 't');
         new_edges
     }
@@ -112,7 +111,6 @@ impl PolyGraph {
 
         // Contract original edge set
         self.contract_edges(original_edges);
-        self.pst();
         self.name.remove(0);
         self.name.insert(0, 'a');
     }
@@ -152,7 +150,7 @@ impl PolyGraph {
 
 #[cfg(test)]
 mod test {
-    use crate::prelude::*;
+    use crate::polyhedra::PolyGraph;
 
     #[test]
     fn truncate() {
