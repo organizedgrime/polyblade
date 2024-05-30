@@ -68,7 +68,6 @@ impl PolyGraph {
     }
 
     pub fn update(&mut self) {
-        println!("updating polyhedron!");
         self.center();
         self.resize();
         self.animate_contraction();

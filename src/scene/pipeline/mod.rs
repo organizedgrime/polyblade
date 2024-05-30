@@ -266,13 +266,6 @@ impl Pipeline {
     ) {
         self.update_depth_texture(device, target_size);
         if self.vertices.raw.size() != polyhedron.buffer_size() {
-            println!(
-                "size changed: os: {} bs: {}, vc: {}",
-                self.vertices.raw.size(),
-                polyhedron.buffer_size(),
-                polyhedron.vertices.len()
-            );
-            //self.vertices.raw.destroy();
             self.vertices.resize(device, polyhedron.buffer_size());
             self.vertex_count = polyhedron.vertices().len() as u32;
         }
