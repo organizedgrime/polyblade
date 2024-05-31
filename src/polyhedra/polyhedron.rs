@@ -148,6 +148,24 @@ impl PolyGraph {
         colors[n % colors.len()] / 255.0
     }
 
+    pub fn vertex_triangle_count(&self) -> u64 {
+        let mut count = 0;
+        for face in self.faces.iter() {
+            match face.len() {
+                3 => {
+                    count += 3;
+                }
+                4 => {
+                    count += 6;
+                }
+                _ => {
+                    count += 3 * face.len() as u64;
+                }
+            }
+        }
+        count
+    }
+
     pub fn vertices(&self) -> Vec<Vertex> {
         let mut vertices = Vec::new();
         let barycentric = vec![Vec3::X, Vec3::Y, Vec3::Z];
@@ -179,7 +197,7 @@ impl PolyGraph {
     }
 
     pub fn buffer_size(&self) -> u64 {
-        std::mem::size_of::<Vertex>() as u64 * self.vertices().len() as u64
+        std::mem::size_of::<Vertex>() as u64 * self.vertex_triangle_count()
     }
 
     pub fn animate_contraction(&mut self) {

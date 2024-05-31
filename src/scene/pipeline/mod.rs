@@ -24,7 +24,7 @@ pub struct Pipeline {
     depth_texture_size: Size<u32>,
     depth_view: wgpu::TextureView,
     depth_pipeline: DepthPipeline,
-    vertex_count: u32,
+    vertex_count: u64,
 }
 
 impl Pipeline {
@@ -223,7 +223,7 @@ impl Pipeline {
             depth_view,
             depth_texture_size: target_size,
             depth_pipeline,
-            vertex_count: polygraph.vertices().len() as u32,
+            vertex_count: polygraph.vertex_triangle_count(),
         }
     }
 
@@ -264,22 +264,29 @@ impl Pipeline {
         polyhedron: &PolyGraph,
         rotation: &Mat4,
     ) {
+        // Update depth
         self.update_depth_texture(device, target_size);
+
+        // Resize buffer if required
         if self.vertices.raw.size() != polyhedron.buffer_size() {
             self.vertices.resize(device, polyhedron.buffer_size());
-            self.vertex_count = polyhedron.vertices().len() as u32;
+            self.vertex_count = polyhedron.vertex_triangle_count();
         }
+
+        // Write the whole buffer
+        // TODO only write position data unless needed
         queue.write_buffer(
             &self.vertices.raw,
             0,
             bytemuck::cast_slice(&polyhedron.vertices()),
         );
+
+        // Write uniforms
         queue.write_buffer(&self.uniform, 0, bytemuck::bytes_of(uniforms));
-        // update uniforms
         queue.write_buffer(&self.frag_uniform, 0, bytemuck::bytes_of(frag_uniforms));
         //queue.write_buffer(&self.light_uniform, 0, bytemuck::bytes_of(light_uniforms));
 
-        //always write new cube data since they are constantly rotating
+        // Write rotation data
         let cube = polyhedron::Raw::from_pg(rotation);
         queue.write_buffer(&self.polyhedron.raw, 0, bytemuck::bytes_of(&cube));
     }
@@ -318,7 +325,7 @@ impl Pipeline {
             pass.set_bind_group(0, &self.uniform_group, &[]);
             pass.set_vertex_buffer(0, self.vertices.raw.slice(..));
             pass.set_vertex_buffer(1, self.polyhedron.raw.slice(..));
-            pass.draw(0..self.vertex_count, 0..1);
+            pass.draw(0..self.vertex_count as u32, 0..1);
         }
     }
 }
