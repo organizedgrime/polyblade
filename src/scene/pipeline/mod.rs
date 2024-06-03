@@ -26,6 +26,7 @@ pub struct Pipeline {
     depth_view: wgpu::TextureView,
     depth_pipeline: DepthPipeline,
     vertex_count: u64,
+    initialized: bool,
 }
 
 impl Pipeline {
@@ -244,6 +245,7 @@ impl Pipeline {
             depth_texture_size: target_size,
             depth_pipeline,
             vertex_count: polygraph.vertex_triangle_count(),
+            initialized: false,
         }
     }
 
@@ -288,27 +290,26 @@ impl Pipeline {
         self.update_depth_texture(device, target_size);
 
         // Resize buffer if required
-        if self.vertices.raw.size() != polyhedron.vertex_buffer_size() {
+        if self.positions.raw.size() != polyhedron.position_buffer_size() || !self.initialized {
+            // Resize the position buffer
+            self.positions
+                .resize(device, polyhedron.position_buffer_size());
+            // Resize the vertex buffer
             self.vertices
                 .resize(device, polyhedron.vertex_buffer_size());
+            // Count that
             self.vertex_count = polyhedron.vertex_triangle_count();
-            // Write the whole buffer
-            // TODO only write position data unless needed
+            // Write the vertices
             queue.write_buffer(
                 &self.vertices.raw,
                 0,
                 bytemuck::cast_slice(&polyhedron.vertices()),
             );
+            // Initialized
+            self.initialized = true;
         }
 
-        if self.positions.raw.size() != polyhedron.position_buffer_size() {
-            self.positions
-                .resize(device, polyhedron.position_buffer_size());
-            self.vertex_count = polyhedron.vertex_triangle_count();
-        }
-
-        // Write the whole buffer
-        // TODO only write position data unless needed
+        // Write all position data
         queue.write_buffer(
             &self.positions.raw,
             0,
@@ -357,8 +358,9 @@ impl Pipeline {
             pass.set_scissor_rect(viewport.x, viewport.y, viewport.width, viewport.height);
             pass.set_pipeline(&self.pipeline);
             pass.set_bind_group(0, &self.uniform_group, &[]);
-            pass.set_vertex_buffer(0, self.vertices.raw.slice(..));
-            pass.set_vertex_buffer(1, self.polyhedron.raw.slice(..));
+            pass.set_vertex_buffer(0, self.positions.raw.slice(..));
+            pass.set_vertex_buffer(1, self.vertices.raw.slice(..));
+            pass.set_vertex_buffer(2, self.polyhedron.raw.slice(..));
             pass.draw(0..self.vertex_count as u32, 0..1);
         }
     }
