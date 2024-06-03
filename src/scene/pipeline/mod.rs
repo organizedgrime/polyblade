@@ -4,7 +4,7 @@ mod buffer;
 mod uniforms;
 mod vertex;
 
-use glam::Mat4;
+use glam::{Mat4, Vec3};
 pub use uniforms::{FragUniforms, LightUniforms, Uniforms};
 
 use buffer::Buffer;
@@ -16,6 +16,7 @@ use iced::{widget::shader::wgpu::RenderPassDepthStencilAttachment, Color, Rectan
 
 pub struct Pipeline {
     pipeline: wgpu::RenderPipeline,
+    positions: Buffer,
     vertices: Buffer,
     polyhedron: Buffer,
     uniform: wgpu::Buffer,
@@ -25,6 +26,7 @@ pub struct Pipeline {
     depth_view: wgpu::TextureView,
     depth_pipeline: DepthPipeline,
     vertex_count: u64,
+    initialized: bool,
 }
 
 impl Pipeline {
@@ -35,10 +37,17 @@ impl Pipeline {
         target_size: Size<u32>,
         polygraph: &PolyGraph,
     ) -> Self {
+        let positions = Buffer::new(
+            device,
+            "Polyhedron position buffer",
+            polygraph.position_buffer_size(),
+            wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::COPY_DST,
+        );
+
         let vertices = Buffer::new(
             device,
             "Polyhedron vertex buffer",
-            polygraph.buffer_size(),
+            polygraph.vertex_buffer_size(),
             wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::COPY_DST,
         );
 
@@ -169,7 +178,18 @@ impl Pipeline {
             vertex: wgpu::VertexState {
                 module: &shader,
                 entry_point: "vs_main",
-                buffers: &[Vertex::desc(), polyhedron::Raw::desc()],
+                buffers: &[
+                    wgpu::VertexBufferLayout {
+                        array_stride: std::mem::size_of::<Vec3>() as wgpu::BufferAddress,
+                        step_mode: wgpu::VertexStepMode::Vertex,
+                        attributes: &wgpu::vertex_attr_array![
+                            // position
+                            0 => Float32x3,
+                        ],
+                    },
+                    Vertex::desc(),
+                    polyhedron::Raw::desc(),
+                ],
             },
             primitive: wgpu::PrimitiveState::default(),
             depth_stencil: Some(wgpu::DepthStencilState {
@@ -219,11 +239,13 @@ impl Pipeline {
             uniform,
             frag_uniform,
             uniform_group,
+            positions,
             vertices,
             depth_view,
             depth_texture_size: target_size,
             depth_pipeline,
             vertex_count: polygraph.vertex_triangle_count(),
+            initialized: false,
         }
     }
 
@@ -268,17 +290,30 @@ impl Pipeline {
         self.update_depth_texture(device, target_size);
 
         // Resize buffer if required
-        if self.vertices.raw.size() != polyhedron.buffer_size() {
-            self.vertices.resize(device, polyhedron.buffer_size());
+        if self.positions.raw.size() != polyhedron.position_buffer_size() || !self.initialized {
+            // Resize the position buffer
+            self.positions
+                .resize(device, polyhedron.position_buffer_size());
+            // Resize the vertex buffer
+            self.vertices
+                .resize(device, polyhedron.vertex_buffer_size());
+            // Count that
             self.vertex_count = polyhedron.vertex_triangle_count();
+            // Write the vertices
+            queue.write_buffer(
+                &self.vertices.raw,
+                0,
+                bytemuck::cast_slice(&polyhedron.vertices()),
+            );
+            // Initialized
+            self.initialized = true;
         }
 
-        // Write the whole buffer
-        // TODO only write position data unless needed
+        // Write all position data
         queue.write_buffer(
-            &self.vertices.raw,
+            &self.positions.raw,
             0,
-            bytemuck::cast_slice(&polyhedron.vertices()),
+            bytemuck::cast_slice(&polyhedron.positions()),
         );
 
         // Write uniforms
@@ -323,8 +358,9 @@ impl Pipeline {
             pass.set_scissor_rect(viewport.x, viewport.y, viewport.width, viewport.height);
             pass.set_pipeline(&self.pipeline);
             pass.set_bind_group(0, &self.uniform_group, &[]);
-            pass.set_vertex_buffer(0, self.vertices.raw.slice(..));
-            pass.set_vertex_buffer(1, self.polyhedron.raw.slice(..));
+            pass.set_vertex_buffer(0, self.positions.raw.slice(..));
+            pass.set_vertex_buffer(1, self.vertices.raw.slice(..));
+            pass.set_vertex_buffer(2, self.polyhedron.raw.slice(..));
             pass.draw(0..self.vertex_count as u32, 0..1);
         }
     }

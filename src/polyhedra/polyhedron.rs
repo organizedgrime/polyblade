@@ -13,18 +13,18 @@ impl PolyGraph {
         let l_diam = self.edge_length * 2.0;
         for v in self.vertices.iter() {
             for u in self.vertices.iter() {
-                let e: Edge = (v, u).into();
-                if self.dist.contains_key(&e) {
+                if u != v {
+                    let e: Edge = (v, u).into();
                     let d = self.dist[&e] as f32;
                     let l = l_diam * (d / diam);
                     let k = 1.0 / d;
-                    if self.contracting_edges.contains(&(v, u).into()) {
-                        let vp = self.positions[&v];
-                        let up = self.positions[&u];
-                        let l = vp.distance(up);
+                    if self.contracting_edges.contains(&e) {
+                        let v_position = self.positions[&v];
+                        let u_position = self.positions[&u];
+                        let l = v_position.distance(u_position);
                         let f = (self.edge_length / TICK_SPEED * 3.0) / l;
-                        *self.positions.get_mut(v).unwrap() = vp.lerp(up, f);
-                        *self.positions.get_mut(u).unwrap() = up.lerp(vp, f);
+                        *self.positions.get_mut(v).unwrap() = v_position.lerp(u_position, f);
+                        *self.positions.get_mut(u).unwrap() = u_position.lerp(v_position, f);
                     } else {
                         let diff = self.positions[&v] - self.positions[&u];
                         let dist = diff.length();
@@ -32,16 +32,15 @@ impl PolyGraph {
                         let restorative_force = k / 2.0 * distention;
                         let f = diff * restorative_force / TICK_SPEED;
 
-                        // Add forces
-                        *self.speeds.get_mut(v).unwrap() += f;
-                        *self.speeds.get_mut(u).unwrap() -= f;
+                        let v_speed = self.speeds.get_mut(v).unwrap();
+                        *v_speed += f;
+                        *v_speed *= 0.92;
+                        *self.positions.get_mut(v).unwrap() += *v_speed;
 
-                        // Apply damping
-                        *self.speeds.get_mut(v).unwrap() *= 0.92;
-                        *self.speeds.get_mut(u).unwrap() *= 0.92;
-
-                        *self.positions.get_mut(v).unwrap() += self.speeds[&v];
-                        *self.positions.get_mut(u).unwrap() += self.speeds[&u];
+                        let u_speed = self.speeds.get_mut(u).unwrap();
+                        *u_speed -= f;
+                        *u_speed *= 0.92;
+                        *self.positions.get_mut(u).unwrap() += *u_speed;
                     }
                 }
             }
@@ -184,7 +183,6 @@ impl PolyGraph {
 
             for j in 0..positions.len() {
                 vertices.push(Vertex {
-                    position: positions[j].clone(),
                     normal: positions[j].normalize(),
                     sides: sides[j],
                     barycentric: barycentric[j % barycentric.len()],
@@ -196,8 +194,12 @@ impl PolyGraph {
         vertices
     }
 
-    pub fn buffer_size(&self) -> u64 {
+    pub fn vertex_buffer_size(&self) -> u64 {
         std::mem::size_of::<Vertex>() as u64 * self.vertex_triangle_count()
+    }
+
+    pub fn position_buffer_size(&self) -> u64 {
+        std::mem::size_of::<Vec3>() as u64 * self.vertex_triangle_count()
     }
 
     pub fn animate_contraction(&mut self) {
