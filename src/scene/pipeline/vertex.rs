@@ -4,7 +4,6 @@ use glam::Vec3;
 #[derive(Debug, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
 #[repr(C)]
 pub struct Vertex {
-    pub position: Vec3,
     pub normal: Vec3,
     pub barycentric: Vec3,
     pub sides: Vec3,
@@ -12,9 +11,7 @@ pub struct Vertex {
 }
 
 impl Vertex {
-    const ATTRIBS: [wgpu::VertexAttribute; 5] = wgpu::vertex_attr_array![
-        // position
-        0 => Float32x3,
+    const ATTRIBS: [wgpu::VertexAttribute; 4] = wgpu::vertex_attr_array![
         // normal
         1 => Float32x3,
         // barycentric

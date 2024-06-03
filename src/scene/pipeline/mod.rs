@@ -4,7 +4,7 @@ mod buffer;
 mod uniforms;
 mod vertex;
 
-use glam::Mat4;
+use glam::{Mat4, Vec3};
 pub use uniforms::{FragUniforms, LightUniforms, Uniforms};
 
 use buffer::Buffer;
@@ -16,6 +16,7 @@ use iced::{widget::shader::wgpu::RenderPassDepthStencilAttachment, Color, Rectan
 
 pub struct Pipeline {
     pipeline: wgpu::RenderPipeline,
+    positions: Buffer,
     vertices: Buffer,
     polyhedron: Buffer,
     uniform: wgpu::Buffer,
@@ -35,10 +36,17 @@ impl Pipeline {
         target_size: Size<u32>,
         polygraph: &PolyGraph,
     ) -> Self {
+        let positions = Buffer::new(
+            device,
+            "Polyhedron position buffer",
+            polygraph.position_buffer_size(),
+            wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::COPY_DST,
+        );
+
         let vertices = Buffer::new(
             device,
             "Polyhedron vertex buffer",
-            polygraph.buffer_size(),
+            polygraph.vertex_buffer_size(),
             wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::COPY_DST,
         );
 
@@ -169,7 +177,18 @@ impl Pipeline {
             vertex: wgpu::VertexState {
                 module: &shader,
                 entry_point: "vs_main",
-                buffers: &[Vertex::desc(), polyhedron::Raw::desc()],
+                buffers: &[
+                    wgpu::VertexBufferLayout {
+                        array_stride: std::mem::size_of::<Vec3>() as wgpu::BufferAddress,
+                        step_mode: wgpu::VertexStepMode::Vertex,
+                        attributes: &wgpu::vertex_attr_array![
+                            // position
+                            0 => Float32x3,
+                        ],
+                    },
+                    Vertex::desc(),
+                    polyhedron::Raw::desc(),
+                ],
             },
             primitive: wgpu::PrimitiveState::default(),
             depth_stencil: Some(wgpu::DepthStencilState {
@@ -219,6 +238,7 @@ impl Pipeline {
             uniform,
             frag_uniform,
             uniform_group,
+            positions,
             vertices,
             depth_view,
             depth_texture_size: target_size,
@@ -268,17 +288,31 @@ impl Pipeline {
         self.update_depth_texture(device, target_size);
 
         // Resize buffer if required
-        if self.vertices.raw.size() != polyhedron.buffer_size() {
-            self.vertices.resize(device, polyhedron.buffer_size());
+        if self.vertices.raw.size() != polyhedron.vertex_buffer_size() {
+            self.vertices
+                .resize(device, polyhedron.vertex_buffer_size());
+            self.vertex_count = polyhedron.vertex_triangle_count();
+            // Write the whole buffer
+            // TODO only write position data unless needed
+            queue.write_buffer(
+                &self.vertices.raw,
+                0,
+                bytemuck::cast_slice(&polyhedron.vertices()),
+            );
+        }
+
+        if self.positions.raw.size() != polyhedron.position_buffer_size() {
+            self.positions
+                .resize(device, polyhedron.position_buffer_size());
             self.vertex_count = polyhedron.vertex_triangle_count();
         }
 
         // Write the whole buffer
         // TODO only write position data unless needed
         queue.write_buffer(
-            &self.vertices.raw,
+            &self.positions.raw,
             0,
-            bytemuck::cast_slice(&polyhedron.vertices()),
+            bytemuck::cast_slice(&polyhedron.positions()),
         );
 
         // Write uniforms

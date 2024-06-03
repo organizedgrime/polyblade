@@ -184,7 +184,6 @@ impl PolyGraph {
 
             for j in 0..positions.len() {
                 vertices.push(Vertex {
-                    position: positions[j].clone(),
                     normal: positions[j].normalize(),
                     sides: sides[j],
                     barycentric: barycentric[j % barycentric.len()],
@@ -196,8 +195,12 @@ impl PolyGraph {
         vertices
     }
 
-    pub fn buffer_size(&self) -> u64 {
+    pub fn vertex_buffer_size(&self) -> u64 {
         std::mem::size_of::<Vertex>() as u64 * self.vertex_triangle_count()
+    }
+
+    pub fn position_buffer_size(&self) -> u64 {
+        std::mem::size_of::<Vec3>() as u64 * self.vertex_triangle_count()
     }
 
     pub fn animate_contraction(&mut self) {
