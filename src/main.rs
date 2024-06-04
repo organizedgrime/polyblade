@@ -49,48 +49,60 @@ impl Application for Polyblade {
     }
 
     fn update(&mut self, message: Self::Message) -> Command<Self::Message> {
+        use Message::*;
         match message.clone() {
-            Message::Tick(time) => {
+            Tick(time) => {
                 self.scene.update2(time - self.start);
             }
-            Message::Rotate(rotating) => {
+            Rotate(rotating) => {
                 self.rotating = rotating;
             }
-            Message::CloseAlert => {
+            CloseAlert => {
                 self.show_alert = false;
             }
-            Message::Conway(conway) => match conway {
-                ConwayMessage::Tetrahedron => {
-                    self.scene.polyhedron = PolyGraph::tetrahedron();
+            Preset(preset) => {
+                use PresetMessage::*;
+                match preset {
+                    Tetrahedron => {
+                        self.scene.polyhedron = PolyGraph::tetrahedron();
+                    }
+                    Cube => {
+                        self.scene.polyhedron = PolyGraph::cube();
+                    }
+                    Octahedron => {
+                        self.scene.polyhedron = PolyGraph::octahedron();
+                    }
+                    Dodecahedron => {
+                        self.scene.polyhedron = PolyGraph::dodecahedron();
+                    }
+                    Icosahedron => {
+                        self.scene.polyhedron = PolyGraph::icosahedron();
+                    }
+                    _ => {
+                        self.show_alert = true;
+                    }
                 }
-                ConwayMessage::Cube => {
-                    self.scene.polyhedron = PolyGraph::cube();
+            }
+            Conway(conway) => {
+                use ConwayMessage::*;
+                match conway {
+                    Truncate => {
+                        self.scene.polyhedron.truncate();
+                        self.scene.polyhedron.pst();
+                    }
+                    Ambo => {
+                        self.scene.polyhedron.ambo();
+                        self.scene.polyhedron.pst();
+                    }
+                    Bevel => {
+                        self.scene.polyhedron.bevel();
+                        self.scene.polyhedron.pst();
+                    }
+                    _ => {
+                        self.show_alert = true;
+                    }
                 }
-                ConwayMessage::Octahedron => {
-                    self.scene.polyhedron = PolyGraph::octahedron();
-                }
-                ConwayMessage::Dodecahedron => {
-                    self.scene.polyhedron = PolyGraph::dodecahedron();
-                }
-                ConwayMessage::Icosahedron => {
-                    self.scene.polyhedron = PolyGraph::icosahedron();
-                }
-                ConwayMessage::Truncate => {
-                    self.scene.polyhedron.truncate();
-                    self.scene.polyhedron.pst();
-                }
-                ConwayMessage::Ambo => {
-                    self.scene.polyhedron.ambo();
-                    self.scene.polyhedron.pst();
-                }
-                ConwayMessage::Bevel => {
-                    self.scene.polyhedron.bevel();
-                    self.scene.polyhedron.pst();
-                }
-                _ => {
-                    self.show_alert = true;
-                }
-            },
+            }
         }
 
         if let Message::Conway(_) = message {}
@@ -100,6 +112,12 @@ impl Application for Polyblade {
 
     fn view(&self) -> Element<'_, Self::Message> {
         //let conway_buttons =             .collect();
+        let preset_row = Row::with_children(PresetMessage::iter().map(|message| {
+            button(Text::new(message.to_string()))
+                .on_press(Message::Preset(message))
+                .into()
+        }))
+        .spacing(10);
         let conway_row = Row::with_children(ConwayMessage::iter().map(|message| {
             button(Text::new(message.to_string()))
                 .on_press(Message::Conway(message))
@@ -111,6 +129,7 @@ impl Application for Polyblade {
             column![
                 shader(&self.scene).width(Length::Fill).height(Length::Fill),
                 checkbox("Rotating", self.rotating).on_toggle(Message::Rotate),
+                preset_row,
                 conway_row
             ]
             .spacing(10)

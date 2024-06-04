@@ -7,17 +7,24 @@ pub enum Message {
     Tick(Instant),
     Rotate(bool),
     CloseAlert,
+    Preset(PresetMessage),
     Conway(ConwayMessage),
 }
 
 #[derive(Debug, Clone, EnumIter, Display)]
-pub enum ConwayMessage {
-    // 1
+pub enum PresetMessage {
+    Prism(usize),
+    Pyramid(usize),
     Tetrahedron,
     Cube,
     Octahedron,
     Dodecahedron,
     Icosahedron,
+}
+
+#[derive(Debug, Clone, EnumIter, Display)]
+pub enum ConwayMessage {
+    // 1
     Dual,
     // 2
     Join,
