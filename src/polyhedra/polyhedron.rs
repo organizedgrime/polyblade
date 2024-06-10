@@ -19,14 +19,14 @@ impl PolyGraph {
                     let l = l_diam * (d / diam);
                     let k = 1.0 / d;
                     if self.contracting_edges.contains(&e) {
-                        let v_position = self.positions[&v];
-                        let u_position = self.positions[&u];
+                        let v_position = self.positions[v];
+                        let u_position = self.positions[u];
                         let l = v_position.distance(u_position);
                         let f = (self.edge_length / TICK_SPEED * 3.0) / l;
                         *self.positions.get_mut(v).unwrap() = v_position.lerp(u_position, f);
                         *self.positions.get_mut(u).unwrap() = u_position.lerp(v_position, f);
                     } else {
-                        let diff = self.positions[&v] - self.positions[&u];
+                        let diff = self.positions[v] - self.positions[u];
                         let dist = diff.length();
                         let distention = l - dist;
                         let restorative_force = k / 2.0 * distention;
@@ -167,7 +167,7 @@ impl PolyGraph {
 
     pub fn vertices(&self) -> Vec<Vertex> {
         let mut vertices = Vec::new();
-        let barycentric = vec![Vec3::X, Vec3::Y, Vec3::Z];
+        let barycentric = [Vec3::X, Vec3::Y, Vec3::Z];
 
         let color_indices = self.faces.iter().fold(HashMap::new(), |mut acc, f| {
             if !acc.contains_key(&f.len()) {

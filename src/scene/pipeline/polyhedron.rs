@@ -1,5 +1,4 @@
 use crate::wgpu;
-use crate::{polyhedra::PolyGraph, scene::pipeline::Vertex};
 
 use glam::{Mat3, Mat4, Quat};
 
