@@ -29,13 +29,11 @@ impl Buffer {
     }
 
     pub fn resize(&mut self, device: &wgpu::Device, new_size: u64) {
-        if new_size > self.size {
-            self.raw = device.create_buffer(&wgpu::BufferDescriptor {
-                label: Some(self.label),
-                size: new_size,
-                usage: self.usage,
-                mapped_at_creation: false,
-            });
-        }
+        self.raw = device.create_buffer(&wgpu::BufferDescriptor {
+            label: Some(self.label),
+            size: new_size,
+            usage: self.usage,
+            mapped_at_creation: false,
+        });
     }
 }
