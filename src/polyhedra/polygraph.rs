@@ -279,8 +279,33 @@ impl PolyGraph {
 
         self.dist = dist;
     }
+}
 
-    pub fn _floyd(&mut self) {
+impl Display for PolyGraph {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut vertices = self.vertices.iter().collect::<Vec<_>>();
+        vertices.sort();
+        let mut adjacents = self.adjacents.clone().into_iter().collect::<Vec<_>>();
+        adjacents.sort();
+
+        f.write_fmt(format_args!(
+            "name:\t\t{}\nvertices:\t{:?}\nadjacents:\t{}\nfaces:\t\t{}\n",
+            self.name,
+            vertices,
+            adjacents
+                .iter()
+                .fold(String::new(), |acc, e| format!("{e}, {acc}")),
+            self.faces.iter().fold(String::new(), |acc, f| format!(
+                "[{}], {acc}",
+                f.iter().fold(String::new(), |acc, x| format!("{x}, {acc}"))
+            ))
+        ))
+    }
+}
+
+#[cfg(test)]
+impl PolyGraph {
+    pub fn floyd(&mut self) {
         // let dist be a |V| × |V| array of minimum distances initialized to ∞ (infinity)
         let mut dist: HashMap<VertexId, HashMap<VertexId, u32>> = self
             .vertices
@@ -336,28 +361,6 @@ impl PolyGraph {
     }
 }
 
-impl Display for PolyGraph {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut vertices = self.vertices.iter().collect::<Vec<_>>();
-        vertices.sort();
-        let mut adjacents = self.adjacents.clone().into_iter().collect::<Vec<_>>();
-        adjacents.sort();
-
-        f.write_fmt(format_args!(
-            "name:\t\t{}\nvertices:\t{:?}\nadjacents:\t{}\nfaces:\t\t{}\n",
-            self.name,
-            vertices,
-            adjacents
-                .iter()
-                .fold(String::new(), |acc, e| format!("{e}, {acc}")),
-            self.faces.iter().fold(String::new(), |acc, f| format!(
-                "[{}], {acc}",
-                f.iter().fold(String::new(), |acc, x| format!("{x}, {acc}"))
-            ))
-        ))
-    }
-}
-
 #[cfg(test)]
 mod test {
     use crate::polyhedra::{Face, PolyGraph};
@@ -375,7 +378,7 @@ mod test {
     fn pst(mut graph: PolyGraph) {
         let new_dist = graph.dist.clone();
         graph.dist = Default::default();
-        graph._floyd();
+        graph.floyd();
         let old_dist = graph.dist.clone();
 
         //assert_eq!(old_dist, graph.dist);
