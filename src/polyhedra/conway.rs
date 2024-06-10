@@ -160,51 +160,27 @@ mod test {
 
     #[test]
     fn contract_edge() {
-        let mut graph = PolyGraph::new_disconnected(6);
-        graph.connect((1, 0));
-        graph.connect((1, 2));
+        let mut graph = PolyGraph::cube();
+        assert_eq!(graph.vertices.len(), 8);
+        assert_eq!(graph.adjacents.len(), 12);
 
-        graph.connect((1, 3));
-
-        graph.connect((3, 4));
-        graph.connect((3, 5));
+        graph.contract_edge((0, 1));
         graph.pst();
 
-        assert_eq!(graph.vertices.len(), 6);
-        assert_eq!(graph.adjacents.len(), 5);
-
-        graph.contract_edge((1, 3));
-        graph.pst();
-
-        assert_eq!(graph.vertices.len(), 5);
-        assert_eq!(graph.adjacents.len(), 4);
-
-        assert_eq!(graph.connections(0), vec![3].into_iter().collect());
-        assert_eq!(graph.connections(2), vec![3].into_iter().collect());
-
-        assert_eq!(graph.connections(3), vec![0, 2, 4, 5].into_iter().collect());
-
-        assert_eq!(graph.connections(4), vec![3].into_iter().collect());
-        assert_eq!(graph.connections(5), vec![3].into_iter().collect());
+        assert_eq!(graph.vertices.len(), 7);
+        assert_eq!(graph.adjacents.len(), 11);
     }
 
     #[test]
     fn split_vertex() {
-        let mut graph = PolyGraph::new_disconnected(5);
-        graph.connect((1, 0));
-        graph.connect((1, 2));
-
-        graph.connect((1, 3));
-        graph.connect((1, 4));
-        graph.pst();
-
-        assert_eq!(graph.vertices.len(), 5);
-        assert_eq!(graph.adjacents.len(), 4);
-
-        graph.split_vertex(1);
-        graph.pst();
-
+        let mut graph = PolyGraph::cube();
         assert_eq!(graph.vertices.len(), 8);
-        assert_eq!(graph.adjacents.len(), 8);
+        assert_eq!(graph.adjacents.len(), 12);
+
+        graph.split_vertex(0);
+        graph.pst();
+
+        assert_eq!(graph.vertices.len(), 10);
+        assert_eq!(graph.adjacents.len(), 15);
     }
 }

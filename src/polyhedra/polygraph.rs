@@ -369,9 +369,9 @@ mod test {
     #[test_case(PolyGraph::octahedron(); "O")]
     #[test_case(PolyGraph::dodecahedron(); "D")]
     #[test_case(PolyGraph::icosahedron(); "I")]
-    #[test_case({ let mut g = PolyGraph::cube(); g.truncate(); g} ; "tC")]
-    #[test_case({ let mut g = PolyGraph::octahedron(); g.truncate(); g} ; "tO")]
-    #[test_case({ let mut g = PolyGraph::dodecahedron(); g.truncate(); g} ; "tD")]
+    #[test_case({ let mut g = PolyGraph::cube(); g.truncate(); g.pst(); g} ; "tC")]
+    #[test_case({ let mut g = PolyGraph::octahedron(); g.truncate(); g.pst(); g} ; "tO")]
+    #[test_case({ let mut g = PolyGraph::dodecahedron(); g.truncate(); g.pst(); g} ; "tD")]
     fn pst(mut graph: PolyGraph) {
         let new_dist = graph.dist.clone();
         graph.dist = Default::default();
@@ -444,6 +444,7 @@ mod test {
 
         graph.connect((2, 0));
         graph.pst();
+        graph.faces();
         assert_eq!(graph.faces, vec![Face::new(vec![0, 1, 2])]);
     }
 }
