@@ -37,7 +37,7 @@ impl Pipeline {
         device: &wgpu::Device,
         format: wgpu::TextureFormat,
         target_size: Size<u32>,
-        descriptor: Descriptor,
+        descriptor: &Descriptor,
     ) -> Self {
         let positions = Buffer::new(
             device,
@@ -276,38 +276,31 @@ impl Pipeline {
         queue: &wgpu::Queue,
         target_size: Size<u32>,
         uniforms: &AllUniforms,
-        polyhedron: &PolyGraph,
+        descriptor: &Descriptor,
+        positions: &Vec<Vec3>,
+        vertices: &Vec<Vertex>,
         rotation: &Mat4,
     ) {
         // Update depth
         self.update_depth_texture(device, target_size);
 
         // Resize buffer if required
-        if self.positions.raw.size() != polyhedron.position_buffer_size() || !self.initialized {
+        if self.positions.raw.size() != descriptor.position_buffer_size || !self.initialized {
             // Resize the position buffer
             self.positions
-                .resize(device, polyhedron.position_buffer_size());
+                .resize(device, descriptor.position_buffer_size);
             // Resize the vertex buffer
-            self.vertices
-                .resize(device, polyhedron.vertex_buffer_size());
+            self.vertices.resize(device, descriptor.vertex_buffer_size);
             // Count that
-            self.vertex_count = polyhedron.vertex_triangle_count();
+            self.vertex_count = descriptor.vertex_triangle_count;
             // Write the vertices
-            queue.write_buffer(
-                &self.vertices.raw,
-                0,
-                bytemuck::cast_slice(&polyhedron.vertices()),
-            );
+            queue.write_buffer(&self.vertices.raw, 0, bytemuck::cast_slice(&vertices));
             // Initialized
             self.initialized = true;
         }
 
         // Write all position data
-        queue.write_buffer(
-            &self.positions.raw,
-            0,
-            bytemuck::cast_slice(&polyhedron.positions()),
-        );
+        queue.write_buffer(&self.positions.raw, 0, bytemuck::cast_slice(&positions));
 
         // Write uniforms
         queue.write_buffer(&self.model_uniform, 0, bytemuck::bytes_of(&uniforms.model));

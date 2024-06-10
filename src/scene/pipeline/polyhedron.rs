@@ -44,6 +44,7 @@ impl Raw {
     }
 }
 
+#[derive(Debug)]
 pub struct Descriptor {
     /// Size of the buffer containing only position data
     pub position_buffer_size: u64,

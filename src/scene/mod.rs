@@ -2,12 +2,15 @@ mod camera;
 mod pipeline;
 
 use camera::Camera;
+use glam::Vec3;
 use pipeline::Pipeline;
 
 use crate::polyhedra::PolyGraph;
 use crate::wgpu;
 pub use pipeline::*;
 
+use iced::advanced::graphics::core::event::Status;
+use iced::advanced::mouse::Cursor;
 use iced::mouse;
 use iced::time::Duration;
 use iced::widget::shader;
@@ -62,12 +65,26 @@ impl<Message> shader::Program<Message> for Scene {
     ) -> Self::Primitive {
         Primitive::new(&self.polyhedron, &self.rotation, &self.camera)
     }
+
+    /*
+    fn update(
+        &self,
+        _state: &mut Self::State,
+        _event: shader::Event,
+        _bounds: Rectangle,
+        _cursor: Cursor,
+        _shell: &mut iced::advanced::Shell<'_, Message>,
+    ) -> (Status, Option<Message>) {
+    }
+    */
 }
 
 /// A collection of `Cube`s that can be rendered.
 #[derive(Debug)]
 pub struct Primitive {
-    polyhedron: PolyGraph,
+    descriptor: Descriptor,
+    positions: Vec<Vec3>,
+    vertices: Vec<Vertex>,
     rotation: Mat4,
     camera: Camera,
 }
@@ -75,7 +92,9 @@ pub struct Primitive {
 impl Primitive {
     pub fn new(pg: &PolyGraph, rotation: &Mat4, camera: &Camera) -> Self {
         Self {
-            polyhedron: pg.clone(),
+            descriptor: pg.into(),
+            positions: pg.positions(),
+            vertices: pg.vertices(),
             rotation: *rotation,
             camera: *camera,
         }
@@ -94,12 +113,8 @@ impl shader::Primitive for Primitive {
         storage: &mut shader::Storage,
     ) {
         if !storage.has::<Pipeline>() {
-            let descriptor: Descriptor = (&self.polyhedron).into();
-            // Here we're only using the position_buffer_size, the vertex_buffer_size, and the
-            // vertex_triangle_count
-            storage.store(Pipeline::new(device, format, target_size, descriptor));
+            storage.store(Pipeline::new(device, format, target_size, &self.descriptor));
         }
-
         let pipeline = storage.get_mut::<Pipeline>().unwrap();
 
         // update uniform buffer
@@ -121,13 +136,16 @@ impl shader::Primitive for Primitive {
                 Color::new(1.0, 1.0, 1.0, 1.0),
             ),
         };
+
         //upload data to GPU
         pipeline.update(
             device,
             queue,
             target_size,
             &uniforms,
-            &self.polyhedron,
+            &self.descriptor,
+            &self.positions,
+            &self.vertices,
             &self.rotation,
         );
     }
