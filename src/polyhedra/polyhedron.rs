@@ -80,14 +80,6 @@ impl PolyGraph {
             .collect()
     }
 
-    pub fn face_normal(&self, face_index: usize) -> Vec3 {
-        self.faces[face_index]
-            .iter()
-            .map(|v| self.positions[v])
-            .fold(Vec3::ZERO, |acc, v| acc.cross(v))
-            .normalize()
-    }
-
     fn face_centroid(&self, face_index: usize) -> Vec3 {
         // All vertices associated with this face
         let vertices: Vec<_> = self.face_positions(face_index);

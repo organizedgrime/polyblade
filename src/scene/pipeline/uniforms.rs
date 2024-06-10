@@ -1,8 +1,14 @@
 use iced::Color;
 
+pub struct AllUniforms {
+    pub model: ModelUniforms,
+    pub frag: FragUniforms,
+    pub light: LightUniforms,
+}
+
 #[derive(Copy, Default, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]
 #[repr(C)]
-pub struct Uniforms {
+pub struct ModelUniforms {
     pub(crate) model_mat: glam::Mat4,
     pub(crate) view_projection_mat: glam::Mat4,
     pub(crate) normal_mat: glam::Mat4,

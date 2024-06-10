@@ -52,7 +52,7 @@ impl Application for Polyblade {
         use Message::*;
         match message.clone() {
             Tick(time) => {
-                self.scene.update2(time - self.start);
+                self.scene.update(time - self.start);
             }
             Rotate(rotating) => {
                 self.rotating = rotating;

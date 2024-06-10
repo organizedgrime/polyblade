@@ -19,8 +19,6 @@ use std::f32::consts::PI;
 
 use std::time::Instant;
 
-pub const MAX: u32 = 500;
-
 #[derive(Clone)]
 pub struct Scene {
     pub start: Instant,
@@ -43,7 +41,7 @@ impl Scene {
         }
     }
 
-    pub fn update2(&mut self, time: Duration) {
+    pub fn update(&mut self, time: Duration) {
         self.polyhedron.update();
         let time = time.as_secs_f32();
         self.rotation = Mat4::from_rotation_x(time / PI) * Mat4::from_rotation_y(time / PI * 1.1);
@@ -94,13 +92,9 @@ impl shader::Primitive for Primitive {
         storage: &mut shader::Storage,
     ) {
         if !storage.has::<Pipeline>() {
-            storage.store(Pipeline::new(
-                device,
-                queue,
-                format,
-                target_size,
-                &self.polyhedron,
-            ));
+            // Here we're only using the position_buffer_size, the vertex_buffer_size, and the
+            // vertex_triangle_count
+            storage.store(Pipeline::new(device, format, target_size, &self.polyhedron));
         }
 
         let pipeline = storage.get_mut::<Pipeline>().unwrap();
@@ -109,25 +103,27 @@ impl shader::Primitive for Primitive {
         let model_mat = self.rotation;
         let view_projection_mat = self.camera.build_view_proj_mat(bounds);
         let normal_mat = (model_mat.inverse()).transpose();
-
-        let uniforms = pipeline::Uniforms {
-            model_mat,
-            view_projection_mat,
-            normal_mat,
+        let uniforms = AllUniforms {
+            model: ModelUniforms {
+                model_mat,
+                view_projection_mat,
+                normal_mat,
+            },
+            frag: FragUniforms {
+                light_position: self.camera.position(),
+                eye_position: self.camera.position() + vec4(2.0, 2.0, 1.0, 0.0),
+            },
+            light: LightUniforms::new(
+                Color::new(1.0, 1.0, 1.0, 1.0),
+                Color::new(1.0, 1.0, 1.0, 1.0),
+            ),
         };
-
-        let frag_uniforms = pipeline::FragUniforms {
-            light_position: self.camera.position(),
-            eye_position: self.camera.position() + vec4(2.0, 2.0, 1.0, 0.0),
-        };
-
         //upload data to GPU
         pipeline.update(
             device,
             queue,
             target_size,
             &uniforms,
-            &frag_uniforms,
             &self.polyhedron,
             &self.rotation,
         );
