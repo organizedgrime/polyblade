@@ -65,21 +65,8 @@ impl<Message> shader::Program<Message> for Scene {
     ) -> Self::Primitive {
         Primitive::new(&self.polyhedron, &self.rotation, &self.camera)
     }
-
-    /*
-    fn update(
-        &self,
-        _state: &mut Self::State,
-        _event: shader::Event,
-        _bounds: Rectangle,
-        _cursor: Cursor,
-        _shell: &mut iced::advanced::Shell<'_, Message>,
-    ) -> (Status, Option<Message>) {
-    }
-    */
 }
 
-/// A collection of `Cube`s that can be rendered.
 #[derive(Debug)]
 pub struct Primitive {
     descriptor: Descriptor,

@@ -53,7 +53,7 @@ impl Pipeline {
             wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::COPY_DST,
         );
 
-        //cube instance data
+        // Polyhedron instance data
         let polyhedron = Buffer::new(
             device,
             "Polyhedron instance buffer",
@@ -248,7 +248,7 @@ impl Pipeline {
             || self.depth_texture_size.width != size.width
         {
             let text = device.create_texture(&wgpu::TextureDescriptor {
-                label: Some("cubes depth texture"),
+                label: Some("depth texture"),
                 size: wgpu::Extent3d {
                     width: size.width,
                     height: size.height,
@@ -320,7 +320,7 @@ impl Pipeline {
     ) {
         {
             let mut pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
-                label: Some("cubes.pipeline.pass"),
+                label: Some("poly.pipeline.pass"),
                 color_attachments: &[Some(wgpu::RenderPassColorAttachment {
                     view: target,
                     resolve_target: None,
