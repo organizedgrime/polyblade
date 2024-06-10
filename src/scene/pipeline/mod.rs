@@ -14,6 +14,8 @@ use crate::{polyhedra::PolyGraph, wgpu};
 
 use iced::{widget::shader::wgpu::RenderPassDepthStencilAttachment, Rectangle, Size};
 
+use self::polyhedron::Descriptor;
+
 pub struct Pipeline {
     pipeline: wgpu::RenderPipeline,
     positions: Buffer,
@@ -35,19 +37,19 @@ impl Pipeline {
         device: &wgpu::Device,
         format: wgpu::TextureFormat,
         target_size: Size<u32>,
-        polygraph: &PolyGraph,
+        descriptor: Descriptor,
     ) -> Self {
         let positions = Buffer::new(
             device,
             "Polyhedron position buffer",
-            polygraph.position_buffer_size(),
+            descriptor.position_buffer_size,
             wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::COPY_DST,
         );
 
         let vertices = Buffer::new(
             device,
             "Polyhedron vertex buffer",
-            polygraph.vertex_buffer_size(),
+            descriptor.vertex_buffer_size,
             wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::COPY_DST,
         );
 
@@ -236,7 +238,7 @@ impl Pipeline {
             depth_view,
             depth_texture_size: target_size,
             depth_pipeline,
-            vertex_count: polygraph.vertex_triangle_count(),
+            vertex_count: descriptor.vertex_triangle_count,
             initialized: false,
         }
     }
@@ -313,8 +315,8 @@ impl Pipeline {
         queue.write_buffer(&self.light_uniform, 0, bytemuck::bytes_of(&uniforms.light));
 
         // Write rotation data
-        let cube = polyhedron::Raw::from_pg(rotation);
-        queue.write_buffer(&self.polyhedron.raw, 0, bytemuck::bytes_of(&cube));
+        let transform = polyhedron::Raw::new(rotation);
+        queue.write_buffer(&self.polyhedron.raw, 0, bytemuck::bytes_of(&transform));
     }
 
     pub fn render(

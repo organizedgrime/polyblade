@@ -19,6 +19,8 @@ use std::f32::consts::PI;
 
 use std::time::Instant;
 
+use self::polyhedron::Descriptor;
+
 #[derive(Clone)]
 pub struct Scene {
     pub start: Instant,
@@ -92,9 +94,10 @@ impl shader::Primitive for Primitive {
         storage: &mut shader::Storage,
     ) {
         if !storage.has::<Pipeline>() {
+            let descriptor: Descriptor = (&self.polyhedron).into();
             // Here we're only using the position_buffer_size, the vertex_buffer_size, and the
             // vertex_triangle_count
-            storage.store(Pipeline::new(device, format, target_size, &self.polyhedron));
+            storage.store(Pipeline::new(device, format, target_size, descriptor));
         }
 
         let pipeline = storage.get_mut::<Pipeline>().unwrap();
