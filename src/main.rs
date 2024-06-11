@@ -92,10 +92,14 @@ impl Application for Polyblade {
                     }
                     Ambo => {
                         self.scene.polyhedron.ambo();
-                        self.scene.polyhedron.pst();
+                        //self.scene.polyhedron.pst();
                     }
                     Bevel => {
                         self.scene.polyhedron.bevel();
+                        self.scene.polyhedron.pst();
+                    }
+                    Expand => {
+                        self.scene.polyhedron.expand();
                         self.scene.polyhedron.pst();
                     }
                     _ => {

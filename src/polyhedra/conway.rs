@@ -109,10 +109,13 @@ impl PolyGraph {
             .map(Edge::clone)
             .collect();
 
+        self.contracting_edges.extend(original_edges);
+        /*
         // Contract original edge set
         self.contract_edges(original_edges);
         self.name.remove(0);
         self.name.insert(0, 'a');
+        */
     }
 
     /// `b` = `ta`
@@ -133,11 +136,13 @@ impl PolyGraph {
         self.name.insert(0, 'e');
     }
 
+    /*
     /// `s` snub is applying `e` followed by diagonal addition
     pub fn snub(&mut self) {
         self.expand();
         //self.diagonal_addition();
     }
+    */
 
     // `j` join
     // `z` zip

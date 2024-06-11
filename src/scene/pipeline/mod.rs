@@ -4,13 +4,13 @@ mod buffer;
 mod uniforms;
 mod vertex;
 
-use glam::{Mat4, Vec3};
+use glam::Vec3;
 pub use uniforms::{AllUniforms, FragUniforms, LightUniforms, ModelUniforms};
 
 use buffer::Buffer;
-pub use vertex::Vertex;
+pub use vertex::{PolyData, Vertex};
 
-use crate::{polyhedra::PolyGraph, wgpu};
+use crate::wgpu;
 
 use iced::{widget::shader::wgpu::RenderPassDepthStencilAttachment, Rectangle, Size};
 
@@ -275,11 +275,9 @@ impl Pipeline {
         device: &wgpu::Device,
         queue: &wgpu::Queue,
         target_size: Size<u32>,
-        uniforms: &AllUniforms,
         descriptor: &Descriptor,
-        positions: &Vec<Vec3>,
-        vertices: &Vec<Vertex>,
-        rotation: &Mat4,
+        uniforms: &AllUniforms,
+        data: &PolyData,
     ) {
         // Update depth
         self.update_depth_texture(device, target_size);
@@ -294,22 +292,24 @@ impl Pipeline {
             // Count that
             self.vertex_count = descriptor.vertex_triangle_count;
             // Write the vertices
-            queue.write_buffer(&self.vertices.raw, 0, bytemuck::cast_slice(&vertices));
+            queue.write_buffer(&self.vertices.raw, 0, bytemuck::cast_slice(&data.vertices));
             // Initialized
             self.initialized = true;
         }
 
         // Write all position data
-        queue.write_buffer(&self.positions.raw, 0, bytemuck::cast_slice(&positions));
+        queue.write_buffer(
+            &self.positions.raw,
+            0,
+            bytemuck::cast_slice(&data.positions),
+        );
+        // Write rotation data
+        queue.write_buffer(&self.polyhedron.raw, 0, bytemuck::bytes_of(&data.raw));
 
         // Write uniforms
         queue.write_buffer(&self.model_uniform, 0, bytemuck::bytes_of(&uniforms.model));
         queue.write_buffer(&self.frag_uniform, 0, bytemuck::bytes_of(&uniforms.frag));
         queue.write_buffer(&self.light_uniform, 0, bytemuck::bytes_of(&uniforms.light));
-
-        // Write rotation data
-        let transform = polyhedron::Raw::new(rotation);
-        queue.write_buffer(&self.polyhedron.raw, 0, bytemuck::bytes_of(&transform));
     }
 
     pub fn render(

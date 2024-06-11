@@ -15,9 +15,6 @@ impl PolyGraph {
             for u in self.vertices.iter() {
                 if u != v {
                     let e: Edge = (v, u).into();
-                    let d = self.dist[&e] as f32;
-                    let l = l_diam * (d / diam);
-                    let k = 1.0 / d;
                     if self.contracting_edges.contains(&e) {
                         let v_position = self.positions[v];
                         let u_position = self.positions[u];
@@ -25,7 +22,10 @@ impl PolyGraph {
                         let f = (self.edge_length / TICK_SPEED * 3.0) / l;
                         *self.positions.get_mut(v).unwrap() = v_position.lerp(u_position, f);
                         *self.positions.get_mut(u).unwrap() = u_position.lerp(v_position, f);
-                    } else {
+                    } else if self.dist.contains_key(&e) {
+                        let d = self.dist[&e] as f32;
+                        let l = l_diam * (d / diam);
+                        let k = 1.0 / d;
                         let diff = self.positions[v] - self.positions[u];
                         let dist = diff.length();
                         let distention = l - dist;

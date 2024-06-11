@@ -34,10 +34,10 @@ impl Raw {
     }
 }
 
-impl Raw {
-    pub fn new(rotation: &Mat4) -> Self {
+impl From<&Mat4> for Raw {
+    fn from(value: &Mat4) -> Self {
         Self {
-            transformation: *rotation,
+            transformation: *value,
             normal: Mat3::from_quat(Quat::IDENTITY),
             _padding: [0.0; 3],
         }

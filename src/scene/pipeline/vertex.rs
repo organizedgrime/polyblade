@@ -1,6 +1,8 @@
 use crate::wgpu;
 use glam::Vec3;
 
+use super::polyhedron;
+
 #[derive(Debug, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
 #[repr(C)]
 pub struct Vertex {
@@ -29,4 +31,11 @@ impl Vertex {
             attributes: &Self::ATTRIBS,
         }
     }
+}
+
+#[derive(Debug)]
+pub struct PolyData {
+    pub positions: Vec<Vec3>,
+    pub vertices: Vec<Vertex>,
+    pub raw: polyhedron::Raw,
 }

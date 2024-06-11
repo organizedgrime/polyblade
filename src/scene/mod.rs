@@ -1,28 +1,18 @@
 mod camera;
 mod pipeline;
-
-use camera::Camera;
-use glam::Vec3;
-use pipeline::Pipeline;
-
+use self::polyhedron::Descriptor;
 use crate::polyhedra::PolyGraph;
 use crate::wgpu;
-pub use pipeline::*;
-
-use iced::advanced::graphics::core::event::Status;
-use iced::advanced::mouse::Cursor;
+use camera::Camera;
+use glam::{vec4, Mat4};
 use iced::mouse;
 use iced::time::Duration;
 use iced::widget::shader;
 use iced::{Color, Rectangle, Size};
-
-use glam::{vec4, Mat4};
-
+use pipeline::Pipeline;
+pub use pipeline::*;
 use std::f32::consts::PI;
-
 use std::time::Instant;
-
-use self::polyhedron::Descriptor;
 
 #[derive(Clone)]
 pub struct Scene {
@@ -70,20 +60,22 @@ impl<Message> shader::Program<Message> for Scene {
 #[derive(Debug)]
 pub struct Primitive {
     descriptor: Descriptor,
-    positions: Vec<Vec3>,
-    vertices: Vec<Vertex>,
-    rotation: Mat4,
     camera: Camera,
+    rotation: Mat4,
+    data: PolyData,
 }
 
 impl Primitive {
     pub fn new(pg: &PolyGraph, rotation: &Mat4, camera: &Camera) -> Self {
         Self {
             descriptor: pg.into(),
-            positions: pg.positions(),
-            vertices: pg.vertices(),
-            rotation: *rotation,
             camera: *camera,
+            rotation: *rotation,
+            data: PolyData {
+                positions: pg.positions(),
+                vertices: pg.vertices(),
+                raw: rotation.into(),
+            },
         }
     }
 }
@@ -129,11 +121,9 @@ impl shader::Primitive for Primitive {
             device,
             queue,
             target_size,
-            &uniforms,
             &self.descriptor,
-            &self.positions,
-            &self.vertices,
-            &self.rotation,
+            &uniforms,
+            &self.data,
         );
     }
 
