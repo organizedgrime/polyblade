@@ -4,7 +4,7 @@ use super::*;
 use glam::{vec3, Vec3};
 use std::collections::{HashMap, HashSet};
 
-const TICK_SPEED: f32 = 200.0;
+const TICK_SPEED: f32 = 400.0;
 
 // Operations
 impl PolyGraph {

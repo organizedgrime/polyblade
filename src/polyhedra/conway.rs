@@ -38,11 +38,31 @@ impl PolyGraph {
         }
     }
 
-    pub fn split_vertex(&mut self, v: VertexId) -> HashSet<Edge> {
+    pub fn split_vertex_crude(&mut self, v: VertexId) {
+        // Remove the vertex
+        let relevant_face_indices = (0..self.faces.len())
+            .into_iter()
+            .filter(|&i| self.faces[i].containz(&v))
+            .collect::<Vec<usize>>();
+
+        let mut new_face = Vec::new();
+        for i in relevant_face_indices {
+            let u = self.insert();
+            self.faces[i].replace(v, u);
+            new_face.push(u);
+        }
+
+        for i in 0..new_face.len() {
+            self.connect((new_face[i], new_face[(i + 1) % new_face.len()]));
+        }
+    }
+
+    pub fn split_vertex_face(&mut self, v: VertexId) -> HashSet<Edge> {
         let original_position = self.positions[&v];
         let mut connections: VecDeque<VertexId> = self.connections(v).into_iter().collect();
         let mut transformations: HashMap<VertexId, VertexId> = Default::default();
         let mut new_face = Vec::new();
+
         // Remove the vertex
 
         // connect a new node to every existing connection
@@ -92,7 +112,7 @@ impl PolyGraph {
     pub fn truncate(&mut self) -> HashSet<Edge> {
         let mut new_edges = HashSet::new();
         for v in self.vertices.clone() {
-            new_edges.extend(self.split_vertex(v));
+            new_edges.extend(self.split_vertex_face(v));
         }
         self.name.insert(0, 't');
         new_edges
@@ -101,11 +121,11 @@ impl PolyGraph {
     /// `a` ambo
     pub fn ambo(&mut self) {
         // Truncate
-        let new_edges = &self.truncate();
+        let new_edges = self.truncate();
         let original_edges: HashSet<Edge> = self
             .adjacents
             .clone()
-            .difference(new_edges)
+            .difference(&new_edges)
             .map(Edge::clone)
             .collect();
 
@@ -129,11 +149,15 @@ impl PolyGraph {
 
     /// `e` = `aa`
     pub fn expand(&mut self) {
-        self.ambo();
-        self.ambo();
-        self.name.remove(0);
+        self.split_vertex_crude(0);
+        for v in self.vertices.clone() {
+            //self.split_vertex_crude(v);
+        }
+
+        /*
         self.name.remove(0);
         self.name.insert(0, 'e');
+        */
     }
 
     /*
@@ -182,7 +206,7 @@ mod test {
         assert_eq!(graph.vertices.len(), 8);
         assert_eq!(graph.adjacents.len(), 12);
 
-        graph.split_vertex(0);
+        graph.split_vertex_face(0);
         graph.pst();
 
         assert_eq!(graph.vertices.len(), 10);

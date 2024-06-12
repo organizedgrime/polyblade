@@ -274,7 +274,8 @@ impl PolyGraph {
 
             if !removed {
                 self.dist = dist;
-                panic!("failed");
+                println!("failed");
+                return;
             }
         }
 
