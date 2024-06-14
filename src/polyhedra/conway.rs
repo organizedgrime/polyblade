@@ -137,7 +137,9 @@ impl PolyGraph {
 
     /// `e` = `aa`
     pub fn expand(&mut self) {
+        let mut quadrangles = HashMap::<Edge, Vec<VertexId>>::new();
         let mut new_edges = HashSet::<Edge>::new();
+        let mut face_edges = HashSet::<Edge>::new();
         // For every vertex
         for v in self.vertices.clone() {
             let original_position = self.positions[&v];
@@ -160,12 +162,14 @@ impl PolyGraph {
                 let b = self.cycles[i][(ui + 1) % flen];
                 // Remove existing edges which may no longer be accurate
                 if new_edges.remove(&(a, v).into()) {
-                    println!("meoww: a {a}");
+                    println!("{v} -> {u}");
+                    println!("meoww: {:?}", vec![a, u]);
                 }
                 if new_edges.remove(&(b, v).into()) {
-                    println!("meoww: b {b}");
+                    println!("{v} -> {u}");
+                    println!("meoww: {:?}", vec![b, u]);
                 }
-                println!("nya");
+                println!("nya : {a},{u} , {b},{u}");
                 // Add the new edges which are so yass
                 new_edges.insert((a, u).into());
                 new_edges.insert((b, u).into());
@@ -176,14 +180,44 @@ impl PolyGraph {
             }
 
             for i in 0..new_face.len() {
-                new_edges.insert((new_face[i], new_face[(i + 1) % new_face.len()]).into());
+                face_edges.insert((new_face[i], new_face[(i + 1) % new_face.len()]).into());
             }
             println!("new_face: {new_face:?}");
+            println!("quads: {quadrangles:?}");
             self.cycles.push(new_face);
             self.delete(v);
         }
 
-        self.adj_v = new_edges;
+        // For every triangle / nf edge
+        for a in face_edges.iter() {
+            // find the edge which is parallel to it
+            for b in face_edges.iter() {
+                if new_edges.contains(&(a.v(), b.v()).into())
+                    && new_edges.contains(&(a.u(), b.u()).into())
+                {
+                    let meow = Face::new(vec![a.u(), b.u(), b.v(), a.v()]);
+                    println!("meow for real: {meow:?}");
+                    if !self.cycles.contains(&meow) {
+                        self.cycles.push(meow);
+                    }
+                }
+
+                if new_edges.contains(&(a.u(), b.v()).into())
+                    && new_edges.contains(&(a.v(), b.u()).into())
+                {
+                    let meow = Face::new(vec![a.u(), b.v(), b.u(), a.v()]);
+                    println!("meow for real: {meow:?}");
+                    if !self.cycles.contains(&meow) {
+                        self.cycles.push(meow);
+                    }
+                }
+            }
+        }
+        self.adj_v = HashSet::new();
+        self.adj_v.extend(new_edges);
+        self.adj_v.extend(face_edges);
+
+        //self.adj_v = new_edges;
 
         /*
         self.name.remove(0);
