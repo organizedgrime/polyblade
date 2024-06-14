@@ -74,7 +74,7 @@ impl PolyGraph {
     }
 
     fn face_positions(&self, face_index: usize) -> Vec<Vec3> {
-        self.faces[face_index]
+        self.cycles[face_index]
             .iter()
             .map(|v| self.positions[v])
             .collect()
@@ -120,7 +120,7 @@ impl PolyGraph {
     }
 
     pub fn positions(&self) -> Vec<Vec3> {
-        (0..self.faces.len()).fold(Vec::new(), |acc, i| {
+        (0..self.cycles.len()).fold(Vec::new(), |acc, i| {
             [acc, self.face_triangle_positions(i)].concat()
         })
     }
@@ -143,7 +143,7 @@ impl PolyGraph {
         let mut vertices = Vec::new();
         let barycentric = [Vec3::X, Vec3::Y, Vec3::Z];
 
-        let mut polygon_sizes: Vec<usize> = self.faces.iter().fold(Vec::new(), |mut acc, f| {
+        let mut polygon_sizes: Vec<usize> = self.cycles.iter().fold(Vec::new(), |mut acc, f| {
             if !acc.contains(&f.len()) {
                 acc.push(f.len());
             }
@@ -152,10 +152,10 @@ impl PolyGraph {
 
         polygon_sizes.sort();
 
-        for i in 0..self.faces.len() {
+        for i in 0..self.cycles.len() {
             let color_index = polygon_sizes
                 .iter()
-                .position(|&x| x == self.faces[i].len())
+                .position(|&x| x == self.cycles[i].len())
                 .unwrap();
 
             let color = Self::poly_color(polygon_sizes.get(color_index).unwrap());

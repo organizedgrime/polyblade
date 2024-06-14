@@ -11,7 +11,7 @@ impl PolyGraph {
             self.connect((w, e.u()));
         }
         // Delete a
-        for f in self.faces.iter_mut() {
+        for f in self.cycles.iter_mut() {
             f.replace(e.v(), e.u());
         }
 
@@ -65,18 +65,18 @@ impl PolyGraph {
         let mut new_edges = HashSet::new();
 
         // upate every face
-        for i in 0..self.faces.len() {
+        for i in 0..self.cycles.len() {
             // if this face had v in it
-            if let Some(vi) = self.faces[i].iter().position(|&x| x == v) {
+            if let Some(vi) = self.cycles[i].iter().position(|&x| x == v) {
                 // indices before and after v in face
-                let vh = (vi + self.faces[i].len() - 1) % self.faces[i].len();
-                let vj = (vi + 1) % self.faces[i].len();
+                let vh = (vi + self.cycles[i].len() - 1) % self.cycles[i].len();
+                let vj = (vi + 1) % self.cycles[i].len();
 
-                let b = transformations[&self.faces[i][vh]];
-                let a = transformations[&self.faces[i][vj]];
+                let b = transformations[&self.cycles[i][vh]];
+                let a = transformations[&self.cycles[i][vj]];
 
-                self.faces[i].insert(vi, a);
-                self.faces[i].insert(vi, b);
+                self.cycles[i].insert(vi, a);
+                self.cycles[i].insert(vi, b);
 
                 let e: Edge = (a, b).into();
                 new_edges.insert(e);
@@ -84,14 +84,14 @@ impl PolyGraph {
             }
         }
 
-        self.faces.push(new_edges.clone().into());
+        self.cycles.push(new_edges.clone().into());
 
         self.delete(v);
         new_edges
     }
 
     /*
-    pub fn sorted_faces(&self, v: VertexId) -> Vec<usize> {
+    pub fn sorted_cycles(&self, v: VertexId) -> Vec<usize> {
         let edge = self.adjacents.iter().find(|e| e.contains(v));
     }
     */
@@ -143,21 +143,21 @@ impl PolyGraph {
             let original_position = self.positions[&v];
             let mut new_face = Face::default();
             // For every face which contains the vertex
-            for i in (0..self.faces.len())
+            for i in (0..self.cycles.len())
                 .into_iter()
-                .filter(|&i| self.faces[i].containz(&v))
+                .filter(|&i| self.cycles[i].containz(&v))
                 .collect::<Vec<usize>>()
             {
                 // Create a new vertex
                 let u = self.insert();
                 // Replace it in the face
-                self.faces[i].replace(v, u);
+                self.cycles[i].replace(v, u);
                 // Now replace
-                let ui = self.faces[i].iter().position(|&x| x == u).unwrap();
-                let flen = self.faces[i].len();
+                let ui = self.cycles[i].iter().position(|&x| x == u).unwrap();
+                let flen = self.cycles[i].len();
                 // Find the values that came before and after in the face
-                let a = self.faces[i][(ui + flen - 1) % flen];
-                let b = self.faces[i][(ui + 1) % flen];
+                let a = self.cycles[i][(ui + flen - 1) % flen];
+                let b = self.cycles[i][(ui + 1) % flen];
                 // Remove existing edges which may no longer be accurate
                 if new_edges.remove(&(a, v).into()) {
                     println!("meoww: a {a}");
@@ -179,7 +179,7 @@ impl PolyGraph {
                 new_edges.insert((new_face[i], new_face[(i + 1) % new_face.len()]).into());
             }
             println!("new_face: {new_face:?}");
-            self.faces.push(new_face);
+            self.cycles.push(new_face);
             self.delete(v);
         }
 

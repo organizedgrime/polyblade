@@ -23,7 +23,7 @@ pub struct PolyGraph {
 
     /// [Derived Properties]
     /// Faces
-    pub faces: Vec<Face>,
+    pub cycles: Vec<Face>,
     /// Distances between all points
     pub dist: HashMap<Edge, usize>,
 
@@ -51,7 +51,7 @@ impl PolyGraph {
             ..Default::default()
         };
         poly.pst();
-        poly.faces();
+        poly.find_cycles();
         poly
     }
 
@@ -66,7 +66,7 @@ impl PolyGraph {
         }
 
         poly.pst();
-        poly.faces();
+        poly.find_cycles();
         poly
     }
 
@@ -102,8 +102,8 @@ impl PolyGraph {
             .filter(|e| !e.contains(v))
             .collect();
 
-        self.faces = self
-            .faces
+        self.cycles = self
+            .cycles
             .clone()
             .into_iter()
             .map(|face| face.into_iter().filter(|&u| u != v).collect())
@@ -132,7 +132,7 @@ impl PolyGraph {
     }
 
     /// All faces
-    pub fn faces(&mut self) {
+    pub fn find_cycles(&mut self) {
         let mut triplets = Vec::<Face>::new();
         let mut cycles = HashSet::<Face>::new();
 
@@ -174,7 +174,7 @@ impl PolyGraph {
             }
         }
 
-        self.faces = cycles.into_iter().collect();
+        self.cycles = cycles.into_iter().collect();
     }
 
     pub fn pst(&mut self) {
@@ -301,7 +301,7 @@ impl Display for PolyGraph {
             adjacents
                 .iter()
                 .fold(String::new(), |acc, e| format!("{e}, {acc}")),
-            self.faces.iter().fold(String::new(), |acc, f| format!(
+            self.cycles.iter().fold(String::new(), |acc, f| format!(
                 "[{}], {acc}",
                 f.iter().fold(String::new(), |acc, x| format!("{x}, {acc}"))
             ))
@@ -449,11 +449,11 @@ mod test {
         graph.connect((2, 3));
 
         graph.pst();
-        assert_eq!(graph.faces.len(), 0);
+        assert_eq!(graph.cycles.len(), 0);
 
         graph.connect((2, 0));
         graph.pst();
-        graph.faces();
-        assert_eq!(graph.faces, vec![Face::new(vec![0, 1, 2])]);
+        graph.find_cycles();
+        assert_eq!(graph.cycles, vec![Face::new(vec![0, 1, 2])]);
     }
 }

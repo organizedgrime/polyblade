@@ -57,7 +57,7 @@ pub struct Descriptor {
 impl From<&PolyGraph> for Descriptor {
     fn from(value: &PolyGraph) -> Self {
         let mut vertex_triangle_count = 0;
-        for face in value.faces.iter() {
+        for face in value.cycles.iter() {
             match face.len() {
                 3 => {
                     vertex_triangle_count += 3;
