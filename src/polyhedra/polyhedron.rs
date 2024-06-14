@@ -4,7 +4,7 @@ use super::*;
 use glam::{vec3, Vec3};
 use std::collections::{HashMap, HashSet};
 
-const TICK_SPEED: f32 = 400.0;
+const TICK_SPEED: f32 = 600.0;
 
 // Operations
 impl PolyGraph {
@@ -143,15 +143,22 @@ impl PolyGraph {
         let mut vertices = Vec::new();
         let barycentric = [Vec3::X, Vec3::Y, Vec3::Z];
 
-        let color_indices = self.faces.iter().fold(HashMap::new(), |mut acc, f| {
-            if !acc.contains_key(&f.len()) {
-                acc.insert(f.len(), acc.len());
+        let mut polygon_sizes: Vec<usize> = self.faces.iter().fold(Vec::new(), |mut acc, f| {
+            if !acc.contains(&f.len()) {
+                acc.push(f.len());
             }
             acc
         });
 
+        polygon_sizes.sort();
+
         for i in 0..self.faces.len() {
-            let color = Self::poly_color(color_indices.get(&self.faces[i].len()).unwrap());
+            let color_index = polygon_sizes
+                .iter()
+                .position(|&x| x == self.faces[i].len())
+                .unwrap();
+
+            let color = Self::poly_color(polygon_sizes.get(color_index).unwrap());
             let sides = self.face_sides_buffer(i);
             let positions = self.face_triangle_positions(i);
 

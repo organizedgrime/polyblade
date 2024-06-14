@@ -108,6 +108,12 @@ impl PolyGraph {
         new_edges
     }
 
+    /*
+    pub fn sorted_faces(&self, v: VertexId) -> Vec<usize> {
+        let edge = self.adjacents.iter().find(|e| e.contains(v));
+    }
+    */
+
     /// `t` truncate
     pub fn truncate(&mut self) -> HashSet<Edge> {
         let mut new_edges = HashSet::new();
@@ -171,8 +177,13 @@ impl PolyGraph {
                 let a = self.faces[i][(ui + flen - 1) % flen];
                 let b = self.faces[i][(ui + 1) % flen];
                 // Remove existing edges which may no longer be accurate
-                new_edges.remove(&(a, v).into());
-                new_edges.remove(&(b, v).into());
+                if new_edges.remove(&(a, v).into()) {
+                    println!("meoww: a {a}");
+                }
+                if new_edges.remove(&(b, v).into()) {
+                    println!("meoww: b {b}");
+                }
+                println!("nya");
                 // Add the new edges which are so yass
                 new_edges.insert((a, u).into());
                 new_edges.insert((b, u).into());
@@ -185,6 +196,7 @@ impl PolyGraph {
             for i in 0..new_face.len() {
                 new_edges.insert((new_face[i], new_face[(i + 1) % new_face.len()]).into());
             }
+            println!("new_face: {new_face:?}");
             self.faces.push(new_face);
             self.delete(v);
         }

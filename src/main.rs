@@ -101,6 +101,7 @@ impl Application for Polyblade {
                     Expand => {
                         self.scene.polyhedron.expand();
                         self.scene.polyhedron.pst();
+                        self.scene.polyhedron.faces();
                     }
                     _ => {
                         self.show_alert = true;
