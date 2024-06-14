@@ -7,7 +7,7 @@ use std::{
     vec::IntoIter,
 };
 
-#[derive(Debug, Clone, PartialOrd, Ord)]
+#[derive(Debug, Default, Clone, PartialOrd, Ord)]
 pub struct Face(Vec<VertexId>);
 
 impl Face {

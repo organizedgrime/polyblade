@@ -109,6 +109,27 @@ impl PolyGraph {
         self.speeds.remove(&v);
     }
 
+    pub fn replace(&mut self, v: VertexId, u: VertexId) {
+        self.vertices.remove(&v);
+
+        self.adjacents = self
+            .adjacents
+            .clone()
+            .into_iter()
+            .filter(|e| !e.contains(v))
+            .collect();
+
+        self.faces = self
+            .faces
+            .clone()
+            .into_iter()
+            .map(|face| face.into_iter().filter(|&u| u != v).collect())
+            .collect();
+
+        self.positions.remove(&v);
+        self.speeds.remove(&v);
+    }
+
     /// Edges of a vertex
     pub fn edges(&self, v: VertexId) -> Vec<Edge> {
         self.adjacents

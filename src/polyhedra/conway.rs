@@ -149,10 +149,47 @@ impl PolyGraph {
 
     /// `e` = `aa`
     pub fn expand(&mut self) {
-        self.split_vertex_crude(0);
+        let mut new_edges = HashSet::<Edge>::new();
+        // For every vertex
         for v in self.vertices.clone() {
-            //self.split_vertex_crude(v);
+            let original_position = self.positions[&v];
+            let mut new_face = Face::default();
+            // For every face which contains the vertex
+            for i in (0..self.faces.len())
+                .into_iter()
+                .filter(|&i| self.faces[i].containz(&v))
+                .collect::<Vec<usize>>()
+            {
+                // Create a new vertex
+                let u = self.insert();
+                // Replace it in the face
+                self.faces[i].replace(v, u);
+                // Now replace
+                let ui = self.faces[i].iter().position(|&x| x == u).unwrap();
+                let flen = self.faces[i].len();
+                // Find the values that came before and after in the face
+                let a = self.faces[i][(ui + flen - 1) % flen];
+                let b = self.faces[i][(ui + 1) % flen];
+                // Remove existing edges which may no longer be accurate
+                new_edges.remove(&(a, v).into());
+                new_edges.remove(&(b, v).into());
+                // Add the new edges which are so yass
+                new_edges.insert((a, u).into());
+                new_edges.insert((b, u).into());
+                // Add u to the new face being formed
+                new_face.push(u);
+                // pos
+                self.positions.insert(u, original_position);
+            }
+
+            for i in 0..new_face.len() {
+                new_edges.insert((new_face[i], new_face[(i + 1) % new_face.len()]).into());
+            }
+            self.faces.push(new_face);
+            self.delete(v);
         }
+
+        self.adjacents = new_edges;
 
         /*
         self.name.remove(0);
