@@ -15,8 +15,8 @@ impl PolyGraph {
             f.replace(e.v(), e.u());
         }
 
-        self.adjacents = self
-            .adjacents
+        self.adj_v = self
+            .adj_v
             .clone()
             .into_iter()
             .map(|f| {
@@ -32,28 +32,10 @@ impl PolyGraph {
         self.delete(e.v());
     }
 
+    #[allow(dead_code)]
     pub fn contract_edges(&mut self, edges: HashSet<Edge>) {
         for e in edges.into_iter() {
             self.contract_edge(e);
-        }
-    }
-
-    pub fn split_vertex_crude(&mut self, v: VertexId) {
-        // Remove the vertex
-        let relevant_face_indices = (0..self.faces.len())
-            .into_iter()
-            .filter(|&i| self.faces[i].containz(&v))
-            .collect::<Vec<usize>>();
-
-        let mut new_face = Vec::new();
-        for i in relevant_face_indices {
-            let u = self.insert();
-            self.faces[i].replace(v, u);
-            new_face.push(u);
-        }
-
-        for i in 0..new_face.len() {
-            self.connect((new_face[i], new_face[(i + 1) % new_face.len()]));
         }
     }
 
@@ -129,7 +111,7 @@ impl PolyGraph {
         // Truncate
         let new_edges = self.truncate();
         let original_edges: HashSet<Edge> = self
-            .adjacents
+            .adj_v
             .clone()
             .difference(&new_edges)
             .map(Edge::clone)
@@ -201,7 +183,7 @@ impl PolyGraph {
             self.delete(v);
         }
 
-        self.adjacents = new_edges;
+        self.adj_v = new_edges;
 
         /*
         self.name.remove(0);
@@ -240,25 +222,25 @@ mod test {
     fn contract_edge() {
         let mut graph = PolyGraph::cube();
         assert_eq!(graph.vertices.len(), 8);
-        assert_eq!(graph.adjacents.len(), 12);
+        assert_eq!(graph.adj_v.len(), 12);
 
         graph.contract_edge((0, 1));
         graph.pst();
 
         assert_eq!(graph.vertices.len(), 7);
-        assert_eq!(graph.adjacents.len(), 11);
+        assert_eq!(graph.adj_v.len(), 11);
     }
 
     #[test]
     fn split_vertex() {
         let mut graph = PolyGraph::cube();
         assert_eq!(graph.vertices.len(), 8);
-        assert_eq!(graph.adjacents.len(), 12);
+        assert_eq!(graph.adj_v.len(), 12);
 
         graph.split_vertex_face(0);
         graph.pst();
 
         assert_eq!(graph.vertices.len(), 10);
-        assert_eq!(graph.adjacents.len(), 15);
+        assert_eq!(graph.adj_v.len(), 15);
     }
 }

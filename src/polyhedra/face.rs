@@ -43,6 +43,7 @@ impl Face {
         }
     }
 
+    #[allow(dead_code)]
     pub fn is_empty(&self) -> bool {
         self.0.is_empty()
     }
@@ -65,12 +66,6 @@ impl Face {
 
     pub fn push(&mut self, value: VertexId) {
         self.0.push(value)
-    }
-
-    pub fn insert_at_value(&mut self, old: VertexId, new: VertexId) {
-        if let Some(index) = self.0.iter().find(|&v| *v == old) {
-            self.insert(*index, new);
-        }
     }
 }
 

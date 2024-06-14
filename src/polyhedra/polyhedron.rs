@@ -2,7 +2,7 @@ use crate::scene::Vertex;
 
 use super::*;
 use glam::{vec3, Vec3};
-use std::collections::{HashMap, HashSet};
+use std::collections::HashSet;
 
 const TICK_SPEED: f32 = 600.0;
 
@@ -19,7 +19,7 @@ impl PolyGraph {
                         let v_position = self.positions[v];
                         let u_position = self.positions[u];
                         let l = v_position.distance(u_position);
-                        let f = (self.edge_length / TICK_SPEED * 3.0) / l;
+                        let f = (self.edge_length / TICK_SPEED * 4.5) / l;
                         *self.positions.get_mut(v).unwrap() = v_position.lerp(u_position, f);
                         *self.positions.get_mut(u).unwrap() = u_position.lerp(v_position, f);
                     } else if self.dist.contains_key(&e) {

@@ -6,6 +6,7 @@ use std::{
     fmt::Display,
 };
 type VertMap<T> = HashMap<VertexId, T>;
+pub type VertexId = usize;
 
 #[derive(Debug, Clone, Default)]
 pub struct PolyGraph {
@@ -15,7 +16,10 @@ pub struct PolyGraph {
     /// [Actual Graph]
     pub vertices: HashSet<VertexId>,
     /// Vertices that are adjacent
-    pub adjacents: HashSet<Edge>,
+    pub adj_v: HashSet<Edge>,
+
+    /// Adjacency of faces
+    pub adj_f: HashSet<Edge>,
 
     /// [Derived Properties]
     /// Faces
@@ -69,13 +73,13 @@ impl PolyGraph {
     pub fn connect(&mut self, e: impl Into<Edge>) {
         let e = e.into();
         if e.v() != e.u() {
-            self.adjacents.insert(e);
+            self.adj_v.insert(e);
         }
     }
 
     #[allow(dead_code)]
     pub fn disconnect(&mut self, e: impl Into<Edge>) {
-        self.adjacents.remove(&e.into());
+        self.adj_v.remove(&e.into());
     }
 
     pub fn insert(&mut self) -> VertexId {
@@ -91,29 +95,8 @@ impl PolyGraph {
     pub fn delete(&mut self, v: VertexId) {
         self.vertices.remove(&v);
 
-        self.adjacents = self
-            .adjacents
-            .clone()
-            .into_iter()
-            .filter(|e| !e.contains(v))
-            .collect();
-
-        self.faces = self
-            .faces
-            .clone()
-            .into_iter()
-            .map(|face| face.into_iter().filter(|&u| u != v).collect())
-            .collect();
-
-        self.positions.remove(&v);
-        self.speeds.remove(&v);
-    }
-
-    pub fn replace(&mut self, v: VertexId, u: VertexId) {
-        self.vertices.remove(&v);
-
-        self.adjacents = self
-            .adjacents
+        self.adj_v = self
+            .adj_v
             .clone()
             .into_iter()
             .filter(|e| !e.contains(v))
@@ -132,7 +115,7 @@ impl PolyGraph {
 
     /// Edges of a vertex
     pub fn edges(&self, v: VertexId) -> Vec<Edge> {
-        self.adjacents
+        self.adj_v
             .iter()
             .filter_map(|e| if e.other(v).is_some() { Some(*e) } else { None })
             .collect()
@@ -140,12 +123,12 @@ impl PolyGraph {
 
     /// Number of faces
     pub fn face_count(&mut self) -> i64 {
-        2 + self.adjacents.len() as i64 - self.vertices.len() as i64
+        2 + self.adj_v.len() as i64 - self.vertices.len() as i64
     }
 
     // Vertices that are connected to a given vertex
     pub fn connections(&self, v: VertexId) -> HashSet<VertexId> {
-        self.adjacents.iter().filter_map(|e| e.other(v)).collect()
+        self.adj_v.iter().filter_map(|e| e.other(v)).collect()
     }
 
     /// All faces
@@ -160,7 +143,7 @@ impl PolyGraph {
                 for &y in adj.iter() {
                     if x != y && u < x && x < y {
                         let new_face = Face::new(vec![x, u, y]);
-                        if self.adjacents.contains(&(x, y).into()) {
+                        if self.adj_v.contains(&(x, y).into()) {
                             cycles.insert(new_face);
                         } else {
                             triplets.push(new_face);
@@ -195,7 +178,7 @@ impl PolyGraph {
     }
 
     pub fn pst(&mut self) {
-        if self.adjacents.is_empty() {
+        if self.adj_v.is_empty() {
             return;
         }
 
@@ -308,7 +291,7 @@ impl Display for PolyGraph {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let mut vertices = self.vertices.iter().collect::<Vec<_>>();
         vertices.sort();
-        let mut adjacents = self.adjacents.clone().into_iter().collect::<Vec<_>>();
+        let mut adjacents = self.adj_v.clone().into_iter().collect::<Vec<_>>();
         adjacents.sort();
 
         f.write_fmt(format_args!(
@@ -343,7 +326,7 @@ impl PolyGraph {
                                 *u,
                                 if u == v {
                                     0
-                                } else if self.adjacents.contains(&(v, u).into()) {
+                                } else if self.adj_v.contains(&(v, u).into()) {
                                     1
                                 } else {
                                     u32::MAX

@@ -1,1 +1,0 @@
-pub type VertexId = usize;
