@@ -188,27 +188,57 @@ impl PolyGraph {
             self.delete(v);
         }
 
+        let mut solved_edges = HashSet::new();
+
         // For every triangle / nf edge
         for a in face_edges.iter() {
             // find the edge which is parallel to it
             for b in face_edges.iter() {
-                if new_edges.contains(&(a.v(), b.v()).into())
-                    && new_edges.contains(&(a.u(), b.u()).into())
-                {
-                    let meow = Face::new(vec![a.u(), b.u(), b.v(), a.v()]);
-                    println!("meow for real: {meow:?}");
-                    if !self.cycles.contains(&meow) {
-                        self.cycles.push(meow);
-                    }
-                }
+                if !solved_edges.contains(a) && !solved_edges.contains(b) {
+                    if new_edges.contains(&(a.v(), b.v()).into())
+                        && new_edges.contains(&(a.u(), b.u()).into())
+                    {
+                        let meow = Face::new(vec![b.u(), a.u(), a.v(), b.v()]);
 
-                if new_edges.contains(&(a.u(), b.v()).into())
-                    && new_edges.contains(&(a.v(), b.u()).into())
-                {
-                    let meow = Face::new(vec![a.u(), b.v(), b.u(), a.v()]);
-                    println!("meow for real: {meow:?}");
-                    if !self.cycles.contains(&meow) {
-                        self.cycles.push(meow);
+                        /*
+                        new_edges.insert((a.u(), b.v()).into());
+                        let m = Face::new(vec![a.u(), b.u(), a.v()]);
+                        let n = Face::new(vec![b.u(), b.v(), a.v()]);
+                        if !self.cycles.contains(&m) {
+                            self.cycles.push(m);
+                        }
+                        if !self.cycles.contains(&n) {
+                            self.cycles.push(n);
+                        }
+                        */
+                        if !self.cycles.contains(&meow) {
+                            self.cycles.push(meow);
+                        }
+
+                        solved_edges.insert(a);
+                        solved_edges.insert(b);
+                    }
+
+                    if new_edges.contains(&(a.u(), b.v()).into())
+                        && new_edges.contains(&(a.v(), b.u()).into())
+                    {
+                        let meow = Face::new(vec![a.u(), b.v(), b.u(), a.v()]);
+                        /*
+                        new_edges.insert((a.u(), b.u()).into());
+                        let m = Face::new(vec![a.u(), b.v(), a.v()]);
+                        let n = Face::new(vec![b.v(), b.u(), a.v()]);
+                        if !self.cycles.contains(&m) {
+                            self.cycles.push(m);
+                        }
+                        if !self.cycles.contains(&n) {
+                            self.cycles.push(n);
+                        }
+                        */
+                        if !self.cycles.contains(&meow) {
+                            self.cycles.push(meow);
+                        }
+                        solved_edges.insert(a);
+                        solved_edges.insert(b);
                     }
                 }
             }
