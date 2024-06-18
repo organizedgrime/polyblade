@@ -52,7 +52,7 @@ impl Application for Polyblade {
 
     fn update(&mut self, message: Self::Message) -> Command<Self::Message> {
         use Message::*;
-        match message.clone() {
+        match message {
             Tick(time) => {
                 self.scene.update(time - self.start);
             }
@@ -63,14 +63,14 @@ impl Application for Polyblade {
                 self.show_alert = false;
             }
             Preset(preset) => self.scene.polyhedron.change_shape(preset),
-            Conway(conway) => self
-                .scene
-                .polyhedron
-                .transactions
-                .insert(0, Transaction::Conway(conway)),
+            Conway(conway) => {
+                self.scene
+                    .polyhedron
+                    .transactions
+                    .push(Transaction::Conway(conway));
+                println!("t: {:?}", self.scene.polyhedron.transactions);
+            }
         }
-
-        if let Message::Conway(_) = message {}
 
         Command::none()
     }

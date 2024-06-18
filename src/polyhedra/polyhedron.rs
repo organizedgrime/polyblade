@@ -16,7 +16,7 @@ impl PolyGraph {
                 if u != v {
                     let e: Edge = (v, u).into();
                     if let Some(Transaction::Contraction(contracting_edges)) =
-                        self.transactions.last()
+                        self.transactions.first()
                     {
                         if contracting_edges.contains(&e) {
                             let v_position = self.positions[v];
@@ -181,10 +181,11 @@ impl PolyGraph {
     }
 
     pub fn process_transactions(&mut self) {
-        if let Some(transaction) = self.transactions.last().cloned() {
+        if let Some(transaction) = self.transactions.first().cloned() {
             use Transaction::*;
             match transaction {
                 Contraction(edges) => {
+                    println!("processing contraction!");
                     if edges.iter().fold(true, |acc, e| {
                         if self.positions.contains_key(&e.v())
                             && self.positions.contains_key(&e.u())
@@ -199,10 +200,11 @@ impl PolyGraph {
                             self.contract_edge(e);
                         }
                         self.pst();
-                        self.transactions.pop();
+                        self.transactions.remove(0);
                     }
                 }
                 Conway(conway) => {
+                    println!("processing conway!");
                     use ConwayMessage::*;
                     match conway {
                         Dual => self.dual(),
@@ -218,7 +220,7 @@ impl PolyGraph {
                         _ => {}
                     }
                     self.pst();
-                    self.transactions.pop();
+                    self.transactions.remove(0);
                 }
                 None => {}
             }

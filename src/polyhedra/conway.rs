@@ -118,7 +118,7 @@ impl PolyGraph {
             .collect();
 
         self.transactions
-            .insert(0, Transaction::Contraction(original_edges));
+            .insert(1, Transaction::Contraction(original_edges));
         /*
         // Contract original edge set
         self.contract_edges(original_edges);
