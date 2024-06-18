@@ -34,9 +34,34 @@ impl PolyGraph {
 
     #[allow(dead_code)]
     pub fn contract_edges(&mut self, edges: HashSet<Edge>) {
+        let mut map = HashMap::<VertexId, VertexId>::new();
         for e in edges.into_iter() {
-            self.contract_edge(e);
+            let u = e.u();
+            let v = e.v();
+            let e = match (map.get(&u), map.get(&v)) {
+                (None, None) => e,
+                (None, Some(v)) => (&u, v).into(),
+                (Some(u), None) => (u, &v).into(),
+                (Some(u), Some(v)) => (u, v).into(),
+            };
+            if e.v() != e.u() {
+                self.contract_edge(e);
+                map.insert(e.v(), e.u());
+            }
         }
+
+        self.cycles = self
+            .cycles
+            .clone()
+            .into_iter()
+            .filter(|c| c.len() > 2)
+            .collect();
+        for i in 0..self.cycles.len() {
+            println!("{:?}", self.cycles[i]);
+        }
+        println!("edges: {:?}", self.adj_v.len());
+        println!("vertices: {:?}", self.vertices.len());
+        println!("faces: {:?}", self.cycles.len());
     }
 
     pub fn split_vertex_face(&mut self, v: VertexId) -> HashSet<Edge> {
@@ -251,7 +276,7 @@ impl PolyGraph {
     pub fn dual(&mut self) {
         let contractions = self.expand();
         self.transactions
-            .insert(0, Transaction::Contraction(contractions));
+            .insert(1, Transaction::Contraction(contractions));
     }
 
     /*

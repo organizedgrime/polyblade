@@ -196,10 +196,9 @@ impl PolyGraph {
                         }
                     }) {
                         // Contract them in the graph
-                        for e in edges.into_iter() {
-                            self.contract_edge(e);
-                        }
+                        self.contract_edges(edges);
                         self.pst();
+                        //self.find_cycles();
                         self.transactions.remove(0);
                     }
                 }
