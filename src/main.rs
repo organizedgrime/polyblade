@@ -2,9 +2,11 @@ mod message;
 mod polyhedra;
 mod scene;
 
+use std::collections::VecDeque;
+
 use iced_aw::{card, modal};
 use message::*;
-use polyhedra::PolyGraph;
+use polyhedra::{PolyGraph, Transaction};
 use scene::Scene;
 
 use iced::executor;
@@ -60,54 +62,12 @@ impl Application for Polyblade {
             CloseAlert => {
                 self.show_alert = false;
             }
-            Preset(preset) => {
-                use PresetMessage::*;
-                match preset {
-                    Tetrahedron => {
-                        self.scene.polyhedron = PolyGraph::tetrahedron();
-                    }
-                    Cube => {
-                        self.scene.polyhedron = PolyGraph::cube();
-                    }
-                    Octahedron => {
-                        self.scene.polyhedron = PolyGraph::octahedron();
-                    }
-                    Dodecahedron => {
-                        self.scene.polyhedron = PolyGraph::dodecahedron();
-                    }
-                    Icosahedron => {
-                        self.scene.polyhedron = PolyGraph::icosahedron();
-                    }
-                    _ => {
-                        self.show_alert = true;
-                    }
-                }
-            }
-            Conway(conway) => {
-                use ConwayMessage::*;
-                match conway {
-                    Truncate => {
-                        self.scene.polyhedron.truncate();
-                        self.scene.polyhedron.pst();
-                    }
-                    Ambo => {
-                        self.scene.polyhedron.ambo();
-                        //self.scene.polyhedron.pst();
-                    }
-                    Bevel => {
-                        self.scene.polyhedron.bevel();
-                        self.scene.polyhedron.pst();
-                    }
-                    Expand => {
-                        self.scene.polyhedron.expand();
-                        self.scene.polyhedron.pst();
-                        //self.scene.polyhedron.find_cycles();
-                    }
-                    _ => {
-                        self.show_alert = true;
-                    }
-                }
-            }
+            Preset(preset) => self.scene.polyhedron.change_shape(preset),
+            Conway(conway) => self
+                .scene
+                .polyhedron
+                .transactions
+                .insert(0, Transaction::Conway(conway)),
         }
 
         if let Message::Conway(_) = message {}

@@ -2,6 +2,8 @@ use std::time::Instant;
 
 use strum_macros::{Display, EnumIter};
 
+use crate::polyhedra::PolyGraph;
+
 #[derive(Debug, Clone)]
 pub enum Message {
     Tick(Instant),
@@ -44,3 +46,38 @@ pub enum ConwayMessage {
     Meta,
     Bevel,
 }
+
+/*
+impl ConwayMessage {
+    pub fn apply(&self, graph: &mut PolyGraph) -> Transaction {
+        use ConwayMessage::*;
+        match self {
+            Dual => {
+                graph.dual();
+                None
+            }
+            Truncate => {
+                graph.truncate();
+                graph.pst();
+                None
+            }
+            Ambo => {
+                graph.ambo();
+                //graph.pst();
+                None
+            }
+            Bevel => {
+                graph.bevel();
+                graph.pst();
+                None
+            }
+            Expand => {
+                graph.expand();
+                graph.pst();
+                None
+            }
+            _ => None,
+        }
+    }
+}
+*/

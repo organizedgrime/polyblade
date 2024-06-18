@@ -33,7 +33,7 @@ pub struct PolyGraph {
     /// Speeds
     pub speeds: VertMap<Vec3>,
     /// Edges in the process of contracting visually
-    pub contracting_edges: HashSet<Edge>,
+    pub transactions: Vec<Transaction>,
     /// Edge length
     pub edge_length: f32,
 }

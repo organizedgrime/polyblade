@@ -117,7 +117,8 @@ impl PolyGraph {
             .map(Edge::clone)
             .collect();
 
-        self.contracting_edges.extend(original_edges);
+        self.transactions
+            .insert(0, Transaction::Contraction(original_edges));
         /*
         // Contract original edge set
         self.contract_edges(original_edges);
@@ -136,7 +137,7 @@ impl PolyGraph {
     }
 
     /// `e` = `aa`
-    pub fn expand(&mut self) {
+    pub fn expand(&mut self) -> HashSet<Edge> {
         let mut quadrangles = HashMap::<Edge, Vec<VertexId>>::new();
         let mut new_edges = HashSet::<Edge>::new();
         let mut face_edges = HashSet::<Edge>::new();
@@ -161,15 +162,8 @@ impl PolyGraph {
                 let a = self.cycles[i][(ui + flen - 1) % flen];
                 let b = self.cycles[i][(ui + 1) % flen];
                 // Remove existing edges which may no longer be accurate
-                if new_edges.remove(&(a, v).into()) {
-                    println!("{v} -> {u}");
-                    println!("meoww: {:?}", vec![a, u]);
-                }
-                if new_edges.remove(&(b, v).into()) {
-                    println!("{v} -> {u}");
-                    println!("meoww: {:?}", vec![b, u]);
-                }
-                println!("nya : {a},{u} , {b},{u}");
+                new_edges.remove(&(a, v).into());
+                new_edges.remove(&(b, v).into());
                 // Add the new edges which are so yass
                 new_edges.insert((a, u).into());
                 new_edges.insert((b, u).into());
@@ -182,8 +176,6 @@ impl PolyGraph {
             for i in 0..new_face.len() {
                 face_edges.insert((new_face[i], new_face[(i + 1) % new_face.len()]).into());
             }
-            println!("new_face: {new_face:?}");
-            println!("quads: {quadrangles:?}");
             self.cycles.push(new_face);
             self.delete(v);
         }
@@ -244,7 +236,7 @@ impl PolyGraph {
             }
         }
         self.adj_v = HashSet::new();
-        self.adj_v.extend(new_edges);
+        self.adj_v.extend(new_edges.clone());
         self.adj_v.extend(face_edges);
 
         //self.adj_v = new_edges;
@@ -253,6 +245,13 @@ impl PolyGraph {
         self.name.remove(0);
         self.name.insert(0, 'e');
         */
+        new_edges
+    }
+
+    pub fn dual(&mut self) {
+        let contractions = self.expand();
+        self.transactions
+            .insert(0, Transaction::Contraction(contractions));
     }
 
     /*

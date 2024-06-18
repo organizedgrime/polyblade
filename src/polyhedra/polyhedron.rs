@@ -1,4 +1,4 @@
-use crate::scene::Vertex;
+use crate::{scene::Vertex, ConwayMessage};
 
 use super::*;
 use glam::{vec3, Vec3};
@@ -15,13 +15,18 @@ impl PolyGraph {
             for u in self.vertices.iter() {
                 if u != v {
                     let e: Edge = (v, u).into();
-                    if self.contracting_edges.contains(&e) {
-                        let v_position = self.positions[v];
-                        let u_position = self.positions[u];
-                        let l = v_position.distance(u_position);
-                        let f = (self.edge_length / TICK_SPEED * 4.5) / l;
-                        *self.positions.get_mut(v).unwrap() = v_position.lerp(u_position, f);
-                        *self.positions.get_mut(u).unwrap() = u_position.lerp(v_position, f);
+                    if let Some(Transaction::Contraction(contracting_edges)) =
+                        self.transactions.last()
+                    {
+                        if contracting_edges.contains(&e) {
+                            let v_position = self.positions[v];
+                            let u_position = self.positions[u];
+                            let l = v_position.distance(u_position);
+                            let f = (self.edge_length / TICK_SPEED * 4.5) / l;
+                            *self.positions.get_mut(v).unwrap() = v_position.lerp(u_position, f);
+                            *self.positions.get_mut(u).unwrap() = u_position.lerp(v_position, f);
+                            continue;
+                        }
                     } else if self.dist.contains_key(&e) {
                         let d = self.dist[&e] as f32;
                         let l = l_diam * (d / diam);
@@ -69,7 +74,7 @@ impl PolyGraph {
     pub fn update(&mut self) {
         self.center();
         self.resize();
-        self.animate_contraction();
+        self.process_transactions();
         self.apply_spring_forces();
     }
 
@@ -175,25 +180,48 @@ impl PolyGraph {
         vertices
     }
 
-    pub fn animate_contraction(&mut self) {
-        // If all edges are contracted visually
-        if !self.contracting_edges.is_empty()
-            && self.contracting_edges.iter().fold(true, |acc, e| {
-                if self.positions.contains_key(&e.v()) && self.positions.contains_key(&e.u()) {
-                    acc && self.positions[&e.v()].distance(self.positions[&e.u()]) < 0.08
-                } else {
-                    acc
+    pub fn process_transactions(&mut self) {
+        if let Some(transaction) = self.transactions.last().cloned() {
+            use Transaction::*;
+            match transaction {
+                Contraction(edges) => {
+                    if edges.iter().fold(true, |acc, e| {
+                        if self.positions.contains_key(&e.v())
+                            && self.positions.contains_key(&e.u())
+                        {
+                            acc && self.positions[&e.v()].distance(self.positions[&e.u()]) < 0.08
+                        } else {
+                            acc
+                        }
+                    }) {
+                        // Contract them in the graph
+                        for e in edges.into_iter() {
+                            self.contract_edge(e);
+                        }
+                        self.pst();
+                        self.transactions.pop();
+                    }
                 }
-            })
-        {
-            // Contract them in the graph
-            for e in self.contracting_edges.clone() {
-                self.contract_edge(e);
+                Conway(conway) => {
+                    use ConwayMessage::*;
+                    match conway {
+                        Dual => self.dual(),
+                        Ambo => self.ambo(),
+                        Truncate => {
+                            self.truncate();
+                        }
+                        Expand => {
+                            self.expand();
+                        }
+                        Snub => {} //self.snub(),
+                        Bevel => self.bevel(),
+                        _ => {}
+                    }
+                    self.pst();
+                    self.transactions.pop();
+                }
+                None => {}
             }
-            self.contracting_edges = HashSet::new();
-            self.pst();
-            self.name.truncate(self.name.len() - 1);
-            self.name += "a";
         }
     }
 }
