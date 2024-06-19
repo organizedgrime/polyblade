@@ -2,11 +2,9 @@ mod message;
 mod polyhedra;
 mod scene;
 
-use std::collections::VecDeque;
-
 use iced_aw::{card, modal};
 use message::*;
-use polyhedra::{PolyGraph, Transaction};
+use polyhedra::Transaction;
 use scene::Scene;
 
 use iced::executor;
@@ -68,7 +66,6 @@ impl Application for Polyblade {
                     .polyhedron
                     .transactions
                     .push(Transaction::Conway(conway));
-                println!("t: {:?}", self.scene.polyhedron.transactions);
             }
         }
 

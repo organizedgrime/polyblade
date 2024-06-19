@@ -6,5 +6,6 @@ use std::collections::HashSet;
 pub enum Transaction {
     Contraction(HashSet<Edge>),
     Conway(ConwayMessage),
+    #[allow(dead_code)]
     None,
 }

@@ -2,7 +2,6 @@ use crate::{scene::Vertex, ConwayMessage};
 
 use super::*;
 use glam::{vec3, Vec3};
-use std::collections::HashSet;
 
 const TICK_SPEED: f32 = 600.0;
 
@@ -185,7 +184,6 @@ impl PolyGraph {
             use Transaction::*;
             match transaction {
                 Contraction(edges) => {
-                    println!("processing contraction!");
                     if edges.iter().fold(true, |acc, e| {
                         if self.positions.contains_key(&e.v())
                             && self.positions.contains_key(&e.u())

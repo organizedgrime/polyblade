@@ -55,12 +55,6 @@ impl PolyGraph {
             .into_iter()
             .filter(|c| c.len() > 2)
             .collect();
-        for i in 0..self.cycles.len() {
-            println!("{:?}", self.cycles[i]);
-        }
-        println!("edges: {:?}", self.adj_v.len());
-        println!("vertices: {:?}", self.vertices.len());
-        println!("faces: {:?}", self.cycles.len());
     }
 
     pub fn split_vertex(&mut self, v: VertexId) -> HashSet<Edge> {
@@ -209,37 +203,18 @@ impl PolyGraph {
                 // Find the values that came before and after in the face
                 let a = self.cycles[i][(ui + flen - 1) % flen];
                 let b = self.cycles[i][(ui + 1) % flen];
-                //transformations.insert
                 // Remove existing edges which may no longer be accurate
                 new_edges.remove(&(a, v).into());
                 new_edges.remove(&(b, v).into());
                 // Add the new edges which are so yass
                 new_edges.insert((a, u).into());
                 new_edges.insert((b, u).into());
-                //println!("{v} became {u}");
                 // Add u to the new face being formed
                 new_face.push(u);
                 // pos
                 self.positions.insert(u, original_position);
             }
-
-            let relevant = (0..self.cycles.len()).collect::<Vec<usize>>();
-
-            for xxx in new_face.iter() {
-                for &i in relevant.iter() {
-                    // Now replace
-                    if let Some(ui) = self.cycles[i].iter().position(|&x| &x == xxx) {
-                        let flen = self.cycles[i].len();
-                        // Find the values that came before and after in the face
-                        let a = self.cycles[i][(ui + flen - 1) % flen];
-                        let b = self.cycles[i][(ui + 1) % flen];
-                        println!("ab: {a}; {b}");
-                    }
-                }
-            }
-
             for i in 0..new_face.len() {
-                //self.cycles[new_face[i],
                 face_edges.insert((new_face[i], new_face[(i + 1) % new_face.len()]).into());
             }
             self.cycles.push(new_face);

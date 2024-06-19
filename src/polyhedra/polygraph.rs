@@ -278,7 +278,7 @@ impl PolyGraph {
 
             if !removed {
                 self.dist = dist;
-                println!("failed");
+                println!("failed distance computation");
                 return;
             }
         }
