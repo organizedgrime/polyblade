@@ -144,7 +144,6 @@ impl PolyGraph {
 
     pub fn ordered_face_indices(&self, v: VertexId) -> Vec<usize> {
         let relevant = (0..self.cycles.len())
-            .into_iter()
             .filter(|&i| self.cycles[i].containz(&v))
             .collect::<Vec<usize>>();
 
@@ -159,12 +158,7 @@ impl PolyGraph {
             edges.insert((a, b).into(), i);
         }
 
-        let f: Face = edges
-            .keys()
-            .into_iter()
-            .cloned()
-            .collect::<HashSet<_>>()
-            .into();
+        let f: Face = edges.keys().cloned().collect::<HashSet<_>>().into();
 
         let mut ordered_face_indices = vec![];
         for i in 0..f.len() {
