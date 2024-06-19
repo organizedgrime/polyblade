@@ -6,6 +6,7 @@ use std::{
     fmt::Display,
 };
 type VertMap<T> = HashMap<VertexId, T>;
+pub type VertexId = usize;
 
 #[derive(Debug, Clone, Default)]
 pub struct PolyGraph {
@@ -15,11 +16,14 @@ pub struct PolyGraph {
     /// [Actual Graph]
     pub vertices: HashSet<VertexId>,
     /// Vertices that are adjacent
-    pub adjacents: HashSet<Edge>,
+    pub adj_v: HashSet<Edge>,
+
+    /// Adjacency of faces
+    pub adj_f: HashSet<Edge>,
 
     /// [Derived Properties]
     /// Faces
-    pub faces: Vec<Face>,
+    pub cycles: Vec<Face>,
     /// Distances between all points
     pub dist: HashMap<Edge, usize>,
 
@@ -29,7 +33,7 @@ pub struct PolyGraph {
     /// Speeds
     pub speeds: VertMap<Vec3>,
     /// Edges in the process of contracting visually
-    pub contracting_edges: HashSet<Edge>,
+    pub transactions: Vec<Transaction>,
     /// Edge length
     pub edge_length: f32,
 }
@@ -47,7 +51,7 @@ impl PolyGraph {
             ..Default::default()
         };
         poly.pst();
-        poly.faces();
+        poly.find_cycles();
         poly
     }
 
@@ -62,19 +66,20 @@ impl PolyGraph {
         }
 
         poly.pst();
-        poly.faces();
+        poly.find_cycles();
         poly
     }
 
     pub fn connect(&mut self, e: impl Into<Edge>) {
         let e = e.into();
         if e.v() != e.u() {
-            self.adjacents.insert(e);
+            self.adj_v.insert(e);
         }
     }
 
+    #[allow(dead_code)]
     pub fn disconnect(&mut self, e: impl Into<Edge>) {
-        self.adjacents.remove(&e.into());
+        self.adj_v.remove(&e.into());
     }
 
     pub fn insert(&mut self) -> VertexId {
@@ -90,15 +95,15 @@ impl PolyGraph {
     pub fn delete(&mut self, v: VertexId) {
         self.vertices.remove(&v);
 
-        self.adjacents = self
-            .adjacents
+        self.adj_v = self
+            .adj_v
             .clone()
             .into_iter()
             .filter(|e| !e.contains(v))
             .collect();
 
-        self.faces = self
-            .faces
+        self.cycles = self
+            .cycles
             .clone()
             .into_iter()
             .map(|face| face.into_iter().filter(|&u| u != v).collect())
@@ -110,7 +115,7 @@ impl PolyGraph {
 
     /// Edges of a vertex
     pub fn edges(&self, v: VertexId) -> Vec<Edge> {
-        self.adjacents
+        self.adj_v
             .iter()
             .filter_map(|e| if e.other(v).is_some() { Some(*e) } else { None })
             .collect()
@@ -118,16 +123,16 @@ impl PolyGraph {
 
     /// Number of faces
     pub fn face_count(&mut self) -> i64 {
-        2 + self.adjacents.len() as i64 - self.vertices.len() as i64
+        2 + self.adj_v.len() as i64 - self.vertices.len() as i64
     }
 
     // Vertices that are connected to a given vertex
     pub fn connections(&self, v: VertexId) -> HashSet<VertexId> {
-        self.adjacents.iter().filter_map(|e| e.other(v)).collect()
+        self.adj_v.iter().filter_map(|e| e.other(v)).collect()
     }
 
     /// All faces
-    pub fn faces(&mut self) {
+    pub fn find_cycles(&mut self) {
         let mut triplets = Vec::<Face>::new();
         let mut cycles = HashSet::<Face>::new();
 
@@ -138,7 +143,7 @@ impl PolyGraph {
                 for &y in adj.iter() {
                     if x != y && u < x && x < y {
                         let new_face = Face::new(vec![x, u, y]);
-                        if self.adjacents.contains(&(x, y).into()) {
+                        if self.adj_v.contains(&(x, y).into()) {
                             cycles.insert(new_face);
                         } else {
                             triplets.push(new_face);
@@ -169,11 +174,11 @@ impl PolyGraph {
             }
         }
 
-        self.faces = cycles.into_iter().collect();
+        self.cycles = cycles.into_iter().collect();
     }
 
     pub fn pst(&mut self) {
-        if self.adjacents.is_empty() {
+        if self.adj_v.is_empty() {
             return;
         }
 
@@ -273,7 +278,8 @@ impl PolyGraph {
 
             if !removed {
                 self.dist = dist;
-                panic!("failed");
+                println!("failed distance computation");
+                return;
             }
         }
 
@@ -285,7 +291,7 @@ impl Display for PolyGraph {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let mut vertices = self.vertices.iter().collect::<Vec<_>>();
         vertices.sort();
-        let mut adjacents = self.adjacents.clone().into_iter().collect::<Vec<_>>();
+        let mut adjacents = self.adj_v.clone().into_iter().collect::<Vec<_>>();
         adjacents.sort();
 
         f.write_fmt(format_args!(
@@ -295,7 +301,7 @@ impl Display for PolyGraph {
             adjacents
                 .iter()
                 .fold(String::new(), |acc, e| format!("{e}, {acc}")),
-            self.faces.iter().fold(String::new(), |acc, f| format!(
+            self.cycles.iter().fold(String::new(), |acc, f| format!(
                 "[{}], {acc}",
                 f.iter().fold(String::new(), |acc, x| format!("{x}, {acc}"))
             ))
@@ -320,7 +326,7 @@ impl PolyGraph {
                                 *u,
                                 if u == v {
                                     0
-                                } else if self.adjacents.contains(&(v, u).into()) {
+                                } else if self.adj_v.contains(&(v, u).into()) {
                                     1
                                 } else {
                                     u32::MAX
@@ -443,11 +449,11 @@ mod test {
         graph.connect((2, 3));
 
         graph.pst();
-        assert_eq!(graph.faces.len(), 0);
+        assert_eq!(graph.cycles.len(), 0);
 
         graph.connect((2, 0));
         graph.pst();
-        graph.faces();
-        assert_eq!(graph.faces, vec![Face::new(vec![0, 1, 2])]);
+        graph.find_cycles();
+        assert_eq!(graph.cycles, vec![Face::new(vec![0, 1, 2])]);
     }
 }

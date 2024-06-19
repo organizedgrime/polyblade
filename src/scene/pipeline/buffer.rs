@@ -4,7 +4,6 @@ use crate::wgpu;
 pub struct Buffer {
     pub raw: wgpu::Buffer,
     label: &'static str,
-    size: u64,
     usage: wgpu::BufferUsages,
 }
 
@@ -23,7 +22,6 @@ impl Buffer {
                 mapped_at_creation: false,
             }),
             label,
-            size,
             usage,
         }
     }

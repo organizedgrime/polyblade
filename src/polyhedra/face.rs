@@ -7,7 +7,7 @@ use std::{
     vec::IntoIter,
 };
 
-#[derive(Debug, Clone, PartialOrd, Ord)]
+#[derive(Debug, Default, Clone, PartialOrd, Ord)]
 pub struct Face(Vec<VertexId>);
 
 impl Face {
@@ -16,6 +16,10 @@ impl Face {
     }
     pub fn contains(&self, other: &Face) -> bool {
         other.0.iter().all(|v| self.0.contains(v))
+    }
+
+    pub fn containz(&self, value: &VertexId) -> bool {
+        self.0.contains(value)
     }
 
     pub fn edges(&self) -> HashSet<Edge> {
@@ -39,6 +43,7 @@ impl Face {
         }
     }
 
+    #[allow(dead_code)]
     pub fn is_empty(&self) -> bool {
         self.0.is_empty()
     }

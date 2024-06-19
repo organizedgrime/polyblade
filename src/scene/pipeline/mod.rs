@@ -4,23 +4,26 @@ mod buffer;
 mod uniforms;
 mod vertex;
 
-use glam::{Mat4, Vec3};
-pub use uniforms::{FragUniforms, LightUniforms, Uniforms};
+use glam::Vec3;
+pub use uniforms::{AllUniforms, FragUniforms, LightUniforms, ModelUniforms};
 
 use buffer::Buffer;
-pub use vertex::Vertex;
+pub use vertex::{PolyData, Vertex};
 
-use crate::{polyhedra::PolyGraph, wgpu};
+use crate::wgpu;
 
-use iced::{widget::shader::wgpu::RenderPassDepthStencilAttachment, Color, Rectangle, Size};
+use iced::{widget::shader::wgpu::RenderPassDepthStencilAttachment, Rectangle, Size};
+
+use self::polyhedron::Descriptor;
 
 pub struct Pipeline {
     pipeline: wgpu::RenderPipeline,
     positions: Buffer,
     vertices: Buffer,
     polyhedron: Buffer,
-    uniform: wgpu::Buffer,
+    model_uniform: wgpu::Buffer,
     frag_uniform: wgpu::Buffer,
+    light_uniform: wgpu::Buffer,
     uniform_group: wgpu::BindGroup,
     depth_texture_size: Size<u32>,
     depth_view: wgpu::TextureView,
@@ -32,26 +35,25 @@ pub struct Pipeline {
 impl Pipeline {
     pub fn new(
         device: &wgpu::Device,
-        queue: &wgpu::Queue,
         format: wgpu::TextureFormat,
         target_size: Size<u32>,
-        polygraph: &PolyGraph,
+        descriptor: &Descriptor,
     ) -> Self {
         let positions = Buffer::new(
             device,
             "Polyhedron position buffer",
-            polygraph.position_buffer_size(),
+            descriptor.position_buffer_size,
             wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::COPY_DST,
         );
 
         let vertices = Buffer::new(
             device,
             "Polyhedron vertex buffer",
-            polygraph.vertex_buffer_size(),
+            descriptor.vertex_buffer_size,
             wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::COPY_DST,
         );
 
-        //cube instance data
+        // Polyhedron instance data
         let polyhedron = Buffer::new(
             device,
             "Polyhedron instance buffer",
@@ -59,9 +61,9 @@ impl Pipeline {
             wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::COPY_DST,
         );
 
-        let uniform = device.create_buffer(&wgpu::BufferDescriptor {
+        let model_uniform = device.create_buffer(&wgpu::BufferDescriptor {
             label: Some("Uniforms buf"),
-            size: std::mem::size_of::<Uniforms>() as u64,
+            size: std::mem::size_of::<ModelUniforms>() as u64,
             usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
             mapped_at_creation: false,
         });
@@ -77,15 +79,6 @@ impl Pipeline {
             usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
             mapped_at_creation: false,
         });
-        queue.write_buffer(
-            &light_uniform,
-            0,
-            bytemuck::cast_slice(&[LightUniforms::new(
-                Color::new(1.0, 1.0, 1.0, 1.0),
-                Color::new(1.0, 1.0, 1.0, 1.0),
-            )]),
-        );
-
         //depth buffer
         let depth_texture = device.create_texture(&wgpu::TextureDescriptor {
             label: Some("Depth texture"),
@@ -146,7 +139,7 @@ impl Pipeline {
             entries: &[
                 wgpu::BindGroupEntry {
                     binding: 0,
-                    resource: uniform.as_entire_binding(),
+                    resource: model_uniform.as_entire_binding(),
                 },
                 wgpu::BindGroupEntry {
                     binding: 1,
@@ -236,15 +229,16 @@ impl Pipeline {
         Self {
             pipeline,
             polyhedron,
-            uniform,
+            model_uniform,
             frag_uniform,
+            light_uniform,
             uniform_group,
             positions,
             vertices,
             depth_view,
             depth_texture_size: target_size,
             depth_pipeline,
-            vertex_count: polygraph.vertex_triangle_count(),
+            vertex_count: descriptor.vertex_triangle_count,
             initialized: false,
         }
     }
@@ -254,7 +248,7 @@ impl Pipeline {
             || self.depth_texture_size.width != size.width
         {
             let text = device.create_texture(&wgpu::TextureDescriptor {
-                label: Some("cubes depth texture"),
+                label: Some("depth texture"),
                 size: wgpu::Extent3d {
                     width: size.width,
                     height: size.height,
@@ -281,30 +275,24 @@ impl Pipeline {
         device: &wgpu::Device,
         queue: &wgpu::Queue,
         target_size: Size<u32>,
-        uniforms: &Uniforms,
-        frag_uniforms: &FragUniforms,
-        polyhedron: &PolyGraph,
-        rotation: &Mat4,
+        descriptor: &Descriptor,
+        uniforms: &AllUniforms,
+        data: &PolyData,
     ) {
         // Update depth
         self.update_depth_texture(device, target_size);
 
         // Resize buffer if required
-        if self.positions.raw.size() != polyhedron.position_buffer_size() || !self.initialized {
+        if self.positions.raw.size() != descriptor.position_buffer_size || !self.initialized {
             // Resize the position buffer
             self.positions
-                .resize(device, polyhedron.position_buffer_size());
+                .resize(device, descriptor.position_buffer_size);
             // Resize the vertex buffer
-            self.vertices
-                .resize(device, polyhedron.vertex_buffer_size());
+            self.vertices.resize(device, descriptor.vertex_buffer_size);
             // Count that
-            self.vertex_count = polyhedron.vertex_triangle_count();
+            self.vertex_count = descriptor.vertex_triangle_count;
             // Write the vertices
-            queue.write_buffer(
-                &self.vertices.raw,
-                0,
-                bytemuck::cast_slice(&polyhedron.vertices()),
-            );
+            queue.write_buffer(&self.vertices.raw, 0, bytemuck::cast_slice(&data.vertices));
             // Initialized
             self.initialized = true;
         }
@@ -313,17 +301,15 @@ impl Pipeline {
         queue.write_buffer(
             &self.positions.raw,
             0,
-            bytemuck::cast_slice(&polyhedron.positions()),
+            bytemuck::cast_slice(&data.positions),
         );
+        // Write rotation data
+        queue.write_buffer(&self.polyhedron.raw, 0, bytemuck::bytes_of(&data.raw));
 
         // Write uniforms
-        queue.write_buffer(&self.uniform, 0, bytemuck::bytes_of(uniforms));
-        queue.write_buffer(&self.frag_uniform, 0, bytemuck::bytes_of(frag_uniforms));
-        //queue.write_buffer(&self.light_uniform, 0, bytemuck::bytes_of(light_uniforms));
-
-        // Write rotation data
-        let cube = polyhedron::Raw::from_pg(rotation);
-        queue.write_buffer(&self.polyhedron.raw, 0, bytemuck::bytes_of(&cube));
+        queue.write_buffer(&self.model_uniform, 0, bytemuck::bytes_of(&uniforms.model));
+        queue.write_buffer(&self.frag_uniform, 0, bytemuck::bytes_of(&uniforms.frag));
+        queue.write_buffer(&self.light_uniform, 0, bytemuck::bytes_of(&uniforms.light));
     }
 
     pub fn render(
@@ -334,7 +320,7 @@ impl Pipeline {
     ) {
         {
             let mut pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
-                label: Some("cubes.pipeline.pass"),
+                label: Some("poly.pipeline.pass"),
                 color_attachments: &[Some(wgpu::RenderPassColorAttachment {
                     view: target,
                     resolve_target: None,
@@ -367,7 +353,6 @@ impl Pipeline {
 }
 
 struct DepthPipeline {
-    pipeline: wgpu::RenderPipeline,
     bind_group_layout: wgpu::BindGroupLayout,
     bind_group: wgpu::BindGroup,
     sampler: wgpu::Sampler,
@@ -435,8 +420,8 @@ impl DepthPipeline {
             ))),
         });
 
-        let pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
-            label: Some("cubes.depth_pipeline.pipeline"),
+        let _pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
+            label: Some("polyhedron.depth_pipeline.pipeline"),
             layout: Some(&layout),
             vertex: wgpu::VertexState {
                 module: &shader,
@@ -465,7 +450,6 @@ impl DepthPipeline {
         });
 
         Self {
-            pipeline,
             bind_group_layout,
             bind_group,
             sampler,

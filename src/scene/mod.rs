@@ -1,25 +1,18 @@
 mod camera;
 mod pipeline;
-
-use camera::Camera;
-use pipeline::Pipeline;
-
+use self::polyhedron::Descriptor;
 use crate::polyhedra::PolyGraph;
 use crate::wgpu;
-pub use pipeline::*;
-
+use camera::Camera;
+use glam::{vec4, Mat4};
 use iced::mouse;
 use iced::time::Duration;
 use iced::widget::shader;
 use iced::{Color, Rectangle, Size};
-
-use glam::{vec4, Mat4};
-
+use pipeline::Pipeline;
+pub use pipeline::*;
 use std::f32::consts::PI;
-
 use std::time::Instant;
-
-pub const MAX: u32 = 500;
 
 #[derive(Clone)]
 pub struct Scene {
@@ -43,7 +36,7 @@ impl Scene {
         }
     }
 
-    pub fn update2(&mut self, time: Duration) {
+    pub fn update(&mut self, time: Duration) {
         self.polyhedron.update();
         let time = time.as_secs_f32();
         self.rotation = Mat4::from_rotation_x(time / PI) * Mat4::from_rotation_y(time / PI * 1.1);
@@ -64,20 +57,25 @@ impl<Message> shader::Program<Message> for Scene {
     }
 }
 
-/// A collection of `Cube`s that can be rendered.
 #[derive(Debug)]
 pub struct Primitive {
-    polyhedron: PolyGraph,
-    rotation: Mat4,
+    descriptor: Descriptor,
     camera: Camera,
+    rotation: Mat4,
+    data: PolyData,
 }
 
 impl Primitive {
     pub fn new(pg: &PolyGraph, rotation: &Mat4, camera: &Camera) -> Self {
         Self {
-            polyhedron: pg.clone(),
-            rotation: *rotation,
+            descriptor: pg.into(),
             camera: *camera,
+            rotation: *rotation,
+            data: PolyData {
+                positions: pg.positions(),
+                vertices: pg.vertices(),
+                raw: rotation.into(),
+            },
         }
     }
 }
@@ -94,31 +92,28 @@ impl shader::Primitive for Primitive {
         storage: &mut shader::Storage,
     ) {
         if !storage.has::<Pipeline>() {
-            storage.store(Pipeline::new(
-                device,
-                queue,
-                format,
-                target_size,
-                &self.polyhedron,
-            ));
+            storage.store(Pipeline::new(device, format, target_size, &self.descriptor));
         }
-
         let pipeline = storage.get_mut::<Pipeline>().unwrap();
 
         // update uniform buffer
         let model_mat = self.rotation;
         let view_projection_mat = self.camera.build_view_proj_mat(bounds);
         let normal_mat = (model_mat.inverse()).transpose();
-
-        let uniforms = pipeline::Uniforms {
-            model_mat,
-            view_projection_mat,
-            normal_mat,
-        };
-
-        let frag_uniforms = pipeline::FragUniforms {
-            light_position: self.camera.position(),
-            eye_position: self.camera.position() + vec4(2.0, 2.0, 1.0, 0.0),
+        let uniforms = AllUniforms {
+            model: ModelUniforms {
+                model_mat,
+                view_projection_mat,
+                normal_mat,
+            },
+            frag: FragUniforms {
+                light_position: self.camera.position(),
+                eye_position: self.camera.position() + vec4(2.0, 2.0, 1.0, 0.0),
+            },
+            light: LightUniforms::new(
+                Color::new(1.0, 1.0, 1.0, 1.0),
+                Color::new(1.0, 1.0, 1.0, 1.0),
+            ),
         };
 
         //upload data to GPU
@@ -126,10 +121,9 @@ impl shader::Primitive for Primitive {
             device,
             queue,
             target_size,
+            &self.descriptor,
             &uniforms,
-            &frag_uniforms,
-            &self.polyhedron,
-            &self.rotation,
+            &self.data,
         );
     }
 

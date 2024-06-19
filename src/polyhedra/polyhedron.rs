@@ -1,10 +1,9 @@
-use crate::scene::Vertex;
+use crate::{scene::Vertex, ConwayMessage};
 
 use super::*;
 use glam::{vec3, Vec3};
-use std::collections::{HashMap, HashSet};
 
-const TICK_SPEED: f32 = 200.0;
+const TICK_SPEED: f32 = 600.0;
 
 // Operations
 impl PolyGraph {
@@ -15,17 +14,22 @@ impl PolyGraph {
             for u in self.vertices.iter() {
                 if u != v {
                     let e: Edge = (v, u).into();
-                    let d = self.dist[&e] as f32;
-                    let l = l_diam * (d / diam);
-                    let k = 1.0 / d;
-                    if self.contracting_edges.contains(&e) {
-                        let v_position = self.positions[v];
-                        let u_position = self.positions[u];
-                        let l = v_position.distance(u_position);
-                        let f = (self.edge_length / TICK_SPEED * 3.0) / l;
-                        *self.positions.get_mut(v).unwrap() = v_position.lerp(u_position, f);
-                        *self.positions.get_mut(u).unwrap() = u_position.lerp(v_position, f);
-                    } else {
+                    if let Some(Transaction::Contraction(contracting_edges)) =
+                        self.transactions.first()
+                    {
+                        if contracting_edges.contains(&e) {
+                            let v_position = self.positions[v];
+                            let u_position = self.positions[u];
+                            let l = v_position.distance(u_position);
+                            let f = (self.edge_length / TICK_SPEED * 4.5) / l;
+                            *self.positions.get_mut(v).unwrap() = v_position.lerp(u_position, f);
+                            *self.positions.get_mut(u).unwrap() = u_position.lerp(v_position, f);
+                            continue;
+                        }
+                    } else if self.dist.contains_key(&e) {
+                        let d = self.dist[&e] as f32;
+                        let l = l_diam * (d / diam);
+                        let k = 1.0 / d;
                         let diff = self.positions[v] - self.positions[u];
                         let dist = diff.length();
                         let distention = l - dist;
@@ -69,23 +73,15 @@ impl PolyGraph {
     pub fn update(&mut self) {
         self.center();
         self.resize();
-        self.animate_contraction();
+        self.process_transactions();
         self.apply_spring_forces();
     }
 
     fn face_positions(&self, face_index: usize) -> Vec<Vec3> {
-        self.faces[face_index]
+        self.cycles[face_index]
             .iter()
             .map(|v| self.positions[v])
             .collect()
-    }
-
-    pub fn face_normal(&self, face_index: usize) -> Vec3 {
-        self.faces[face_index]
-            .iter()
-            .map(|v| self.positions[v])
-            .fold(Vec3::ZERO, |acc, v| acc.cross(v))
-            .normalize()
     }
 
     fn face_centroid(&self, face_index: usize) -> Vec3 {
@@ -128,7 +124,7 @@ impl PolyGraph {
     }
 
     pub fn positions(&self) -> Vec<Vec3> {
-        (0..self.faces.len()).fold(Vec::new(), |acc, i| {
+        (0..self.cycles.len()).fold(Vec::new(), |acc, i| {
             [acc, self.face_triangle_positions(i)].concat()
         })
     }
@@ -147,37 +143,26 @@ impl PolyGraph {
         colors[n % colors.len()] / 255.0
     }
 
-    pub fn vertex_triangle_count(&self) -> u64 {
-        let mut count = 0;
-        for face in self.faces.iter() {
-            match face.len() {
-                3 => {
-                    count += 3;
-                }
-                4 => {
-                    count += 6;
-                }
-                _ => {
-                    count += 3 * face.len() as u64;
-                }
-            }
-        }
-        count
-    }
-
     pub fn vertices(&self) -> Vec<Vertex> {
         let mut vertices = Vec::new();
         let barycentric = [Vec3::X, Vec3::Y, Vec3::Z];
 
-        let color_indices = self.faces.iter().fold(HashMap::new(), |mut acc, f| {
-            if !acc.contains_key(&f.len()) {
-                acc.insert(f.len(), acc.len());
+        let mut polygon_sizes: Vec<usize> = self.cycles.iter().fold(Vec::new(), |mut acc, f| {
+            if !acc.contains(&f.len()) {
+                acc.push(f.len());
             }
             acc
         });
 
-        for i in 0..self.faces.len() {
-            let color = Self::poly_color(color_indices.get(&self.faces[i].len()).unwrap());
+        polygon_sizes.sort();
+
+        for i in 0..self.cycles.len() {
+            let color_index = polygon_sizes
+                .iter()
+                .position(|&x| x == self.cycles[i].len())
+                .unwrap();
+
+            let color = Self::poly_color(polygon_sizes.get(color_index).unwrap());
             let sides = self.face_sides_buffer(i);
             let positions = self.face_triangle_positions(i);
 
@@ -194,33 +179,48 @@ impl PolyGraph {
         vertices
     }
 
-    pub fn vertex_buffer_size(&self) -> u64 {
-        std::mem::size_of::<Vertex>() as u64 * self.vertex_triangle_count()
-    }
-
-    pub fn position_buffer_size(&self) -> u64 {
-        std::mem::size_of::<Vec3>() as u64 * self.vertex_triangle_count()
-    }
-
-    pub fn animate_contraction(&mut self) {
-        // If all edges are contracted visually
-        if !self.contracting_edges.is_empty()
-            && self.contracting_edges.iter().fold(true, |acc, e| {
-                if self.positions.contains_key(&e.v()) && self.positions.contains_key(&e.u()) {
-                    acc && self.positions[&e.v()].distance(self.positions[&e.u()]) < 0.08
-                } else {
-                    acc
+    pub fn process_transactions(&mut self) {
+        if let Some(transaction) = self.transactions.first().cloned() {
+            use Transaction::*;
+            match transaction {
+                Contraction(edges) => {
+                    if edges.iter().fold(true, |acc, e| {
+                        if self.positions.contains_key(&e.v())
+                            && self.positions.contains_key(&e.u())
+                        {
+                            acc && self.positions[&e.v()].distance(self.positions[&e.u()]) < 0.08
+                        } else {
+                            acc
+                        }
+                    }) {
+                        // Contract them in the graph
+                        self.contract_edges(edges);
+                        self.pst();
+                        //self.find_cycles();
+                        self.transactions.remove(0);
+                    }
                 }
-            })
-        {
-            // Contract them in the graph
-            for e in self.contracting_edges.clone() {
-                self.contract_edge(e);
+                Conway(conway) => {
+                    println!("processing conway!");
+                    use ConwayMessage::*;
+                    match conway {
+                        Dual => self.dual(),
+                        Ambo => self.ambo(),
+                        Truncate => {
+                            self.truncate();
+                        }
+                        Expand => {
+                            self.expand();
+                        }
+                        Snub => {} //self.snub(),
+                        Bevel => self.bevel(),
+                        _ => {}
+                    }
+                    self.pst();
+                    self.transactions.remove(0);
+                }
+                None => {}
             }
-            self.contracting_edges = HashSet::new();
-            self.pst();
-            self.name.truncate(self.name.len() - 1);
-            self.name += "a";
         }
     }
 }
