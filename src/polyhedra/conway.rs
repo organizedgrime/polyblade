@@ -32,7 +32,6 @@ impl PolyGraph {
         self.delete(e.v());
     }
 
-    #[allow(dead_code)]
     pub fn contract_edges(&mut self, edges: HashSet<Edge>) {
         let mut map = HashMap::<VertexId, VertexId>::new();
         for e in edges.into_iter() {
@@ -64,7 +63,7 @@ impl PolyGraph {
         println!("faces: {:?}", self.cycles.len());
     }
 
-    pub fn split_vertex_face(&mut self, v: VertexId) -> HashSet<Edge> {
+    pub fn split_vertex(&mut self, v: VertexId) -> HashSet<Edge> {
         let original_position = self.positions[&v];
         let mut connections: VecDeque<VertexId> = self.connections(v).into_iter().collect();
         let mut transformations: HashMap<VertexId, VertexId> = Default::default();
@@ -115,17 +114,11 @@ impl PolyGraph {
         new_edges
     }
 
-    /*
-    pub fn sorted_cycles(&self, v: VertexId) -> Vec<usize> {
-        let edge = self.adjacents.iter().find(|e| e.contains(v));
-    }
-    */
-
     /// `t` truncate
     pub fn truncate(&mut self) -> HashSet<Edge> {
         let mut new_edges = HashSet::new();
         for v in self.vertices.clone() {
-            new_edges.extend(self.split_vertex_face(v));
+            new_edges.extend(self.split_vertex(v));
         }
         self.name.insert(0, 't');
         new_edges
@@ -144,12 +137,6 @@ impl PolyGraph {
 
         self.transactions
             .insert(1, Transaction::Contraction(original_edges));
-        /*
-        // Contract original edge set
-        self.contract_edges(original_edges);
-        self.name.remove(0);
-        self.name.insert(0, 'a');
-        */
     }
 
     /// `b` = `ta`
@@ -161,21 +148,57 @@ impl PolyGraph {
         self.name.insert(0, 'b');
     }
 
+    pub fn ordered_face_indices(&self, v: VertexId) -> Vec<usize> {
+        let relevant = (0..self.cycles.len())
+            .into_iter()
+            .filter(|&i| self.cycles[i].containz(&v))
+            .collect::<Vec<usize>>();
+
+        let mut edges = HashMap::new();
+
+        for &i in relevant.iter() {
+            let ui = self.cycles[i].iter().position(|&x| x == v).unwrap();
+            let flen = self.cycles[i].len();
+            // Find the values that came before and after in the face
+            let a = self.cycles[i][(ui + flen - 1) % flen];
+            let b = self.cycles[i][(ui + 1) % flen];
+            edges.insert((a, b).into(), i);
+        }
+
+        let f: Face = edges
+            .keys()
+            .into_iter()
+            .cloned()
+            .collect::<HashSet<_>>()
+            .into();
+
+        let mut ordered_face_indices = vec![];
+        for i in 0..f.len() {
+            let e: Edge = (f[i], f[(i + 1) % f.len()]).into();
+            let fi = edges.get(&e).unwrap();
+            ordered_face_indices.push(*fi);
+        }
+
+        ordered_face_indices
+    }
+
     /// `e` = `aa`
     pub fn expand(&mut self) -> HashSet<Edge> {
-        let mut quadrangles = HashMap::<Edge, Vec<VertexId>>::new();
         let mut new_edges = HashSet::<Edge>::new();
         let mut face_edges = HashSet::<Edge>::new();
+
+        let ordered_face_indices: HashMap<usize, Vec<usize>> = self
+            .vertices
+            .iter()
+            .map(|&v| (v, self.ordered_face_indices(v)))
+            .collect();
+
         // For every vertex
         for v in self.vertices.clone() {
             let original_position = self.positions[&v];
             let mut new_face = Face::default();
             // For every face which contains the vertex
-            for i in (0..self.cycles.len())
-                .into_iter()
-                .filter(|&i| self.cycles[i].containz(&v))
-                .collect::<Vec<usize>>()
-            {
+            for &i in ordered_face_indices.get(&v).unwrap() {
                 // Create a new vertex
                 let u = self.insert();
                 // Replace it in the face
@@ -186,19 +209,37 @@ impl PolyGraph {
                 // Find the values that came before and after in the face
                 let a = self.cycles[i][(ui + flen - 1) % flen];
                 let b = self.cycles[i][(ui + 1) % flen];
+                //transformations.insert
                 // Remove existing edges which may no longer be accurate
                 new_edges.remove(&(a, v).into());
                 new_edges.remove(&(b, v).into());
                 // Add the new edges which are so yass
                 new_edges.insert((a, u).into());
                 new_edges.insert((b, u).into());
+                //println!("{v} became {u}");
                 // Add u to the new face being formed
                 new_face.push(u);
                 // pos
                 self.positions.insert(u, original_position);
             }
 
+            let relevant = (0..self.cycles.len()).collect::<Vec<usize>>();
+
+            for xxx in new_face.iter() {
+                for &i in relevant.iter() {
+                    // Now replace
+                    if let Some(ui) = self.cycles[i].iter().position(|&x| &x == xxx) {
+                        let flen = self.cycles[i].len();
+                        // Find the values that came before and after in the face
+                        let a = self.cycles[i][(ui + flen - 1) % flen];
+                        let b = self.cycles[i][(ui + 1) % flen];
+                        println!("ab: {a}; {b}");
+                    }
+                }
+            }
+
             for i in 0..new_face.len() {
+                //self.cycles[new_face[i],
                 face_edges.insert((new_face[i], new_face[(i + 1) % new_face.len()]).into());
             }
             self.cycles.push(new_face);
@@ -263,13 +304,6 @@ impl PolyGraph {
         self.adj_v = HashSet::new();
         self.adj_v.extend(new_edges.clone());
         self.adj_v.extend(face_edges);
-
-        //self.adj_v = new_edges;
-
-        /*
-        self.name.remove(0);
-        self.name.insert(0, 'e');
-        */
         new_edges
     }
 
@@ -325,7 +359,7 @@ mod test {
         assert_eq!(graph.vertices.len(), 8);
         assert_eq!(graph.adj_v.len(), 12);
 
-        graph.split_vertex_face(0);
+        graph.split_vertex(0);
         graph.pst();
 
         assert_eq!(graph.vertices.len(), 10);

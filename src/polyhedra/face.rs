@@ -67,6 +67,33 @@ impl Face {
     pub fn push(&mut self, value: VertexId) {
         self.0.push(value)
     }
+
+    pub fn union(&self, other: &Face) -> HashSet<VertexId> {
+        let mut union = HashSet::new();
+        for i in self.iter() {
+            if other.containz(i) {
+                union.insert(*i);
+            }
+        }
+
+        for i in other.iter() {
+            if self.containz(i) {
+                union.insert(*i);
+            }
+        }
+
+        union
+    }
+
+    pub fn has_edge(&self, e: &Edge) -> bool {
+        match (
+            self.iter().position(|&v| v == e.v()),
+            self.iter().position(|&u| u == e.u()),
+        ) {
+            (Some(vi), Some(ui)) => (vi as isize - ui as isize).abs() == 1,
+            _ => false,
+        }
+    }
 }
 
 impl From<HashSet<Edge>> for Face {
