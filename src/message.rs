@@ -27,22 +27,23 @@ pub enum ConwayMessage {
     // 1
     Dual,
     // 2
-    Join,
+    // Join,
     Ambo,
     // 3
-    Kis,
-    Needle,
-    Zip,
+    // Kis,
+    // Needle,
+    // Zip,
     Truncate,
     // 4
-    Ortho,
+    // Ortho,
     Expand,
     // 5
-    Gyro,
-    Snub,
-    // 6
-    Meta,
+    // Gyro,
+    // Snub,
+    // // 6
+    // Meta,
     Bevel,
+    Contract,
 }
 
 /*

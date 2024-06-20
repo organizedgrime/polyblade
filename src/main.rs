@@ -129,6 +129,18 @@ impl Application for Polyblade {
     }
 
     fn subscription(&self) -> Subscription<Message> {
-        window::frames().map(Message::Tick)
+        use iced::keyboard;
+        use keyboard::key;
+        let handle_hotkey = |key: key::Key, _modifiers: keyboard::Modifiers| match key.as_ref() {
+            keyboard::Key::Character("d") => Some(Message::Conway(ConwayMessage::Dual)),
+            keyboard::Key::Character("e") => Some(Message::Conway(ConwayMessage::Expand)),
+            keyboard::Key::Character("c") => Some(Message::Conway(ConwayMessage::Contract)),
+            keyboard::Key::Character("a") => Some(Message::Conway(ConwayMessage::Ambo)),
+            keyboard::Key::Character("t") => Some(Message::Conway(ConwayMessage::Truncate)),
+            keyboard::Key::Character("b") => Some(Message::Conway(ConwayMessage::Bevel)),
+            _ => None,
+        };
+        let tick = window::frames().map(Message::Tick);
+        Subscription::batch(vec![tick, keyboard::on_key_press(handle_hotkey)])
     }
 }

@@ -36,6 +36,7 @@ pub struct PolyGraph {
     pub transactions: Vec<Transaction>,
     /// Edge length
     pub edge_length: f32,
+    pub contractions: HashSet<Edge>,
 }
 
 impl PolyGraph {

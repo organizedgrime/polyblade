@@ -3,7 +3,7 @@ use crate::{scene::Vertex, ConwayMessage};
 use super::*;
 use glam::{vec3, Vec3};
 
-const TICK_SPEED: f32 = 600.0;
+const TICK_SPEED: f32 = 800.0;
 
 // Operations
 impl PolyGraph {
@@ -212,9 +212,11 @@ impl PolyGraph {
                         Expand => {
                             self.expand();
                         }
-                        Snub => {} //self.snub(),
                         Bevel => self.bevel(),
-                        _ => {}
+                        Contract => {
+                            self.transactions
+                                .push(Transaction::Contraction(self.contractions.clone()));
+                        } // _ => {}
                     }
                     self.pst();
                     self.transactions.remove(0);

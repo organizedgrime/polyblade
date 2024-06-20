@@ -171,7 +171,7 @@ impl PolyGraph {
     }
 
     /// `e` = `aa`
-    pub fn expand(&mut self) -> HashSet<Edge> {
+    pub fn expand(&mut self) {
         let mut new_edges = HashSet::<Edge>::new();
         let mut face_edges = HashSet::<Edge>::new();
 
@@ -273,13 +273,13 @@ impl PolyGraph {
         self.adj_v = HashSet::new();
         self.adj_v.extend(new_edges.clone());
         self.adj_v.extend(face_edges);
-        new_edges
+        self.contractions = new_edges;
     }
 
     pub fn dual(&mut self) {
-        let contractions = self.expand();
+        self.expand();
         self.transactions
-            .insert(1, Transaction::Contraction(contractions));
+            .insert(1, Transaction::Contraction(self.contractions.clone()));
     }
 
     /*
