@@ -72,7 +72,6 @@ pub enum Message {
 pub enum PresetMessage {
     Prism(usize),
     Pyramid(usize),
-    Cube,
     Octahedron,
     Dodecahedron,
     Icosahedron,
@@ -83,8 +82,13 @@ impl std::fmt::Display for PresetMessage {
         use PresetMessage::*;
         match self {
             Prism(n) => match n {
-                3 => f.write_str("Pen"),
-                _ => f.write_str("meow"),
+                3 => f.write_str("Triangular"),
+                4 => f.write_str("Cube"),
+                5 => f.write_str("Pentagonal"),
+                6 => f.write_str("Hexagonal"),
+                7 => f.write_str("Heptagonal"),
+                8 => f.write_str("Octagonal"),
+                _ => f.write_str("?"),
             },
             Pyramid(n) => match n {
                 3 => f.write_str("Tetrahedron"),

@@ -15,8 +15,8 @@ impl PolyGraph {
     pub fn change_shape(&mut self, message: PresetMessage) {
         use PresetMessage::*;
         match message {
+            Prism(n) => *self = PolyGraph::prism(n),
             Pyramid(n) => *self = PolyGraph::pyramid(n),
-            Cube => *self = PolyGraph::cube(),
             Octahedron => *self = PolyGraph::octahedron(),
             Dodecahedron => *self = PolyGraph::dodecahedron(),
             Icosahedron => *self = PolyGraph::icosahedron(),
@@ -27,6 +27,22 @@ impl PolyGraph {
 
 // Platonic Solids
 impl PolyGraph {
+    pub fn prism(n: usize) -> PolyGraph {
+        let mut p = PolyGraph::new_disconnected(n * 2);
+        for i in 0..n {
+            // Lower polygon
+            p.connect((i % n, (i + 1) % n));
+            // Upper polygon
+            p.connect(((i % n) + n, ((i + 1) % n) + n));
+            // Connect
+            p.connect(((i % n), (i % n) + n));
+            p.connect(((i + 1) % n, ((i + 1) % n) + n));
+        }
+        p.pst();
+        p.find_cycles();
+        p
+    }
+
     pub fn pyramid(n: usize) -> PolyGraph {
         let mut p = PolyGraph::new_disconnected(n + 1);
         for i in 0..n {
@@ -37,12 +53,6 @@ impl PolyGraph {
         p.pst();
         p.find_cycles();
         p
-    }
-    pub fn tetrahedron() -> PolyGraph {
-        PolyGraph::new_platonic(
-            "T",
-            vec![vec![1, 2, 3], vec![0, 2, 3], vec![0, 1, 3], vec![0, 1, 2]],
-        )
     }
 
     pub fn cube() -> PolyGraph {
