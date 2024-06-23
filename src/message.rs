@@ -121,7 +121,7 @@ pub enum ConwayMessage {
     // 1
     Dual,
     // 2
-    // Join,
+    Join,
     Ambo,
     // 3
     Kis,
@@ -129,7 +129,7 @@ pub enum ConwayMessage {
     // Zip,
     Truncate,
     // 4
-    // Ortho,
+    //Ortho,
     Expand,
     // 5
     // Gyro,

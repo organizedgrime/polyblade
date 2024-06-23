@@ -1,3 +1,5 @@
+use std::time::Instant;
+
 use crate::{scene::Vertex, ConwayMessage};
 
 use super::*;
@@ -200,13 +202,25 @@ impl PolyGraph {
                         self.transactions.remove(0);
                     }
                 }
+                Release(edges) => {
+                    println!("edges: {:?}", self.adj_v);
+                    for e in edges.into_iter() {
+                        self.disconnect(e);
+                    }
+                    self.pst();
+                    self.find_cycles();
+                    self.transactions.remove(0);
+                }
                 Conway(conway) => {
                     println!("processing conway!");
                     use ConwayMessage::*;
                     match conway {
                         Dual => self.dual(),
+                        Join => self.join(),
                         Ambo => self.ambo(),
-                        Kis => self.kis(),
+                        Kis => {
+                            self.kis();
+                        }
                         Truncate => {
                             self.truncate();
                         }
@@ -226,6 +240,11 @@ impl PolyGraph {
                 Name(c) => {
                     self.name = format!("{c}{}", self.name);
                     self.transactions.remove(0);
+                }
+                Wait(instant) => {
+                    if Instant::now() > instant {
+                        self.transactions.remove(0);
+                    }
                 }
                 None => {}
             }

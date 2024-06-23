@@ -1,4 +1,7 @@
-use std::collections::{HashMap, VecDeque};
+use std::{
+    collections::{HashMap, VecDeque},
+    time::{Duration, Instant},
+};
 
 use glam::Vec3;
 
@@ -110,14 +113,15 @@ impl PolyGraph {
         new_edges
     }
 
-    /// `t` truncate
-    pub fn truncate(&mut self) -> HashSet<Edge> {
-        let mut new_edges = HashSet::new();
-        for v in self.vertices.clone() {
-            new_edges.extend(self.split_vertex(v));
-        }
-        self.transactions.insert(1, Transaction::Name('t'));
-        new_edges
+    pub fn join(&mut self) {
+        let edges = self.kis();
+        self.transactions.remove(1);
+        self.transactions.insert(1, Transaction::Name('j'));
+        self.transactions.insert(1, Transaction::Release(edges));
+        self.transactions.insert(
+            1,
+            Transaction::Wait(Instant::now().checked_add(Duration::from_secs(1)).unwrap()),
+        );
     }
 
     /// `a` ambo
@@ -138,7 +142,8 @@ impl PolyGraph {
     }
 
     /// `k` kis
-    pub fn kis(&mut self) {
+    pub fn kis(&mut self) -> HashSet<Edge> {
+        let edges = self.adj_v.clone();
         for cycle in self.cycles.clone() {
             let v = self.insert();
             let mut vpos = Vec3::ZERO;
@@ -153,8 +158,25 @@ impl PolyGraph {
         self.pst();
         self.find_cycles();
         self.transactions.insert(1, Transaction::Name('k'));
+        edges
     }
 
+    /// `t` truncate
+    pub fn truncate(&mut self) -> HashSet<Edge> {
+        let mut new_edges = HashSet::new();
+        for v in self.vertices.clone() {
+            new_edges.extend(self.split_vertex(v));
+        }
+        self.transactions.insert(1, Transaction::Name('t'));
+        new_edges
+    }
+
+    /// `o` ortho
+    pub fn ortho(&mut self) {
+        for c in self.cycles.clone() {
+            let v = self.insert();
+        }
+    }
     /// `b` = `ta`
     pub fn bevel(&mut self) {
         self.truncate();
