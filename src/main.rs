@@ -4,20 +4,22 @@ mod scene;
 
 use iced_aw::{
     card,
-    menu::{Item, Menu},
-    menu_bar, menu_items, modal, BootstrapIcon, BOOTSTRAP_FONT, BOOTSTRAP_FONT_BYTES,
+    menu::{Item, Menu, StyleSheet},
+    menu_bar, menu_items, modal,
+    style::MenuBarStyle,
+    BootstrapIcon, BOOTSTRAP_FONT, BOOTSTRAP_FONT_BYTES,
 };
 use message::*;
 use polyhedra::Transaction;
 use scene::Scene;
 
-use iced::time::Instant;
 use iced::widget::shader::wgpu;
-use iced::widget::{button, checkbox, column, container, row, shader, text, Row, Text};
-use iced::{alignment, window};
-use iced::{executor, Border, Color};
-use iced::{Alignment, Application, Command, Element, Length, Subscription, Theme};
-use strum::IntoEnumIterator;
+use iced::{
+    alignment, executor, font,
+    time::Instant,
+    widget::{button, checkbox, column, container, row, shader, text, Row, Text},
+    window, Alignment, Application, Border, Command, Element, Length, Subscription, Theme,
+};
 
 fn main() -> iced::Result {
     Polyblade::run(iced::Settings::default())
@@ -48,13 +50,21 @@ impl Application for Polyblade {
                 rotating: true,
                 show_alert: false,
             },
-            Command::none(),
+            Command::batch(vec![
+                // There is no automatic way for iced aw to load fonts, you the user have to load
+                // them and this is as simple as we can make it currently.
+                // Creating your own is easy, check out the source code of
+                // [`iced_aw::core::icons`], that's the simplest way to learn.
+                font::load(iced_aw::BOOTSTRAP_FONT_BYTES).map(Message::FontLoaded),
+                font::load(iced_aw::NERD_FONT_BYTES).map(Message::FontLoaded),
+            ]),
         )
     }
 
     fn update(&mut self, message: Self::Message) -> Command<Self::Message> {
         use Message::*;
         match message {
+            FontLoaded(_) => {}
             Tick(time) => {
                 self.scene.update(time - self.start);
             }
@@ -77,38 +87,22 @@ impl Application for Polyblade {
     }
 
     fn view(&self) -> Element<'_, Self::Message> {
-        /*
-        let menu_tpl_1 = |items| Menu::new(items).max_width(180.0).offset(15.0).spacing(5.0);
-        let menu_tpl_2 = |items| Menu::new(items).max_width(180.0).offset(0.0).spacing(5.0);
-        let meow = menu_bar!((debug_button_s("Nested Menus"), {
-            let sub1 = menu_tpl_2(menu_items!((debug_button("Item"))(debug_button("Item"))(
-                debug_button("Item")
-            )(debug_button("Item"))(
-                debug_button("Item")
-            )))
-            .width(220.0);
-
-            menu_tpl_1(menu_items!((debug_button("Item"))(debug_button("Item"))(
-                submenu_button("A sub menu"),
-                sub1
-            )(debug_button("Item"))(
-                debug_button("Item")
-            )(debug_button("Item"))))
-            .width(140.0)
-        }));
-        */
-
-        //let conway_buttons =             .collect();
-
         let underlay = container(
             column![
                 menu_bar!((PresetMessage::bar("Preset"), PresetMessage::menu())(
                     ConwayMessage::bar("Conway"),
                     ConwayMessage::menu()
                 ))
-                .spacing(10.0),
+                .spacing(10.0)
+                .draw_path(iced_aw::menu::DrawPath::Backdrop)
+                .style(|theme: &iced::Theme| iced_aw::menu::Appearance {
+                    path_border: Border {
+                        radius: [6.0; 4].into(),
+                        ..Default::default()
+                    },
+                    ..theme.appearance(&MenuBarStyle::Default)
+                }),
                 shader(&self.scene).width(Length::Fill).height(Length::Fill),
-                checkbox("Rotating", self.rotating).on_toggle(Message::Rotate),
             ]
             .spacing(10)
             .align_items(Alignment::Center),

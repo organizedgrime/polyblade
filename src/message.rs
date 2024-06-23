@@ -1,7 +1,7 @@
 use std::time::Instant;
 
 use iced::{
-    alignment,
+    alignment, font,
     widget::{button, row, text, Row, Text},
     Element, Length, Renderer, Theme,
 };
@@ -16,7 +16,7 @@ use crate::base_button;
 
 pub trait MenuAble {
     fn bar<'a>(label: &str) -> button::Button<'a, Message, Theme, Renderer> {
-        button(text(label).vertical_alignment(alignment::Vertical::Center))
+        button(text(label).vertical_alignment(alignment::Vertical::Center)).width(Length::Shrink)
     }
 
     fn base<'a>(
@@ -66,6 +66,7 @@ pub enum Message {
     CloseAlert,
     Preset(PresetMessage),
     Conway(ConwayMessage),
+    FontLoaded(Result<(), font::Error>),
 }
 
 #[derive(Debug, Clone, EnumIter)]
@@ -168,6 +169,7 @@ impl MenuAble for PresetMessage {
         Self::base_menu(items)
     }
 }
+
 impl MenuAble for ConwayMessage {
     fn menu<'a>() -> Menu<'a, Message, Theme, Renderer> {
         let items: Vec<Item<'a, Message, Theme, Renderer>> = ConwayMessage::iter()
@@ -181,23 +183,3 @@ impl MenuAble for ConwayMessage {
         Self::base_menu(items)
     }
 }
-
-/*
-impl ViewAble for ConwayMessage {
-    fn view() -> Element<'static, Message> {
-        Row::with_children(ConwayMessage::iter().map(|message| {
-            button(Text::new(message.to_string()))
-                .on_press(Message::Conway(message))
-                .into()
-        }))
-        .spacing(10)
-        .into()
-    }
-}
-
-impl ViewAble for Message {
-    fn view() -> impl Into<Element<'static, Message>> {
-        menu_bar!((button("Preset"), Self::menu(vec![])))
-    }
-}
-*/
