@@ -77,6 +77,7 @@ impl Application for Polyblade {
     }
 
     fn view(&self) -> Element<'_, Self::Message> {
+        /*
         let menu_tpl_1 = |items| Menu::new(items).max_width(180.0).offset(15.0).spacing(5.0);
         let menu_tpl_2 = |items| Menu::new(items).max_width(180.0).offset(0.0).spacing(5.0);
         let meow = menu_bar!((debug_button_s("Nested Menus"), {
@@ -95,28 +96,19 @@ impl Application for Polyblade {
             )(debug_button("Item"))))
             .width(140.0)
         }));
+        */
 
         //let conway_buttons =             .collect();
-        let preset_row = Row::with_children(PresetMessage::iter().map(|message| {
-            button(Text::new(message.to_string()))
-                .on_press(Message::Preset(message))
-                .into()
-        }))
-        .spacing(10);
-        let conway_row = Row::with_children(ConwayMessage::iter().map(|message| {
-            button(Text::new(message.to_string()))
-                .on_press(Message::Conway(message))
-                .into()
-        }))
-        .spacing(10);
 
         let underlay = container(
             column![
-                meow,
+                menu_bar!((PresetMessage::bar("Preset"), PresetMessage::menu())(
+                    PresetMessage::bar("Preset"),
+                    PresetMessage::menu()
+                ))
+                .spacing(10.0),
                 shader(&self.scene).width(Length::Fill).height(Length::Fill),
                 checkbox("Rotating", self.rotating).on_toggle(Message::Rotate),
-                preset_row,
-                conway_row,
             ]
             .spacing(10)
             .align_items(Alignment::Center),
@@ -167,33 +159,9 @@ impl Application for Polyblade {
         let tick = window::frames().map(Message::Tick);
         Subscription::batch(vec![tick, keyboard::on_key_press(handle_hotkey)])
     }
-}
 
-struct ButtonStyle;
-impl button::StyleSheet for ButtonStyle {
-    type Style = iced::Theme;
-
-    fn active(&self, style: &Self::Style) -> button::Appearance {
-        button::Appearance {
-            text_color: style.extended_palette().background.base.text,
-            background: Some(Color::TRANSPARENT.into()),
-            // background: Some(Color::from([1.0; 3]).into()),
-            border: Border {
-                radius: [6.0; 4].into(),
-                ..Default::default()
-            },
-            ..Default::default()
-        }
-    }
-
-    fn hovered(&self, style: &Self::Style) -> button::Appearance {
-        let plt = style.extended_palette();
-
-        button::Appearance {
-            background: Some(plt.primary.weak.color.into()),
-            text_color: plt.primary.weak.text,
-            ..self.active(style)
-        }
+    fn theme(&self) -> Self::Theme {
+        Theme::KanagawaLotus
     }
 }
 
@@ -201,10 +169,7 @@ fn base_button<'a>(
     content: impl Into<Element<'a, Message, iced::Theme, iced::Renderer>>,
     msg: Message,
 ) -> button::Button<'a, Message, iced::Theme, iced::Renderer> {
-    button(content)
-        .padding([4, 8])
-        .style(iced::theme::Button::Custom(Box::new(ButtonStyle {})))
-        .on_press(msg)
+    button(content).padding([4, 8]).on_press(msg)
 }
 fn labeled_button<'a>(
     label: &str,
