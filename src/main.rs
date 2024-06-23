@@ -4,20 +4,22 @@ mod scene;
 
 use iced_aw::{
     card,
-    menu::{Item, Menu, StyleSheet},
-    menu_bar, menu_items, modal,
+    menu::{Item, StyleSheet},
+    menu_bar, modal,
     style::MenuBarStyle,
-    BootstrapIcon, BOOTSTRAP_FONT, BOOTSTRAP_FONT_BYTES,
 };
 use message::*;
 use polyhedra::Transaction;
 use scene::Scene;
 
-use iced::widget::shader::wgpu;
 use iced::{
-    alignment, executor, font,
+    alignment::Horizontal,
+    widget::{checkbox, shader::wgpu, text},
+};
+use iced::{
+    executor, font,
     time::Instant,
-    widget::{button, checkbox, column, container, row, shader, text, Row, Text},
+    widget::{button, column, container, row, shader},
     window, Alignment, Application, Border, Command, Element, Length, Subscription, Theme,
 };
 
@@ -51,10 +53,6 @@ impl Application for Polyblade {
                 show_alert: false,
             },
             Command::batch(vec![
-                // There is no automatic way for iced aw to load fonts, you the user have to load
-                // them and this is as simple as we can make it currently.
-                // Creating your own is easy, check out the source code of
-                // [`iced_aw::core::icons`], that's the simplest way to learn.
                 font::load(iced_aw::BOOTSTRAP_FONT_BYTES).map(Message::FontLoaded),
                 font::load(iced_aw::NERD_FONT_BYTES).map(Message::FontLoaded),
             ]),
@@ -89,23 +87,33 @@ impl Application for Polyblade {
     fn view(&self) -> Element<'_, Self::Message> {
         let underlay = container(
             column![
-                menu_bar!((PresetMessage::bar("Preset"), PresetMessage::menu())(
-                    ConwayMessage::bar("Conway"),
-                    ConwayMessage::menu()
-                ))
-                .spacing(10.0)
-                .draw_path(iced_aw::menu::DrawPath::Backdrop)
-                .style(|theme: &iced::Theme| iced_aw::menu::Appearance {
-                    path_border: Border {
-                        radius: [6.0; 4].into(),
-                        ..Default::default()
-                    },
-                    ..theme.appearance(&MenuBarStyle::Default)
-                }),
+                row![
+                    menu_bar!((PresetMessage::bar("Preset"), PresetMessage::menu())(
+                        ConwayMessage::bar("Conway"),
+                        ConwayMessage::menu()
+                    ))
+                    .spacing(10.0)
+                    .style(|theme: &iced::Theme| iced_aw::menu::Appearance {
+                        path_border: Border {
+                            radius: [6.0; 4].into(),
+                            ..Default::default()
+                        },
+                        ..theme.appearance(&MenuBarStyle::Default)
+                    }),
+                    checkbox("Rotating", self.rotating).on_toggle(Message::Rotate)
+                ]
+                .spacing(10.0),
+                // Actual shader of the program
                 shader(&self.scene).width(Length::Fill).height(Length::Fill),
+                // Info
+                //
+                container(
+                    text(&self.scene.polyhedron.name)
+                        .size(30)
+                        .horizontal_alignment(Horizontal::Left)
+                )
             ]
-            .spacing(10)
-            .align_items(Alignment::Center),
+            .spacing(10),
         )
         .width(Length::Fill)
         .height(Length::Fill)

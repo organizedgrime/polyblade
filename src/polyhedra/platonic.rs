@@ -16,11 +16,11 @@ impl PolyGraph {
         use PresetMessage::*;
         match message {
             Prism(n) => *self = PolyGraph::prism(n),
+            AntiPrism(n) => *self = PolyGraph::anti_prism(n),
             Pyramid(n) => *self = PolyGraph::pyramid(n),
             Octahedron => *self = PolyGraph::octahedron(),
             Dodecahedron => *self = PolyGraph::dodecahedron(),
             Icosahedron => *self = PolyGraph::icosahedron(),
-            _ => {}
         }
     }
 }
@@ -37,6 +37,24 @@ impl PolyGraph {
             // Connect
             p.connect(((i % n), (i % n) + n));
             p.connect(((i + 1) % n, ((i + 1) % n) + n));
+        }
+        p.pst();
+        p.find_cycles();
+        p
+    }
+
+    pub fn anti_prism(n: usize) -> PolyGraph {
+        let mut p = PolyGraph::new_disconnected(n * 2);
+        for i in 0..n {
+            // Lower polygon
+            p.connect((i % n, (i + 1) % n));
+            // Upper polygon
+            p.connect(((i % n) + n, ((i + 1) % n) + n));
+            // Connect
+            p.connect(((i % n), (i % n) + n));
+            p.connect(((i + 1) % n, ((i + 1) % n) + n));
+
+            p.connect(((i % n), ((i + 1) % n) + n));
         }
         p.pst();
         p.find_cycles();

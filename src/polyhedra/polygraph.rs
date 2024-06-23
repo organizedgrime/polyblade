@@ -42,11 +42,22 @@ pub struct PolyGraph {
 impl PolyGraph {
     /// New with n vertices
     pub fn new_disconnected(vertex_count: usize) -> Self {
+        // Use a Fibonacci Lattice to evently distribute starting points on a sphere
+        let phi = std::f32::consts::PI * (3.0 - 5.0f32.sqrt());
+        let positions = (0..vertex_count)
+            .map(|i| {
+                let y = 1.0 - (i as f32 / (vertex_count - 1) as f32);
+                let radius = (1.0 - y * y).sqrt();
+                let theta = phi * i as f32;
+                let x = theta.cos() * radius;
+                let z = theta.sin() * radius;
+                (i, vec3(x, y, z))
+            })
+            .collect();
+
         let mut poly = Self {
             vertices: (0..vertex_count).collect(),
-            positions: (0..vertex_count)
-                .map(|x| (x, vec3(random(), random(), random()).normalize()))
-                .collect(),
+            positions,
             speeds: (0..vertex_count).map(|x| (x, Vec3::ZERO)).collect(),
             edge_length: 1.0,
             ..Default::default()

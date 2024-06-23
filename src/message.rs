@@ -2,12 +2,12 @@ use std::time::Instant;
 
 use iced::{
     alignment, font,
-    widget::{button, row, text, Row, Text},
+    widget::{button, row, text},
     Element, Length, Renderer, Theme,
 };
 use iced_aw::{
     menu::{Item, Menu},
-    menu_bar, menu_items, BootstrapIcon, BOOTSTRAP_FONT,
+    BootstrapIcon, BOOTSTRAP_FONT,
 };
 use strum::IntoEnumIterator;
 use strum_macros::{Display, EnumIter};
@@ -32,9 +32,9 @@ pub trait MenuAble {
         .width(Length::Fill)
     }
 
-    fn base_menu<'a>(
-        items: Vec<Item<'a, Message, Theme, Renderer>>,
-    ) -> Menu<'a, Message, Theme, Renderer> {
+    fn base_menu(
+        items: Vec<Item<'_, Message, Theme, Renderer>>,
+    ) -> Menu<'_, Message, Theme, Renderer> {
         Menu::new(items).max_width(180.0).offset(0.0).spacing(5.0)
     }
     fn submenu_button<'a>(label: &str) -> button::Button<'a, Message, iced::Theme, iced::Renderer> {
@@ -55,6 +55,8 @@ pub trait MenuAble {
     }
 
     fn menu<'a>() -> Menu<'a, Message, Theme, Renderer>;
+
+    fn item<'a>(self) -> Item<'a, Message, Theme, Renderer>;
 }
 
 #[derive(Debug, Clone)]
@@ -70,6 +72,7 @@ pub enum Message {
 #[derive(Debug, Clone, EnumIter)]
 pub enum PresetMessage {
     Prism(usize),
+    AntiPrism(usize),
     Pyramid(usize),
     Octahedron,
     Dodecahedron,
@@ -128,6 +131,10 @@ pub enum ConwayMessage {
 }
 
 impl MenuAble for PresetMessage {
+    fn item<'a>(self) -> Item<'a, Message, Theme, Renderer> {
+        Item::new(Self::labeled(&self.to_string(), Message::Preset(self)))
+    }
+
     fn menu<'a>() -> Menu<'a, Message, Theme, Renderer> {
         let items: Vec<Item<'a, Message, Theme, Renderer>> = PresetMessage::iter()
             .map(|message| {
@@ -135,32 +142,17 @@ impl MenuAble for PresetMessage {
                 match message {
                     Prism(_) => Item::with_menu(
                         Self::submenu_button("Prism"),
-                        Self::base_menu(
-                            (3..=8)
-                                .into_iter()
-                                .map(|n| Prism(n))
-                                .map(|msg| {
-                                    Item::new(Self::labeled(&msg.to_string(), Message::Preset(msg)))
-                                })
-                                .collect(),
-                        ),
+                        Self::base_menu((3..=8).map(Prism).map(Self::item).collect()),
+                    ),
+                    AntiPrism(_) => Item::with_menu(
+                        Self::submenu_button("AntiPrism"),
+                        Self::base_menu((3..=8).map(AntiPrism).map(Self::item).collect()),
                     ),
                     Pyramid(_) => Item::with_menu(
                         Self::submenu_button("Pyramid"),
-                        Self::base_menu(
-                            (3..=8)
-                                .into_iter()
-                                .map(|n| Pyramid(n))
-                                .map(|msg| {
-                                    Item::new(Self::labeled(&msg.to_string(), Message::Preset(msg)))
-                                })
-                                .collect(),
-                        ),
+                        Self::base_menu((3..=8).map(Pyramid).map(Self::item).collect()),
                     ),
-                    _ => Item::new(
-                        Self::labeled(&message.to_string(), Message::Preset(message))
-                            .width(Length::Fill),
-                    ),
+                    _ => Self::item(message),
                 }
             })
             .collect();
@@ -169,15 +161,13 @@ impl MenuAble for PresetMessage {
 }
 
 impl MenuAble for ConwayMessage {
+    fn item<'a>(self) -> Item<'a, Message, Theme, Renderer> {
+        Item::new(Self::labeled(&self.to_string(), Message::Conway(self)).width(Length::Fill))
+    }
+
     fn menu<'a>() -> Menu<'a, Message, Theme, Renderer> {
-        let items: Vec<Item<'a, Message, Theme, Renderer>> = ConwayMessage::iter()
-            .map(|message| {
-                Item::new(
-                    Self::labeled(&message.to_string(), Message::Conway(message))
-                        .width(Length::Fill),
-                )
-            })
-            .collect();
+        let items: Vec<Item<'a, Message, Theme, Renderer>> =
+            ConwayMessage::iter().map(Self::item).collect();
         Self::base_menu(items)
     }
 }
