@@ -12,8 +12,6 @@ use iced_aw::{
 use strum::IntoEnumIterator;
 use strum_macros::{Display, EnumIter};
 
-use crate::base_button;
-
 pub trait MenuAble {
     fn bar<'a>(label: &str) -> button::Button<'a, Message, Theme, Renderer> {
         button(text(label).vertical_alignment(alignment::Vertical::Center)).width(Length::Shrink)
@@ -40,7 +38,7 @@ pub trait MenuAble {
         Menu::new(items).max_width(180.0).offset(0.0).spacing(5.0)
     }
     fn submenu_button<'a>(label: &str) -> button::Button<'a, Message, iced::Theme, iced::Renderer> {
-        base_button(
+        Self::base(
             row![
                 text(label)
                     .width(Length::Fill)
