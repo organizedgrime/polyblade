@@ -2,16 +2,20 @@ mod message;
 mod polyhedra;
 mod scene;
 
-use iced_aw::{card, modal};
+use iced_aw::{
+    card,
+    menu::{Item, Menu},
+    menu_bar, menu_items, modal, BootstrapIcon, BOOTSTRAP_FONT, BOOTSTRAP_FONT_BYTES,
+};
 use message::*;
 use polyhedra::Transaction;
 use scene::Scene;
 
-use iced::executor;
 use iced::time::Instant;
 use iced::widget::shader::wgpu;
-use iced::widget::{button, checkbox, column, container, row, shader, Row, Text};
-use iced::window;
+use iced::widget::{button, checkbox, column, container, row, shader, text, Row, Text};
+use iced::{alignment, window};
+use iced::{executor, Border, Color};
 use iced::{Alignment, Application, Command, Element, Length, Subscription, Theme};
 use strum::IntoEnumIterator;
 
@@ -73,6 +77,25 @@ impl Application for Polyblade {
     }
 
     fn view(&self) -> Element<'_, Self::Message> {
+        let menu_tpl_1 = |items| Menu::new(items).max_width(180.0).offset(15.0).spacing(5.0);
+        let menu_tpl_2 = |items| Menu::new(items).max_width(180.0).offset(0.0).spacing(5.0);
+        let meow = menu_bar!((debug_button_s("Nested Menus"), {
+            let sub1 = menu_tpl_2(menu_items!((debug_button("Item"))(debug_button("Item"))(
+                debug_button("Item")
+            )(debug_button("Item"))(
+                debug_button("Item")
+            )))
+            .width(220.0);
+
+            menu_tpl_1(menu_items!((debug_button("Item"))(debug_button("Item"))(
+                submenu_button("A sub menu"),
+                sub1
+            )(debug_button("Item"))(
+                debug_button("Item")
+            )(debug_button("Item"))))
+            .width(140.0)
+        }));
+
         //let conway_buttons =             .collect();
         let preset_row = Row::with_children(PresetMessage::iter().map(|message| {
             button(Text::new(message.to_string()))
@@ -89,10 +112,11 @@ impl Application for Polyblade {
 
         let underlay = container(
             column![
+                meow,
                 shader(&self.scene).width(Length::Fill).height(Length::Fill),
                 checkbox("Rotating", self.rotating).on_toggle(Message::Rotate),
                 preset_row,
-                conway_row
+                conway_row,
             ]
             .spacing(10)
             .align_items(Alignment::Center),
@@ -143,4 +167,73 @@ impl Application for Polyblade {
         let tick = window::frames().map(Message::Tick);
         Subscription::batch(vec![tick, keyboard::on_key_press(handle_hotkey)])
     }
+}
+
+struct ButtonStyle;
+impl button::StyleSheet for ButtonStyle {
+    type Style = iced::Theme;
+
+    fn active(&self, style: &Self::Style) -> button::Appearance {
+        button::Appearance {
+            text_color: style.extended_palette().background.base.text,
+            background: Some(Color::TRANSPARENT.into()),
+            // background: Some(Color::from([1.0; 3]).into()),
+            border: Border {
+                radius: [6.0; 4].into(),
+                ..Default::default()
+            },
+            ..Default::default()
+        }
+    }
+
+    fn hovered(&self, style: &Self::Style) -> button::Appearance {
+        let plt = style.extended_palette();
+
+        button::Appearance {
+            background: Some(plt.primary.weak.color.into()),
+            text_color: plt.primary.weak.text,
+            ..self.active(style)
+        }
+    }
+}
+
+fn base_button<'a>(
+    content: impl Into<Element<'a, Message, iced::Theme, iced::Renderer>>,
+    msg: Message,
+) -> button::Button<'a, Message, iced::Theme, iced::Renderer> {
+    button(content)
+        .padding([4, 8])
+        .style(iced::theme::Button::Custom(Box::new(ButtonStyle {})))
+        .on_press(msg)
+}
+fn labeled_button<'a>(
+    label: &str,
+    msg: Message,
+) -> button::Button<'a, Message, iced::Theme, iced::Renderer> {
+    base_button(
+        text(label).vertical_alignment(alignment::Vertical::Center),
+        msg,
+    )
+}
+fn debug_button<'a>(label: &str) -> button::Button<'a, Message, iced::Theme, iced::Renderer> {
+    labeled_button(label, Message::Tick(Instant::now())).width(Length::Fill)
+}
+fn debug_button_s<'a>(label: &str) -> button::Button<'a, Message, iced::Theme, iced::Renderer> {
+    labeled_button(label, Message::Tick(Instant::now())).width(Length::Shrink)
+}
+fn submenu_button<'a>(label: &str) -> button::Button<'a, Message, iced::Theme, iced::Renderer> {
+    base_button(
+        row![
+            text(label)
+                .width(Length::Fill)
+                .vertical_alignment(alignment::Vertical::Center),
+            text(BootstrapIcon::CaretRightFill)
+                .font(BOOTSTRAP_FONT)
+                .width(Length::Shrink)
+                .vertical_alignment(alignment::Vertical::Center),
+        ]
+        .align_items(iced::Alignment::Center),
+        Message::Tick(Instant::now()),
+    )
+    .width(Length::Fill)
 }
