@@ -31,6 +31,7 @@ pub trait MenuAble {
             text(label).vertical_alignment(alignment::Vertical::Center),
             msg,
         )
+        .width(Length::Fill)
     }
 
     fn base_menu<'a>(
@@ -67,15 +68,36 @@ pub enum Message {
     Conway(ConwayMessage),
 }
 
-#[derive(Debug, Clone, EnumIter, Display)]
+#[derive(Debug, Clone, EnumIter)]
 pub enum PresetMessage {
     Prism(usize),
     Pyramid(usize),
-    Tetrahedron,
     Cube,
     Octahedron,
     Dodecahedron,
     Icosahedron,
+}
+
+impl std::fmt::Display for PresetMessage {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        use PresetMessage::*;
+        match self {
+            Prism(n) => match n {
+                3 => f.write_str("Pen"),
+                _ => f.write_str("meow"),
+            },
+            Pyramid(n) => match n {
+                3 => f.write_str("Tetrahedron"),
+                4 => f.write_str("Square"),
+                5 => f.write_str("Pentagonal"),
+                6 => f.write_str("Hexagonal"),
+                7 => f.write_str("Heptagonal"),
+                8 => f.write_str("Octagonal"),
+                _ => f.write_str("?"),
+            },
+            _ => f.write_fmt(format_args!("{self:?}")),
+        }
+    }
 }
 
 #[derive(Debug, Clone, EnumIter, Display)]
@@ -124,10 +146,29 @@ impl MenuAble for PresetMessage {
             .map(|message| {
                 use PresetMessage::*;
                 match message {
-                    Prism(_) => Item::new(Text::new("nyaaaa")),
+                    Prism(_) => Item::with_menu(
+                        Self::submenu_button("Prism"),
+                        Self::base_menu(
+                            (3..=8)
+                                .into_iter()
+                                .map(|n| Prism(n))
+                                .map(|msg| {
+                                    Item::new(Self::labeled(&msg.to_string(), Message::Preset(msg)))
+                                })
+                                .collect(),
+                        ),
+                    ),
                     Pyramid(_) => Item::with_menu(
                         Self::submenu_button("Pyramid"),
-                        Self::base_menu(vec![Item::new(Text::new("three"))]),
+                        Self::base_menu(
+                            (3..=8)
+                                .into_iter()
+                                .map(|n| Pyramid(n))
+                                .map(|msg| {
+                                    Item::new(Self::labeled(&msg.to_string(), Message::Preset(msg)))
+                                })
+                                .collect(),
+                        ),
                     ),
                     _ => Item::new(
                         Self::base(Text::new(message.to_string()), Message::Preset(message))
