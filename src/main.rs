@@ -3,10 +3,7 @@ mod polyhedra;
 mod scene;
 
 use iced_aw::{
-    card,
-    menu::{Item, MenuBar, StyleSheet},
-    menu_bar, modal,
-    style::MenuBarStyle,
+    menu::{Item, MenuBar},
 };
 use message::*;
 use polyhedra::Transaction;
@@ -20,7 +17,7 @@ use iced::{
     executor, font,
     time::Instant,
     widget::{button, column, container, row, shader},
-    window, Alignment, Application, Border, Command, Element, Length, Subscription, Theme,
+    window, Application, Command, Element, Length, Subscription, Theme,
 };
 
 fn main() -> iced::Result {

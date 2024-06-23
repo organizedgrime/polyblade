@@ -217,7 +217,7 @@ impl PolyGraph {
                         Contract => {
                             self.transactions
                                 .push(Transaction::Contraction(self.contractions.clone()));
-                            self.name = format!("d{}", self.name[1..].to_string());
+                            self.name = format!("d{}", &self.name[1..]);
                         }
                     }
                     self.pst();
