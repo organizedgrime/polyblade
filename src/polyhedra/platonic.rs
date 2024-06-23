@@ -29,6 +29,7 @@ impl PolyGraph {
 impl PolyGraph {
     pub fn prism(n: usize) -> PolyGraph {
         let mut p = PolyGraph::new_disconnected(n * 2);
+        p.name = format!("P{n}");
         for i in 0..n {
             // Lower polygon
             p.connect((i % n, (i + 1) % n));
@@ -45,6 +46,7 @@ impl PolyGraph {
 
     pub fn anti_prism(n: usize) -> PolyGraph {
         let mut p = PolyGraph::new_disconnected(n * 2);
+        p.name = format!("A{n}");
         for i in 0..n {
             // Lower polygon
             p.connect((i % n, (i + 1) % n));
@@ -63,6 +65,7 @@ impl PolyGraph {
 
     pub fn pyramid(n: usize) -> PolyGraph {
         let mut p = PolyGraph::new_disconnected(n + 1);
+        p.name = format!("Y{n}");
         for i in 0..n {
             p.connect((i, (i + 1) % n));
             p.connect((i, n));

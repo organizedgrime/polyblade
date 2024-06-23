@@ -67,6 +67,7 @@ pub enum Message {
     Preset(PresetMessage),
     Conway(ConwayMessage),
     FontLoaded(Result<(), font::Error>),
+    None,
 }
 
 #[derive(Debug, Clone, EnumIter)]
@@ -84,6 +85,15 @@ impl std::fmt::Display for PresetMessage {
         use PresetMessage::*;
         match self {
             Prism(n) => match n {
+                3 => f.write_str("Triangular"),
+                4 => f.write_str("Cube"),
+                5 => f.write_str("Pentagonal"),
+                6 => f.write_str("Hexagonal"),
+                7 => f.write_str("Heptagonal"),
+                8 => f.write_str("Octagonal"),
+                _ => f.write_str("?"),
+            },
+            AntiPrism(n) => match n {
                 3 => f.write_str("Triangular"),
                 4 => f.write_str("Cube"),
                 5 => f.write_str("Pentagonal"),

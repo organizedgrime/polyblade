@@ -152,15 +152,15 @@ impl PolyGraph {
         }
         self.pst();
         self.find_cycles();
+        self.transactions.insert(1, Transaction::Name('k'));
     }
 
     /// `b` = `ta`
     pub fn bevel(&mut self) {
         self.truncate();
         self.ambo();
-        self.name.remove(0);
-        self.name.remove(0);
-        self.name.insert(0, 'b');
+        self.transactions.remove(1);
+        self.transactions.insert(1, Transaction::Name('b'));
     }
 
     pub fn ordered_face_indices(&self, v: VertexId) -> Vec<usize> {

@@ -4,7 +4,7 @@ mod scene;
 
 use iced_aw::{
     card,
-    menu::{Item, StyleSheet},
+    menu::{Item, MenuBar, StyleSheet},
     menu_bar, modal,
     style::MenuBarStyle,
 };
@@ -79,27 +79,20 @@ impl Application for Polyblade {
                     .transactions
                     .push(Transaction::Conway(conway));
             }
+            None => {}
         }
 
         Command::none()
     }
 
     fn view(&self) -> Element<'_, Self::Message> {
-        let underlay = container(
+        container(
             column![
                 row![
-                    menu_bar!((PresetMessage::bar("Preset"), PresetMessage::menu())(
-                        ConwayMessage::bar("Conway"),
-                        ConwayMessage::menu()
-                    ))
-                    .spacing(10.0)
-                    .style(|theme: &iced::Theme| iced_aw::menu::Appearance {
-                        path_border: Border {
-                            radius: [6.0; 4].into(),
-                            ..Default::default()
-                        },
-                        ..theme.appearance(&MenuBarStyle::Default)
-                    }),
+                    MenuBar::new(vec![
+                        Item::with_menu(button(text("Preset")), PresetMessage::menu()),
+                        Item::with_menu(button(text("Conway")), ConwayMessage::menu())
+                    ]),
                     checkbox("Rotating", self.rotating).on_toggle(Message::Rotate)
                 ]
                 .spacing(10.0),
@@ -119,31 +112,8 @@ impl Application for Polyblade {
         .height(Length::Fill)
         .center_x()
         .center_y()
-        .padding(10);
-
-        let card = if self.show_alert {
-            Some(
-                card("Error", "Sorry, that isn't implemented yet.")
-                    .foot(
-                        row![button("Ok")
-                            .width(Length::Fill)
-                            .on_press(Message::CloseAlert)]
-                        .spacing(10)
-                        .padding(5)
-                        .width(Length::Fill),
-                    )
-                    .max_width(300.0)
-                    .on_close(Message::CloseAlert),
-            )
-        } else {
-            None
-        };
-
-        modal(underlay, card)
-            .backdrop(Message::CloseAlert)
-            .on_esc(Message::CloseAlert)
-            //.align_y(Vertical::Center)
-            .into()
+        .padding(10)
+        .into()
     }
 
     fn subscription(&self) -> Subscription<Message> {
