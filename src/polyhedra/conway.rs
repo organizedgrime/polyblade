@@ -116,7 +116,7 @@ impl PolyGraph {
         for v in self.vertices.clone() {
             new_edges.extend(self.split_vertex(v));
         }
-        self.name.insert(0, 't');
+        self.transactions.insert(1, Transaction::Name('t'));
         new_edges
     }
 
@@ -124,6 +124,7 @@ impl PolyGraph {
     pub fn ambo(&mut self) {
         // Truncate
         let new_edges = self.truncate();
+        self.transactions.remove(1);
         let original_edges: HashSet<Edge> = self
             .adj_v
             .clone()
@@ -131,6 +132,7 @@ impl PolyGraph {
             .map(Edge::clone)
             .collect();
 
+        self.transactions.insert(1, Transaction::Name('a'));
         self.transactions
             .insert(1, Transaction::Contraction(original_edges));
     }
@@ -293,12 +295,16 @@ impl PolyGraph {
         self.adj_v.extend(new_edges.clone());
         self.adj_v.extend(face_edges);
         self.contractions = new_edges;
+        self.transactions.insert(1, Transaction::Name('e'));
     }
 
     pub fn dual(&mut self) {
         self.expand();
+        self.transactions.remove(1);
+        self.transactions.insert(1, Transaction::Name('d'));
         self.transactions
             .insert(1, Transaction::Contraction(self.contractions.clone()));
+        println!("n:{:?}", self.transactions);
     }
 
     /*
