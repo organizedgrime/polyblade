@@ -206,6 +206,7 @@ impl PolyGraph {
                     match conway {
                         Dual => self.dual(),
                         Ambo => self.ambo(),
+                        Kis => self.kis(),
                         Truncate => {
                             self.truncate();
                         }

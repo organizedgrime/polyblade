@@ -1,5 +1,7 @@
 use std::collections::{HashMap, VecDeque};
 
+use glam::Vec3;
+
 pub use super::*;
 use std::collections::HashSet;
 
@@ -131,6 +133,23 @@ impl PolyGraph {
 
         self.transactions
             .insert(1, Transaction::Contraction(original_edges));
+    }
+
+    /// `k` kis
+    pub fn kis(&mut self) {
+        for cycle in self.cycles.clone() {
+            let v = self.insert();
+            let mut vpos = Vec3::ZERO;
+
+            for &u in cycle.iter() {
+                self.connect((v, u));
+                vpos += self.positions[&u];
+            }
+
+            self.positions.insert(v, vpos / cycle.len() as f32);
+        }
+        self.pst();
+        self.find_cycles();
     }
 
     /// `b` = `ta`

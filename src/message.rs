@@ -114,7 +114,7 @@ pub enum ConwayMessage {
     // Join,
     Ambo,
     // 3
-    // Kis,
+    Kis,
     // Needle,
     // Zip,
     Truncate,
