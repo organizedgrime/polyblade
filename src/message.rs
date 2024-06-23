@@ -129,22 +129,6 @@ pub enum ConwayMessage {
 }
 
 impl MenuAble for PresetMessage {
-    /*
-    fn view() -> Element<'static, Message> {
-        Row::with_children(PresetMessage::iter().map(|message| {
-            use PresetMessage::*;
-            match message {
-                Prism(_) => Self::labeled("Prism", Message::Tick(Instant::now())).into(),
-                Pyramid(_) => Self::labeled("Pyramid", Message::Tick(Instant::now())).into(),
-                _ => button(Text::new(message.to_string()))
-                    .on_press(Message::Preset(message))
-                    .into(),
-            }
-        }))
-        .spacing(10)
-        .into()
-    }
-    */
     fn menu<'a>() -> Menu<'a, Message, Theme, Renderer> {
         let items: Vec<Item<'a, Message, Theme, Renderer>> = PresetMessage::iter()
             .map(|message| {
@@ -175,10 +159,23 @@ impl MenuAble for PresetMessage {
                         ),
                     ),
                     _ => Item::new(
-                        Self::base(Text::new(message.to_string()), Message::Preset(message))
+                        Self::labeled(&message.to_string(), Message::Preset(message))
                             .width(Length::Fill),
                     ),
                 }
+            })
+            .collect();
+        Self::base_menu(items)
+    }
+}
+impl MenuAble for ConwayMessage {
+    fn menu<'a>() -> Menu<'a, Message, Theme, Renderer> {
+        let items: Vec<Item<'a, Message, Theme, Renderer>> = ConwayMessage::iter()
+            .map(|message| {
+                Item::new(
+                    Self::labeled(&message.to_string(), Message::Conway(message))
+                        .width(Length::Fill),
+                )
             })
             .collect();
         Self::base_menu(items)

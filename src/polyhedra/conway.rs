@@ -311,7 +311,7 @@ mod test {
 
     #[test]
     fn contract_edge() {
-        let mut graph = PolyGraph::cube();
+        let mut graph = PolyGraph::prism(4);
         assert_eq!(graph.vertices.len(), 8);
         assert_eq!(graph.adj_v.len(), 12);
 
@@ -324,7 +324,7 @@ mod test {
 
     #[test]
     fn split_vertex() {
-        let mut graph = PolyGraph::cube();
+        let mut graph = PolyGraph::prism(4);
         assert_eq!(graph.vertices.len(), 8);
         assert_eq!(graph.adj_v.len(), 12);
 

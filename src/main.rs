@@ -103,8 +103,8 @@ impl Application for Polyblade {
         let underlay = container(
             column![
                 menu_bar!((PresetMessage::bar("Preset"), PresetMessage::menu())(
-                    PresetMessage::bar("Preset"),
-                    PresetMessage::menu()
+                    ConwayMessage::bar("Conway"),
+                    ConwayMessage::menu()
                 ))
                 .spacing(10.0),
                 shader(&self.scene).width(Length::Fill).height(Length::Fill),

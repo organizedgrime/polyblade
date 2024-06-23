@@ -15,9 +15,9 @@ iced_aw = { version = "0.8.0", default-features = false, features = [
 	"color_picker",
 	"card",
 	"modal",
-	"icons",
 	"menu",
 	"quad",
+	"icons",
 ] }
 image = { version = "0.24.9" }
 rand = "^0.8.5"

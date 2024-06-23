@@ -374,12 +374,12 @@ mod test {
     use std::collections::HashSet;
     use test_case::test_case;
 
-    #[test_case(PolyGraph::tetrahedron(); "T")]
-    #[test_case(PolyGraph::cube(); "C")]
+    #[test_case(PolyGraph::pyramid(3); "T")]
+    #[test_case(PolyGraph::prism(4); "C")]
     #[test_case(PolyGraph::octahedron(); "O")]
     #[test_case(PolyGraph::dodecahedron(); "D")]
     #[test_case(PolyGraph::icosahedron(); "I")]
-    #[test_case({ let mut g = PolyGraph::cube(); g.truncate(); g.pst(); g} ; "tC")]
+    #[test_case({ let mut g = PolyGraph::prism(4); g.truncate(); g.pst(); g} ; "tC")]
     #[test_case({ let mut g = PolyGraph::octahedron(); g.truncate(); g.pst(); g} ; "tO")]
     #[test_case({ let mut g = PolyGraph::dodecahedron(); g.truncate(); g.pst(); g} ; "tD")]
     fn pst(mut graph: PolyGraph) {

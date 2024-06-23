@@ -55,21 +55,6 @@ impl PolyGraph {
         p
     }
 
-    pub fn cube() -> PolyGraph {
-        PolyGraph::new_platonic(
-            "C",
-            vec![
-                vec![1, 2, 7],
-                vec![0, 3, 6],
-                vec![0, 3, 5],
-                vec![1, 2, 4],
-                vec![3, 5, 6],
-                vec![2, 4, 7],
-                vec![1, 4, 7],
-                vec![0, 5, 6],
-            ],
-        )
-    }
     pub fn octahedron() -> PolyGraph {
         PolyGraph::new_platonic(
             "O",
