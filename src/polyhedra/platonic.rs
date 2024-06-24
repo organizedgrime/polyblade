@@ -15,9 +15,19 @@ impl PolyGraph {
     pub fn change_shape(&mut self, message: PresetMessage) {
         use PresetMessage::*;
         match message {
-            Prism(n) => *self = PolyGraph::prism(n),
+            Prism(n) => {
+                *self = PolyGraph::prism(n);
+                if n == 4 {
+                    self.name = "C".into();
+                }
+            }
             AntiPrism(n) => *self = PolyGraph::anti_prism(n),
-            Pyramid(n) => *self = PolyGraph::pyramid(n),
+            Pyramid(n) => {
+                *self = PolyGraph::pyramid(n);
+                if n == 3 {
+                    self.name = "T".into();
+                }
+            }
             Octahedron => *self = PolyGraph::octahedron(),
             Dodecahedron => *self = PolyGraph::dodecahedron(),
             Icosahedron => *self = PolyGraph::icosahedron(),
@@ -72,7 +82,6 @@ impl PolyGraph {
             p.connect((i, (i + 1) % n));
             p.connect((i, n));
         }
-
         p.pst();
         p.find_cycles();
         p.lattice();
@@ -80,24 +89,28 @@ impl PolyGraph {
     }
 
     pub fn octahedron() -> PolyGraph {
-        let mut y = PolyGraph::pyramid(3);
-        y.ambo();
-        y.pst();
-        y.lattice();
-        y
+        let mut p = PolyGraph::pyramid(3);
+        let edges = p.ambo();
+        p.contract_edges(edges);
+        p.pst();
+        p.lattice();
+        p.name = "O".into();
+        p
     }
     pub fn dodecahedron() -> PolyGraph {
         let mut p = PolyGraph::anti_prism(5);
-        p.dual();
-        p.pst();
+        let edges = p.expand(false);
+        p.contract_edges(edges);
         p.truncate(Some(5));
         p.pst();
+        p.name = "D".into();
         p
     }
     pub fn icosahedron() -> PolyGraph {
         let mut p = PolyGraph::anti_prism(5);
         p.kis(Some(5));
         p.pst();
+        p.name = "I".into();
         p
     }
 }

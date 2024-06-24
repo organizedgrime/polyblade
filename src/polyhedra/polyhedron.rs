@@ -1,10 +1,8 @@
-use std::time::Instant;
-
-use crate::{scene::Vertex, ConwayMessage};
-
 use super::*;
+use crate::{scene::Vertex, ConwayMessage};
 use glam::{vec3, Vec3};
 use iced::Color;
+use std::time::{Duration, Instant};
 
 const TICK_SPEED: f32 = 800.0;
 
@@ -202,32 +200,49 @@ impl PolyGraph {
                 }
                 Conway(conway) => {
                     println!("processing conway!");
+                    self.transactions.remove(0);
                     use ConwayMessage::*;
-                    match conway {
-                        Dual => self.dual(),
-                        Join => self.join(),
-                        Ambo => self.ambo(),
+                    use Transaction::*;
+                    let new_transactions = match conway {
+                        Dual => {
+                            let edges = self.expand(false);
+                            vec![Contraction(edges), Name('d')]
+                        }
+                        Join => {
+                            let edges = self.kis(Option::None);
+                            vec![
+                                Wait(Instant::now() + Duration::from_secs(1)),
+                                Release(edges),
+                                Name('j'),
+                            ]
+                        }
+                        Ambo => {
+                            let edges = self.ambo();
+                            vec![Contraction(edges), Name('a')]
+                        }
                         Kis => {
                             self.kis(Option::None);
+                            vec![Name('k')]
                         }
                         Truncate => {
                             self.truncate(Option::None);
+                            vec![Name('t')]
                         }
                         Expand => {
                             self.expand(false);
+                            vec![Name('e')]
                         }
                         Snub => {
                             self.expand(true);
+                            vec![Name('s')]
                         }
-                        Bevel => self.bevel(),
-                        Contract => {
-                            self.transactions
-                                .push(Transaction::Contraction(self.contractions.clone()));
-                            self.name = format!("d{}", &self.name[1..]);
+                        Bevel => {
+                            let edges = self.bevel();
+                            vec![Contraction(edges), Name('b')]
                         }
-                    }
+                    };
+                    self.transactions = [new_transactions, self.transactions.clone()].concat();
                     self.pst();
-                    self.transactions.remove(0);
                 }
                 Name(c) => {
                     self.name = format!("{c}{}", self.name);

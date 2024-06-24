@@ -34,8 +34,7 @@ pub struct PolyGraph {
     pub transactions: Vec<Transaction>,
     /// Edge length
     pub edge_length: f32,
-    ///
-    pub contractions: HashSet<Edge>,
+    //pub contractions: HashSet<Edge>,
 }
 
 impl PolyGraph {
@@ -47,22 +46,6 @@ impl PolyGraph {
             edge_length: 1.0,
             ..Default::default()
         }
-    }
-
-    /// New known shape
-    pub fn new_platonic(name: &str, points: Vec<Vec<usize>>) -> Self {
-        let mut poly = Self::new_disconnected(points.len());
-        poly.name = String::from(name);
-        for (v, conns) in points.into_iter().enumerate() {
-            for u in conns {
-                poly.connect(Into::<Edge>::into((v, u)).id());
-            }
-        }
-
-        poly.pst();
-        poly.find_cycles();
-        poly.lattice();
-        poly
     }
 
     // Use a Fibonacci Lattice to spread the points evenly around a sphere

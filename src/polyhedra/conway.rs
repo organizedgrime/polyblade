@@ -113,33 +113,16 @@ impl PolyGraph {
         new_edges
     }
 
-    pub fn join(&mut self) {
-        let edges = self.kis(None);
-        self.transactions.remove(1);
-        self.transactions.insert(1, Transaction::Name('j'));
-        self.transactions.insert(1, Transaction::Release(edges));
-        self.transactions.insert(
-            1,
-            Transaction::Wait(Instant::now().checked_add(Duration::from_secs(1)).unwrap()),
-        );
-    }
-
     /// `a` ambo
-    pub fn ambo(&mut self) {
+    /// Returns a set of edges to contract
+    pub fn ambo(&mut self) -> HashSet<Edge> {
         // Truncate
         let new_edges = self.truncate(None);
-        //self.transactions.remove(1);
-        let original_edges: HashSet<Edge> = self
-            .edges
+        self.edges
             .clone()
             .difference(&new_edges)
             .map(Edge::clone)
-            .collect();
-        self.contract_edges(original_edges);
-
-        /* self.transactions.insert(1, Transaction::Name('a'));
-        self.transactions
-            .insert(1, Transaction::Contraction(original_edges)); */
+            .collect()
     }
 
     /// `k` kis
@@ -184,7 +167,6 @@ impl PolyGraph {
         for v in vertices {
             new_edges.extend(self.split_vertex(v));
         }
-        //self.transactions.insert(1, Transaction::Name('t'));
         new_edges
     }
 
@@ -196,11 +178,10 @@ impl PolyGraph {
         }
     }
     /// `b` = `ta`
-    pub fn bevel(&mut self) {
+    pub fn bevel(&mut self) -> HashSet<Edge> {
         self.truncate(None);
-        self.ambo();
-        self.transactions.remove(1);
-        self.transactions.insert(1, Transaction::Name('b'));
+        self.pst();
+        self.ambo()
     }
 
     pub fn ordered_face_indices(&self, v: VertexId) -> Vec<usize> {
@@ -232,7 +213,7 @@ impl PolyGraph {
     }
 
     /// `e` = `aa`
-    pub fn expand(&mut self, snub: bool) {
+    pub fn expand(&mut self, snub: bool) -> HashSet<Edge> {
         let mut new_edges = HashSet::<Edge>::new();
         let mut face_edges = HashSet::<Edge>::new();
 
@@ -323,34 +304,8 @@ impl PolyGraph {
         self.edges = HashSet::new();
         self.edges.extend(new_edges.clone());
         self.edges.extend(face_edges);
-        self.contractions = new_edges;
-        //self.transactions .insert(1, Transaction::Name(if snub { 's' } else { 'e' }));
+        new_edges
     }
-
-    pub fn dual(&mut self) {
-        self.expand(false);
-        /* self.transactions.remove(1);
-        if self.name.chars().nth(0) == Some('d') {
-            self.transactions.insert(1, Transaction::ShortenName(1));
-        } else {
-            self.transactions.insert(1, Transaction::Name('d'));
-        }
-        self.transactions
-            .insert(1, Transaction::Contraction(self.contractions.clone()));
-        self.transactions.insert(
-            1,
-            Transaction::Wait(Instant::now() + Duration::from_millis(350)),
-        ); */
-        self.contract_edges(self.contractions.clone());
-    }
-
-    /*
-    /// `s` snub is applying `e` followed by diagonal addition
-    pub fn snub(&mut self) {
-        self.expand();
-        //self.diagonal_addition();
-    }
-    */
 
     // `j` join
     // `z` zip

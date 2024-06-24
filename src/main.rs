@@ -171,7 +171,6 @@ impl Application for Polyblade {
                     Character("s") => Some(Snub),
                     Character("k") => Some(Kis),
                     Character("j") => Some(Join),
-                    Character("c") => Some(Contract),
                     Character("a") => Some(Ambo),
                     Character("t") => Some(Truncate),
                     Character("b") => Some(Bevel),

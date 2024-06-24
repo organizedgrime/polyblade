@@ -88,7 +88,6 @@ pub enum ConwayMessage {
     // // 6
     // Meta,
     Bevel,
-    Contract,
 }
 
 impl HotKey for PresetMessage {}
