@@ -1,3 +1,4 @@
+mod menu;
 mod message;
 mod polyhedra;
 mod scene;
@@ -5,10 +6,9 @@ mod scene;
 use std::time::Duration;
 
 use iced::widget::slider;
-use iced::{theme, Border, Color};
-use iced_aw::menu::{self, Item, MenuBar, StyleSheet};
-use iced_aw::style::MenuBarStyle;
-use iced_aw::{menu_bar, BootstrapIcon, BOOTSTRAP_FONT};
+use iced_aw::menu::Item;
+use iced_aw::menu_bar;
+use menu::*;
 use message::*;
 use polyhedra::Transaction;
 use scene::Scene;
@@ -17,7 +17,7 @@ use iced::widget::{checkbox, shader::wgpu, text};
 use iced::{
     executor, font,
     time::Instant,
-    widget::{button, column, container, row, shader},
+    widget::{column, container, row, shader},
     window, Application, Command, Element, Length, Subscription, Theme,
 };
 
@@ -92,12 +92,13 @@ impl Application for Polyblade {
     }
 
     fn view(&self) -> Element<'_, Self::Message> {
-        let palette = self.theme();
-        let theme = palette.extended_palette();
         container(
             column![
                 row![
-                    menu_bar!((bar("Preset"), PresetMessage::menu())),
+                    menu_bar!(
+                        //(bar("Preset"), PresetMessage::menu())
+                        (bar("Conway"), ConwayMessage::menu())
+                    ),
                     /*
                     .style(|theme: &Theme| {
                         menu::Appearance {

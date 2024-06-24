@@ -172,9 +172,10 @@ impl PolyGraph {
     }
 
     /// `o` ortho
+    #[allow(dead_code)]
     pub fn ortho(&mut self) {
-        for c in self.cycles.clone() {
-            let v = self.insert();
+        for _c in self.cycles.clone() {
+            let _v = self.insert();
         }
     }
     /// `b` = `ta`
