@@ -146,18 +146,37 @@ impl Application for Polyblade {
     fn subscription(&self) -> Subscription<Message> {
         use iced::keyboard;
         use keyboard::key;
-        let handle_hotkey = |key: key::Key, _modifiers: keyboard::Modifiers| match key.as_ref() {
-            keyboard::Key::Character("d") => Some(Message::Conway(ConwayMessage::Dual)),
-            keyboard::Key::Character("e") => Some(Message::Conway(ConwayMessage::Expand)),
-            keyboard::Key::Character("s") => Some(Message::Conway(ConwayMessage::Snub)),
-            keyboard::Key::Character("k") => Some(Message::Conway(ConwayMessage::Kis)),
-            keyboard::Key::Character("j") => Some(Message::Conway(ConwayMessage::Join)),
-            keyboard::Key::Character("c") => Some(Message::Conway(ConwayMessage::Contract)),
-            keyboard::Key::Character("a") => Some(Message::Conway(ConwayMessage::Ambo)),
-            keyboard::Key::Character("t") => Some(Message::Conway(ConwayMessage::Truncate)),
-            keyboard::Key::Character("b") => Some(Message::Conway(ConwayMessage::Bevel)),
-            _ => None,
+        let handle_hotkey = |key: key::Key, modifiers: keyboard::Modifiers| {
+            use keyboard::Key::Character;
+            if modifiers.command() {
+                use PresetMessage::*;
+                let pm = match key.as_ref() {
+                    Character("t") => Some(Pyramid(3)),
+                    Character("c") => Some(Prism(4)),
+                    Character("o") => Some(Octahedron),
+                    Character("d") => Some(Dodecahedron),
+                    Character("i") => Some(Icosahedron),
+                    _ => None,
+                };
+                pm.map(Message::Preset)
+            } else {
+                use ConwayMessage::*;
+                let cm = match key.as_ref() {
+                    Character("d") => Some(Dual),
+                    Character("e") => Some(Expand),
+                    Character("s") => Some(Snub),
+                    Character("k") => Some(Kis),
+                    Character("j") => Some(Join),
+                    Character("c") => Some(Contract),
+                    Character("a") => Some(Ambo),
+                    Character("t") => Some(Truncate),
+                    Character("b") => Some(Bevel),
+                    _ => None,
+                };
+                cm.map(Message::Conway)
+            }
         };
+
         let tick = window::frames().map(Message::Tick);
 
         Subscription::batch(vec![tick, keyboard::on_key_press(handle_hotkey)])

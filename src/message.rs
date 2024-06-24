@@ -1,4 +1,4 @@
-use std::time::Instant;
+use std::{fmt::Display, time::Instant};
 
 use iced::font;
 use strum_macros::{Display, EnumIter};
@@ -23,7 +23,7 @@ pub enum PresetMessage {
     Icosahedron,
 }
 
-impl std::fmt::Display for PresetMessage {
+impl Display for PresetMessage {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         use PresetMessage::*;
         match self {
@@ -37,8 +37,9 @@ impl std::fmt::Display for PresetMessage {
                 _ => f.write_str("?"),
             },
             AntiPrism(n) => match n {
+                2 => f.write_str("Digonal"),
                 3 => f.write_str("Triangular"),
-                4 => f.write_str("Cube"),
+                4 => f.write_str("Square"),
                 5 => f.write_str("Pentagonal"),
                 6 => f.write_str("Hexagonal"),
                 7 => f.write_str("Heptagonal"),
@@ -56,6 +57,12 @@ impl std::fmt::Display for PresetMessage {
             },
             _ => f.write_fmt(format_args!("{self:?}")),
         }
+    }
+}
+
+trait HotKey: Display {
+    fn hotkey(&self) -> char {
+        self.to_string().to_lowercase().chars().nth(0).unwrap()
     }
 }
 
@@ -82,3 +89,6 @@ pub enum ConwayMessage {
     Bevel,
     Contract,
 }
+
+impl HotKey for PresetMessage {}
+impl HotKey for ConwayMessage {}
