@@ -2,7 +2,10 @@ mod message;
 mod polyhedra;
 mod scene;
 
+use std::time::Duration;
+
 use iced_aw::menu::{Item, MenuBar};
+use iced_aw::{BootstrapIcon, BOOTSTRAP_FONT};
 use message::*;
 use polyhedra::Transaction;
 use scene::Scene;
@@ -26,7 +29,7 @@ struct Polyblade {
     start: Instant,
     scene: Scene,
     rotating: bool,
-    show_alert: bool,
+    rotation_duration: Duration,
 }
 
 impl Application for Polyblade {
@@ -45,7 +48,7 @@ impl Application for Polyblade {
                 start: Instant::now(),
                 scene: Scene::new(),
                 rotating: true,
-                show_alert: false,
+                rotation_duration: Duration::from_secs(0),
             },
             Command::batch(vec![
                 font::load(iced_aw::BOOTSTRAP_FONT_BYTES).map(Message::FontLoaded),
@@ -59,13 +62,19 @@ impl Application for Polyblade {
         match message {
             FontLoaded(_) => {}
             Tick(time) => {
-                self.scene.update(time - self.start);
+                if self.rotating {
+                    self.scene.update(time.duration_since(self.start));
+                } else {
+                    self.scene.update(self.rotation_duration);
+                }
             }
             Rotate(rotating) => {
                 self.rotating = rotating;
-            }
-            CloseAlert => {
-                self.show_alert = false;
+                if !rotating {
+                    self.rotation_duration = Instant::now().duration_since(self.start);
+                } else {
+                    self.start = Instant::now().checked_sub(self.rotation_duration).unwrap();
+                }
             }
             Preset(preset) => self.scene.polyhedron.change_shape(preset),
             Conway(conway) => {
@@ -74,7 +83,6 @@ impl Application for Polyblade {
                     .transactions
                     .push(Transaction::Conway(conway));
             }
-            None => {}
         }
 
         Command::none()
@@ -94,11 +102,22 @@ impl Application for Polyblade {
                 // Actual shader of the program
                 shader(&self.scene).width(Length::Fill).height(Length::Fill),
                 // Info
-                //
                 container(
-                    text(&self.scene.polyhedron.name)
-                        .size(30)
-                        .horizontal_alignment(Horizontal::Left)
+                    row![
+                        column![
+                            text("Conway:"),
+                            text("Faces:"),
+                            text("Edges:"),
+                            text("Vertices:"),
+                        ],
+                        column![
+                            text(&self.scene.polyhedron.name),
+                            text(self.scene.polyhedron.cycles.len().to_string()),
+                            text(self.scene.polyhedron.adj_v.len().to_string(),),
+                            text(self.scene.polyhedron.vertices.len().to_string())
+                        ]
+                    ]
+                    .spacing(20)
                 )
             ]
             .spacing(10),
@@ -127,6 +146,7 @@ impl Application for Polyblade {
             _ => None,
         };
         let tick = window::frames().map(Message::Tick);
+
         Subscription::batch(vec![tick, keyboard::on_key_press(handle_hotkey)])
     }
 

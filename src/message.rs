@@ -63,11 +63,9 @@ pub trait MenuAble {
 pub enum Message {
     Tick(Instant),
     Rotate(bool),
-    CloseAlert,
     Preset(PresetMessage),
     Conway(ConwayMessage),
     FontLoaded(Result<(), font::Error>),
-    None,
 }
 
 #[derive(Debug, Clone, EnumIter)]

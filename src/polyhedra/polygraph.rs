@@ -134,7 +134,7 @@ impl PolyGraph {
     }
 
     /// Number of faces
-    pub fn face_count(&mut self) -> i64 {
+    pub fn face_count(&self) -> i64 {
         2 + self.adj_v.len() as i64 - self.vertices.len() as i64
     }
 
