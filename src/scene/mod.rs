@@ -66,7 +66,6 @@ impl<Message> shader::Program<Message> for Scene {
         _cursor: mouse::Cursor,
         _bounds: Rectangle,
     ) -> Self::Primitive {
-        println!("new primitive!");
         Primitive::new(
             &self.polyhedron,
             &self.palette,

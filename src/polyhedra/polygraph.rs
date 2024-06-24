@@ -36,45 +36,17 @@ pub struct PolyGraph {
     pub edge_length: f32,
     ///
     pub contractions: HashSet<Edge>,
-    ///
-    pub palette: Vec<Color>,
 }
 
 impl PolyGraph {
     /// New with n vertices
     pub fn new_disconnected(vertex_count: usize) -> Self {
-        // Use a Fibonacci Lattice to evently distribute starting points on a sphere
-        let phi = std::f32::consts::PI * (3.0 - 5.0f32.sqrt());
-        let positions = (0..vertex_count)
-            .map(|i| {
-                let y = 1.0 - (i as f32 / (vertex_count - 1) as f32);
-                let radius = (1.0 - y * y).sqrt();
-                let theta = phi * i as f32;
-                let x = theta.cos() * radius;
-                let z = theta.sin() * radius;
-                (i, vec3(x, y, z))
-            })
-            .collect();
-
-        let mut poly = Self {
+        Self {
             vertices: (0..vertex_count).collect(),
-            positions,
             speeds: (0..vertex_count).map(|x| (x, Vec3::ZERO)).collect(),
-            palette: vec![
-                Color::from_rgb8(72, 132, 90),
-                Color::from_rgb8(163, 186, 112),
-                Color::from_rgb8(51, 81, 69),
-                Color::from_rgb8(254, 240, 134),
-                Color::from_rgb8(95, 155, 252),
-                Color::from_rgb8(244, 164, 231),
-                Color::from_rgb8(170, 137, 190),
-            ],
             edge_length: 1.0,
             ..Default::default()
-        };
-        poly.pst();
-        poly.find_cycles();
-        poly
+        }
     }
 
     /// New known shape
@@ -89,7 +61,27 @@ impl PolyGraph {
 
         poly.pst();
         poly.find_cycles();
+        poly.lattice();
         poly
+    }
+
+    // Use a Fibonacci Lattice to spread the points evenly around a sphere
+    pub fn lattice(&mut self) {
+        // Use a Fibonacci Lattice to evently distribute starting points on a sphere
+        let phi = std::f32::consts::PI * (3.0 - 5.0f32.sqrt());
+        let positions: VertMap<Vec3> = self
+            .vertices
+            .iter()
+            .map(|&i| {
+                let y = 1.0 - (i as f32 / (self.vertices.len() - 1) as f32);
+                let radius = (1.0 - y * y).sqrt();
+                let theta = phi * i as f32;
+                let x = theta.cos() * radius;
+                let z = theta.sin() * radius;
+                (i, vec3(x, y, z))
+            })
+            .collect();
+        self.positions = positions;
     }
 
     pub fn connect(&mut self, e: impl Into<Edge>) {

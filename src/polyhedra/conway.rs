@@ -314,10 +314,17 @@ impl PolyGraph {
     pub fn dual(&mut self) {
         self.expand(false);
         self.transactions.remove(1);
-        self.transactions.insert(1, Transaction::Name('d'));
+        if self.name.chars().nth(0) == Some('d') {
+            self.transactions.insert(1, Transaction::ShortenName(1));
+        } else {
+            self.transactions.insert(1, Transaction::Name('d'));
+        }
         self.transactions
             .insert(1, Transaction::Contraction(self.contractions.clone()));
-        println!("n:{:?}", self.transactions);
+        self.transactions.insert(
+            1,
+            Transaction::Wait(Instant::now() + Duration::from_millis(350)),
+        );
     }
 
     /*

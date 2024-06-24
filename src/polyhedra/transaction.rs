@@ -7,6 +7,7 @@ pub enum Transaction {
     Contraction(HashSet<Edge>),
     Release(HashSet<Edge>),
     Conway(ConwayMessage),
+    ShortenName(usize),
     Name(char),
     Wait(Instant),
     #[allow(dead_code)]

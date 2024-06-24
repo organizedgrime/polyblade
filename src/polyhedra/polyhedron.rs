@@ -233,6 +233,10 @@ impl PolyGraph {
                     self.name = format!("{c}{}", self.name);
                     self.transactions.remove(0);
                 }
+                ShortenName(n) => {
+                    self.name = self.name[n..].to_string();
+                    self.transactions.remove(0);
+                }
                 Wait(instant) => {
                     if Instant::now() > instant {
                         self.transactions.remove(0);

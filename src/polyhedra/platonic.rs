@@ -41,6 +41,7 @@ impl PolyGraph {
         }
         p.pst();
         p.find_cycles();
+        p.lattice();
         p
     }
 
@@ -60,6 +61,7 @@ impl PolyGraph {
         }
         p.pst();
         p.find_cycles();
+        p.lattice();
         p
     }
 
@@ -73,6 +75,7 @@ impl PolyGraph {
 
         p.pst();
         p.find_cycles();
+        p.lattice();
         p
     }
 

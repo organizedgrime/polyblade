@@ -8,6 +8,7 @@ pub enum Message {
     Tick(Instant),
     Rotate(bool),
     SizeChanged(f32),
+    FovChanged(f32),
     Preset(PresetMessage),
     Conway(ConwayMessage),
     FontLoaded(Result<(), font::Error>),

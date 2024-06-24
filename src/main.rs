@@ -79,6 +79,9 @@ impl Application for Polyblade {
             SizeChanged(size) => {
                 self.scene.size = size;
             }
+            FovChanged(fov) => {
+                self.scene.camera.fov_y = fov;
+            }
             Preset(preset) => self.scene.polyhedron.change_shape(preset),
             Conway(conway) => {
                 self.scene
@@ -131,7 +134,8 @@ impl Application for Polyblade {
                     ]
                     .spacing(20)
                 ),
-                slider(1.0..=10.0, self.scene.size, Message::SizeChanged).step(0.1)
+                slider(1.0..=10.0, self.scene.size, Message::SizeChanged).step(0.1),
+                slider(45.0..=180.0, self.scene.camera.fov_y, Message::FovChanged).step(0.1)
             ]
             .spacing(10),
         )

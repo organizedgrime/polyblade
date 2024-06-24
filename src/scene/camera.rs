@@ -6,7 +6,7 @@ pub struct Camera {
     eye: glam::Vec3,
     target: glam::Vec3,
     up: glam::Vec3,
-    fov_y: f32,
+    pub(crate) fov_y: f32,
     near: f32,
     far: f32,
 }
