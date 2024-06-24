@@ -2,9 +2,7 @@ mod message;
 mod polyhedra;
 mod scene;
 
-use iced_aw::{
-    menu::{Item, MenuBar},
-};
+use iced_aw::menu::{Item, MenuBar};
 use message::*;
 use polyhedra::Transaction;
 use scene::Scene;
@@ -119,6 +117,9 @@ impl Application for Polyblade {
         let handle_hotkey = |key: key::Key, _modifiers: keyboard::Modifiers| match key.as_ref() {
             keyboard::Key::Character("d") => Some(Message::Conway(ConwayMessage::Dual)),
             keyboard::Key::Character("e") => Some(Message::Conway(ConwayMessage::Expand)),
+            keyboard::Key::Character("s") => Some(Message::Conway(ConwayMessage::Snub)),
+            keyboard::Key::Character("k") => Some(Message::Conway(ConwayMessage::Kis)),
+            keyboard::Key::Character("j") => Some(Message::Conway(ConwayMessage::Join)),
             keyboard::Key::Character("c") => Some(Message::Conway(ConwayMessage::Contract)),
             keyboard::Key::Character("a") => Some(Message::Conway(ConwayMessage::Ambo)),
             keyboard::Key::Character("t") => Some(Message::Conway(ConwayMessage::Truncate)),

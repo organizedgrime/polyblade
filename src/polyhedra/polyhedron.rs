@@ -225,7 +225,10 @@ impl PolyGraph {
                             self.truncate();
                         }
                         Expand => {
-                            self.expand();
+                            self.expand(false);
+                        }
+                        Snub => {
+                            self.expand(true);
                         }
                         Bevel => self.bevel(),
                         Contract => {

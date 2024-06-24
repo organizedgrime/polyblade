@@ -133,7 +133,7 @@ pub enum ConwayMessage {
     Expand,
     // 5
     // Gyro,
-    // Snub,
+    Snub,
     // // 6
     // Meta,
     Bevel,
