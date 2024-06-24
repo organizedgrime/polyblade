@@ -1,5 +1,6 @@
 pub use super::*;
 use glam::{vec3, Vec3};
+use iced::Color;
 use rand::random;
 use std::{
     collections::{HashMap, HashSet, VecDeque},
@@ -16,15 +17,12 @@ pub struct PolyGraph {
     /// [Actual Graph]
     pub vertices: HashSet<VertexId>,
     /// Vertices that are adjacent
-    pub adj_v: HashSet<Edge>,
-
-    /// Adjacency of faces
-    pub adj_f: HashSet<Edge>,
+    pub edges: HashSet<Edge>,
 
     /// [Derived Properties]
-    /// Faces
+    /// Faces are simple cycles
     pub cycles: Vec<Face>,
-    /// Distances between all points
+    /// Distance matrix
     pub dist: HashMap<Edge, usize>,
 
     /// [Render Properties]
@@ -36,7 +34,10 @@ pub struct PolyGraph {
     pub transactions: Vec<Transaction>,
     /// Edge length
     pub edge_length: f32,
+    ///
     pub contractions: HashSet<Edge>,
+    ///
+    pub palette: Vec<Color>,
 }
 
 impl PolyGraph {
@@ -59,6 +60,15 @@ impl PolyGraph {
             vertices: (0..vertex_count).collect(),
             positions,
             speeds: (0..vertex_count).map(|x| (x, Vec3::ZERO)).collect(),
+            palette: vec![
+                Color::from_rgb8(72, 132, 90),
+                Color::from_rgb8(163, 186, 112),
+                Color::from_rgb8(51, 81, 69),
+                Color::from_rgb8(254, 240, 134),
+                Color::from_rgb8(95, 155, 252),
+                Color::from_rgb8(244, 164, 231),
+                Color::from_rgb8(170, 137, 190),
+            ],
             edge_length: 1.0,
             ..Default::default()
         };
@@ -85,13 +95,13 @@ impl PolyGraph {
     pub fn connect(&mut self, e: impl Into<Edge>) {
         let e = e.into();
         if e.v() != e.u() {
-            self.adj_v.insert(e);
+            self.edges.insert(e);
         }
     }
 
     #[allow(dead_code)]
     pub fn disconnect(&mut self, e: impl Into<Edge>) {
-        self.adj_v.remove(&e.into());
+        self.edges.remove(&e.into());
     }
 
     pub fn insert(&mut self) -> VertexId {
@@ -107,8 +117,8 @@ impl PolyGraph {
     pub fn delete(&mut self, v: VertexId) {
         self.vertices.remove(&v);
 
-        self.adj_v = self
-            .adj_v
+        self.edges = self
+            .edges
             .clone()
             .into_iter()
             .filter(|e| !e.contains(v))
@@ -127,7 +137,7 @@ impl PolyGraph {
 
     /// Edges of a vertex
     pub fn edges(&self, v: VertexId) -> Vec<Edge> {
-        self.adj_v
+        self.edges
             .iter()
             .filter_map(|e| if e.other(v).is_some() { Some(*e) } else { None })
             .collect()
@@ -135,12 +145,12 @@ impl PolyGraph {
 
     /// Number of faces
     pub fn face_count(&self) -> i64 {
-        2 + self.adj_v.len() as i64 - self.vertices.len() as i64
+        2 + self.edges.len() as i64 - self.vertices.len() as i64
     }
 
     // Vertices that are connected to a given vertex
     pub fn connections(&self, v: VertexId) -> HashSet<VertexId> {
-        self.adj_v.iter().filter_map(|e| e.other(v)).collect()
+        self.edges.iter().filter_map(|e| e.other(v)).collect()
     }
 
     /// All faces
@@ -155,7 +165,7 @@ impl PolyGraph {
                 for &y in adj.iter() {
                     if x != y && u < x && x < y {
                         let new_face = Face::new(vec![x, u, y]);
-                        if self.adj_v.contains(&(x, y).into()) {
+                        if self.edges.contains(&(x, y).into()) {
                             cycles.insert(new_face);
                         } else {
                             triplets.push(new_face);
@@ -190,7 +200,7 @@ impl PolyGraph {
     }
 
     pub fn pst(&mut self) {
-        if self.adj_v.is_empty() {
+        if self.edges.is_empty() {
             return;
         }
 
@@ -303,7 +313,7 @@ impl Display for PolyGraph {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let mut vertices = self.vertices.iter().collect::<Vec<_>>();
         vertices.sort();
-        let mut adjacents = self.adj_v.clone().into_iter().collect::<Vec<_>>();
+        let mut adjacents = self.edges.clone().into_iter().collect::<Vec<_>>();
         adjacents.sort();
 
         f.write_fmt(format_args!(
@@ -338,7 +348,7 @@ impl PolyGraph {
                                 *u,
                                 if u == v {
                                     0
-                                } else if self.adj_v.contains(&(v, u).into()) {
+                                } else if self.edges.contains(&(v, u).into()) {
                                     1
                                 } else {
                                     u32::MAX

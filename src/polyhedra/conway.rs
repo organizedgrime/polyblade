@@ -20,8 +20,8 @@ impl PolyGraph {
             f.replace(e.v(), e.u());
         }
 
-        self.adj_v = self
-            .adj_v
+        self.edges = self
+            .edges
             .clone()
             .into_iter()
             .map(|f| {
@@ -130,7 +130,7 @@ impl PolyGraph {
         let new_edges = self.truncate();
         self.transactions.remove(1);
         let original_edges: HashSet<Edge> = self
-            .adj_v
+            .edges
             .clone()
             .difference(&new_edges)
             .map(Edge::clone)
@@ -143,7 +143,7 @@ impl PolyGraph {
 
     /// `k` kis
     pub fn kis(&mut self) -> HashSet<Edge> {
-        let edges = self.adj_v.clone();
+        let edges = self.edges.clone();
         for cycle in self.cycles.clone() {
             let v = self.insert();
             let mut vpos = Vec3::ZERO;
@@ -302,9 +302,9 @@ impl PolyGraph {
                 }
             }
         }
-        self.adj_v = HashSet::new();
-        self.adj_v.extend(new_edges.clone());
-        self.adj_v.extend(face_edges);
+        self.edges = HashSet::new();
+        self.edges.extend(new_edges.clone());
+        self.edges.extend(face_edges);
         self.contractions = new_edges;
         self.transactions
             .insert(1, Transaction::Name(if snub { 's' } else { 'e' }));
@@ -350,25 +350,25 @@ mod test {
     fn contract_edge() {
         let mut graph = PolyGraph::prism(4);
         assert_eq!(graph.vertices.len(), 8);
-        assert_eq!(graph.adj_v.len(), 12);
+        assert_eq!(graph.edges.len(), 12);
 
         graph.contract_edge((0, 1));
         graph.pst();
 
         assert_eq!(graph.vertices.len(), 7);
-        assert_eq!(graph.adj_v.len(), 11);
+        assert_eq!(graph.edges.len(), 11);
     }
 
     #[test]
     fn split_vertex() {
         let mut graph = PolyGraph::prism(4);
         assert_eq!(graph.vertices.len(), 8);
-        assert_eq!(graph.adj_v.len(), 12);
+        assert_eq!(graph.edges.len(), 12);
 
         graph.split_vertex(0);
         graph.pst();
 
         assert_eq!(graph.vertices.len(), 10);
-        assert_eq!(graph.adj_v.len(), 15);
+        assert_eq!(graph.edges.len(), 15);
     }
 }

@@ -22,16 +22,27 @@ pub struct Scene {
     pub polyhedron: PolyGraph,
     pub camera: Camera,
     pub light_color: Color,
+    pub palette: Vec<Color>,
 }
 
 impl Scene {
     pub fn new() -> Self {
+        println!("new scene!");
         Self {
             start: Instant::now(),
             size: 1.0,
             rotation: Mat4::IDENTITY,
             polyhedron: PolyGraph::dodecahedron(),
             camera: Camera::default(),
+            palette: vec![
+                Color::from_rgb8(72, 132, 90),
+                Color::from_rgb8(163, 186, 112),
+                Color::from_rgb8(51, 81, 69),
+                Color::from_rgb8(254, 240, 134),
+                Color::from_rgb8(95, 155, 252),
+                Color::from_rgb8(244, 164, 231),
+                Color::from_rgb8(170, 137, 190),
+            ],
             light_color: Color::WHITE,
         }
     }
@@ -53,7 +64,13 @@ impl<Message> shader::Program<Message> for Scene {
         _cursor: mouse::Cursor,
         _bounds: Rectangle,
     ) -> Self::Primitive {
-        Primitive::new(&self.polyhedron, &self.rotation, &self.camera)
+        println!("new primitive!");
+        Primitive::new(
+            &self.polyhedron,
+            &self.palette,
+            &self.rotation,
+            &self.camera,
+        )
     }
 }
 
@@ -66,14 +83,14 @@ pub struct Primitive {
 }
 
 impl Primitive {
-    pub fn new(pg: &PolyGraph, rotation: &Mat4, camera: &Camera) -> Self {
+    pub fn new(pg: &PolyGraph, palette: &Vec<Color>, rotation: &Mat4, camera: &Camera) -> Self {
         Self {
             descriptor: pg.into(),
             camera: *camera,
             rotation: *rotation,
             data: PolyData {
                 positions: pg.positions(),
-                vertices: pg.vertices(),
+                vertices: pg.vertices(palette),
                 raw: rotation.into(),
             },
         }

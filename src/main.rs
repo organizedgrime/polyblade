@@ -4,16 +4,15 @@ mod scene;
 
 use std::time::Duration;
 
+use glam::vec3;
+use iced::Color;
+use iced_aw::color_picker;
 use iced_aw::menu::{Item, MenuBar};
-use iced_aw::{BootstrapIcon, BOOTSTRAP_FONT};
 use message::*;
 use polyhedra::Transaction;
 use scene::Scene;
 
-use iced::{
-    alignment::Horizontal,
-    widget::{checkbox, shader::wgpu, text},
-};
+use iced::widget::{checkbox, shader::wgpu, text};
 use iced::{
     executor, font,
     time::Instant,
@@ -30,6 +29,7 @@ struct Polyblade {
     scene: Scene,
     rotating: bool,
     rotation_duration: Duration,
+    show_picker: bool,
 }
 
 impl Application for Polyblade {
@@ -49,6 +49,7 @@ impl Application for Polyblade {
                 scene: Scene::new(),
                 rotating: true,
                 rotation_duration: Duration::from_secs(0),
+                show_picker: false,
             },
             Command::batch(vec![
                 font::load(iced_aw::BOOTSTRAP_FONT_BYTES).map(Message::FontLoaded),
@@ -113,12 +114,12 @@ impl Application for Polyblade {
                         column![
                             text(&self.scene.polyhedron.name),
                             text(self.scene.polyhedron.cycles.len().to_string()),
-                            text(self.scene.polyhedron.adj_v.len().to_string(),),
+                            text(self.scene.polyhedron.edges.len().to_string(),),
                             text(self.scene.polyhedron.vertices.len().to_string())
                         ]
                     ]
                     .spacing(20)
-                )
+                ),
             ]
             .spacing(10),
         )

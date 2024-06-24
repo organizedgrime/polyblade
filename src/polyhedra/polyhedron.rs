@@ -4,6 +4,7 @@ use crate::{scene::Vertex, ConwayMessage};
 
 use super::*;
 use glam::{vec3, Vec3};
+use iced::Color;
 
 const TICK_SPEED: f32 = 800.0;
 
@@ -131,21 +132,7 @@ impl PolyGraph {
         })
     }
 
-    pub fn poly_color(n: &usize) -> Vec3 {
-        let colors = [
-            vec3(72.0, 132.0, 90.0),
-            vec3(163.0, 186.0, 112.0),
-            vec3(51.0, 81.0, 69.0),
-            vec3(254.0, 240.0, 134.0),
-            vec3(95.0, 155.0, 252.0),
-            vec3(244.0, 164.0, 231.0),
-            vec3(170.0, 137.0, 190.0),
-        ];
-
-        colors[n % colors.len()] / 255.0
-    }
-
-    pub fn vertices(&self) -> Vec<Vertex> {
+    pub fn vertices(&self, palette: &Vec<Color>) -> Vec<Vertex> {
         let mut vertices = Vec::new();
         let barycentric = [Vec3::X, Vec3::Y, Vec3::Z];
 
@@ -164,7 +151,9 @@ impl PolyGraph {
                 .position(|&x| x == self.cycles[i].len())
                 .unwrap();
 
-            let color = Self::poly_color(polygon_sizes.get(color_index).unwrap());
+            let n = polygon_sizes.get(color_index).unwrap();
+            let color = palette[n % palette.len()];
+            let color = vec3(color.r, color.g, color.b);
             let sides = self.face_sides_buffer(i);
             let positions = self.face_triangle_positions(i);
 
@@ -203,7 +192,7 @@ impl PolyGraph {
                     }
                 }
                 Release(edges) => {
-                    println!("edges: {:?}", self.adj_v);
+                    println!("edges: {:?}", self.edges);
                     for e in edges.into_iter() {
                         self.disconnect(e);
                     }

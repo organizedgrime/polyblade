@@ -3,7 +3,7 @@ use std::time::Instant;
 use iced::{
     alignment, font,
     widget::{button, row, text},
-    Element, Length, Renderer, Theme,
+    Color, Element, Length, Renderer, Theme,
 };
 use iced_aw::{
     menu::{Item, Menu},
