@@ -4,7 +4,7 @@ use self::polyhedron::Descriptor;
 use crate::polyhedra::PolyGraph;
 use crate::wgpu;
 use camera::Camera;
-use glam::{vec4, Mat4};
+use glam::{vec3, vec4, Mat4};
 use iced::mouse;
 use iced::time::Duration;
 use iced::widget::shader;
@@ -50,7 +50,9 @@ impl Scene {
     pub fn update(&mut self, time: Duration) {
         self.polyhedron.update();
         let time = time.as_secs_f32();
-        self.rotation = Mat4::from_rotation_x(time / PI) * Mat4::from_rotation_y(time / PI * 1.1);
+        self.rotation = Mat4::from_rotation_x(time / PI)
+            * Mat4::from_rotation_y(time / PI * 1.1)
+            * Mat4::from_scale(vec3(self.size, self.size, self.size));
     }
 }
 

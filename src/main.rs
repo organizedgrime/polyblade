@@ -4,10 +4,11 @@ mod scene;
 
 use std::time::Duration;
 
-use glam::vec3;
-use iced::Color;
-use iced_aw::color_picker;
-use iced_aw::menu::{Item, MenuBar};
+use iced::widget::slider;
+use iced::{theme, Border, Color};
+use iced_aw::menu::{self, Item, MenuBar, StyleSheet};
+use iced_aw::style::MenuBarStyle;
+use iced_aw::{menu_bar, BootstrapIcon, BOOTSTRAP_FONT};
 use message::*;
 use polyhedra::Transaction;
 use scene::Scene;
@@ -29,7 +30,6 @@ struct Polyblade {
     scene: Scene,
     rotating: bool,
     rotation_duration: Duration,
-    show_picker: bool,
 }
 
 impl Application for Polyblade {
@@ -49,7 +49,6 @@ impl Application for Polyblade {
                 scene: Scene::new(),
                 rotating: true,
                 rotation_duration: Duration::from_secs(0),
-                show_picker: false,
             },
             Command::batch(vec![
                 font::load(iced_aw::BOOTSTRAP_FONT_BYTES).map(Message::FontLoaded),
@@ -77,6 +76,9 @@ impl Application for Polyblade {
                     self.start = Instant::now().checked_sub(self.rotation_duration).unwrap();
                 }
             }
+            SizeChanged(size) => {
+                self.scene.size = size;
+            }
             Preset(preset) => self.scene.polyhedron.change_shape(preset),
             Conway(conway) => {
                 self.scene
@@ -90,13 +92,28 @@ impl Application for Polyblade {
     }
 
     fn view(&self) -> Element<'_, Self::Message> {
+        let palette = self.theme();
+        let theme = palette.extended_palette();
         container(
             column![
                 row![
-                    MenuBar::new(vec![
-                        Item::with_menu(button(text("Preset")), PresetMessage::menu()),
-                        Item::with_menu(button(text("Conway")), ConwayMessage::menu())
-                    ]),
+                    menu_bar!((
+                        button(row![
+                            text("Preset ").size(18).style(theme.secondary.base.text),
+                            text(BootstrapIcon::CaretDownFill)
+                                .size(18)
+                                .font(BOOTSTRAP_FONT)
+                                .height(Length::Shrink)
+                                .style(theme.secondary.base.text)
+                        ])
+                        .style(theme::Button::custom(LotusButton)),
+                        PresetMessage::menu()
+                    ))
+                    .style(|theme: &Theme| menu::Appearance {
+                        bar_background: Color::BLACK.into(),
+                        menu_background: Color::WHITE.into(),
+                        ..theme.appearance(&MenuBarStyle::Default)
+                    }),
                     checkbox("Rotating", self.rotating).on_toggle(Message::Rotate)
                 ]
                 .spacing(10.0),
@@ -120,6 +137,7 @@ impl Application for Polyblade {
                     ]
                     .spacing(20)
                 ),
+                slider(1.0..=10.0, self.scene.size, Message::SizeChanged).step(0.1)
             ]
             .spacing(10),
         )
@@ -153,5 +171,29 @@ impl Application for Polyblade {
 
     fn theme(&self) -> Self::Theme {
         Theme::KanagawaLotus
+    }
+}
+
+struct LotusButton;
+impl button::StyleSheet for LotusButton {
+    type Style = Theme;
+
+    fn active(&self, _: &Self::Style) -> button::Appearance {
+        let palette = Theme::KanagawaLotus.extended_palette();
+
+        button::Appearance {
+            background: Some(palette.secondary.base.color.into()),
+            text_color: palette.secondary.base.text,
+            border: Border::with_radius(5),
+            ..button::Appearance::default()
+        }
+    }
+
+    fn hovered(&self, _: &Self::Style) -> button::Appearance {
+        let palette = Theme::KanagawaLotus.extended_palette();
+        button::Appearance {
+            background: Some(palette.primary.base.color.into()),
+            ..self.active(&Theme::KanagawaLotus)
+        }
     }
 }

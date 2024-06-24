@@ -12,48 +12,44 @@ use iced_aw::{
 use strum::IntoEnumIterator;
 use strum_macros::{Display, EnumIter};
 
+fn bar<'a>(label: &str) -> button::Button<'a, Message, Theme, Renderer> {
+    button(text(label).vertical_alignment(alignment::Vertical::Center)).width(Length::Shrink)
+}
+fn base<'a>(
+    content: impl Into<Element<'a, Message, Theme, Renderer>>,
+    msg: Message,
+) -> button::Button<'a, Message, Theme, Renderer> {
+    button(content).padding([4, 8]).on_press(msg)
+}
+fn labeled<'a>(label: &str, msg: Message) -> button::Button<'a, Message, Theme, Renderer> {
+    base(
+        text(label).vertical_alignment(alignment::Vertical::Center),
+        msg,
+    )
+    .width(Length::Fill)
+}
+
+fn base_menu(items: Vec<Item<'_, Message, Theme, Renderer>>) -> Menu<'_, Message, Theme, Renderer> {
+    Menu::new(items).max_width(180.0).offset(0.0).spacing(5.0)
+}
+fn submenu_button<'a>(label: &str) -> button::Button<'a, Message, iced::Theme, iced::Renderer> {
+    base(
+        row![
+            text(label)
+                .width(Length::Fill)
+                .vertical_alignment(alignment::Vertical::Center),
+            text(BootstrapIcon::CaretRightFill)
+                .font(BOOTSTRAP_FONT)
+                .width(Length::Shrink)
+                .vertical_alignment(alignment::Vertical::Center),
+        ]
+        .align_items(iced::Alignment::Center),
+        Message::Tick(Instant::now()),
+    )
+    .width(Length::Fill)
+}
+
 pub trait MenuAble {
-    fn bar<'a>(label: &str) -> button::Button<'a, Message, Theme, Renderer> {
-        button(text(label).vertical_alignment(alignment::Vertical::Center)).width(Length::Shrink)
-    }
-
-    fn base<'a>(
-        content: impl Into<Element<'a, Message, Theme, Renderer>>,
-        msg: Message,
-    ) -> button::Button<'a, Message, Theme, Renderer> {
-        button(content).padding([4, 8]).on_press(msg)
-    }
-
-    fn labeled<'a>(label: &str, msg: Message) -> button::Button<'a, Message, Theme, Renderer> {
-        Self::base(
-            text(label).vertical_alignment(alignment::Vertical::Center),
-            msg,
-        )
-        .width(Length::Fill)
-    }
-
-    fn base_menu(
-        items: Vec<Item<'_, Message, Theme, Renderer>>,
-    ) -> Menu<'_, Message, Theme, Renderer> {
-        Menu::new(items).max_width(180.0).offset(0.0).spacing(5.0)
-    }
-    fn submenu_button<'a>(label: &str) -> button::Button<'a, Message, iced::Theme, iced::Renderer> {
-        Self::base(
-            row![
-                text(label)
-                    .width(Length::Fill)
-                    .vertical_alignment(alignment::Vertical::Center),
-                text(BootstrapIcon::CaretRightFill)
-                    .font(BOOTSTRAP_FONT)
-                    .width(Length::Shrink)
-                    .vertical_alignment(alignment::Vertical::Center),
-            ]
-            .align_items(iced::Alignment::Center),
-            Message::Tick(Instant::now()),
-        )
-        .width(Length::Fill)
-    }
-
     fn menu<'a>() -> Menu<'a, Message, Theme, Renderer>;
 
     fn item<'a>(self) -> Item<'a, Message, Theme, Renderer>;
@@ -63,6 +59,7 @@ pub trait MenuAble {
 pub enum Message {
     Tick(Instant),
     Rotate(bool),
+    SizeChanged(f32),
     Preset(PresetMessage),
     Conway(ConwayMessage),
     FontLoaded(Result<(), font::Error>),
@@ -140,7 +137,7 @@ pub enum ConwayMessage {
 
 impl MenuAble for PresetMessage {
     fn item<'a>(self) -> Item<'a, Message, Theme, Renderer> {
-        Item::new(Self::labeled(&self.to_string(), Message::Preset(self)))
+        Item::new(labeled(&self.to_string(), Message::Preset(self)))
     }
 
     fn menu<'a>() -> Menu<'a, Message, Theme, Renderer> {
@@ -149,33 +146,33 @@ impl MenuAble for PresetMessage {
                 use PresetMessage::*;
                 match message {
                     Prism(_) => Item::with_menu(
-                        Self::submenu_button("Prism"),
-                        Self::base_menu((3..=8).map(Prism).map(Self::item).collect()),
+                        submenu_button("Prism"),
+                        base_menu((3..=8).map(Prism).map(Self::item).collect()),
                     ),
                     AntiPrism(_) => Item::with_menu(
-                        Self::submenu_button("AntiPrism"),
-                        Self::base_menu((3..=8).map(AntiPrism).map(Self::item).collect()),
+                        submenu_button("AntiPrism"),
+                        base_menu((3..=8).map(AntiPrism).map(Self::item).collect()),
                     ),
                     Pyramid(_) => Item::with_menu(
-                        Self::submenu_button("Pyramid"),
-                        Self::base_menu((3..=8).map(Pyramid).map(Self::item).collect()),
+                        submenu_button("Pyramid"),
+                        base_menu((3..=8).map(Pyramid).map(Self::item).collect()),
                     ),
                     _ => Self::item(message),
                 }
             })
             .collect();
-        Self::base_menu(items)
+        base_menu(items)
     }
 }
 
 impl MenuAble for ConwayMessage {
     fn item<'a>(self) -> Item<'a, Message, Theme, Renderer> {
-        Item::new(Self::labeled(&self.to_string(), Message::Conway(self)).width(Length::Fill))
+        Item::new(labeled(&self.to_string(), Message::Conway(self)).width(Length::Fill))
     }
 
     fn menu<'a>() -> Menu<'a, Message, Theme, Renderer> {
         let items: Vec<Item<'a, Message, Theme, Renderer>> =
             ConwayMessage::iter().map(Self::item).collect();
-        Self::base_menu(items)
+        base_menu(items)
     }
 }
