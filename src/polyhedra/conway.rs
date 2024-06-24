@@ -114,7 +114,7 @@ impl PolyGraph {
     }
 
     pub fn join(&mut self) {
-        let edges = self.kis();
+        let edges = self.kis(None);
         self.transactions.remove(1);
         self.transactions.insert(1, Transaction::Name('j'));
         self.transactions.insert(1, Transaction::Release(edges));
@@ -127,24 +127,29 @@ impl PolyGraph {
     /// `a` ambo
     pub fn ambo(&mut self) {
         // Truncate
-        let new_edges = self.truncate();
-        self.transactions.remove(1);
+        let new_edges = self.truncate(None);
+        //self.transactions.remove(1);
         let original_edges: HashSet<Edge> = self
             .edges
             .clone()
             .difference(&new_edges)
             .map(Edge::clone)
             .collect();
+        self.contract_edges(original_edges);
 
-        self.transactions.insert(1, Transaction::Name('a'));
+        /* self.transactions.insert(1, Transaction::Name('a'));
         self.transactions
-            .insert(1, Transaction::Contraction(original_edges));
+            .insert(1, Transaction::Contraction(original_edges)); */
     }
 
     /// `k` kis
-    pub fn kis(&mut self) -> HashSet<Edge> {
+    pub fn kis(&mut self, degree: Option<usize>) -> HashSet<Edge> {
         let edges = self.edges.clone();
-        for cycle in self.cycles.clone() {
+        let mut cycles = self.cycles.clone();
+        if let Some(degree) = degree {
+            cycles = cycles.into_iter().filter(|c| c.len() == degree).collect();
+        }
+        for cycle in cycles {
             let v = self.insert();
             let mut vpos = Vec3::ZERO;
 
@@ -157,17 +162,29 @@ impl PolyGraph {
         }
         self.pst();
         self.find_cycles();
-        self.transactions.insert(1, Transaction::Name('k'));
+        //self.transactions.insert(1, Transaction::Name('k'));
         edges
     }
 
     /// `t` truncate
-    pub fn truncate(&mut self) -> HashSet<Edge> {
+    pub fn truncate(&mut self, degree: Option<usize>) -> HashSet<Edge> {
         let mut new_edges = HashSet::new();
-        for v in self.vertices.clone() {
+        let mut vertices = self.vertices.clone();
+        if let Some(degree) = degree {
+            println!("meow!");
+            vertices = vertices
+                .into_iter()
+                .filter(|&v| {
+                    println!("degree of {v}: {}", self.connections(v).len());
+                    self.connections(v).len() == degree
+                })
+                .collect();
+            println!("verts: {vertices:?}");
+        }
+        for v in vertices {
             new_edges.extend(self.split_vertex(v));
         }
-        self.transactions.insert(1, Transaction::Name('t'));
+        //self.transactions.insert(1, Transaction::Name('t'));
         new_edges
     }
 
@@ -180,7 +197,7 @@ impl PolyGraph {
     }
     /// `b` = `ta`
     pub fn bevel(&mut self) {
-        self.truncate();
+        self.truncate(None);
         self.ambo();
         self.transactions.remove(1);
         self.transactions.insert(1, Transaction::Name('b'));
@@ -307,13 +324,12 @@ impl PolyGraph {
         self.edges.extend(new_edges.clone());
         self.edges.extend(face_edges);
         self.contractions = new_edges;
-        self.transactions
-            .insert(1, Transaction::Name(if snub { 's' } else { 'e' }));
+        //self.transactions .insert(1, Transaction::Name(if snub { 's' } else { 'e' }));
     }
 
     pub fn dual(&mut self) {
         self.expand(false);
-        self.transactions.remove(1);
+        /* self.transactions.remove(1);
         if self.name.chars().nth(0) == Some('d') {
             self.transactions.insert(1, Transaction::ShortenName(1));
         } else {
@@ -324,7 +340,8 @@ impl PolyGraph {
         self.transactions.insert(
             1,
             Transaction::Wait(Instant::now() + Duration::from_millis(350)),
-        );
+        ); */
+        self.contract_edges(self.contractions.clone());
     }
 
     /*
@@ -351,7 +368,7 @@ mod test {
     #[test]
     fn truncate() {
         let mut shape = PolyGraph::icosahedron();
-        shape.truncate();
+        shape.truncate(None);
     }
 
     #[test]

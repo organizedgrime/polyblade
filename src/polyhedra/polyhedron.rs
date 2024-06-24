@@ -208,10 +208,10 @@ impl PolyGraph {
                         Join => self.join(),
                         Ambo => self.ambo(),
                         Kis => {
-                            self.kis();
+                            self.kis(Option::None);
                         }
                         Truncate => {
-                            self.truncate();
+                            self.truncate(Option::None);
                         }
                         Expand => {
                             self.expand(false);

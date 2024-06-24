@@ -32,7 +32,7 @@ impl Scene {
             start: Instant::now(),
             size: 1.0,
             rotation: Mat4::IDENTITY,
-            polyhedron: PolyGraph::dodecahedron(),
+            polyhedron: PolyGraph::icosahedron(),
             camera: Camera::default(),
             palette: vec![
                 Color::from_rgb8(72, 132, 90),

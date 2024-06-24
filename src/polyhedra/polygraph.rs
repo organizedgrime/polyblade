@@ -69,19 +69,16 @@ impl PolyGraph {
     pub fn lattice(&mut self) {
         // Use a Fibonacci Lattice to evently distribute starting points on a sphere
         let phi = std::f32::consts::PI * (3.0 - 5.0f32.sqrt());
-        let positions: VertMap<Vec3> = self
-            .vertices
-            .iter()
-            .map(|&i| {
-                let y = 1.0 - (i as f32 / (self.vertices.len() - 1) as f32);
-                let radius = (1.0 - y * y).sqrt();
-                let theta = phi * i as f32;
-                let x = theta.cos() * radius;
-                let z = theta.sin() * radius;
-                (i, vec3(x, y, z))
-            })
-            .collect();
-        self.positions = positions;
+        for (i, v) in self.vertices.iter().enumerate() {
+            let y = 1.0 - (i as f32 / (self.vertices.len() - 1) as f32);
+            let radius = (1.0 - y * y).sqrt();
+            let theta = (phi * (i as f32)) % (std::f32::consts::PI * 2.0);
+            println!("theta: {theta:?}");
+            let x = theta.cos() * radius;
+            let z = theta.sin() * radius;
+            self.positions.insert(*v, vec3(x, y, z));
+        }
+        println!("pos:{:?}", self.positions);
     }
 
     pub fn connect(&mut self, e: impl Into<Edge>) {
@@ -392,9 +389,9 @@ mod test {
     #[test_case(PolyGraph::octahedron(); "O")]
     #[test_case(PolyGraph::dodecahedron(); "D")]
     #[test_case(PolyGraph::icosahedron(); "I")]
-    #[test_case({ let mut g = PolyGraph::prism(4); g.truncate(); g.pst(); g} ; "tC")]
-    #[test_case({ let mut g = PolyGraph::octahedron(); g.truncate(); g.pst(); g} ; "tO")]
-    #[test_case({ let mut g = PolyGraph::dodecahedron(); g.truncate(); g.pst(); g} ; "tD")]
+    #[test_case({ let mut g = PolyGraph::prism(4); g.truncate(None); g.pst(); g} ; "tC")]
+    #[test_case({ let mut g = PolyGraph::octahedron(); g.truncate(None); g.pst(); g} ; "tO")]
+    #[test_case({ let mut g = PolyGraph::dodecahedron(); g.truncate(None); g.pst(); g} ; "tD")]
     fn pst(mut graph: PolyGraph) {
         let new_dist = graph.dist.clone();
         graph.dist = Default::default();

@@ -98,10 +98,10 @@ impl Application for Polyblade {
         container(
             column![
                 row![
-                    menu_bar!(
-                        //(bar("Preset"), PresetMessage::menu())
-                        (bar("Conway"), ConwayMessage::menu())
-                    ),
+                    menu_bar!((bar("Preset"), PresetMessage::menu())(
+                        bar("Conway"),
+                        ConwayMessage::menu()
+                    )),
                     /*
                     .style(|theme: &Theme| {
                         menu::Appearance {
