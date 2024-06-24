@@ -1,9 +1,9 @@
 use std::time::Instant;
 
 use iced::{
-    alignment, font,
+    alignment, font, theme,
     widget::{button, row, text},
-    Color, Element, Length, Renderer, Theme,
+    Border, Color, Element, Length, Renderer, Theme,
 };
 use iced_aw::{
     menu::{Item, Menu},
@@ -12,14 +12,25 @@ use iced_aw::{
 use strum::IntoEnumIterator;
 use strum_macros::{Display, EnumIter};
 
-fn bar<'a>(label: &str) -> button::Button<'a, Message, Theme, Renderer> {
-    button(text(label).vertical_alignment(alignment::Vertical::Center)).width(Length::Shrink)
+pub fn bar<'a>(label: &str) -> button::Button<'a, Message, Theme, Renderer> {
+    button(row![
+        text(label).vertical_alignment(alignment::Vertical::Center),
+        text(BootstrapIcon::CaretDownFill)
+            .size(18)
+            .font(BOOTSTRAP_FONT)
+            .height(Length::Shrink)
+    ])
+    .width(Length::Shrink)
+    .style(theme::Button::custom(LotusButton))
 }
-fn base<'a>(
+pub fn base<'a>(
     content: impl Into<Element<'a, Message, Theme, Renderer>>,
     msg: Message,
 ) -> button::Button<'a, Message, Theme, Renderer> {
-    button(content).padding([4, 8]).on_press(msg)
+    button(content)
+        .padding([4, 8])
+        .on_press(msg)
+        .style(theme::Button::custom(LotusButton))
 }
 fn labeled<'a>(label: &str, msg: Message) -> button::Button<'a, Message, Theme, Renderer> {
     base(
@@ -174,5 +185,29 @@ impl MenuAble for ConwayMessage {
         let items: Vec<Item<'a, Message, Theme, Renderer>> =
             ConwayMessage::iter().map(Self::item).collect();
         base_menu(items)
+    }
+}
+
+struct LotusButton;
+impl button::StyleSheet for LotusButton {
+    type Style = Theme;
+
+    fn active(&self, _: &Self::Style) -> button::Appearance {
+        let palette = Theme::KanagawaLotus.extended_palette();
+
+        button::Appearance {
+            background: Some(palette.secondary.base.color.into()),
+            text_color: palette.secondary.base.text,
+            border: Border::with_radius(5),
+            ..button::Appearance::default()
+        }
+    }
+
+    fn hovered(&self, _: &Self::Style) -> button::Appearance {
+        let palette = Theme::KanagawaLotus.extended_palette();
+        button::Appearance {
+            background: Some(palette.primary.base.color.into()),
+            ..self.active(&Theme::KanagawaLotus)
+        }
     }
 }

@@ -97,23 +97,16 @@ impl Application for Polyblade {
         container(
             column![
                 row![
-                    menu_bar!((
-                        button(row![
-                            text("Preset ").size(18).style(theme.secondary.base.text),
-                            text(BootstrapIcon::CaretDownFill)
-                                .size(18)
-                                .font(BOOTSTRAP_FONT)
-                                .height(Length::Shrink)
-                                .style(theme.secondary.base.text)
-                        ])
-                        .style(theme::Button::custom(LotusButton)),
-                        PresetMessage::menu()
-                    ))
-                    .style(|theme: &Theme| menu::Appearance {
-                        bar_background: Color::BLACK.into(),
-                        menu_background: Color::WHITE.into(),
-                        ..theme.appearance(&MenuBarStyle::Default)
+                    menu_bar!((bar("Preset"), PresetMessage::menu())),
+                    /*
+                    .style(|theme: &Theme| {
+                        menu::Appearance {
+                            bar_background: Color::WHITE.into(),
+                            menu_background: Color::WHITE.into(),
+                            ..theme.appearance(&MenuBarStyle::Default)
+                        }
                     }),
+                    */
                     checkbox("Rotating", self.rotating).on_toggle(Message::Rotate)
                 ]
                 .spacing(10.0),
@@ -171,29 +164,5 @@ impl Application for Polyblade {
 
     fn theme(&self) -> Self::Theme {
         Theme::KanagawaLotus
-    }
-}
-
-struct LotusButton;
-impl button::StyleSheet for LotusButton {
-    type Style = Theme;
-
-    fn active(&self, _: &Self::Style) -> button::Appearance {
-        let palette = Theme::KanagawaLotus.extended_palette();
-
-        button::Appearance {
-            background: Some(palette.secondary.base.color.into()),
-            text_color: palette.secondary.base.text,
-            border: Border::with_radius(5),
-            ..button::Appearance::default()
-        }
-    }
-
-    fn hovered(&self, _: &Self::Style) -> button::Appearance {
-        let palette = Theme::KanagawaLotus.extended_palette();
-        button::Appearance {
-            background: Some(palette.primary.base.color.into()),
-            ..self.active(&Theme::KanagawaLotus)
-        }
     }
 }
