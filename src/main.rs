@@ -66,7 +66,6 @@ impl Application for Polyblade {
             FontLoaded(_) => {}
             Tick(time) => {
                 if self.schlegel {
-                    println!("meowww");
                     self.scene.camera.eye = self.scene.polyhedron.face_centroid(0) * 1.1;
                     self.scene.clear_face = Some(0);
                 }

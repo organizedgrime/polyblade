@@ -28,7 +28,6 @@ pub struct Scene {
 
 impl Scene {
     pub fn new() -> Self {
-        println!("new scene!");
         Self {
             start: Instant::now(),
             size: 1.0,

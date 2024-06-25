@@ -56,12 +56,10 @@ impl PolyGraph {
             let y = 1.0 - (i as f32 / (self.vertices.len() - 1) as f32);
             let radius = (1.0 - y * y).sqrt();
             let theta = (phi * (i as f32)) % (std::f32::consts::PI * 2.0);
-            println!("theta: {theta:?}");
             let x = theta.cos() * radius;
             let z = theta.sin() * radius;
             self.positions.insert(*v, vec3(x, y, z));
         }
-        println!("pos:{:?}", self.positions);
     }
 
     pub fn connect(&mut self, e: impl Into<Edge>) {

@@ -154,15 +154,10 @@ impl PolyGraph {
         let mut new_edges = HashSet::new();
         let mut vertices = self.vertices.clone();
         if let Some(degree) = degree {
-            println!("meow!");
             vertices = vertices
                 .into_iter()
-                .filter(|&v| {
-                    println!("degree of {v}: {}", self.connections(v).len());
-                    self.connections(v).len() == degree
-                })
+                .filter(|&v| self.connections(v).len() == degree)
                 .collect();
-            println!("verts: {vertices:?}");
         }
         for v in vertices {
             new_edges.extend(self.split_vertex(v));

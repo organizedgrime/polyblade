@@ -144,7 +144,6 @@ impl PolyGraph {
         polygon_sizes.sort();
 
         for i in 0..self.cycles.len() {
-            println!("i: {i}, cf: {clear_face:?}");
             let color_index = polygon_sizes
                 .iter()
                 .position(|&x| x == self.cycles[i].len())
@@ -198,7 +197,6 @@ impl PolyGraph {
                     }
                 }
                 Release(edges) => {
-                    println!("edges: {:?}", self.edges);
                     for e in edges.into_iter() {
                         self.disconnect(e);
                     }
@@ -207,7 +205,6 @@ impl PolyGraph {
                     self.transactions.remove(0);
                 }
                 Conway(conway) => {
-                    println!("processing conway!");
                     self.transactions.remove(0);
                     use ConwayMessage::*;
                     use Transaction::*;

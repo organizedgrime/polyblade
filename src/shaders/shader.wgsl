@@ -74,7 +74,7 @@ fn fs_main(
     let specular: f32 = light_uniforms.specular_intensity * pow(max(dot(N, H), 0.0), light_uniforms.specular_shininess);
     let ambient: f32 = light_uniforms.ambient_intensity;
     let reflection_color = light_uniforms.color * (ambient + diffuse) + light_uniforms.specular_color * specular;
-    //let lit_color = normalize(v_color + reflection_color * 0.2);
+    let lit_color = normalize(v_color.xyz + reflection_color.xyz * 0.2);
     let edge_color = edge_factor(v_barycentric.xyz, v_sides.xyz);
-    return vec4(min(edge_color, v_color.xyz), v_color.w);
+    return vec4(min(edge_color, lit_color), v_color.w);
 }
