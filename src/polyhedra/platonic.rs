@@ -1,6 +1,6 @@
-use crate::{ConwayMessage, PresetMessage};
+use crate::{PresetMessage};
 
-use super::{PolyGraph, Transaction};
+use super::{PolyGraph};
 
 /*
     // TODO: once conway ops are efficient enough- use this.

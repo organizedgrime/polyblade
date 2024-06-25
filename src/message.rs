@@ -62,6 +62,7 @@ impl Display for PresetMessage {
     }
 }
 
+#[allow(dead_code)]
 trait HotKey: Display {
     fn hotkey(&self) -> char {
         self.to_string().to_lowercase().chars().nth(0).unwrap()

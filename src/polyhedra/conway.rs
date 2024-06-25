@@ -1,6 +1,5 @@
 use std::{
     collections::{HashMap, VecDeque},
-    time::{Duration, Instant},
 };
 
 use glam::Vec3;
@@ -130,7 +129,7 @@ impl PolyGraph {
         let edges = self.edges.clone();
         let mut cycles = self.cycles.clone();
         if let Some(degree) = degree {
-            cycles = cycles.into_iter().filter(|c| c.len() == degree).collect();
+            cycles.retain(|c| c.len() == degree);
         }
         for cycle in cycles {
             let v = self.insert();
@@ -154,10 +153,7 @@ impl PolyGraph {
         let mut new_edges = HashSet::new();
         let mut vertices = self.vertices.clone();
         if let Some(degree) = degree {
-            vertices = vertices
-                .into_iter()
-                .filter(|&v| self.connections(v).len() == degree)
-                .collect();
+            vertices.retain(|&v| self.connections(v).len() == degree);
         }
         for v in vertices {
             new_edges.extend(self.split_vertex(v));

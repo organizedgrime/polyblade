@@ -92,7 +92,7 @@ impl Primitive {
     pub fn new(
         pg: &PolyGraph,
         clear_face: Option<usize>,
-        palette: &Vec<Color>,
+        palette: &[Color],
         rotation: &Mat4,
         camera: &Camera,
     ) -> Self {

@@ -130,7 +130,7 @@ impl PolyGraph {
         })
     }
 
-    pub fn vertices(&self, clear_face: Option<usize>, palette: &Vec<Color>) -> Vec<Vertex> {
+    pub fn vertices(&self, clear_face: Option<usize>, palette: &[Color]) -> Vec<Vertex> {
         let mut vertices = Vec::new();
         let barycentric = [Vec3::X, Vec3::Y, Vec3::Z];
 
