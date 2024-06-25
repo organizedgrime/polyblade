@@ -7,6 +7,7 @@ use strum_macros::{Display, EnumIter};
 pub enum Message {
     Tick(Instant),
     Rotate(bool),
+    Schlegel(bool),
     SizeChanged(f32),
     FovChanged(f32),
     Preset(PresetMessage),

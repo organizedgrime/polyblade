@@ -220,6 +220,7 @@ impl Pipeline {
             multiview: None,
         });
 
+        println!("new dp: {format:?}");
         let depth_pipeline = DepthPipeline::new(
             device,
             format,
@@ -420,6 +421,7 @@ impl DepthPipeline {
             ))),
         });
 
+        println!("format!: {format:?}");
         let _pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
             label: Some("polyhedron.depth_pipeline.pipeline"),
             layout: Some(&layout),

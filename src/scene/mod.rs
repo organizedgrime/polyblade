@@ -18,6 +18,7 @@ use std::time::Instant;
 pub struct Scene {
     pub start: Instant,
     pub size: f32,
+    pub clear_face: Option<usize>,
     pub rotation: Mat4,
     pub polyhedron: PolyGraph,
     pub camera: Camera,
@@ -31,6 +32,7 @@ impl Scene {
         Self {
             start: Instant::now(),
             size: 1.0,
+            clear_face: None,
             rotation: Mat4::IDENTITY,
             polyhedron: PolyGraph::icosahedron(),
             camera: Camera::default(),
@@ -47,12 +49,15 @@ impl Scene {
         }
     }
 
-    pub fn update(&mut self, time: Duration) {
+    pub fn update(&mut self, schlegel: bool, time: Duration) {
         self.polyhedron.update();
         let time = time.as_secs_f32();
-        self.rotation = Mat4::from_rotation_x(time / PI)
-            * Mat4::from_rotation_y(time / PI * 1.1)
-            * Mat4::from_scale(vec3(self.size, self.size, self.size));
+        self.rotation = Mat4::IDENTITY;
+        if !schlegel {
+            self.rotation *= Mat4::from_rotation_x(time / PI);
+            self.rotation *= Mat4::from_rotation_y(time / PI * 1.1);
+            self.rotation *= Mat4::from_scale(vec3(self.size, self.size, self.size));
+        }
     }
 }
 
@@ -68,6 +73,7 @@ impl<Message> shader::Program<Message> for Scene {
     ) -> Self::Primitive {
         Primitive::new(
             &self.polyhedron,
+            self.clear_face,
             &self.palette,
             &self.rotation,
             &self.camera,
@@ -84,14 +90,20 @@ pub struct Primitive {
 }
 
 impl Primitive {
-    pub fn new(pg: &PolyGraph, palette: &Vec<Color>, rotation: &Mat4, camera: &Camera) -> Self {
+    pub fn new(
+        pg: &PolyGraph,
+        clear_face: Option<usize>,
+        palette: &Vec<Color>,
+        rotation: &Mat4,
+        camera: &Camera,
+    ) -> Self {
         Self {
             descriptor: pg.into(),
             camera: *camera,
             rotation: *rotation,
             data: PolyData {
                 positions: pg.positions(),
-                vertices: pg.vertices(palette),
+                vertices: pg.vertices(clear_face, palette),
                 raw: rotation.into(),
             },
         }

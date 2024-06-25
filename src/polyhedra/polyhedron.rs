@@ -1,6 +1,6 @@
 use super::*;
 use crate::{scene::Vertex, ConwayMessage};
-use glam::{vec3, Vec3};
+use glam::{vec3, vec4, Vec3};
 use iced::Color;
 use std::time::{Duration, Instant};
 
@@ -85,7 +85,7 @@ impl PolyGraph {
             .collect()
     }
 
-    fn face_centroid(&self, face_index: usize) -> Vec3 {
+    pub fn face_centroid(&self, face_index: usize) -> Vec3 {
         // All vertices associated with this face
         let vertices: Vec<_> = self.face_positions(face_index);
         vertices.iter().fold(Vec3::ZERO, |a, &b| a + b) / vertices.len() as f32
@@ -130,7 +130,7 @@ impl PolyGraph {
         })
     }
 
-    pub fn vertices(&self, palette: &Vec<Color>) -> Vec<Vertex> {
+    pub fn vertices(&self, clear_face: Option<usize>, palette: &Vec<Color>) -> Vec<Vertex> {
         let mut vertices = Vec::new();
         let barycentric = [Vec3::X, Vec3::Y, Vec3::Z];
 
@@ -144,6 +144,7 @@ impl PolyGraph {
         polygon_sizes.sort();
 
         for i in 0..self.cycles.len() {
+            println!("i: {i}, cf: {clear_face:?}");
             let color_index = polygon_sizes
                 .iter()
                 .position(|&x| x == self.cycles[i].len())
@@ -151,15 +152,22 @@ impl PolyGraph {
 
             let n = polygon_sizes.get(color_index).unwrap();
             let color = palette[n % palette.len()];
-            let color = vec3(color.r, color.g, color.b);
+            let color = vec4(
+                color.r,
+                color.g,
+                color.b,
+                if Some(i) == clear_face { 0.0 } else { 1.0 },
+            );
             let sides = self.face_sides_buffer(i);
             let positions = self.face_triangle_positions(i);
 
             for j in 0..positions.len() {
+                let p = positions[j].normalize();
+                let b = barycentric[j % barycentric.len()];
                 vertices.push(Vertex {
-                    normal: positions[j].normalize(),
-                    sides: sides[j],
-                    barycentric: barycentric[j % barycentric.len()],
+                    normal: vec4(p.x, p.y, p.z, 0.0),
+                    sides: vec4(sides[j].x, sides[j].y, sides[j].z, 0.0),
+                    barycentric: vec4(b.x, b.y, b.z, 0.0),
                     color,
                 });
             }
