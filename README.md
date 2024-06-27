@@ -33,3 +33,5 @@ See also:
 - [ ] Schlegel diagrams
 - [ ] Color pickers
 - [ ] Pokedex entries for polyhedra, point users to wikipedia or polytope wiki when they stumble onto a known entry
+- [ ] Create WASM deployment and add to website as git submodule
+- [ ] Setup some basic CI integrations
