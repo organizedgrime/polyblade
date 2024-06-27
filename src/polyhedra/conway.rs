@@ -1,5 +1,7 @@
 use std::collections::{HashMap, VecDeque};
 
+use glam::Vec3;
+
 pub use super::*;
 use std::collections::HashSet;
 
@@ -15,8 +17,8 @@ impl PolyGraph {
             f.replace(e.v(), e.u());
         }
 
-        self.adj_v = self
-            .adj_v
+        self.edges = self
+            .edges
             .clone()
             .into_iter()
             .map(|f| {
@@ -108,38 +110,67 @@ impl PolyGraph {
         new_edges
     }
 
-    /// `t` truncate
-    pub fn truncate(&mut self) -> HashSet<Edge> {
-        let mut new_edges = HashSet::new();
-        for v in self.vertices.clone() {
-            new_edges.extend(self.split_vertex(v));
-        }
-        self.name.insert(0, 't');
-        new_edges
-    }
-
     /// `a` ambo
-    pub fn ambo(&mut self) {
+    /// Returns a set of edges to contract
+    pub fn ambo(&mut self) -> HashSet<Edge> {
         // Truncate
-        let new_edges = self.truncate();
-        let original_edges: HashSet<Edge> = self
-            .adj_v
+        let new_edges = self.truncate(None);
+        self.edges
             .clone()
             .difference(&new_edges)
             .map(Edge::clone)
-            .collect();
-
-        self.transactions
-            .insert(1, Transaction::Contraction(original_edges));
+            .collect()
     }
 
+    /// `k` kis
+    pub fn kis(&mut self, degree: Option<usize>) -> HashSet<Edge> {
+        let edges = self.edges.clone();
+        let mut cycles = self.cycles.clone();
+        if let Some(degree) = degree {
+            cycles.retain(|c| c.len() == degree);
+        }
+        for cycle in cycles {
+            let v = self.insert();
+            let mut vpos = Vec3::ZERO;
+
+            for &u in cycle.iter() {
+                self.connect((v, u));
+                vpos += self.positions[&u];
+            }
+
+            self.positions.insert(v, vpos / cycle.len() as f32);
+        }
+        self.pst();
+        self.find_cycles();
+        //self.transactions.insert(1, Transaction::Name('k'));
+        edges
+    }
+
+    /// `t` truncate
+    pub fn truncate(&mut self, degree: Option<usize>) -> HashSet<Edge> {
+        let mut new_edges = HashSet::new();
+        let mut vertices = self.vertices.clone();
+        if let Some(degree) = degree {
+            vertices.retain(|&v| self.connections(v).len() == degree);
+        }
+        for v in vertices {
+            new_edges.extend(self.split_vertex(v));
+        }
+        new_edges
+    }
+
+    /// `o` ortho
+    #[allow(dead_code)]
+    pub fn ortho(&mut self) {
+        for _c in self.cycles.clone() {
+            let _v = self.insert();
+        }
+    }
     /// `b` = `ta`
-    pub fn bevel(&mut self) {
-        self.truncate();
-        self.ambo();
-        self.name.remove(0);
-        self.name.remove(0);
-        self.name.insert(0, 'b');
+    pub fn bevel(&mut self) -> HashSet<Edge> {
+        self.truncate(None);
+        self.pst();
+        self.ambo()
     }
 
     pub fn ordered_face_indices(&self, v: VertexId) -> Vec<usize> {
@@ -171,7 +202,7 @@ impl PolyGraph {
     }
 
     /// `e` = `aa`
-    pub fn expand(&mut self) {
+    pub fn expand(&mut self, snub: bool) -> HashSet<Edge> {
         let mut new_edges = HashSet::<Edge>::new();
         let mut face_edges = HashSet::<Edge>::new();
 
@@ -225,21 +256,15 @@ impl PolyGraph {
                     if new_edges.contains(&(a.v(), b.v()).into())
                         && new_edges.contains(&(a.u(), b.u()).into())
                     {
-                        let meow = Face::new(vec![b.u(), a.u(), a.v(), b.v()]);
-
-                        /*
-                        new_edges.insert((a.u(), b.v()).into());
-                        let m = Face::new(vec![a.u(), b.u(), a.v()]);
-                        let n = Face::new(vec![b.u(), b.v(), a.v()]);
-                        if !self.cycles.contains(&m) {
+                        if snub {
+                            new_edges.insert((a.v(), b.u()).into());
+                            let m = Face::new(vec![a.v(), b.u(), a.u()]);
+                            let n = Face::new(vec![a.v(), b.u(), b.v()]);
                             self.cycles.push(m);
-                        }
-                        if !self.cycles.contains(&n) {
                             self.cycles.push(n);
-                        }
-                        */
-                        if !self.cycles.contains(&meow) {
-                            self.cycles.push(meow);
+                        } else {
+                            let quad = Face::new(vec![b.u(), a.u(), a.v(), b.v()]);
+                            self.cycles.push(quad);
                         }
 
                         solved_edges.insert(a);
@@ -249,20 +274,15 @@ impl PolyGraph {
                     if new_edges.contains(&(a.u(), b.v()).into())
                         && new_edges.contains(&(a.v(), b.u()).into())
                     {
-                        let meow = Face::new(vec![a.u(), b.v(), b.u(), a.v()]);
-                        /*
-                        new_edges.insert((a.u(), b.u()).into());
-                        let m = Face::new(vec![a.u(), b.v(), a.v()]);
-                        let n = Face::new(vec![b.v(), b.u(), a.v()]);
-                        if !self.cycles.contains(&m) {
+                        if snub {
+                            new_edges.insert((a.u(), b.u()).into());
+                            let m = Face::new(vec![a.u(), b.u(), a.v()]);
+                            let n = Face::new(vec![a.u(), b.u(), b.v()]);
                             self.cycles.push(m);
-                        }
-                        if !self.cycles.contains(&n) {
                             self.cycles.push(n);
-                        }
-                        */
-                        if !self.cycles.contains(&meow) {
-                            self.cycles.push(meow);
+                        } else {
+                            let quad = Face::new(vec![a.u(), b.v(), b.u(), a.v()]);
+                            self.cycles.push(quad);
                         }
                         solved_edges.insert(a);
                         solved_edges.insert(b);
@@ -270,25 +290,11 @@ impl PolyGraph {
                 }
             }
         }
-        self.adj_v = HashSet::new();
-        self.adj_v.extend(new_edges.clone());
-        self.adj_v.extend(face_edges);
-        self.contractions = new_edges;
+        self.edges = HashSet::new();
+        self.edges.extend(new_edges.clone());
+        self.edges.extend(face_edges);
+        new_edges
     }
-
-    pub fn dual(&mut self) {
-        self.expand();
-        self.transactions
-            .insert(1, Transaction::Contraction(self.contractions.clone()));
-    }
-
-    /*
-    /// `s` snub is applying `e` followed by diagonal addition
-    pub fn snub(&mut self) {
-        self.expand();
-        //self.diagonal_addition();
-    }
-    */
 
     // `j` join
     // `z` zip
@@ -306,32 +312,32 @@ mod test {
     #[test]
     fn truncate() {
         let mut shape = PolyGraph::icosahedron();
-        shape.truncate();
+        shape.truncate(None);
     }
 
     #[test]
     fn contract_edge() {
-        let mut graph = PolyGraph::cube();
+        let mut graph = PolyGraph::prism(4);
         assert_eq!(graph.vertices.len(), 8);
-        assert_eq!(graph.adj_v.len(), 12);
+        assert_eq!(graph.edges.len(), 12);
 
         graph.contract_edge((0, 1));
         graph.pst();
 
         assert_eq!(graph.vertices.len(), 7);
-        assert_eq!(graph.adj_v.len(), 11);
+        assert_eq!(graph.edges.len(), 11);
     }
 
     #[test]
     fn split_vertex() {
-        let mut graph = PolyGraph::cube();
+        let mut graph = PolyGraph::prism(4);
         assert_eq!(graph.vertices.len(), 8);
-        assert_eq!(graph.adj_v.len(), 12);
+        assert_eq!(graph.edges.len(), 12);
 
         graph.split_vertex(0);
         graph.pst();
 
         assert_eq!(graph.vertices.len(), 10);
-        assert_eq!(graph.adj_v.len(), 15);
+        assert_eq!(graph.edges.len(), 15);
     }
 }

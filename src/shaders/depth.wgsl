@@ -28,7 +28,7 @@ struct Output {
 fn vs_main(@builtin(vertex_index) v_index: u32) -> Output {
     var out: Output;
 
-    out.position = vec4<f32>(positions[v_index], 0.0, 1.0);
+    out.position = vec4<f32>(positions[v_index], 0.0, 0.0);
     out.uv = uvs[v_index];
 
     return out;

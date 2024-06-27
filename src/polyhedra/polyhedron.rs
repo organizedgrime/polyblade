@@ -1,7 +1,8 @@
-use crate::{scene::Vertex, ConwayMessage};
-
 use super::*;
-use glam::{vec3, Vec3};
+use crate::{scene::Vertex, ConwayMessage};
+use glam::{vec3, vec4, Vec3};
+use iced::Color;
+use std::time::{Duration, Instant};
 
 const TICK_SPEED: f32 = 800.0;
 
@@ -84,7 +85,7 @@ impl PolyGraph {
             .collect()
     }
 
-    fn face_centroid(&self, face_index: usize) -> Vec3 {
+    pub fn face_centroid(&self, face_index: usize) -> Vec3 {
         // All vertices associated with this face
         let vertices: Vec<_> = self.face_positions(face_index);
         vertices.iter().fold(Vec3::ZERO, |a, &b| a + b) / vertices.len() as f32
@@ -129,21 +130,7 @@ impl PolyGraph {
         })
     }
 
-    pub fn poly_color(n: &usize) -> Vec3 {
-        let colors = [
-            vec3(72.0, 132.0, 90.0),
-            vec3(163.0, 186.0, 112.0),
-            vec3(51.0, 81.0, 69.0),
-            vec3(254.0, 240.0, 134.0),
-            vec3(95.0, 155.0, 252.0),
-            vec3(244.0, 164.0, 231.0),
-            vec3(170.0, 137.0, 190.0),
-        ];
-
-        colors[n % colors.len()] / 255.0
-    }
-
-    pub fn vertices(&self) -> Vec<Vertex> {
+    pub fn vertices(&self, clear_face: Option<usize>, palette: &[Color]) -> Vec<Vertex> {
         let mut vertices = Vec::new();
         let barycentric = [Vec3::X, Vec3::Y, Vec3::Z];
 
@@ -162,15 +149,24 @@ impl PolyGraph {
                 .position(|&x| x == self.cycles[i].len())
                 .unwrap();
 
-            let color = Self::poly_color(polygon_sizes.get(color_index).unwrap());
+            let n = polygon_sizes.get(color_index).unwrap();
+            let color = palette[n % palette.len()];
+            let color = vec4(
+                color.r,
+                color.g,
+                color.b,
+                if Some(i) == clear_face { 0.0 } else { 1.0 },
+            );
             let sides = self.face_sides_buffer(i);
             let positions = self.face_triangle_positions(i);
 
             for j in 0..positions.len() {
+                let p = positions[j].normalize();
+                let b = barycentric[j % barycentric.len()];
                 vertices.push(Vertex {
-                    normal: positions[j].normalize(),
-                    sides: sides[j],
-                    barycentric: barycentric[j % barycentric.len()],
+                    normal: vec4(p.x, p.y, p.z, 0.0),
+                    sides: vec4(sides[j].x, sides[j].y, sides[j].z, 0.0),
+                    barycentric: vec4(b.x, b.y, b.z, 0.0),
                     color,
                 });
             }
@@ -200,26 +196,75 @@ impl PolyGraph {
                         self.transactions.remove(0);
                     }
                 }
-                Conway(conway) => {
-                    println!("processing conway!");
-                    use ConwayMessage::*;
-                    match conway {
-                        Dual => self.dual(),
-                        Ambo => self.ambo(),
-                        Truncate => {
-                            self.truncate();
-                        }
-                        Expand => {
-                            self.expand();
-                        }
-                        Bevel => self.bevel(),
-                        Contract => {
-                            self.transactions
-                                .push(Transaction::Contraction(self.contractions.clone()));
-                        } // _ => {}
+                Release(edges) => {
+                    for e in edges.into_iter() {
+                        self.disconnect(e);
                     }
                     self.pst();
+                    self.find_cycles();
                     self.transactions.remove(0);
+                }
+                Conway(conway) => {
+                    self.transactions.remove(0);
+                    use ConwayMessage::*;
+                    use Transaction::*;
+                    let new_transactions = match conway {
+                        Dual => {
+                            let edges = self.expand(false);
+                            vec![
+                                Wait(Instant::now() + Duration::from_millis(500)),
+                                Contraction(edges),
+                                Name('d'),
+                            ]
+                        }
+                        Join => {
+                            let edges = self.kis(Option::None);
+                            vec![
+                                Wait(Instant::now() + Duration::from_secs(1)),
+                                Release(edges),
+                                Name('j'),
+                            ]
+                        }
+                        Ambo => {
+                            let edges = self.ambo();
+                            vec![Contraction(edges), Name('a')]
+                        }
+                        Kis => {
+                            self.kis(Option::None);
+                            vec![Name('k')]
+                        }
+                        Truncate => {
+                            self.truncate(Option::None);
+                            vec![Name('t')]
+                        }
+                        Expand => {
+                            self.expand(false);
+                            vec![Name('e')]
+                        }
+                        Snub => {
+                            self.expand(true);
+                            vec![Name('s')]
+                        }
+                        Bevel => {
+                            let edges = self.bevel();
+                            vec![Contraction(edges), Name('b')]
+                        }
+                    };
+                    self.transactions = [new_transactions, self.transactions.clone()].concat();
+                    self.pst();
+                }
+                Name(c) => {
+                    self.name = format!("{c}{}", self.name);
+                    self.transactions.remove(0);
+                }
+                ShortenName(n) => {
+                    self.name = self.name[n..].to_string();
+                    self.transactions.remove(0);
+                }
+                Wait(instant) => {
+                    if Instant::now() > instant {
+                        self.transactions.remove(0);
+                    }
                 }
                 None => {}
             }

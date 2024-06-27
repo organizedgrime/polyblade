@@ -1,27 +1,27 @@
 use crate::wgpu;
-use glam::Vec3;
+use glam::{Vec3, Vec4};
 
 use super::polyhedron;
 
 #[derive(Debug, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
 #[repr(C)]
 pub struct Vertex {
-    pub normal: Vec3,
-    pub barycentric: Vec3,
-    pub sides: Vec3,
-    pub color: Vec3,
+    pub normal: Vec4,
+    pub barycentric: Vec4,
+    pub sides: Vec4,
+    pub color: Vec4,
 }
 
 impl Vertex {
     const ATTRIBS: [wgpu::VertexAttribute; 4] = wgpu::vertex_attr_array![
         // normal
-        1 => Float32x3,
+        1 => Float32x4,
         // barycentric
-        2 => Float32x3,
+        2 => Float32x4,
         // sides
-        3 => Float32x3,
+        3 => Float32x4,
         // color
-        4 => Float32x3,
+        4 => Float32x4,
     ];
 
     pub fn desc<'a>() -> wgpu::VertexBufferLayout<'a> {

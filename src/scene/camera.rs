@@ -3,12 +3,12 @@ use iced::Rectangle;
 
 #[derive(Copy, Debug, Clone)]
 pub struct Camera {
-    eye: glam::Vec3,
-    target: glam::Vec3,
-    up: glam::Vec3,
-    fov_y: f32,
-    near: f32,
-    far: f32,
+    pub eye: glam::Vec3,
+    pub target: glam::Vec3,
+    pub up: glam::Vec3,
+    pub fov_y: f32,
+    pub near: f32,
+    pub far: f32,
 }
 
 impl Default for Camera {
@@ -17,7 +17,7 @@ impl Default for Camera {
             eye: vec3(0.0, 2.0, 3.0),
             target: glam::Vec3::ZERO,
             up: glam::Vec3::Y,
-            fov_y: 45.0,
+            fov_y: 1.0,
             near: 0.1,
             far: 100.0,
         }
