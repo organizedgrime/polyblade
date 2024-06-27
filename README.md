@@ -25,8 +25,11 @@ See also:
 - [ ] Needle
 
 #### Other goals
+- [x] Replace all hardcoded presets with prisms, antiprisms, and pyramids that have undergone modification.
+- [ ] Fix Fibonnaci lattice distribution for new shapes
 - [ ] Tesselations / tilings using Wythoff
 - [ ] "Undo" button
 - [ ] Save and load animations and cycles of `Transaction`s
 - [ ] Schlegel diagrams
 - [ ] Color pickers
+- [ ] Pokedex entries for polyhedra, point users to wikipedia or polytope wiki when they stumble onto a known entry
