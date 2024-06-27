@@ -211,7 +211,11 @@ impl PolyGraph {
                     let new_transactions = match conway {
                         Dual => {
                             let edges = self.expand(false);
-                            vec![Contraction(edges), Name('d')]
+                            vec![
+                                Wait(Instant::now() + Duration::from_millis(500)),
+                                Contraction(edges),
+                                Name('d'),
+                            ]
                         }
                         Join => {
                             let edges = self.kis(Option::None);
