@@ -416,12 +416,12 @@ impl_scope! {
             (1, 0) => self.label,
             (0, 1) => align!(center, self.iters_label),
             (0, 2) => self.slider,
-            (1..3, 1..4) => self.mbrot,
+            (1..3, 1..4) => self.pblade,
         };
     }]
     struct PolybladeUI {
         core: widget_core!(),
-        #[widget(&self.mbrot)]
+        #[widget(&self.pblade)]
         label: Text<Polyblade, String>,
         #[widget(&self.iters)]
         iters_label: Reserve<Text<i32, String>>,
@@ -429,7 +429,7 @@ impl_scope! {
         slider: Slider<i32, i32, kas::dir::Up>,
         // extra col span allows use of Label's margin
         #[widget(&self.iters)]
-        mbrot: Polyblade,
+        pblade: Polyblade,
         iters: i32,
     }
 
@@ -442,7 +442,7 @@ impl_scope! {
                     .with_min_size_em(3.0, 0.0),
                 slider: Slider::up(0..=256, |_, iters| *iters)
                     .with_msg(|iters| iters),
-                mbrot: Polyblade::new(),
+                pblade: Polyblade::new(),
                 iters: 64,
             }
         }
@@ -454,7 +454,7 @@ impl_scope! {
             if let Some(iters) = cx.try_pop() {
                 self.iters = iters;
             } else if let Some(ViewUpdate) = cx.try_pop() {
-                cx.redraw(self.mbrot.id());
+                cx.redraw(self.pblade.id());
             } else {
                 return;
             }
