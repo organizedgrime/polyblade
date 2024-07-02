@@ -5,25 +5,21 @@ edition = "2021"
 
 [dependencies]
 glam = { version = "0.25", features = ["bytemuck"] }
-bytemuck = { version = "1.0", features = [
+bytemuck = { version = "1.7", features = [
 	"derive",
 	"zeroable_maybe_uninit",
 	"zeroable_atomics",
-] }
-iced = { version = "0.12.0", features = ["debug", "advanced", "svg"] }
-iced_aw = { version = "0.8.0", default-features = false, features = [
-	"color_picker",
-	"card",
-	"modal",
-	"menu",
-	"quad",
-	"icons",
 ] }
 image = { version = "0.24.9" }
 rand = "^0.8.5"
 strum = "0.26.2"
 strum_macros = "0.26.2"
+kas = { version = "0.14.1", features = ["wgpu"] }
+kas-wgpu = "0.14.1"
+env_logger = "0.10"
 
+[build-dependencies]
+glob = "0.3"
 
 [dev-dependencies]
 test-case = { version = "^3.3.0" }
