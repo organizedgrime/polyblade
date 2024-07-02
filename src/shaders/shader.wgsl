@@ -8,24 +8,22 @@ struct Uniforms {
 struct Output {
     @builtin(position) position: vec4<f32>,
     @location(0) v_position: vec4<f32>,
-    @location(1) v_normal: vec4<f32>,
-    @location(2) v_barycentric: vec4<f32>,
-    @location(3) v_sides: vec4<f32>,
-    @location(4) v_color: vec4<f32>,
+    @location(1) v_barycentric: vec4<f32>,
+    @location(2) v_sides: vec4<f32>,
+    @location(3) v_color: vec4<f32>,
 };
 
 @vertex
 fn vs_main(
     @location(0) position: vec4<f32>,
-    @location(1) normal: vec4<f32>,
-    @location(2) barycentric: vec4<f32>,
-    @location(3) sides: vec4<f32>,
-    @location(4) color: vec4<f32>,
+    @location(1) barycentric: vec4<f32>,
+    @location(2) sides: vec4<f32>,
+    @location(3) color: vec4<f32>,
 ) -> Output {
     var output: Output;
     let m_position: vec4<f32> = uniforms.model_mat * position;
     output.v_position = m_position;
-    output.v_normal = uniforms.normal_mat * normal;
+    //output.v_normal = uniforms.normal_mat * normal;
     output.v_barycentric = barycentric;
     output.v_sides = sides;
     output.v_color = color;
@@ -61,12 +59,11 @@ fn edge_factor(v_barycentric: vec3<f32>, v_sides: vec3<f32>) -> vec3<f32> {
 @fragment
 fn fs_main(
     @location(0) v_position: vec4<f32>,
-    @location(1) v_normal: vec4<f32>,
-    @location(2) v_barycentric: vec4<f32>,
-    @location(3) v_sides: vec4<f32>,
-    @location(4) v_color: vec4<f32>,
+    @location(1) v_barycentric: vec4<f32>,
+    @location(2) v_sides: vec4<f32>,
+    @location(3) v_color: vec4<f32>,
 ) -> @location(0) vec4<f32> {
-    let N: vec3<f32> = normalize(v_normal.xyz);
+    let N: vec3<f32> = normalize(v_position.xyz);
     let L: vec3<f32> = normalize(frag_uniforms.light_position.xyz - v_position.xyz);
     let V: vec3<f32> = normalize(frag_uniforms.eye_position.xyz - v_position.xyz);
     let H: vec3<f32> = normalize(L + V);

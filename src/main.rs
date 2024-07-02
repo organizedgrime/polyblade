@@ -9,13 +9,14 @@
 
 use kas::draw::{Draw, DrawIface, PassId};
 use kas::event::{self, Command};
-use kas::geom::{DVec2, Vec2, Vec3};
+use kas::geom::{DVec2, Vec2};
 use kas::prelude::*;
 use kas::widgets::adapt::Reserve;
 use kas::widgets::{format_data, format_value, Slider, Text};
 use kas_wgpu::draw::{CustomPipe, CustomPipeBuilder, CustomWindow, DrawCustom, DrawPipe};
 use kas_wgpu::wgpu;
 use std::mem::size_of;
+use ultraviolet as uv;
 use wgpu::util::DeviceExt;
 use wgpu::{Buffer, ShaderModule};
 
@@ -38,9 +39,30 @@ impl Shaders {
 
 #[repr(C)]
 #[derive(Clone, Copy, Debug)]
-struct Vertex(Vec3, Vec2);
+struct Position {
+    pub position: uv::Vec4,
+}
+unsafe impl bytemuck::Zeroable for Position {}
+unsafe impl bytemuck::Pod for Position {}
+
+#[repr(C)]
+#[derive(Clone, Copy, Debug)]
+struct Vertex {
+    pub barycentric: uv::Vec4,
+    pub sides: uv::Vec4,
+    pub color: uv::Vec4,
+}
 unsafe impl bytemuck::Zeroable for Vertex {}
 unsafe impl bytemuck::Pod for Vertex {}
+
+#[repr(C)]
+#[derive(Clone, Default, Copy, Debug)]
+struct Transforms {
+    pub transformation: uv::Mat4,
+    pub normal: uv::Mat3,
+}
+unsafe impl bytemuck::Zeroable for Transforms {}
+unsafe impl bytemuck::Pod for Transforms {}
 
 #[repr(C)]
 #[derive(Clone, Copy, Debug)]
@@ -115,11 +137,43 @@ impl CustomPipeBuilder for PipeBuilder {
             vertex: wgpu::VertexState {
                 module: &shaders.wgsl,
                 entry_point: "vs_main",
-                buffers: &[wgpu::VertexBufferLayout {
-                    array_stride: size_of::<Vertex>() as wgpu::BufferAddress,
-                    step_mode: wgpu::VertexStepMode::Vertex,
-                    attributes: &wgpu::vertex_attr_array![0 => Float32x3, 1 => Float32x2],
-                }],
+                buffers: &[
+                    wgpu::VertexBufferLayout {
+                        array_stride: size_of::<Position>() as wgpu::BufferAddress,
+                        step_mode: wgpu::VertexStepMode::Vertex,
+                        attributes: &wgpu::vertex_attr_array![
+                            // position
+                            0 => Float32x3
+                        ],
+                    },
+                    wgpu::VertexBufferLayout {
+                        array_stride: size_of::<Vertex>() as wgpu::BufferAddress,
+                        step_mode: wgpu::VertexStepMode::Vertex,
+                        attributes: &wgpu::vertex_attr_array![
+                            // barycentric
+                            1 => Float32x4,
+                            // sides
+                            2 => Float32x4,
+                            // color
+                            3 => Float32x4,
+                        ],
+                    },
+                    wgpu::VertexBufferLayout {
+                        array_stride: std::mem::size_of::<Self>() as wgpu::BufferAddress,
+                        step_mode: wgpu::VertexStepMode::Instance,
+                        attributes: &wgpu::vertex_attr_array![
+                            //cube transformation matrix
+                            4 => Float32x4,
+                            5 => Float32x4,
+                            6 => Float32x4,
+                            7 => Float32x4,
+                            //normal rotation matrix
+                            8 => Float32x3,
+                            9 => Float32x3,
+                            10 => Float32x3,
+                        ],
+                    },
+                ],
             },
             primitive: wgpu::PrimitiveState {
                 topology: wgpu::PrimitiveTopology::TriangleList,
@@ -130,6 +184,7 @@ impl CustomPipeBuilder for PipeBuilder {
                 polygon_mode: wgpu::PolygonMode::Fill,
                 conservative: false,
             },
+            // TODO depth stencil
             depth_stencil: None,
             multisample: Default::default(),
             fragment: Some(wgpu::FragmentState {
@@ -137,6 +192,7 @@ impl CustomPipeBuilder for PipeBuilder {
                 entry_point: "fs_main",
                 targets: &[Some(wgpu::ColorTargetState {
                     format: tex_format,
+                    // TODO add blend mode
                     blend: None,
                     write_mask: wgpu::ColorWrites::ALL,
                 })],
@@ -154,7 +210,10 @@ struct Pipe {
 
 struct PipeWindow {
     push_constants: PushConstants,
-    passes: Vec<(Vec<Vertex>, Option<Buffer>, u32)>,
+    positions: (Vec<Position>, Option<Buffer>),
+    vertices: (Vec<Vertex>, Option<Buffer>),
+    transforms: (Option<Transforms>, Option<Buffer>),
+    vertex_count: u32,
 }
 
 impl CustomPipe for Pipe {
@@ -163,7 +222,10 @@ impl CustomPipe for Pipe {
     fn new_window(&self, _: &wgpu::Device) -> Self::Window {
         PipeWindow {
             push_constants: Default::default(),
-            passes: vec![],
+            positions: Default::default(),
+            vertices: Default::default(),
+            transforms: Default::default(),
+            vertex_count: 0,
         }
     }
 
@@ -174,21 +236,37 @@ impl CustomPipe for Pipe {
         _: &mut wgpu::util::StagingBelt,
         _: &mut wgpu::CommandEncoder,
     ) {
-        // Upload per-pass render data to buffers. NOTE: we could use a single
-        // buffer for all passes like in kas-wgpu/src/draw/common.rs.
-        for pass in &mut window.passes {
-            if !pass.0.is_empty() {
-                let buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                    label: None,
-                    contents: bytemuck::cast_slice(&pass.0),
-                    usage: wgpu::BufferUsages::VERTEX,
-                });
-                pass.1 = Some(buffer);
-                pass.2 = pass.0.len().cast();
-                pass.0.clear();
-            } else {
-                pass.1 = None;
-            }
+        if !window.positions.0.is_empty() {
+            let buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                label: None,
+                contents: bytemuck::cast_slice(&window.positions.0),
+                usage: wgpu::BufferUsages::VERTEX,
+            });
+            window.positions.1 = Some(buffer);
+        } else {
+            window.positions.1 = None;
+        }
+
+        if !window.vertices.0.is_empty() {
+            let buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                label: None,
+                contents: bytemuck::cast_slice(&window.vertices.0),
+                usage: wgpu::BufferUsages::VERTEX,
+            });
+            window.vertices.1 = Some(buffer);
+        } else {
+            window.vertices.1 = None;
+        }
+
+        if let Some(transforms) = window.transforms.0 {
+            let buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                label: None,
+                contents: bytemuck::bytes_of(&transforms),
+                usage: wgpu::BufferUsages::VERTEX,
+            });
+            window.transforms.1 = Some(buffer);
+        } else {
+            window.transforms.1 = None;
         }
     }
 
@@ -196,23 +274,27 @@ impl CustomPipe for Pipe {
         &'a self,
         window: &'a mut Self::Window,
         _: &wgpu::Device,
-        pass: usize,
+        _: usize,
         rpass: &mut wgpu::RenderPass<'a>,
         bg_common: &'a wgpu::BindGroup,
     ) {
-        if let Some(tuple) = window.passes.get(pass) {
-            if let Some(buffer) = tuple.1.as_ref() {
-                rpass.set_pipeline(&self.render_pipeline);
-                rpass.set_push_constants(
-                    wgpu::ShaderStages::FRAGMENT,
-                    0,
-                    bytemuck::bytes_of(&window.push_constants),
-                );
-                rpass.set_bind_group(0, bg_common, &[]);
-                rpass.set_vertex_buffer(0, buffer.slice(..));
-                rpass.draw(0..tuple.2, 0..1);
-            }
+        rpass.set_pipeline(&self.render_pipeline);
+        rpass.set_push_constants(
+            wgpu::ShaderStages::FRAGMENT,
+            0,
+            bytemuck::bytes_of(&window.push_constants),
+        );
+        rpass.set_bind_group(0, bg_common, &[]);
+        if window.positions.1.is_some() {
+            rpass.set_vertex_buffer(0, window.positions.1.as_ref().unwrap().slice(..));
         }
+        if window.vertices.1.is_some() {
+            rpass.set_vertex_buffer(1, window.vertices.1.as_ref().unwrap().slice(..));
+        }
+        if window.transforms.1.is_some() {
+            rpass.set_vertex_buffer(2, window.transforms.1.as_ref().unwrap().slice(..));
+        }
+        rpass.draw(0..window.vertex_count, 0..1);
     }
 }
 
@@ -220,7 +302,7 @@ impl CustomWindow for PipeWindow {
     type Param = (DVec2, DVec2, f32, i32);
 
     fn invoke(&mut self, pass: PassId, rect: Rect, p: Self::Param) {
-        self.push_constants.set(p.0, p.1, p.3);
+        /* self.push_constants.set(p.0, p.1, p.3);
         let rel_width = p.2;
 
         let aa = Vec2::conv(rect.pos);
@@ -249,11 +331,11 @@ impl CustomWindow for PipeWindow {
         self.add_vertices(pass.pass(), &[
             Vertex(aa, caa), Vertex(ba, cba), Vertex(ab, cab),
             Vertex(ab, cab), Vertex(ba, cba), Vertex(bb, cbb),
-        ]);
+        ]); */
     }
 }
 
-impl PipeWindow {
+/* impl PipeWindow {
     fn add_vertices(&mut self, pass: usize, slice: &[Vertex]) {
         if self.passes.len() <= pass {
             // We only need one more, but no harm in adding extra
@@ -262,7 +344,7 @@ impl PipeWindow {
 
         self.passes[pass].0.extend_from_slice(slice);
     }
-}
+} */
 
 #[derive(Clone, Debug)]
 struct ViewUpdate;
