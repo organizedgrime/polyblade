@@ -17,6 +17,7 @@ strum_macros = "0.26.2"
 kas = { version = "0.14.1", features = ["wgpu"] }
 kas-wgpu = "0.14.1"
 env_logger = "0.10"
+wgpu = "0.18.0"
 
 [build-dependencies]
 glob = "0.3"

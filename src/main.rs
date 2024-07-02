@@ -19,37 +19,32 @@ use std::mem::size_of;
 use wgpu::util::DeviceExt;
 use wgpu::{include_spirv, Buffer, ShaderModule};
 
-#[cfg(not(feature = "shader64"))]
+//#[cfg(not(feature = "shader64"))]
 type ShaderVec2 = Vec2;
-#[cfg(feature = "shader64")]
-type ShaderVec2 = DVec2;
+/* #[cfg(feature = "shader64")]
+type ShaderVec2 = DVec2; */
 
-#[cfg(not(feature = "shader64"))]
+//#[cfg(not(feature = "shader64"))]
 const SHADER_FLOAT64: wgpu::Features = wgpu::Features::empty();
-#[cfg(feature = "shader64")]
-const SHADER_FLOAT64: wgpu::Features = wgpu::Features::SHADER_F64;
 
-#[cfg(not(feature = "shader64"))]
-const FRAG_SHADER: &[u8] = include_bytes!("shader32.frag.spv");
-#[cfg(feature = "shader64")]
-const FRAG_SHADER: &[u8] = include_bytes!("shader64.frag.spv");
+/* #[cfg(feature = "shader64")]
+const SHADER_FLOAT64: wgpu::Features = wgpu::Features::SHADER_F64; */
+
+//const SHADER: &[u8] = include_bytes!("./shaders/shader.wgsl");
+const SHADER: &str = include_str!("./shaders/shader.wgsl");
 
 struct Shaders {
-    vertex: ShaderModule,
-    fragment: ShaderModule,
+    wgsl: ShaderModule,
+    //fragment: ShaderModule,
 }
 
 impl Shaders {
     fn new(device: &wgpu::Device) -> Self {
-        let vertex = device.create_shader_module(include_spirv!("shader.vert.spv"));
-        // Note: we don't use wgpu::include_spirv since it forces validation,
-        // which cannot currently deal with double precision floats (dvec2).
-        let fragment = device.create_shader_module(wgpu::ShaderModuleDescriptor {
-            label: Some("fragment shader"),
-            source: wgpu::util::make_spirv(FRAG_SHADER),
+        let wgsl = device.create_shader_module(wgpu::ShaderModuleDescriptor {
+            label: None,
+            source: wgpu::ShaderSource::Wgsl(std::borrow::Cow::Borrowed(SHADER)),
         });
-
-        Shaders { vertex, fragment }
+        Shaders { wgsl }
     }
 }
 
@@ -130,8 +125,8 @@ impl CustomPipeBuilder for PipeBuilder {
             label: None,
             layout: Some(&pipeline_layout),
             vertex: wgpu::VertexState {
-                module: &shaders.vertex,
-                entry_point: "main",
+                module: &shaders.wgsl,
+                entry_point: "vs_main",
                 buffers: &[wgpu::VertexBufferLayout {
                     array_stride: size_of::<Vertex>() as wgpu::BufferAddress,
                     step_mode: wgpu::VertexStepMode::Vertex,
@@ -150,7 +145,7 @@ impl CustomPipeBuilder for PipeBuilder {
             depth_stencil: None,
             multisample: Default::default(),
             fragment: Some(wgpu::FragmentState {
-                module: &shaders.fragment,
+                module: &shaders.wgsl,
                 entry_point: "main",
                 targets: &[Some(wgpu::ColorTargetState {
                     format: tex_format,
