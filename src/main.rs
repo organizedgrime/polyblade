@@ -3,7 +3,7 @@
 // You may obtain a copy of the License in the LICENSE-APACHE file or at:
 //     https://www.apache.org/licenses/LICENSE-2.0
 
-//! Mandlebrot example
+//! Polyblade example
 //!
 //! Demonstrates use of a custom draw pipe.
 
@@ -260,7 +260,7 @@ impl CustomWindow for PipeWindow {
         //               = 2 * (p - rect.pos) / height - (width, height) / height
         //               = 2p / height - (2*rect.pos + rect.size) / height
         // Or: α_v = 2 / height, δ_v = -(2*rect.pos + rect.size) / height
-        // This is used to define view_alpha and view_delta (in Mandlebrot::set_rect).
+        // This is used to define view_alpha and view_delta (in Polyblade::set_rect).
 
         #[rustfmt::skip]
         self.add_vertices(pass.pass(), &[
@@ -286,7 +286,7 @@ struct ViewUpdate;
 
 impl_scope! {
     #[widget]
-    struct Mandlebrot {
+    struct Polyblade {
         core: widget_core!(),
         alpha: DVec2,
         delta: DVec2,
@@ -296,9 +296,9 @@ impl_scope! {
         iters: i32,
     }
 
-    impl Mandlebrot {
+    impl Polyblade {
         fn new() -> Self {
-            Mandlebrot {
+            Polyblade {
                 core: Default::default(),
                 alpha: DVec2(1.0, 0.0),
                 delta: DVec2(-0.5, 0.0),
@@ -328,7 +328,7 @@ impl_scope! {
         }
     }
 
-    impl Layout for Mandlebrot {
+    impl Layout for Polyblade {
         fn size_rules(&mut self, sizer: SizeCx, axis: AxisInfo) -> SizeRules {
             kas::layout::LogicalSize(320.0, 240.0)
                 .to_rules_with_factor(axis, sizer.scale_factor(), 4.0)
@@ -353,7 +353,7 @@ impl_scope! {
         }
     }
 
-    impl Events for Mandlebrot {
+    impl Events for Polyblade {
         type Data = i32;
 
         fn configure(&mut self, cx: &mut ConfigCx) {
@@ -436,30 +436,30 @@ impl_scope! {
             (1..3, 1..4) => self.mbrot,
         };
     }]
-    struct MandlebrotUI {
+    struct PolybladeUI {
         core: widget_core!(),
         #[widget(&self.mbrot)]
-        label: Text<Mandlebrot, String>,
+        label: Text<Polyblade, String>,
         #[widget(&self.iters)]
         iters_label: Reserve<Text<i32, String>>,
         #[widget(&self.iters)]
         slider: Slider<i32, i32, kas::dir::Up>,
         // extra col span allows use of Label's margin
         #[widget(&self.iters)]
-        mbrot: Mandlebrot,
+        mbrot: Polyblade,
         iters: i32,
     }
 
-    impl MandlebrotUI {
-        fn new() -> MandlebrotUI {
-            MandlebrotUI {
+    impl PolybladeUI {
+        fn new() -> PolybladeUI {
+            PolybladeUI {
                 core: Default::default(),
-                label: format_data!(mbrot: &Mandlebrot, "{}", mbrot.loc()),
+                label: format_data!(mbrot: &Polyblade, "{}", mbrot.loc()),
                 iters_label: format_value!("{}")
                     .with_min_size_em(3.0, 0.0),
                 slider: Slider::up(0..=256, |_, iters| *iters)
                     .with_msg(|iters| iters),
-                mbrot: Mandlebrot::new(),
+                mbrot: Polyblade::new(),
                 iters: 64,
             }
         }
@@ -483,7 +483,7 @@ impl_scope! {
 fn main() -> kas::app::Result<()> {
     env_logger::init();
 
-    let window = Window::new(MandlebrotUI::new(), "Mandlebrot");
+    let window = Window::new(PolybladeUI::new(), "Polyblade");
     let theme = kas::theme::FlatTheme::new().with_colours("dark");
     kas::app::WgpuBuilder::new(PipeBuilder)
         .with_theme(theme)
