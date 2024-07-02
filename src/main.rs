@@ -17,20 +17,8 @@ use kas_wgpu::draw::{CustomPipe, CustomPipeBuilder, CustomWindow, DrawCustom, Dr
 use kas_wgpu::wgpu;
 use std::mem::size_of;
 use wgpu::util::DeviceExt;
-use wgpu::{include_spirv, Buffer, ShaderModule};
+use wgpu::{Buffer, ShaderModule};
 
-//#[cfg(not(feature = "shader64"))]
-type ShaderVec2 = Vec2;
-/* #[cfg(feature = "shader64")]
-type ShaderVec2 = DVec2; */
-
-//#[cfg(not(feature = "shader64"))]
-const SHADER_FLOAT64: wgpu::Features = wgpu::Features::empty();
-
-/* #[cfg(feature = "shader64")]
-const SHADER_FLOAT64: wgpu::Features = wgpu::Features::SHADER_F64; */
-
-//const SHADER: &[u8] = include_bytes!("./shaders/shader.wgsl");
 const SHADER: &str = include_str!("./shaders/shader.wgsl");
 
 struct Shaders {
@@ -57,15 +45,15 @@ unsafe impl bytemuck::Pod for Vertex {}
 #[repr(C)]
 #[derive(Clone, Copy, Debug)]
 struct PushConstants {
-    p: ShaderVec2,
-    q: ShaderVec2,
+    p: Vec2,
+    q: Vec2,
     iterations: i32,
 }
 impl Default for PushConstants {
     fn default() -> Self {
         PushConstants {
-            p: ShaderVec2::splat(0.0),
-            q: ShaderVec2::splat(1.0),
+            p: Vec2::splat(0.0),
+            q: Vec2::splat(1.0),
             iterations: 64,
         }
     }
@@ -96,7 +84,7 @@ impl CustomPipeBuilder for PipeBuilder {
     fn device_descriptor() -> wgpu::DeviceDescriptor<'static> {
         wgpu::DeviceDescriptor {
             label: None,
-            features: wgpu::Features::PUSH_CONSTANTS | SHADER_FLOAT64,
+            features: wgpu::Features::PUSH_CONSTANTS,
             limits: wgpu::Limits {
                 max_push_constant_size: size_of::<PushConstants>().cast(),
                 ..Default::default()
@@ -146,7 +134,7 @@ impl CustomPipeBuilder for PipeBuilder {
             multisample: Default::default(),
             fragment: Some(wgpu::FragmentState {
                 module: &shaders.wgsl,
-                entry_point: "main",
+                entry_point: "fs_main",
                 targets: &[Some(wgpu::ColorTargetState {
                     format: tex_format,
                     blend: None,
