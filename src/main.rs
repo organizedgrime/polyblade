@@ -66,7 +66,7 @@ unsafe impl bytemuck::Pod for Vertex {}
 #[derive(Clone, Default, Copy, Debug)]
 struct Transforms {
     pub transformation: uv::Mat4,
-    pub normal: uv::Mat3,
+    pub normal: uv::Mat4,
 }
 unsafe impl bytemuck::Zeroable for Transforms {}
 unsafe impl bytemuck::Pod for Transforms {}
@@ -375,7 +375,7 @@ impl CustomWindow for PipeWindow {
         self.vertices.0 = p.vertices(None, &palette);
         self.transforms.0 = Some(Transforms {
             transformation: uv::Mat4::identity(),
-            normal: uv::Mat3::identity(),
+            normal: uv::Mat4::identity(),
         });
     }
 }
