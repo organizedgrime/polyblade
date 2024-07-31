@@ -1,85 +1,98 @@
-//use three_d::{Srgba, Vec4};
-use kas::geom::Vec3;
+use std::cmp::{max, min};
+pub trait WgpuColor: Into<wgpu::Color> {}
 
 #[derive(Debug, Default)]
 pub struct HSL {
     /// Hue in 0-360 degree
-    h: f64,
+    h: f32,
     /// Saturation in 0...1 (percent)
-    s: f64,
+    s: f32,
     /// Luminosity in 0...1 (percent)
-    l: f64,
+    l: f32,
+}
+
+#[derive(Debug, Default)]
+pub struct RGB {
+    r: u8,
+    g: u8,
+    b: u8,
+}
+
+impl RGB {
+    pub fn new(r: u8, g: u8, b: u8) -> Self {
+        Self { r, g, b }
+    }
 }
 
 impl HSL {
-    // New
-    pub fn new(h: f64, s: f64, l: f64) -> Self {
+    pub fn new(h: f32, s: f32, l: f32) -> Self {
         Self { h, s, l }
     }
+}
 
-    pub fn from_rgb(rgb: &[u8]) -> HSL {
-        use std::cmp::{max, min};
-
-        let mut h: f64;
-
-        let (r, g, b) = (rgb[0], rgb[1], rgb[2]);
+impl Into<HSL> for RGB {
+    fn into(self) -> HSL {
+        let mut h: f32;
+        let (r, g, b) = (self.r, self.g, self.b);
 
         let max = max(max(r, g), b);
         let min = min(min(r, g), b);
 
         // Normalized RGB: Divide everything by 255 to get percentages of colors.
-        let (r, g, b) = (r as f64 / 255_f64, g as f64 / 255_f64, b as f64 / 255_f64);
-        let (min, max) = (min as f64 / 255_f64, max as f64 / 255_f64);
+        let (r, g, b) = (r as f32 / 255_f32, g as f32 / 255_f32, b as f32 / 255_f32);
+        let (min, max) = (min as f32 / 255_f32, max as f32 / 255_f32);
 
         // Luminosity is the average of the max and min rgb color intensities.
-        let l: f64 = (max + min) / 2_f64;
+        let l: f32 = (max + min) / 2_f32;
 
         // Saturation
-        let delta: f64 = max - min;
-        if delta == 0_f64 {
+        let delta: f32 = max - min;
+        if delta == 0_f32 {
             // it's gray
             return HSL {
-                h: 0_f64,
-                s: 0_f64,
+                h: 0_f32,
+                s: 0_f32,
                 l,
             };
         }
 
         // it's not gray
-        let s = if l < 0.5_f64 {
+        let s = if l < 0.5_f32 {
             delta / (max + min)
         } else {
-            delta / (2_f64 - max - min)
+            delta / (2_f32 - max - min)
         };
 
         // Hue
-        let r2 = (((max - r) / 6_f64) + (delta / 2_f64)) / delta;
-        let g2 = (((max - g) / 6_f64) + (delta / 2_f64)) / delta;
-        let b2 = (((max - b) / 6_f64) + (delta / 2_f64)) / delta;
+        let r2 = (((max - r) / 6_f32) + (delta / 2_f32)) / delta;
+        let g2 = (((max - g) / 6_f32) + (delta / 2_f32)) / delta;
+        let b2 = (((max - b) / 6_f32) + (delta / 2_f32)) / delta;
 
         h = match max {
             x if x == r => b2 - g2,
-            x if x == g => (1_f64 / 3_f64) + r2 - b2,
-            _ => (2_f64 / 3_f64) + g2 - r2,
+            x if x == g => (1_f32 / 3_f32) + r2 - b2,
+            _ => (2_f32 / 3_f32) + g2 - r2,
         };
 
         // Fix wraparounds
-        if h < 0 as f64 {
-            h += 1_f64;
-        } else if h > 1_f64 {
-            h -= 1_f64;
+        if h < 0 as f32 {
+            h += 1_f32;
+        } else if h > 1_f32 {
+            h -= 1_f32;
         }
 
         // Hue is precise to milli-degrees, e.g. `74.52deg`.
-        let h = (h * 360_f64 * 100_f64).round() / 100_f64;
+        let h = (h * 360_f32 * 100_f32).round() / 100_f32;
         HSL { h, s, l }
     }
+}
 
-    pub fn to_rgb(&self) -> (u8, u8, u8) {
+impl Into<RGB> for HSL {
+    fn into(self) -> RGB {
         if self.s == 0.0 {
             // Achromatic, i.e., grey.
             let l = percent_to_byte(self.l);
-            return (l, l, l);
+            return RGB::new(l, l, l);
         }
 
         let h = self.h / 360.0; // treat this as 0..1 instead of degrees
@@ -93,40 +106,35 @@ impl HSL {
         };
         let p = 2.0 * l - q;
 
-        (
+        RGB::new(
             percent_to_byte(hue_to_rgb(p, q, h + 1.0 / 3.0)),
             percent_to_byte(hue_to_rgb(p, q, h)),
             percent_to_byte(hue_to_rgb(p, q, h - 1.0 / 3.0)),
         )
     }
-
-    pub fn to_rgb_float(&self) -> Vec3 {
-        let rgb = self.to_rgb();
-        Vec3(
-            rgb.0 as f32 / 255.0,
-            rgb.1 as f32 / 255.0,
-            rgb.2 as f32 / 255.0,
-        )
-    }
-
-    /*
-    pub fn to_srgba(&self) -> Srgba {
-        let color = self.to_rgb();
-        Srgba::new_opaque(color.0, color.1, color.2)
-    }
-
-    pub fn to_linear_srgb(&self) -> Vec4 {
-        let color = self.to_rgb();
-        Srgba::new_opaque(color.0, color.1, color.2).to_linear_srgb()
-    }
-    */
 }
 
-fn percent_to_byte(percent: f64) -> u8 {
+impl Into<wgpu::Color> for RGB {
+    fn into(self) -> wgpu::Color {
+        wgpu::Color {
+            r: self.r as f64 / 255.0,
+            g: self.g as f64 / 255.0,
+            b: self.b as f64 / 255.0,
+            a: 1.0,
+        }
+    }
+}
+impl Into<wgpu::Color> for HSL {
+    fn into(self) -> wgpu::Color {
+        Into::<RGB>::into(self).into()
+    }
+}
+
+fn percent_to_byte(percent: f32) -> u8 {
     (percent * 255.0).round() as u8
 }
 
-fn hue_to_rgb(p: f64, q: f64, t: f64) -> f64 {
+fn hue_to_rgb(p: f32, q: f32, t: f32) -> f32 {
     // Normalize
     let t = if t < 0.0 {
         t + 1.0
@@ -146,12 +154,3 @@ fn hue_to_rgb(p: f64, q: f64, t: f64) -> f64 {
         p
     }
 }
-
-/*
-fn scheme(sides: usize) -> HSL {
-    match sides {
-
-    }
-
-}
-*/
