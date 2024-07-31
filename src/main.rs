@@ -344,7 +344,7 @@ impl CustomPipe for Pipe {
         if window.transforms.1.is_some() {
             rpass.set_vertex_buffer(2, window.transforms.1.as_ref().unwrap().slice(..));
         }
-        rpass.draw(0..window.vertex_count, 0..1);
+        rpass.draw(0..window.positions.0.len() as u32, 0..1);
     }
 }
 
@@ -352,6 +352,7 @@ impl CustomWindow for PipeWindow {
     type Param = PolyGraph;
 
     fn invoke(&mut self, pass: PassId, rect: Rect, p: Self::Param) {
+        println!("render pass: {:?}", pass.pass());
         let palette: Vec<wgpu::Color> = vec![
             RGB::new(72, 132, 90),
             RGB::new(163, 186, 112),
