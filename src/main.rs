@@ -24,7 +24,7 @@ use kas_wgpu::wgpu;
 use std::mem::size_of;
 use ultraviolet as uv;
 use wgpu::util::DeviceExt;
-use wgpu::{BindGroup, Buffer, ShaderModule};
+use wgpu::{Buffer, ShaderModule};
 
 const SHADER: &str = include_str!("./shaders/shader.wgsl");
 
@@ -373,7 +373,9 @@ impl CustomWindow for PipeWindow {
     type Param = PolyGraph;
 
     fn invoke(&mut self, pass: PassId, rect: Rect, p: Self::Param) {
+        /*
         let palette = vec![
+
             Color::from_rgb8(72, 132, 90),
             Color::from_rgb8(163, 186, 112),
             Color::from_rgb8(51, 81, 69),
@@ -382,25 +384,24 @@ impl CustomWindow for PipeWindow {
             Color::from_rgb8(244, 164, 231),
             Color::from_rgb8(170, 137, 190),
         ];
+        */
         p.positions();
-        p.vertices(None, palette)
+        p.vertices(None, palette);
 
         #[rustfmt::skip]
         self.add_vertices(pass.pass(), &[
-            Vertex(aa, caa), Vertex(ba, cba), Vertex(ab, cab),
-            Vertex(ab, cab), Vertex(ba, cba), Vertex(bb, cbb),
         ]);
     }
 }
 
 impl PipeWindow {
     fn add_vertices(&mut self, pass: usize, slice: &[Vertex]) {
-        if self.passes.len() <= pass {
+        /* if self.passes.len() <= pass {
             // We only need one more, but no harm in adding extra
             self.passes.resize_with(pass + 8, Default::default);
         }
 
-        self.passes[pass].0.extend_from_slice(slice);
+        self.passes[pass].0.extend_from_slice(slice); */
     }
 }
 

@@ -1,10 +1,10 @@
 pub use super::*;
-use glam::{vec3, Vec3};
 use rand::random;
 use std::{
     collections::{HashMap, HashSet, VecDeque},
     fmt::Display,
 };
+use ultraviolet::Vec3;
 type VertMap<T> = HashMap<VertexId, T>;
 pub type VertexId = usize;
 
@@ -41,7 +41,7 @@ impl PolyGraph {
     pub fn new_disconnected(vertex_count: usize) -> Self {
         Self {
             vertices: (0..vertex_count).collect(),
-            speeds: (0..vertex_count).map(|x| (x, Vec3::ZERO)).collect(),
+            speeds: (0..vertex_count).map(|x| (x, Vec3::zero())).collect(),
             edge_length: 1.0,
             ..Default::default()
         }
@@ -57,7 +57,7 @@ impl PolyGraph {
             let theta = (phi * (i as f32)) % (std::f32::consts::PI * 2.0);
             let x = theta.cos() * radius;
             let z = theta.sin() * radius;
-            self.positions.insert(*v, vec3(x, y, z));
+            self.positions.insert(*v, Vec3::new(x, y, z));
         }
     }
 
@@ -78,8 +78,8 @@ impl PolyGraph {
         self.vertices.insert(new_id);
         // Position and speed
         self.positions
-            .insert(new_id, Vec3::new(random(), random(), random()).normalize());
-        self.speeds.insert(new_id, Vec3::ZERO);
+            .insert(new_id, Vec3::new(random(), random(), random()).normalized());
+        self.speeds.insert(new_id, Vec3::zero());
         new_id
     }
 

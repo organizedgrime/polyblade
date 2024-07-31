@@ -1,7 +1,5 @@
 use super::*;
-use std::time::{Duration, Instant};
-use ultraviolet as uv;
-use uv::{Vec3, Vec4};
+use ultraviolet::{Slerp, Vec3, Vec4};
 
 const TICK_SPEED: f32 = 1000.0;
 
@@ -20,10 +18,10 @@ impl PolyGraph {
                         if contracting_edges.contains(&e) {
                             let v_position = self.positions[v];
                             let u_position = self.positions[u];
-                            let l = v_position.distance(u_position);
+                            let l = (v_position - u_position).mag();
                             let f = (self.edge_length / TICK_SPEED * 4.5) / l;
-                            *self.positions.get_mut(v).unwrap() = v_position.lerp(u_position, f);
-                            *self.positions.get_mut(u).unwrap() = u_position.lerp(v_position, f);
+                            *self.positions.get_mut(v).unwrap() = v_position.slerp(u_position, f);
+                            *self.positions.get_mut(u).unwrap() = u_position.slerp(v_position, f);
                             continue;
                         }
                     } else if self.dist.contains_key(&e) {
@@ -31,7 +29,7 @@ impl PolyGraph {
                         let l = l_diam * (d / diam);
                         let k = 1.0 / d;
                         let diff = self.positions[v] - self.positions[u];
-                        let dist = diff.length();
+                        let dist = diff.mag();
                         let distention = l - dist;
                         let restorative_force = k / 2.0 * distention;
                         let f = diff * restorative_force / TICK_SPEED;
@@ -52,11 +50,8 @@ impl PolyGraph {
     }
 
     fn center(&mut self) {
-        let shift = self
-            .positions
-            .values()
-            .fold(uv::Vec3::zero(), |a, &b| a + b)
-            / self.vertices.len() as f32;
+        let shift =
+            self.positions.values().fold(Vec3::zero(), |a, &b| a + b) / self.vertices.len() as f32;
 
         for (_, v) in self.positions.iter_mut() {
             *v -= shift;
@@ -64,11 +59,7 @@ impl PolyGraph {
     }
 
     fn resize(&mut self) {
-        let mean_length = self
-            .positions
-            .values()
-            .map(|p| p.length())
-            .fold(0.0, f32::max);
+        let mean_length = self.positions.values().map(|p| p.mag()).fold(0.0, f32::max);
         let distance = mean_length - 1.0;
         self.edge_length -= distance / TICK_SPEED;
     }
