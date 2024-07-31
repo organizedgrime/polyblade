@@ -64,7 +64,8 @@ unsafe impl bytemuck::Pod for Vertex {}
 #[repr(C)]
 #[derive(Clone, Default, Copy, Debug)]
 struct Transforms {
-    pub transformation: Mat4,
+    pub model: Mat4,
+    pub view_projection: Mat4,
     pub normal: Mat4,
 }
 unsafe impl bytemuck::Zeroable for Transforms {}
@@ -368,7 +369,9 @@ impl CustomWindow for PipeWindow {
             })
             .collect();
         self.vertices.0 = pblade.polyhedron.vertices(None, &palette);
-        self.transforms.0 = Transforms::default();
+        self.transforms.0.model = Mat4::from_scale(pblade.size);
+        self.transforms.0.normal = self.transforms.0.model.inversed().transposed();
+        self.transforms.0.view_projection = Mat4::identity();
     }
 }
 

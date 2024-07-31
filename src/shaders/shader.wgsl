@@ -1,6 +1,7 @@
 struct Uniforms {
-    transformation: mat4x4<f32>,
-    normal_mat: mat4x4<f32>,
+    model: mat4x4<f32>,
+	view_projection: mat4x4<f32>,
+    normal: mat4x4<f32>,
 };
 @binding(0) @group(1) var<uniform> uniforms : Uniforms;
 
@@ -20,13 +21,13 @@ fn vs_main(
     @location(3) color: vec4<f32>,
 ) -> Output {
     var output: Output;
-    let m_position: vec4<f32> = uniforms.transformation * position;
+    let m_position: vec4<f32> = uniforms.model * position;
     output.v_position = m_position;
     output.v_barycentric = barycentric;
     output.v_sides = sides;
     output.v_color = color;
 
-    output.position = uniforms.transformation * m_position;
+    output.position = uniforms.view_projection * position;
     return output;
 }
 
