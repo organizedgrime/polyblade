@@ -246,7 +246,6 @@ struct PipeWindow {
     vertices: (Vec<Vertex>, Option<Buffer>),
     transforms: (Option<Transforms>, Option<Buffer>),
     uniform_group: Option<wgpu::BindGroup>,
-    vertex_count: u32,
 }
 
 impl CustomPipe for Pipe {
@@ -259,7 +258,6 @@ impl CustomPipe for Pipe {
             vertices: Default::default(),
             transforms: Default::default(),
             uniform_group: Default::default(),
-            vertex_count: 0,
         }
     }
 
