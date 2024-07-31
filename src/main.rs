@@ -14,7 +14,7 @@ mod color;
 use color::*;
 
 use kas::draw::{Draw, DrawIface, PassId};
-use kas::event::{self, Command};
+use kas::event::{self, Command, Key, SmolStr};
 use kas::geom::{DVec2, Vec2};
 use kas::prelude::*;
 use kas::widgets::adapt::Reserve;
@@ -30,7 +30,6 @@ const SHADER: &str = include_str!("./shaders/shader.wgsl");
 
 struct Shaders {
     wgsl: ShaderModule,
-    //fragment: ShaderModule,
 }
 
 impl Shaders {
@@ -437,6 +436,16 @@ impl_scope! {
 
         fn handle_event(&mut self, cx: &mut EventCx, _: &i32, event: Event) -> IsUsed {
             match event {
+                Event::Key(event, is_synthetic) => {
+                    println!("key: {event:?}");
+                    let s: Key = Key::Character("s".into());
+                    match event.logical_key {
+                        s => {
+                            self.polyhedron = PolyGraph::dodecahedron();
+                        },
+                        _ => {}
+                    }
+                }
                 Event::Command(cmd, _) => {
                     match cmd {
                         Command::Home | Command::End => self.reset_view(),
@@ -515,6 +524,7 @@ impl_scope! {
             } else if let Some(ViewUpdate) = cx.try_pop() {
                 cx.redraw(self.pblade.id());
             } else {
+                println!("meowing");
                 return;
             }
             cx.update(self.as_node(data));
