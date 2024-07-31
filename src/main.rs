@@ -342,9 +342,9 @@ impl CustomPipe for Pipe {
 }
 
 impl CustomWindow for PipeWindow {
-    type Param = PolyGraph;
+    type Param = Polyblade;
 
-    fn invoke(&mut self, pass: PassId, rect: Rect, p: Self::Param) {
+    fn invoke(&mut self, pass: PassId, rect: Rect, pblade: Self::Param) {
         println!("render pass: {:?}", pass.pass());
         let palette: Vec<wgpu::Color> = vec![
             RGB::new(72, 132, 90),
@@ -359,14 +359,15 @@ impl CustomWindow for PipeWindow {
         .map(Into::<wgpu::Color>::into)
         .collect();
 
-        self.positions.0 = p
+        self.positions.0 = pblade
+            .polyhedron
             .positions()
             .into_iter()
             .map(|v| Position {
                 position: Vec4::new(v.x, v.y, v.z, 0.0),
             })
             .collect();
-        self.vertices.0 = p.vertices(None, &palette);
+        self.vertices.0 = pblade.polyhedron.vertices(None, &palette);
         self.transforms.0 = Transforms::default();
     }
 }
@@ -376,6 +377,7 @@ struct ViewUpdate;
 
 impl_scope! {
     #[widget]
+    #[derive(Clone)]
     struct Polyblade {
         core: widget_core!(),
         polyhedron: PolyGraph,
@@ -411,7 +413,7 @@ impl_scope! {
         fn draw(&mut self, mut draw: DrawCx) {
             let draw = draw.draw_device();
             let draw = DrawIface::<DrawPipe<Pipe>>::downcast_from(draw).unwrap();
-            draw.draw.custom(draw.get_pass(), self.core.rect, self.polyhedron.clone());
+            draw.draw.custom(draw.get_pass(), self.core.rect, self.clone());
         }
     }
 
