@@ -22,8 +22,7 @@ use kas::widgets::{format_data, format_value, Slider, Text};
 use kas_wgpu::draw::{CustomPipe, CustomPipeBuilder, CustomWindow, DrawCustom, DrawPipe};
 use kas_wgpu::wgpu;
 use std::mem::size_of;
-use ultraviolet as uv;
-use uv::Vec4;
+use ultraviolet::{Mat4, Vec3, Vec4};
 use wgpu::util::DeviceExt;
 use wgpu::{Buffer, ShaderModule};
 
@@ -47,7 +46,7 @@ impl Shaders {
 #[repr(C)]
 #[derive(Clone, Copy, Debug)]
 struct Position {
-    pub position: uv::Vec4,
+    pub position: Vec4,
 }
 unsafe impl bytemuck::Zeroable for Position {}
 unsafe impl bytemuck::Pod for Position {}
@@ -55,9 +54,9 @@ unsafe impl bytemuck::Pod for Position {}
 #[repr(C)]
 #[derive(Clone, Copy, Debug)]
 struct Vertex {
-    pub barycentric: uv::Vec4,
-    pub sides: uv::Vec4,
-    pub color: uv::Vec4,
+    pub barycentric: Vec4,
+    pub sides: Vec4,
+    pub color: Vec4,
 }
 unsafe impl bytemuck::Zeroable for Vertex {}
 unsafe impl bytemuck::Pod for Vertex {}
@@ -65,8 +64,8 @@ unsafe impl bytemuck::Pod for Vertex {}
 #[repr(C)]
 #[derive(Clone, Default, Copy, Debug)]
 struct Transforms {
-    pub transformation: uv::Mat4,
-    pub normal: uv::Mat4,
+    pub transformation: Mat4,
+    pub normal: Mat4,
 }
 unsafe impl bytemuck::Zeroable for Transforms {}
 unsafe impl bytemuck::Pod for Transforms {}
@@ -244,7 +243,7 @@ struct PipeWindow {
     push_constants: PushConstants,
     positions: (Vec<Position>, Option<Buffer>),
     vertices: (Vec<Vertex>, Option<Buffer>),
-    transforms: (Option<Transforms>, Option<Buffer>),
+    transforms: (Transforms, Option<Buffer>),
     uniform_group: Option<wgpu::BindGroup>,
 }
 
@@ -290,16 +289,12 @@ impl CustomPipe for Pipe {
             window.vertices.1 = None;
         }
 
-        if let Some(transforms) = window.transforms.0 {
-            let buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                label: Some("vs_uniforms"),
-                contents: bytemuck::bytes_of(&transforms),
-                usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::VERTEX,
-            });
-            window.transforms.1 = Some(buffer);
-        } else {
-            window.transforms.1 = None;
-        }
+        let buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+            label: Some("vs_uniforms"),
+            contents: bytemuck::bytes_of(&window.transforms.0),
+            usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::VERTEX,
+        });
+        window.transforms.1 = Some(buffer);
 
         if window.uniform_group.is_none() {
             if let Some(transforms) = &window.transforms.1 {
@@ -372,10 +367,7 @@ impl CustomWindow for PipeWindow {
             })
             .collect();
         self.vertices.0 = p.vertices(None, &palette);
-        self.transforms.0 = Some(Transforms {
-            transformation: uv::Mat4::identity(),
-            normal: uv::Mat4::identity(),
-        });
+        self.transforms.0 = Transforms::default();
     }
 }
 
