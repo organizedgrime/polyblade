@@ -23,6 +23,7 @@ use kas_wgpu::draw::{CustomPipe, CustomPipeBuilder, CustomWindow, DrawCustom, Dr
 use kas_wgpu::wgpu;
 use std::mem::size_of;
 use ultraviolet as uv;
+use uv::Vec4;
 use wgpu::util::DeviceExt;
 use wgpu::{Buffer, ShaderModule};
 
@@ -130,38 +131,16 @@ impl CustomPipeBuilder for PipeBuilder {
 
         let uniform_layout = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
             label: Some("uniforms_bgl"),
-            entries: &[
-                wgpu::BindGroupLayoutEntry {
-                    binding: 0,
-                    visibility: wgpu::ShaderStages::VERTEX,
-                    ty: wgpu::BindingType::Buffer {
-                        ty: wgpu::BufferBindingType::Uniform,
-                        has_dynamic_offset: false,
-                        min_binding_size: None,
-                    },
-                    count: None,
+            entries: &[wgpu::BindGroupLayoutEntry {
+                binding: 0,
+                visibility: wgpu::ShaderStages::VERTEX,
+                ty: wgpu::BindingType::Buffer {
+                    ty: wgpu::BufferBindingType::Uniform,
+                    has_dynamic_offset: false,
+                    min_binding_size: None,
                 },
-                wgpu::BindGroupLayoutEntry {
-                    binding: 1,
-                    visibility: wgpu::ShaderStages::FRAGMENT,
-                    ty: wgpu::BindingType::Buffer {
-                        ty: wgpu::BufferBindingType::Uniform,
-                        has_dynamic_offset: false,
-                        min_binding_size: None,
-                    },
-                    count: None,
-                },
-                wgpu::BindGroupLayoutEntry {
-                    binding: 2,
-                    visibility: wgpu::ShaderStages::FRAGMENT,
-                    ty: wgpu::BindingType::Buffer {
-                        ty: wgpu::BufferBindingType::Uniform,
-                        has_dynamic_offset: false,
-                        min_binding_size: None,
-                    },
-                    count: None,
-                },
-            ],
+                count: None,
+            }],
         });
         let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
             label: None,
@@ -317,7 +296,7 @@ impl CustomPipe for Pipe {
             let buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
                 label: Some("vs_uniforms"),
                 contents: bytemuck::bytes_of(&transforms),
-                usage: wgpu::BufferUsages::VERTEX,
+                usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::VERTEX,
             });
             window.transforms.1 = Some(buffer);
         } else {
@@ -386,23 +365,18 @@ impl CustomWindow for PipeWindow {
         .map(Into::<wgpu::Color>::into)
         .collect();
 
-        p.positions();
-        p.vertices(None, &palette);
-
-        #[rustfmt::skip]
-        self.add_vertices(pass.pass(), &[
-        ]);
-    }
-}
-
-impl PipeWindow {
-    fn add_vertices(&mut self, pass: usize, slice: &[Vertex]) {
-        /* if self.passes.len() <= pass {
-            // We only need one more, but no harm in adding extra
-            self.passes.resize_with(pass + 8, Default::default);
-        }
-
-        self.passes[pass].0.extend_from_slice(slice); */
+        self.positions.0 = p
+            .positions()
+            .into_iter()
+            .map(|v| Position {
+                position: Vec4::new(v.x, v.y, v.z, 0.0),
+            })
+            .collect();
+        self.vertices.0 = p.vertices(None, &palette);
+        self.transforms.0 = Some(Transforms {
+            transformation: uv::Mat4::identity(),
+            normal: uv::Mat3::identity(),
+        });
     }
 }
 
