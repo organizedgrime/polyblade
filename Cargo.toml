@@ -9,15 +9,12 @@ bytemuck = { version = "1.7", features = [
 	"zeroable_maybe_uninit",
 	"zeroable_atomics",
 ] }
-image = { version = "0.24.9" }
-rand = "^0.8.5"
-strum = "0.26.2"
-strum_macros = "0.26.2"
+rand = { version = "^0.8.5" }
 kas = { version = "0.14.1", features = ["wgpu"] }
-kas-wgpu = "0.14.1"
-env_logger = "0.10"
-wgpu = "0.18.0"
-ultraviolet = "0.9.2"
+kas-wgpu = { version = "0.14.1" }
+env_logger = { version = "0.10" }
+wgpu = { version = "0.18.0" }
+ultraviolet = { version = "0.9.2" }
 
 [build-dependencies]
 glob = "0.3"

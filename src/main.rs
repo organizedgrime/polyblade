@@ -14,15 +14,14 @@ mod color;
 use color::*;
 
 use kas::draw::{Draw, DrawIface, PassId};
-use kas::event::{self, Command, Key, SmolStr};
-use kas::geom::{DVec2, Vec2};
+use kas::event::{self, Command, Key};
 use kas::prelude::*;
 use kas::widgets::adapt::Reserve;
 use kas::widgets::{format_data, format_value, Slider, Text};
 use kas_wgpu::draw::{CustomPipe, CustomPipeBuilder, CustomWindow, DrawCustom, DrawPipe};
 use kas_wgpu::wgpu;
 use std::mem::size_of;
-use ultraviolet::{Mat4, Vec3, Vec4};
+use ultraviolet::{Mat4, Vec4};
 use wgpu::util::DeviceExt;
 use wgpu::{Buffer, ShaderModule};
 
@@ -70,40 +69,6 @@ struct Transforms {
 unsafe impl bytemuck::Zeroable for Transforms {}
 unsafe impl bytemuck::Pod for Transforms {}
 
-#[repr(C)]
-#[derive(Clone, Copy, Debug)]
-struct PushConstants {
-    p: Vec2,
-    q: Vec2,
-    iterations: i32,
-}
-impl Default for PushConstants {
-    fn default() -> Self {
-        PushConstants {
-            p: Vec2::splat(0.0),
-            q: Vec2::splat(1.0),
-            iterations: 64,
-        }
-    }
-}
-impl PushConstants {
-    fn set(&mut self, p: DVec2, q: DVec2, iterations: i32) {
-        #[cfg(feature = "shader64")]
-        {
-            self.p = p;
-            self.q = q;
-        }
-        #[cfg(not(feature = "shader64"))]
-        {
-            self.p = p.cast_approx();
-            self.q = q.cast_approx();
-        }
-        self.iterations = iterations;
-    }
-}
-unsafe impl bytemuck::Zeroable for PushConstants {}
-unsafe impl bytemuck::Pod for PushConstants {}
-
 struct PipeBuilder;
 
 impl CustomPipeBuilder for PipeBuilder {
@@ -114,7 +79,6 @@ impl CustomPipeBuilder for PipeBuilder {
             label: None,
             features: wgpu::Features::PUSH_CONSTANTS,
             limits: wgpu::Limits {
-                max_push_constant_size: size_of::<PushConstants>().cast(),
                 ..Default::default()
             },
         }
@@ -144,10 +108,7 @@ impl CustomPipeBuilder for PipeBuilder {
         let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
             label: None,
             bind_group_layouts: &[bgl_common, &uniform_layout],
-            push_constant_ranges: &[wgpu::PushConstantRange {
-                stages: wgpu::ShaderStages::FRAGMENT,
-                range: 0..size_of::<PushConstants>().cast(),
-            }],
+            push_constant_ranges: &[],
         });
 
         let render_pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
@@ -240,7 +201,6 @@ struct Pipe {
 }
 
 struct PipeWindow {
-    push_constants: PushConstants,
     positions: (Vec<Position>, Option<Buffer>),
     vertices: (Vec<Vertex>, Option<Buffer>),
     transforms: (Transforms, Option<Buffer>),
@@ -252,7 +212,6 @@ impl CustomPipe for Pipe {
 
     fn new_window(&self, _: &wgpu::Device) -> Self::Window {
         PipeWindow {
-            push_constants: Default::default(),
             positions: Default::default(),
             vertices: Default::default(),
             transforms: Default::default(),
@@ -319,11 +278,6 @@ impl CustomPipe for Pipe {
         bg_common: &'a wgpu::BindGroup,
     ) {
         rpass.set_pipeline(&self.render_pipeline);
-        rpass.set_push_constants(
-            wgpu::ShaderStages::FRAGMENT,
-            0,
-            bytemuck::bytes_of(&window.push_constants),
-        );
         rpass.set_bind_group(0, bg_common, &[]);
         if let Some(uniform_group) = &window.uniform_group {
             rpass.set_bind_group(1, uniform_group, &[]);
@@ -435,6 +389,7 @@ impl_scope! {
         }
 
         fn handle_event(&mut self, cx: &mut EventCx, _: &i32, event: Event) -> IsUsed {
+            println!("nya: {event:?}");
             match event {
                 Event::Key(event, is_synthetic) => {
                     println!("key: {event:?}");

@@ -1,5 +1,4 @@
 use std::cmp::{max, min};
-pub trait WgpuColor: Into<wgpu::Color> {}
 
 #[derive(Debug, Default)]
 pub struct HSL {
@@ -25,6 +24,7 @@ impl RGB {
 }
 
 impl HSL {
+    #[allow(dead_code)]
     pub fn new(h: f32, s: f32, l: f32) -> Self {
         Self { h, s, l }
     }
