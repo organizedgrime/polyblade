@@ -4,18 +4,18 @@ pub trait WgpuColor: Into<wgpu::Color> {}
 #[derive(Debug, Default)]
 pub struct HSL {
     /// Hue in 0-360 degree
-    h: f32,
+    pub h: f32,
     /// Saturation in 0...1 (percent)
-    s: f32,
+    pub s: f32,
     /// Luminosity in 0...1 (percent)
-    l: f32,
+    pub l: f32,
 }
 
 #[derive(Debug, Default)]
 pub struct RGB {
-    r: u8,
-    g: u8,
-    b: u8,
+    pub r: u8,
+    pub g: u8,
+    pub b: u8,
 }
 
 impl RGB {

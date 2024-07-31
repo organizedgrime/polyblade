@@ -1,3 +1,5 @@
+use crate::{Vertex, RGB};
+
 use super::*;
 use ultraviolet::{Slerp, Vec3, Vec4};
 
@@ -123,7 +125,7 @@ impl PolyGraph {
         })
     }
 
-    pub fn vertices(&self, clear_face: Option<usize>, palette: &[Color]) -> Vec<Vertex> {
+    pub fn vertices(&self, clear_face: Option<usize>, palette: &[wgpu::Color]) -> Vec<Vertex> {
         let mut vertices = Vec::new();
         let barycentric = [Vec3::unit_x(), Vec3::unit_y(), Vec3::unit_z()];
 
@@ -145,20 +147,17 @@ impl PolyGraph {
             let n = polygon_sizes.get(color_index).unwrap();
             let color = palette[n % palette.len()];
             let color = Vec4::new(
-                color.r,
-                color.g,
-                color.b,
+                color.r as f32,
+                color.g as f32,
+                color.b as f32,
                 if Some(i) == clear_face { 0.0 } else { 1.0 },
             );
             let sides = self.face_sides_buffer(i);
             let positions = self.face_triangle_positions(i);
 
             for j in 0..positions.len() {
-                let mut p = positions[j].clone();
-                p.normalize();
                 let b = barycentric[j % barycentric.len()];
                 vertices.push(Vertex {
-                    normal: Vec4::new(p.x, p.y, p.z, 0.0),
                     sides: Vec4::new(sides[j].x, sides[j].y, sides[j].z, 0.0),
                     barycentric: Vec4::new(b.x, b.y, b.z, 0.0),
                     color,

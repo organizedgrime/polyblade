@@ -1,12 +1,12 @@
 use super::Edge;
-use crate::ConwayMessage;
+// use crate::ConwayMessage;
 use std::{collections::HashSet, time::Instant};
 
 #[derive(Debug, Clone)]
 pub enum Transaction {
     Contraction(HashSet<Edge>),
     Release(HashSet<Edge>),
-    Conway(ConwayMessage),
+    // Conway(ConwayMessage),
     #[allow(dead_code)]
     ShortenName(usize),
     Name(char),

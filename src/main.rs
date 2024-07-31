@@ -373,20 +373,21 @@ impl CustomWindow for PipeWindow {
     type Param = PolyGraph;
 
     fn invoke(&mut self, pass: PassId, rect: Rect, p: Self::Param) {
-        /*
-        let palette = vec![
+        let palette: Vec<wgpu::Color> = vec![
+            RGB::new(72, 132, 90),
+            RGB::new(163, 186, 112),
+            RGB::new(51, 81, 69),
+            RGB::new(254, 240, 134),
+            RGB::new(95, 155, 252),
+            RGB::new(244, 164, 231),
+            RGB::new(170, 137, 190),
+        ]
+        .into_iter()
+        .map(Into::<wgpu::Color>::into)
+        .collect();
 
-            Color::from_rgb8(72, 132, 90),
-            Color::from_rgb8(163, 186, 112),
-            Color::from_rgb8(51, 81, 69),
-            Color::from_rgb8(254, 240, 134),
-            Color::from_rgb8(95, 155, 252),
-            Color::from_rgb8(244, 164, 231),
-            Color::from_rgb8(170, 137, 190),
-        ];
-        */
         p.positions();
-        p.vertices(None, palette);
+        p.vertices(None, &palette);
 
         #[rustfmt::skip]
         self.add_vertices(pass.pass(), &[

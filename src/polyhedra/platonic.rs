@@ -1,4 +1,4 @@
-use crate::PresetMessage;
+// use crate::PresetMessage;
 
 use super::PolyGraph;
 
@@ -11,7 +11,7 @@ use super::PolyGraph;
     D = gT (gyro tetrahedron)
 */
 
-impl PolyGraph {
+/* impl PolyGraph {
     pub fn change_shape(&mut self, message: PresetMessage) {
         use PresetMessage::*;
         match message {
@@ -33,7 +33,7 @@ impl PolyGraph {
             Icosahedron => *self = PolyGraph::icosahedron(),
         }
     }
-}
+} */
 
 // Platonic Solids
 impl PolyGraph {
