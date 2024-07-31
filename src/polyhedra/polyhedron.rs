@@ -1,10 +1,9 @@
 use super::*;
-use crate::{scene::Vertex, ConwayMessage};
-use glam::{vec3, vec4, Vec3};
-use iced::Color;
 use std::time::{Duration, Instant};
+use ultraviolet as uv;
+use uv::{Vec3, Vec4};
 
-const TICK_SPEED: f32 = 800.0;
+const TICK_SPEED: f32 = 1000.0;
 
 // Operations
 impl PolyGraph {
@@ -53,8 +52,11 @@ impl PolyGraph {
     }
 
     fn center(&mut self) {
-        let shift =
-            self.positions.values().fold(Vec3::ZERO, |a, &b| a + b) / self.vertices.len() as f32;
+        let shift = self
+            .positions
+            .values()
+            .fold(uv::Vec3::zero(), |a, &b| a + b)
+            / self.vertices.len() as f32;
 
         for (_, v) in self.positions.iter_mut() {
             *v -= shift;
@@ -74,7 +76,7 @@ impl PolyGraph {
     pub fn update(&mut self) {
         self.center();
         self.resize();
-        self.process_transactions();
+        // self.process_transactions();
         self.apply_spring_forces();
     }
 
@@ -88,7 +90,7 @@ impl PolyGraph {
     pub fn face_centroid(&self, face_index: usize) -> Vec3 {
         // All vertices associated with this face
         let vertices: Vec<_> = self.face_positions(face_index);
-        vertices.iter().fold(Vec3::ZERO, |a, &b| a + b) / vertices.len() as f32
+        vertices.iter().fold(Vec3::zero(), |a, &b| a + b) / vertices.len() as f32
     }
 
     fn face_triangle_positions(&self, face_index: usize) -> Vec<Vec3> {
@@ -118,21 +120,21 @@ impl PolyGraph {
         let positions = self.face_positions(face_index);
         let n = positions.len();
         match n {
-            3 => vec![vec3(1.0, 1.0, 1.0); 3],
-            4 => vec![vec3(1.0, 0.0, 1.0); 6],
-            _ => vec![vec3(0.0, 1.0, 0.0); n * 3],
+            3 => vec![Vec3::new(1.0, 1.0, 1.0); 3],
+            4 => vec![Vec3::new(1.0, 0.0, 1.0); 6],
+            _ => vec![Vec3::new(0.0, 1.0, 0.0); n * 3],
         }
     }
 
     pub fn positions(&self) -> Vec<Vec3> {
-        (0..self.cycles.len()).fold(Vec::new(), |acc, i| {
+        (1..self.cycles.len()).fold(Vec::new(), |acc, i| {
             [acc, self.face_triangle_positions(i)].concat()
         })
     }
 
     pub fn vertices(&self, clear_face: Option<usize>, palette: &[Color]) -> Vec<Vertex> {
         let mut vertices = Vec::new();
-        let barycentric = [Vec3::X, Vec3::Y, Vec3::Z];
+        let barycentric = [Vec3::unit_x(), Vec3::unit_y(), Vec3::unit_z()];
 
         let mut polygon_sizes: Vec<usize> = self.cycles.iter().fold(Vec::new(), |mut acc, f| {
             if !acc.contains(&f.len()) {
@@ -143,7 +145,7 @@ impl PolyGraph {
 
         polygon_sizes.sort();
 
-        for i in 0..self.cycles.len() {
+        for i in 1..self.cycles.len() {
             let color_index = polygon_sizes
                 .iter()
                 .position(|&x| x == self.cycles[i].len())
@@ -151,7 +153,7 @@ impl PolyGraph {
 
             let n = polygon_sizes.get(color_index).unwrap();
             let color = palette[n % palette.len()];
-            let color = vec4(
+            let color = Vec4::new(
                 color.r,
                 color.g,
                 color.b,
@@ -161,12 +163,13 @@ impl PolyGraph {
             let positions = self.face_triangle_positions(i);
 
             for j in 0..positions.len() {
-                let p = positions[j].normalize();
+                let mut p = positions[j].clone();
+                p.normalize();
                 let b = barycentric[j % barycentric.len()];
                 vertices.push(Vertex {
-                    normal: vec4(p.x, p.y, p.z, 0.0),
-                    sides: vec4(sides[j].x, sides[j].y, sides[j].z, 0.0),
-                    barycentric: vec4(b.x, b.y, b.z, 0.0),
+                    normal: Vec4::new(p.x, p.y, p.z, 0.0),
+                    sides: Vec4::new(sides[j].x, sides[j].y, sides[j].z, 0.0),
+                    barycentric: Vec4::new(b.x, b.y, b.z, 0.0),
                     color,
                 });
             }
@@ -175,7 +178,7 @@ impl PolyGraph {
         vertices
     }
 
-    pub fn process_transactions(&mut self) {
+    /* pub fn process_transactions(&mut self) {
         if let Some(transaction) = self.transactions.first().cloned() {
             use Transaction::*;
             match transaction {
@@ -269,5 +272,5 @@ impl PolyGraph {
                 None => {}
             }
         }
-    }
+    } */
 }

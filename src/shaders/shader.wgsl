@@ -1,9 +1,8 @@
 struct Uniforms {
-    model_mat: mat4x4<f32>,
-    view_project_mat: mat4x4<f32>,
+    transformation: mat4x4<f32>,
     normal_mat: mat4x4<f32>,
 };
-@binding(0) @group(0) var<uniform> uniforms : Uniforms;
+@binding(0) @group(1) var<uniform> uniforms : Uniforms;
 
 struct Output {
     @builtin(position) position: vec4<f32>,
@@ -21,14 +20,14 @@ fn vs_main(
     @location(3) color: vec4<f32>,
 ) -> Output {
     var output: Output;
-    let m_position: vec4<f32> = uniforms.model_mat * position;
+    let m_position: vec4<f32> = uniforms.transformation * position;
     output.v_position = m_position;
     //output.v_normal = uniforms.normal_mat * normal;
     output.v_barycentric = barycentric;
     output.v_sides = sides;
     output.v_color = color;
 
-    output.position = uniforms.view_project_mat * m_position;
+    output.position = uniforms.transformation * m_position;
     return output;
 }
 
@@ -36,7 +35,7 @@ struct FragUniforms {
     light_position: vec4<f32>,
     eye_position: vec4<f32>,
 };
-@binding(1) @group(0) var<uniform> frag_uniforms : FragUniforms;
+@binding(1) @group(1) var<uniform> frag_uniforms : FragUniforms;
 
 struct LightUniforms {
     color: vec4<f32>,
@@ -46,7 +45,7 @@ struct LightUniforms {
     specular_intensity: f32,
     specular_shininess: f32,
 };
-@binding(2) @group(0) var<uniform> light_uniforms : LightUniforms;
+@binding(2) @group(1) var<uniform> light_uniforms : LightUniforms;
 
 fn edge_factor(v_barycentric: vec3<f32>, v_sides: vec3<f32>) -> vec3<f32> {
     let line_width = 2.0;

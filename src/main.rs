@@ -6,6 +6,12 @@
 //! Polyblade example
 //!
 //! Demonstrates use of a custom draw pipe.
+//!
+
+mod polyhedra;
+use polyhedra::*;
+mod color;
+use color::*;
 
 use kas::draw::{Draw, DrawIface, PassId};
 use kas::event::{self, Command};
@@ -18,7 +24,7 @@ use kas_wgpu::wgpu;
 use std::mem::size_of;
 use ultraviolet as uv;
 use wgpu::util::DeviceExt;
-use wgpu::{Buffer, ShaderModule};
+use wgpu::{BindGroup, Buffer, ShaderModule};
 
 const SHADER: &str = include_str!("./shaders/shader.wgsl");
 
@@ -122,9 +128,44 @@ impl CustomPipeBuilder for PipeBuilder {
     ) -> Self::Pipe {
         let shaders = Shaders::new(device);
 
+        let uniform_layout = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+            label: Some("uniforms_bgl"),
+            entries: &[
+                wgpu::BindGroupLayoutEntry {
+                    binding: 0,
+                    visibility: wgpu::ShaderStages::VERTEX,
+                    ty: wgpu::BindingType::Buffer {
+                        ty: wgpu::BufferBindingType::Uniform,
+                        has_dynamic_offset: false,
+                        min_binding_size: None,
+                    },
+                    count: None,
+                },
+                wgpu::BindGroupLayoutEntry {
+                    binding: 1,
+                    visibility: wgpu::ShaderStages::FRAGMENT,
+                    ty: wgpu::BindingType::Buffer {
+                        ty: wgpu::BufferBindingType::Uniform,
+                        has_dynamic_offset: false,
+                        min_binding_size: None,
+                    },
+                    count: None,
+                },
+                wgpu::BindGroupLayoutEntry {
+                    binding: 2,
+                    visibility: wgpu::ShaderStages::FRAGMENT,
+                    ty: wgpu::BindingType::Buffer {
+                        ty: wgpu::BufferBindingType::Uniform,
+                        has_dynamic_offset: false,
+                        min_binding_size: None,
+                    },
+                    count: None,
+                },
+            ],
+        });
         let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
             label: None,
-            bind_group_layouts: &[bgl_common],
+            bind_group_layouts: &[bgl_common, &uniform_layout],
             push_constant_ranges: &[wgpu::PushConstantRange {
                 stages: wgpu::ShaderStages::FRAGMENT,
                 range: 0..size_of::<PushConstants>().cast(),
@@ -175,6 +216,8 @@ impl CustomPipeBuilder for PipeBuilder {
                     },
                 ],
             },
+            primitive: wgpu::PrimitiveState::default(),
+            /*
             primitive: wgpu::PrimitiveState {
                 topology: wgpu::PrimitiveTopology::TriangleList,
                 strip_index_format: None,
@@ -184,9 +227,15 @@ impl CustomPipeBuilder for PipeBuilder {
                 polygon_mode: wgpu::PolygonMode::Fill,
                 conservative: false,
             },
+            */
             // TODO depth stencil
             depth_stencil: None,
-            multisample: Default::default(),
+            // multisample: Default::default(),
+            multisample: wgpu::MultisampleState {
+                count: 1,
+                mask: !0,
+                alpha_to_coverage_enabled: false,
+            },
             fragment: Some(wgpu::FragmentState {
                 module: &shaders.wgsl,
                 entry_point: "fs_main",
@@ -200,12 +249,16 @@ impl CustomPipeBuilder for PipeBuilder {
             multiview: None,
         });
 
-        Pipe { render_pipeline }
+        Pipe {
+            render_pipeline,
+            uniform_layout,
+        }
     }
 }
 
 struct Pipe {
     render_pipeline: wgpu::RenderPipeline,
+    uniform_layout: wgpu::BindGroupLayout,
 }
 
 struct PipeWindow {
@@ -213,6 +266,7 @@ struct PipeWindow {
     positions: (Vec<Position>, Option<Buffer>),
     vertices: (Vec<Vertex>, Option<Buffer>),
     transforms: (Option<Transforms>, Option<Buffer>),
+    uniform_group: Option<wgpu::BindGroup>,
     vertex_count: u32,
 }
 
@@ -225,6 +279,7 @@ impl CustomPipe for Pipe {
             positions: Default::default(),
             vertices: Default::default(),
             transforms: Default::default(),
+            uniform_group: Default::default(),
             vertex_count: 0,
         }
     }
@@ -238,7 +293,7 @@ impl CustomPipe for Pipe {
     ) {
         if !window.positions.0.is_empty() {
             let buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                label: None,
+                label: Some("vs_positions"),
                 contents: bytemuck::cast_slice(&window.positions.0),
                 usage: wgpu::BufferUsages::VERTEX,
             });
@@ -249,7 +304,7 @@ impl CustomPipe for Pipe {
 
         if !window.vertices.0.is_empty() {
             let buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                label: None,
+                label: Some("vs_vertices"),
                 contents: bytemuck::cast_slice(&window.vertices.0),
                 usage: wgpu::BufferUsages::VERTEX,
             });
@@ -260,13 +315,26 @@ impl CustomPipe for Pipe {
 
         if let Some(transforms) = window.transforms.0 {
             let buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                label: None,
+                label: Some("vs_uniforms"),
                 contents: bytemuck::bytes_of(&transforms),
                 usage: wgpu::BufferUsages::VERTEX,
             });
             window.transforms.1 = Some(buffer);
         } else {
             window.transforms.1 = None;
+        }
+
+        if window.uniform_group.is_none() {
+            if let Some(transforms) = &window.transforms.1 {
+                window.uniform_group = Some(device.create_bind_group(&wgpu::BindGroupDescriptor {
+                    label: Some("uniforms_bg"),
+                    layout: &self.uniform_layout,
+                    entries: &[wgpu::BindGroupEntry {
+                        binding: 0,
+                        resource: transforms.as_entire_binding(),
+                    }],
+                }))
+            }
         }
     }
 
@@ -285,6 +353,9 @@ impl CustomPipe for Pipe {
             bytemuck::bytes_of(&window.push_constants),
         );
         rpass.set_bind_group(0, bg_common, &[]);
+        if let Some(uniform_group) = &window.uniform_group {
+            rpass.set_bind_group(1, uniform_group, &[]);
+        }
         if window.positions.1.is_some() {
             rpass.set_vertex_buffer(0, window.positions.1.as_ref().unwrap().slice(..));
         }
@@ -299,43 +370,30 @@ impl CustomPipe for Pipe {
 }
 
 impl CustomWindow for PipeWindow {
-    type Param = (DVec2, DVec2, f32, i32);
+    type Param = PolyGraph;
 
     fn invoke(&mut self, pass: PassId, rect: Rect, p: Self::Param) {
-        /* self.push_constants.set(p.0, p.1, p.3);
-        let rel_width = p.2;
-
-        let aa = Vec2::conv(rect.pos);
-        let bb = aa + Vec2::conv(rect.size);
-
-        let depth = pass.depth();
-        let ab = Vec3(aa.0, bb.1, depth);
-        let ba = Vec3(bb.0, aa.1, depth);
-        let aa = Vec3::from2(aa, depth);
-        let bb = Vec3::from2(bb, depth);
-
-        // Fix height to 2 here; width is relative:
-        let cbb = Vec2(rel_width, 1.0);
-        let caa = -cbb;
-        let cab = Vec2(caa.0, cbb.1);
-        let cba = Vec2(cbb.0, caa.1);
-
-        // Effectively, this gives us the following "view transform":
-        // α_v * p + δ_v = 2 * (p - rect.pos) * (rel_width / width, 1 / height) - (rel_width, 1)
-        //               = 2 * (p - rect.pos) / height - (width, height) / height
-        //               = 2p / height - (2*rect.pos + rect.size) / height
-        // Or: α_v = 2 / height, δ_v = -(2*rect.pos + rect.size) / height
-        // This is used to define view_alpha and view_delta (in Polyblade::set_rect).
+        let palette = vec![
+            Color::from_rgb8(72, 132, 90),
+            Color::from_rgb8(163, 186, 112),
+            Color::from_rgb8(51, 81, 69),
+            Color::from_rgb8(254, 240, 134),
+            Color::from_rgb8(95, 155, 252),
+            Color::from_rgb8(244, 164, 231),
+            Color::from_rgb8(170, 137, 190),
+        ];
+        p.positions();
+        p.vertices(None, palette)
 
         #[rustfmt::skip]
         self.add_vertices(pass.pass(), &[
             Vertex(aa, caa), Vertex(ba, cba), Vertex(ab, cab),
             Vertex(ab, cab), Vertex(ba, cba), Vertex(bb, cbb),
-        ]); */
+        ]);
     }
 }
 
-/* impl PipeWindow {
+impl PipeWindow {
     fn add_vertices(&mut self, pass: usize, slice: &[Vertex]) {
         if self.passes.len() <= pass {
             // We only need one more, but no harm in adding extra
@@ -344,7 +402,7 @@ impl CustomWindow for PipeWindow {
 
         self.passes[pass].0.extend_from_slice(slice);
     }
-} */
+}
 
 #[derive(Clone, Debug)]
 struct ViewUpdate;
