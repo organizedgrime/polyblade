@@ -407,7 +407,7 @@ impl_scope! {
 
     impl Layout for Polyblade {
         fn size_rules(&mut self, sizer: SizeCx, axis: AxisInfo) -> SizeRules {
-            kas::layout::LogicalSize(320.0, 240.0)
+            kas::layout::LogicalSize(800.0, 800.0)
                 .to_rules_with_factor(axis, sizer.scale_factor(), 4.0)
                 .with_stretch(Stretch::High)
         }
@@ -478,7 +478,7 @@ impl_scope! {
     #[widget{
         layout = grid! {
             (1, 0) => self.label,
-            (0, 1) => align!(center, self.iters_label),
+            (0, 1) => align!(center, self.zoom_label),
             (0, 2) => self.slider,
             (1..3, 1..4) => self.pblade,
         };
@@ -487,27 +487,25 @@ impl_scope! {
         core: widget_core!(),
         #[widget(&self.pblade)]
         label: Text<Polyblade, String>,
-        #[widget(&self.iters)]
-        iters_label: Reserve<Text<i32, String>>,
-        #[widget(&self.iters)]
+        #[widget(&self.zoom)]
+        zoom_label: Reserve<Text<i32, String>>,
+        #[widget(&self.zoom)]
         slider: Slider<i32, i32, kas::dir::Up>,
         // extra col span allows use of Label's margin
-        #[widget(&self.iters)]
+        #[widget(&self.zoom)]
         pblade: Polyblade,
-        iters: i32,
+        zoom: i32,
     }
 
     impl PolybladeUI {
         fn new() -> PolybladeUI {
             PolybladeUI {
                 core: Default::default(),
-                label: format_data!(mbrot: &Polyblade, "{}", "meow, change me"),
-                iters_label: format_value!("{}")
-                    .with_min_size_em(3.0, 0.0),
-                slider: Slider::up(0..=256, |_, iters| *iters)
-                    .with_msg(|iters| iters),
+                label: format_data!(pblade: &Polyblade, "{}", "meow, change me"),
+                zoom_label: format_value!("{}").with_min_size_em(3.0, 0.0),
+                slider: Slider::up(0..=1000, |_, zoom| *zoom).with_msg(|zoom| zoom),
                 pblade: Polyblade::new(),
-                iters: 64,
+                zoom: 100,
             }
         }
     }
@@ -516,7 +514,8 @@ impl_scope! {
 
         fn handle_messages(&mut self, cx: &mut EventCx, data: &()) {
             if let Some(iters) = cx.try_pop() {
-                self.iters = iters;
+                self.zoom = iters;
+                self.pblade.size = self.zoom as f32 / 100.0;
             } else if let Some(ViewUpdate) = cx.try_pop() {
                 cx.redraw(self.pblade.id());
             } else {
