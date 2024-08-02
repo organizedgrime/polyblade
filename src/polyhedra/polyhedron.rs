@@ -22,7 +22,7 @@ impl PolyGraph {
                             let v_position = self.positions[v];
                             let u_position = self.positions[u];
                             let l = (v_position - u_position).mag();
-                            let f = (self.edge_length / TICK_SPEED * 4.5) / l;
+                            let f = (self.edge_length / TICK_SPEED * 2.0) / l;
                             *self.positions.get_mut(v).unwrap() = v_position.slerp(u_position, f);
                             *self.positions.get_mut(u).unwrap() = u_position.slerp(v_position, f);
                             continue;
@@ -178,7 +178,7 @@ impl PolyGraph {
                         if self.positions.contains_key(&e.v())
                             && self.positions.contains_key(&e.u())
                         {
-                            acc && (self.positions[&e.v()] - self.positions[&e.u()]).mag() < 0.08
+                            acc && (self.positions[&e.v()] - self.positions[&e.u()]).mag() < 0.1
                         } else {
                             acc
                         }

@@ -271,7 +271,7 @@ fn main() -> kas::app::Result<()> {
                         self.state.now = Local::now();
                         self.pblade.polyhedron.update();
                         // Locked at 60fps
-                        let ns = (1_000_000_000 - (self.state.now.time().nanosecond() % 1_000_000_000)) / 120;
+                        let ns = (1_000_000_000 - (self.state.now.time().nanosecond() % 1_000_000_000)) / 60;
                         cx.request_timer(self.id(), 0, Duration::new(0, ns));
                         cx.redraw(self);
                         Used
