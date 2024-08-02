@@ -1,6 +1,4 @@
 use std::{fmt::Display, time::Instant};
-
-use iced::font;
 use strum_macros::{Display, EnumIter};
 
 #[derive(Debug, Clone)]

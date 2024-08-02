@@ -1,6 +1,5 @@
-use crate::{Vertex, RGB};
-
 use super::*;
+use crate::Vertex;
 use ultraviolet::{Slerp, Vec3, Vec4};
 
 const TICK_SPEED: f32 = 1000.0;
