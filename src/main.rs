@@ -19,7 +19,7 @@ use pipeline::*;
 use kas::draw::{Draw, DrawIface};
 use kas::event::{self, Command, Key};
 use kas::prelude::*;
-use kas::widgets::{menu, Separator};
+use kas::widgets::{adapt, menu, Adapt, CheckButton, Separator, Slider};
 use kas_wgpu::draw::{DrawCustom, DrawPipe};
 
 #[derive(Clone, Debug)]
@@ -132,6 +132,56 @@ impl_scope! {
 pub struct AppData {
     disabled: bool,
 }
+
+fn widgets() -> Box<dyn Widget<Data = AppData>> {
+    #[derive(Clone, Debug)]
+    enum Item {
+        Button,
+        Check(bool),
+        Slider(i32),
+    }
+
+    impl_scope! {
+        #[derive(Debug)]
+        #[impl_default]
+        struct Data {
+            check: bool = true,
+            radio: u32 = 1,
+            value: i32 = 5,
+            ratio: f32 = 0.0,
+            text: String,
+        }
+    }
+    let data = Data {
+        text: "Use button to edit →".to_string(),
+        ..Default::default()
+    };
+
+    let widgets = kas::aligned_column![
+        row![
+            "CheckButton",
+            CheckButton::new_msg("&Check me", |_, data: &Data| data.check, Item::Check)
+        ],
+        row![
+            "Slider",
+            Slider::right(0..=10, |_, data: &Data| data.value).with_msg(Item::Slider)
+        ],
+    ];
+
+    let ui = Adapt::new(widgets, data).on_message(|cx, data, item| {
+        println!("Message: {item:?}");
+        match item {
+            Item::Check(v) => data.check = v,
+            _ => (),
+        }
+    });
+
+    let ui = adapt::AdaptEvents::new(ui)
+        .on_update(|cx, _, data: &AppData| cx.set_disabled(data.disabled));
+
+    Box::new(ui)
+}
+
 fn main() -> kas::app::Result<()> {
     env_logger::init();
 
@@ -160,7 +210,9 @@ fn main() -> kas::app::Result<()> {
             layout = column! [
                 self.menubar,
                 Separator::new(),
-                self.pblade
+                self.pblade,
+                Separator::new(),
+                self.widgets
             ];
         }]
         struct {
@@ -168,6 +220,7 @@ fn main() -> kas::app::Result<()> {
             state: AppData,
             #[widget(&self.state)] menubar: menu::MenuBar::<AppData, Right> = menubar,
             #[widget(&self.state)] pblade: Polyblade = Polyblade::new(),
+            #[widget(&self.state)] widgets: Box<dyn Widget<Data = AppData>> = widgets(),
         }
         impl Events for Self {
             type Data = ();
