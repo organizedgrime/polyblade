@@ -17,7 +17,7 @@ use kas::draw::{Draw, DrawIface, PassId};
 use kas::event::{self, Command, Key};
 use kas::prelude::*;
 use kas::widgets::adapt::Reserve;
-use kas::widgets::{format_data, format_value, Slider, Text};
+use kas::widgets::{format_data, format_value, Adapt, Button, Slider, Text};
 use kas_wgpu::draw::{CustomPipe, CustomPipeBuilder, CustomWindow, DrawCustom, DrawPipe};
 use kas_wgpu::wgpu;
 use std::mem::size_of;
@@ -451,7 +451,6 @@ impl_scope! {
         zoom_label: Reserve<Text<i32, String>>,
         #[widget(&self.zoom)]
         slider: Slider<i32, i32, kas::dir::Up>,
-        // extra col span allows use of Label's margin
         #[widget(&self.zoom)]
         pblade: Polyblade,
         zoom: i32,
@@ -461,7 +460,7 @@ impl_scope! {
         fn new() -> PolybladeUI {
             PolybladeUI {
                 core: Default::default(),
-                label: format_data!(pblade: &Polyblade, "{}", "meow, change me"),
+                label: format_data!(pblade: &Polyblade, "{}", pblade.polyhedron.name),
                 zoom_label: format_value!("{}").with_min_size_em(3.0, 0.0),
                 slider: Slider::up(0..=1000, |_, zoom| *zoom).with_msg(|zoom| zoom),
                 pblade: Polyblade::new(),
@@ -469,13 +468,16 @@ impl_scope! {
             }
         }
     }
-    impl Events for Self {
+
+    impl Events for PolybladeUI {
         type Data = ();
 
         fn handle_messages(&mut self, cx: &mut EventCx, data: &()) {
-            if let Some(iters) = cx.try_pop() {
-                self.zoom = iters;
+            if let Some(zoom) = cx.try_pop() {
+                self.zoom = zoom;
                 self.pblade.size = self.zoom as f32 / 100.0;
+                println!("updated zoom");
+                cx.update(self.as_node(data));
             } else if let Some(ViewUpdate) = cx.try_pop() {
                 cx.redraw(self.pblade.id());
             } else {
@@ -485,6 +487,20 @@ impl_scope! {
             cx.update(self.as_node(data));
         }
     }
+}
+#[derive(Clone, Debug)]
+struct Increment(i32);
+fn counter() -> impl Widget<Data = ()> {
+    let tree = kas::column![
+        align!(center, format_value!("{}")),
+        kas::row![
+            Button::label_msg("−", Increment(-1)),
+            Button::label_msg("+", Increment(1)),
+        ]
+        .map_any(),
+    ];
+
+    Adapt::new(tree, 0).on_message(|_, count, Increment(add)| *count += add)
 }
 
 fn main() -> kas::app::Result<()> {
