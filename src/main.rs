@@ -8,7 +8,12 @@
 //! Demonstrates use of a custom draw pipe.
 //!
 
+extern crate chrono;
+
+use chrono::prelude::*;
 mod polyhedra;
+use std::time::Duration;
+
 use kas::dir::Right;
 use polyhedra::*;
 mod color;
@@ -130,6 +135,7 @@ impl_scope! {
 
 #[derive(Debug, Default)]
 pub struct AppData {
+    now: DateTime<Local>,
     disabled: bool,
 }
 
@@ -225,6 +231,10 @@ fn main() -> kas::app::Result<()> {
         impl Events for Self {
             type Data = ();
 
+            fn configure(&mut self, cx: &mut ConfigCx) {
+                cx.request_timer(self.id(), 0, Duration::new(0, 0))
+            }
+
             fn handle_messages(&mut self, cx: &mut EventCx, _: &Self::Data) {
                 if let Some(msg) = cx.try_pop::<Menu>() {
                     match msg {
@@ -234,6 +244,22 @@ fn main() -> kas::app::Result<()> {
                         _ => {}
                     }
                 }
+            }
+
+            fn handle_event(&mut self, cx: &mut EventCx, _: &Self::Data,  event: Event) -> IsUsed {
+                match event {
+                    Event::Timer(0) => {
+                        self.state.now = Local::now();
+                        self.pblade.polyhedron.update();
+                        // Locked at 60fps
+                        let ns = (1_000_000_000 - (self.state.now.time().nanosecond() % 1_000_000_000)) / 60;
+                        cx.request_timer(self.id(), 0, Duration::new(0, ns));
+                        cx.redraw(self);
+                        Used
+                    }
+                    _ => Unused,
+                }
+
             }
         }
     };

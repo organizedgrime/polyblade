@@ -15,6 +15,7 @@ kas-wgpu = { version = "0.14.1" }
 env_logger = { version = "0.10" }
 wgpu = { version = "0.18.0" }
 ultraviolet = { version = "0.9.2" }
+chrono = "0.4.38"
 
 [build-dependencies]
 glob = "0.3"
