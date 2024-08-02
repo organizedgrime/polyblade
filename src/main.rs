@@ -9,6 +9,8 @@
 //!
 
 mod polyhedra;
+// use kas::app::AppData;
+use kas::dir::Right;
 use polyhedra::*;
 mod color;
 use color::*;
@@ -17,7 +19,7 @@ use kas::draw::{Draw, DrawIface, PassId};
 use kas::event::{self, Command, Key};
 use kas::prelude::*;
 use kas::widgets::adapt::Reserve;
-use kas::widgets::{format_data, format_value, Adapt, Button, Slider, Text};
+use kas::widgets::{format_data, format_value, menu, Adapt, Button, Separator, Slider, Text};
 use kas_wgpu::draw::{CustomPipe, CustomPipeBuilder, CustomWindow, DrawCustom, DrawPipe};
 use kas_wgpu::wgpu;
 use std::mem::size_of;
@@ -374,13 +376,13 @@ impl_scope! {
     }
 
     impl Events for Polyblade {
-        type Data = i32;
+        type Data = AppData;
 
         fn configure(&mut self, cx: &mut ConfigCx) {
             cx.register_nav_fallback(self.id());
         }
 
-        fn update(&mut self, _: &mut ConfigCx, data: &i32) {
+        fn update(&mut self, _: &mut ConfigCx, data: &AppData) {
             self.polyhedron.update();
         }
 
@@ -388,7 +390,7 @@ impl_scope! {
             true
         }
 
-        fn handle_event(&mut self, cx: &mut EventCx, _: &i32, event: Event) -> IsUsed {
+        fn handle_event(&mut self, cx: &mut EventCx, _: &AppData, event: Event) -> IsUsed {
             println!("nya: {event:?}");
             match event {
                 Event::Key(event, is_synthetic) => {
@@ -434,83 +436,63 @@ impl_scope! {
     }
 }
 
-impl_scope! {
-    #[widget{
-        layout = grid! {
-            (1, 0) => self.label,
-            (0, 1) => align!(center, self.zoom_label),
-            (0, 2) => self.slider,
-            (1..3, 1..4) => self.pblade,
-        };
-    }]
-    struct PolybladeUI {
-        core: widget_core!(),
-        #[widget(&self.pblade)]
-        label: Text<Polyblade, String>,
-        #[widget(&self.zoom)]
-        zoom_label: Reserve<Text<i32, String>>,
-        #[widget(&self.zoom)]
-        slider: Slider<i32, i32, kas::dir::Up>,
-        #[widget(&self.zoom)]
-        pblade: Polyblade,
-        zoom: i32,
-    }
-
-    impl PolybladeUI {
-        fn new() -> PolybladeUI {
-            PolybladeUI {
-                core: Default::default(),
-                label: format_data!(pblade: &Polyblade, "{}", pblade.polyhedron.name),
-                zoom_label: format_value!("{}").with_min_size_em(3.0, 0.0),
-                slider: Slider::up(0..=1000, |_, zoom| *zoom).with_msg(|zoom| zoom),
-                pblade: Polyblade::new(),
-                zoom: 100,
-            }
-        }
-    }
-
-    impl Events for PolybladeUI {
-        type Data = ();
-
-        fn handle_messages(&mut self, cx: &mut EventCx, data: &()) {
-            if let Some(zoom) = cx.try_pop() {
-                self.zoom = zoom;
-                self.pblade.size = self.zoom as f32 / 100.0;
-                println!("updated zoom");
-                cx.update(self.as_node(data));
-            } else if let Some(ViewUpdate) = cx.try_pop() {
-                cx.redraw(self.pblade.id());
-            } else {
-                println!("meowing");
-                return;
-            }
-            cx.update(self.as_node(data));
-        }
-    }
+#[derive(Debug, Default)]
+struct AppData {
+    disabled: bool,
 }
-#[derive(Clone, Debug)]
-struct Increment(i32);
-fn counter() -> impl Widget<Data = ()> {
-    let tree = kas::column![
-        align!(center, format_value!("{}")),
-        kas::row![
-            Button::label_msg("−", Increment(-1)),
-            Button::label_msg("+", Increment(1)),
-        ]
-        .map_any(),
-    ];
-
-    Adapt::new(tree, 0).on_message(|_, count, Increment(add)| *count += add)
-}
-
 fn main() -> kas::app::Result<()> {
     env_logger::init();
 
-    let window = Window::new(PolybladeUI::new(), "Polyblade");
-    let theme = kas::theme::FlatTheme::new().with_colours("dark");
-    kas::app::WgpuBuilder::new(PipeBuilder)
+    //let window = Window::new(PolybladeUI::new(), "Polyblade");
+    let theme = kas::theme::FlatTheme::new().with_colours("light");
+    let mut app = kas::app::WgpuBuilder::new(PipeBuilder)
         .with_theme(theme)
-        .build(())?
-        .with(window)
-        .run()
+        .build(())?;
+
+    #[derive(Clone, Debug)]
+    enum Menu {
+        Theme(&'static str),
+        Colour(String),
+        Disabled(bool),
+        Quit,
+    }
+
+    let menubar = menu::MenuBar::<AppData, Right>::builder()
+        .menu("&App", |menu| {
+            menu.entry("&Quit", Menu::Quit);
+        })
+        .build();
+
+    let ui = impl_anon! {
+        #[widget{
+            layout = column! [
+                self.menubar,
+                Separator::new(),
+                self.pblade
+            ];
+        }]
+        struct {
+            core: widget_core!(),
+            state: AppData,
+            #[widget(&self.state)] menubar: menu::MenuBar::<AppData, Right> = menubar,
+            #[widget(&self.state)] pblade: Polyblade = Polyblade::new(),
+        }
+        impl Events for Self {
+            type Data = ();
+
+            fn handle_messages(&mut self, cx: &mut EventCx, _: &Self::Data) {
+                if let Some(msg) = cx.try_pop::<Menu>() {
+                    match msg {
+                        Menu::Quit => {
+                            cx.exit();
+                        }
+                        _ => {}
+                    }
+                }
+            }
+        }
+    };
+
+    app.add(Window::new(ui, "Polyblade"));
+    app.run()
 }
