@@ -1,6 +1,8 @@
 use std::{fmt::Display, time::Instant};
 use strum_macros::{Display, EnumIter};
 
+use crate::PolyGraph;
+
 #[derive(Debug, Clone)]
 pub enum Message {
     Tick(Instant),
@@ -8,13 +10,12 @@ pub enum Message {
     Schlegel(bool),
     SizeChanged(f32),
     FovChanged(f32),
-    Preset(PresetMessage),
+    Preset(PresetMenu),
     Conway(ConwayMessage),
-    FontLoaded(Result<(), font::Error>),
 }
 
 #[derive(Debug, Clone, EnumIter)]
-pub enum PresetMessage {
+pub enum PresetMenu {
     Prism(usize),
     AntiPrism(usize),
     Pyramid(usize),
@@ -23,9 +24,9 @@ pub enum PresetMessage {
     Icosahedron,
 }
 
-impl Display for PresetMessage {
+impl Display for PresetMenu {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        use PresetMessage::*;
+        use PresetMenu::*;
         match self {
             Prism(n) => match n {
                 3 => f.write_str("Triangular"),
@@ -60,6 +61,20 @@ impl Display for PresetMessage {
     }
 }
 
+impl PresetMenu {
+    pub fn polyhedron(&self) -> PolyGraph {
+        use PresetMenu::*;
+        match *self {
+            Prism(n) => PolyGraph::prism(n),
+            AntiPrism(n) => PolyGraph::anti_prism(n),
+            Pyramid(n) => PolyGraph::pyramid(n),
+            Octahedron => PolyGraph::octahedron(),
+            Dodecahedron => PolyGraph::dodecahedron(),
+            Icosahedron => PolyGraph::icosahedron(),
+        }
+    }
+}
+
 #[allow(dead_code)]
 trait HotKey: Display {
     fn hotkey(&self) -> char {
@@ -90,5 +105,5 @@ pub enum ConwayMessage {
     Bevel,
 }
 
-impl HotKey for PresetMessage {}
+impl HotKey for PresetMenu {}
 impl HotKey for ConwayMessage {}

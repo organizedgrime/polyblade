@@ -10,22 +10,28 @@
 
 extern crate chrono;
 
-use chrono::prelude::*;
-mod polyhedra;
-use std::time::Duration;
-
-use kas::dir::Right;
-use polyhedra::*;
 mod color;
-use color::*;
+mod message;
 mod pipeline;
+mod polyhedra;
+
+use chrono::prelude::*;
+use message::*;
+use std::time::Duration;
+use strum::IntoEnumIterator;
+
+use color::*;
+use kas::dir::Right;
 use pipeline::*;
+use polyhedra::*;
 
 use kas::draw::{Draw, DrawIface};
-use kas::event::{self, Command, Key};
+use kas::event::{self};
 use kas::prelude::*;
 use kas::widgets::{adapt, menu, Adapt, CheckButton, Separator, Slider};
 use kas_wgpu::draw::{DrawCustom, DrawPipe};
+
+type Key = kas::event::Key<kas::event::SmolStr>;
 
 #[derive(Clone, Debug)]
 pub struct ViewUpdate;
@@ -51,13 +57,26 @@ impl_scope! {
         fn reset_view(&mut self) {
             self.size = 1.0;
         }
+
+        fn handle(&mut self, key: Key) {
+            println!("key pressed: {key:?}");
+            match key {
+                Key::Character(s) if s == "+" => {
+                    println!("+ pressed")
+                },
+                Key::Character(s) if s == "o" => {
+                    println!("o pressed")
+                },
+                _ => (),
+            }
+        }
     }
 
     impl Layout for Polyblade {
         fn size_rules(&mut self, sizer: SizeCx, axis: AxisInfo) -> SizeRules {
-            kas::layout::LogicalSize(800.0, 800.0)
+            kas::layout::LogicalSize(400.0, 400.0)
                 .to_rules_with_factor(axis, sizer.scale_factor(), 4.0)
-                .with_stretch(Stretch::High)
+                .with_stretch(Stretch::Low)
         }
 
         #[inline]
@@ -79,44 +98,12 @@ impl_scope! {
             cx.register_nav_fallback(self.id());
         }
 
-        fn update(&mut self, _: &mut ConfigCx, data: &AppData) {
-            self.polyhedron.update();
-        }
-
-        fn navigable(&self) -> bool {
-            true
-        }
+        fn update(&mut self, _: &mut ConfigCx, _: &AppData) {}
 
         fn handle_event(&mut self, cx: &mut EventCx, _: &AppData, event: Event) -> IsUsed {
             println!("nya: {event:?}");
             match event {
-                Event::Key(event, is_synthetic) => {
-                    println!("key: {event:?}");
-                    let s: Key = Key::Character("s".into());
-                    match event.logical_key {
-                        s => {
-                            self.polyhedron = PolyGraph::dodecahedron();
-                        },
-                        _ => {}
-                    }
-                }
-                Event::Command(cmd, _) => {
-                    match cmd {
-                        Command::Home | Command::End => self.reset_view(),
-                        Command::PageUp => {},
-                        Command::PageDown => {},
-                        cmd => {
-                        }
-                    }
-                    cx.push(ViewUpdate);
-                }
-                Event::Scroll(delta) => {
-                    let factor = match delta {
-                        event::ScrollDelta::LineDelta(_, y) => -0.5 * y as f64,
-                        event::ScrollDelta::PixelDelta(coord) => -0.01 * coord.1 as f64,
-                    };
-                    cx.push(ViewUpdate);
-                }
+                // TODO Orbital controls
                 Event::Pan { alpha, delta } => {
                     cx.push(ViewUpdate);
                 }
@@ -152,14 +139,10 @@ fn widgets() -> Box<dyn Widget<Data = AppData>> {
         #[impl_default]
         struct Data {
             check: bool = true,
-            radio: u32 = 1,
             value: i32 = 5,
-            ratio: f32 = 0.0,
-            text: String,
         }
     }
     let data = Data {
-        text: "Use button to edit →".to_string(),
         ..Default::default()
     };
 
@@ -199,15 +182,37 @@ fn main() -> kas::app::Result<()> {
 
     #[derive(Clone, Debug)]
     enum Menu {
-        Theme(&'static str),
-        Colour(String),
-        Disabled(bool),
         Quit,
+        Preset(PresetMenu),
     }
 
     let menubar = menu::MenuBar::<AppData, Right>::builder()
         .menu("&App", |menu| {
             menu.entry("&Quit", Menu::Quit);
+        })
+        .menu("&Preset", |menu| {
+            let _: menu::SubMenuBuilder<AppData> =
+                PresetMenu::iter().fold(menu, |menu, menu_item| match menu_item {
+                    PresetMenu::Prism(_) => menu.submenu("Prism", |mut menu| {
+                        for i in 3..=8 {
+                            let entry = PresetMenu::Prism(i);
+                            menu.push_entry(entry.to_string(), entry);
+                        }
+                    }),
+                    PresetMenu::AntiPrism(_) => menu.submenu("AntiPrism", |mut menu| {
+                        for i in 2..=8 {
+                            let entry = PresetMenu::AntiPrism(i);
+                            menu.push_entry(entry.to_string(), entry);
+                        }
+                    }),
+                    PresetMenu::Pyramid(_) => menu.submenu("Pyramid", |mut menu| {
+                        for i in 3..=8 {
+                            let entry = PresetMenu::Pyramid(i);
+                            menu.push_entry(entry.to_string(), entry);
+                        }
+                    }),
+                    _ => menu.entry(menu_item.to_string(), Menu::Preset(menu_item)),
+                });
         })
         .build();
 
@@ -241,6 +246,9 @@ fn main() -> kas::app::Result<()> {
                         Menu::Quit => {
                             cx.exit();
                         }
+                        Menu::Preset(preset) => {
+                            self.pblade.polyhedron = preset.polyhedron();
+                        }
                         _ => {}
                     }
                 }
@@ -262,7 +270,12 @@ fn main() -> kas::app::Result<()> {
 
             }
         }
-    };
+    }
+    .on_message(|_, polyblade, key| polyblade.pblade.handle(key))
+    .on_configure(|cx, _| {
+        cx.disable_nav_focus(true);
+        cx.enable_alt_bypass(true);
+    });
 
     app.add(Window::new(ui, "Polyblade"));
     app.run()

@@ -283,7 +283,7 @@ impl CustomWindow for PipeWindow {
     type Param = Polyblade;
 
     fn invoke(&mut self, pass: PassId, rect: Rect, pblade: Self::Param) {
-        println!("render pass: {:?}", pass.pass());
+        /*         println!("render pass: {:?}", pass.pass()); */
         let palette: Vec<wgpu::Color> = vec![
             RGB::new(72, 132, 90),
             RGB::new(163, 186, 112),
