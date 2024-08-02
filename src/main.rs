@@ -190,29 +190,30 @@ fn main() -> kas::app::Result<()> {
         .menu("&App", |menu| {
             menu.entry("&Quit", Menu::Quit);
         })
-        .menu("&Preset", |menu| {
-            let _: menu::SubMenuBuilder<AppData> =
-                PresetMenu::iter().fold(menu, |menu, menu_item| match menu_item {
-                    PresetMenu::Prism(_) => menu.submenu("Prism", |mut menu| {
+        .menu("&Preset", |mut menu| {
+            for preset in PresetMenu::iter() {
+                match preset {
+                    PresetMenu::Prism(_) => menu.push_submenu("Prism", |mut menu| {
                         for i in 3..=8 {
                             let entry = PresetMenu::Prism(i);
                             menu.push_entry(entry.to_string(), entry);
                         }
                     }),
-                    PresetMenu::AntiPrism(_) => menu.submenu("AntiPrism", |mut menu| {
+                    PresetMenu::AntiPrism(_) => menu.push_submenu("AntiPrism", |mut menu| {
                         for i in 2..=8 {
                             let entry = PresetMenu::AntiPrism(i);
                             menu.push_entry(entry.to_string(), entry);
                         }
                     }),
-                    PresetMenu::Pyramid(_) => menu.submenu("Pyramid", |mut menu| {
+                    PresetMenu::Pyramid(_) => menu.push_submenu("Pyramid", |mut menu| {
                         for i in 3..=8 {
                             let entry = PresetMenu::Pyramid(i);
                             menu.push_entry(entry.to_string(), entry);
                         }
                     }),
-                    _ => menu.entry(menu_item.to_string(), Menu::Preset(menu_item)),
-                });
+                    _ => menu.push_entry(preset.to_string(), Menu::Preset(preset)),
+                };
+            }
         })
         .build();
 
