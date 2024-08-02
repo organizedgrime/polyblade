@@ -184,6 +184,7 @@ fn main() -> kas::app::Result<()> {
     enum Menu {
         Quit,
         Preset(PresetMenu),
+        Conway(ConwayMenu),
     }
 
     let menubar = menu::MenuBar::<AppData, Right>::builder()
@@ -192,20 +193,21 @@ fn main() -> kas::app::Result<()> {
         })
         .menu("&Preset", |mut menu| {
             for preset in PresetMenu::iter() {
+                use PresetMenu::*;
                 match preset {
-                    PresetMenu::Prism(_) => menu.push_submenu("Prism", |mut menu| {
+                    Prism(_) => menu.push_submenu("Prism", |mut menu| {
                         for i in 3..=8 {
                             let entry = PresetMenu::Prism(i);
                             menu.push_entry(entry.to_string(), entry);
                         }
                     }),
-                    PresetMenu::AntiPrism(_) => menu.push_submenu("AntiPrism", |mut menu| {
+                    AntiPrism(_) => menu.push_submenu("AntiPrism", |mut menu| {
                         for i in 2..=8 {
                             let entry = PresetMenu::AntiPrism(i);
                             menu.push_entry(entry.to_string(), entry);
                         }
                     }),
-                    PresetMenu::Pyramid(_) => menu.push_submenu("Pyramid", |mut menu| {
+                    Pyramid(_) => menu.push_submenu("Pyramid", |mut menu| {
                         for i in 3..=8 {
                             let entry = PresetMenu::Pyramid(i);
                             menu.push_entry(entry.to_string(), entry);
@@ -213,6 +215,11 @@ fn main() -> kas::app::Result<()> {
                     }),
                     _ => menu.push_entry(preset.to_string(), Menu::Preset(preset)),
                 };
+            }
+        })
+        .menu("&Conway", |mut menu| {
+            for conway in ConwayMenu::iter() {
+                menu.push_entry(conway.to_string(), Menu::Conway(conway));
             }
         })
         .build();
@@ -250,6 +257,9 @@ fn main() -> kas::app::Result<()> {
                         Menu::Preset(preset) => {
                             self.pblade.polyhedron = preset.polyhedron();
                         }
+                        Menu::Conway(conway) => {
+                            self.pblade.polyhedron.transactions.push(Transaction::Conway(conway));
+                        }
                         _ => {}
                     }
                 }
@@ -261,7 +271,7 @@ fn main() -> kas::app::Result<()> {
                         self.state.now = Local::now();
                         self.pblade.polyhedron.update();
                         // Locked at 60fps
-                        let ns = (1_000_000_000 - (self.state.now.time().nanosecond() % 1_000_000_000)) / 60;
+                        let ns = (1_000_000_000 - (self.state.now.time().nanosecond() % 1_000_000_000)) / 120;
                         cx.request_timer(self.id(), 0, Duration::new(0, ns));
                         cx.redraw(self);
                         Used

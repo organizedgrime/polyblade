@@ -11,7 +11,7 @@ pub enum Message {
     SizeChanged(f32),
     FovChanged(f32),
     Preset(PresetMenu),
-    Conway(ConwayMessage),
+    Conway(ConwayMenu),
 }
 
 #[derive(Debug, Clone, EnumIter)]
@@ -83,7 +83,7 @@ trait HotKey: Display {
 }
 
 #[derive(Debug, Clone, EnumIter, Display)]
-pub enum ConwayMessage {
+pub enum ConwayMenu {
     // 1
     Dual,
     // 2
@@ -106,4 +106,4 @@ pub enum ConwayMessage {
 }
 
 impl HotKey for PresetMenu {}
-impl HotKey for ConwayMessage {}
+impl HotKey for ConwayMenu {}

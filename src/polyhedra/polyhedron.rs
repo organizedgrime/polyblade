@@ -1,5 +1,7 @@
+use std::time::{Duration, Instant};
+
 use super::*;
-use crate::Vertex;
+use crate::{ConwayMenu, Vertex};
 use ultraviolet::{Slerp, Vec3, Vec4};
 
 const TICK_SPEED: f32 = 1000.0;
@@ -68,7 +70,7 @@ impl PolyGraph {
     pub fn update(&mut self) {
         self.center();
         self.resize();
-        // self.process_transactions();
+        self.process_transactions();
         self.apply_spring_forces();
     }
 
@@ -167,7 +169,7 @@ impl PolyGraph {
         vertices
     }
 
-    /* pub fn process_transactions(&mut self) {
+    pub fn process_transactions(&mut self) {
         if let Some(transaction) = self.transactions.first().cloned() {
             use Transaction::*;
             match transaction {
@@ -176,7 +178,7 @@ impl PolyGraph {
                         if self.positions.contains_key(&e.v())
                             && self.positions.contains_key(&e.u())
                         {
-                            acc && self.positions[&e.v()].distance(self.positions[&e.u()]) < 0.08
+                            acc && (self.positions[&e.v()] - self.positions[&e.u()]).mag() < 0.08
                         } else {
                             acc
                         }
@@ -198,7 +200,7 @@ impl PolyGraph {
                 }
                 Conway(conway) => {
                     self.transactions.remove(0);
-                    use ConwayMessage::*;
+                    use ConwayMenu::*;
                     use Transaction::*;
                     let new_transactions = match conway {
                         Dual => {
@@ -261,5 +263,5 @@ impl PolyGraph {
                 None => {}
             }
         }
-    } */
+    }
 }
