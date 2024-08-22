@@ -4,7 +4,6 @@ use self::polyhedron::Descriptor;
 use crate::polyhedra::PolyGraph;
 use crate::wgpu;
 use camera::Camera;
-use glam::{vec3, vec4, Mat4};
 use iced::mouse;
 use iced::time::Duration;
 use iced::widget::shader;
@@ -13,6 +12,7 @@ use pipeline::Pipeline;
 pub use pipeline::*;
 use std::f32::consts::PI;
 use std::time::Instant;
+use ultraviolet::{Mat4, Vec4};
 
 #[derive(Clone)]
 pub struct Scene {
@@ -32,7 +32,7 @@ impl Scene {
             start: Instant::now(),
             size: 1.0,
             clear_face: None,
-            rotation: Mat4::IDENTITY,
+            rotation: Mat4::default(),
             polyhedron: PolyGraph::icosahedron(),
             camera: Camera::default(),
             palette: vec![
@@ -51,11 +51,11 @@ impl Scene {
     pub fn update(&mut self, schlegel: bool, time: Duration) {
         self.polyhedron.update();
         let time = time.as_secs_f32();
-        self.rotation = Mat4::IDENTITY;
+        self.rotation = Mat4::default();
         if !schlegel {
-            self.rotation *= Mat4::from_rotation_x(time / PI);
-            self.rotation *= Mat4::from_rotation_y(time / PI * 1.1);
-            self.rotation *= Mat4::from_scale(vec3(self.size, self.size, self.size));
+            self.rotation = Mat4::from_scale(self.size)
+                * Mat4::from_rotation_x(time / PI)
+                * Mat4::from_rotation_y(time / PI * 1.1);
         }
     }
 }
@@ -72,7 +72,6 @@ impl<Message> shader::Program<Message> for Scene {
     ) -> Self::Primitive {
         Primitive::new(
             &self.polyhedron,
-            self.clear_face,
             &self.palette,
             &self.rotation,
             &self.camera,
@@ -89,20 +88,14 @@ pub struct Primitive {
 }
 
 impl Primitive {
-    pub fn new(
-        pg: &PolyGraph,
-        clear_face: Option<usize>,
-        palette: &[Color],
-        rotation: &Mat4,
-        camera: &Camera,
-    ) -> Self {
+    pub fn new(pg: &PolyGraph, palette: &[Color], rotation: &Mat4, camera: &Camera) -> Self {
         Self {
             descriptor: pg.into(),
             camera: *camera,
             rotation: *rotation,
             data: PolyData {
                 positions: pg.positions(),
-                vertices: pg.vertices(clear_face, palette),
+                vertices: pg.vertices(palette),
                 raw: rotation.into(),
             },
         }
@@ -128,7 +121,7 @@ impl shader::Primitive for Primitive {
         // update uniform buffer
         let model_mat = self.rotation;
         let view_projection_mat = self.camera.build_view_proj_mat(bounds);
-        let normal_mat = (model_mat.inverse()).transpose();
+        let normal_mat = (model_mat.inversed()).transposed();
         let uniforms = AllUniforms {
             model: ModelUniforms {
                 model_mat,
@@ -137,7 +130,7 @@ impl shader::Primitive for Primitive {
             },
             frag: FragUniforms {
                 light_position: self.camera.position(),
-                eye_position: self.camera.position() + vec4(2.0, 2.0, 1.0, 0.0),
+                eye_position: self.camera.position() + Vec4::new(2.0, 2.0, 1.0, 0.0),
             },
             light: LightUniforms::new(
                 Color::new(1.0, 1.0, 1.0, 1.0),

@@ -1,11 +1,11 @@
-use glam::{mat4, vec3, vec4};
 use iced::Rectangle;
+use ultraviolet::{Mat4, Vec3, Vec4};
 
 #[derive(Copy, Debug, Clone)]
 pub struct Camera {
-    pub eye: glam::Vec3,
-    pub target: glam::Vec3,
-    pub up: glam::Vec3,
+    pub eye: Vec3,
+    pub target: Vec3,
+    pub up: Vec3,
     pub fov_y: f32,
     pub near: f32,
     pub far: f32,
@@ -14,9 +14,9 @@ pub struct Camera {
 impl Default for Camera {
     fn default() -> Self {
         Self {
-            eye: vec3(0.0, 2.0, 3.0),
-            target: glam::Vec3::ZERO,
-            up: glam::Vec3::Y,
+            eye: Vec3::new(0.0, 2.0, 3.0),
+            target: Vec3::zero(),
+            up: Vec3::unit_y(),
             fov_y: 1.0,
             near: 0.1,
             far: 100.0,
@@ -24,25 +24,33 @@ impl Default for Camera {
     }
 }
 
-pub const OPENGL_TO_WGPU_MATRIX: glam::Mat4 = mat4(
-    vec4(1.0, 0.0, 0.0, 0.0),
-    vec4(0.0, 1.0, 0.0, 0.0),
-    vec4(0.0, 0.0, 0.5, 0.0),
-    vec4(0.0, 0.0, 0.5, 1.0),
+pub const OPENGL_TO_WGPU_MATRIX: Mat4 = Mat4::new(
+    Vec4::new(1.0, 0.0, 0.0, 0.0),
+    Vec4::new(0.0, 1.0, 0.0, 0.0),
+    Vec4::new(0.0, 0.0, 0.5, 0.0),
+    Vec4::new(0.0, 0.0, 0.5, 1.0),
 );
 
 impl Camera {
-    pub fn build_view_proj_mat(&self, bounds: Rectangle) -> glam::Mat4 {
+    pub fn build_view_proj_mat(&self, bounds: Rectangle) -> Mat4 {
         //TODO looks distorted without padding; base on surface texture size instead?
         let aspect_ratio = bounds.width / (bounds.height + 150.0);
 
-        let view = glam::Mat4::look_at_rh(self.eye, self.target, self.up);
-        let proj = glam::Mat4::perspective_rh(self.fov_y, aspect_ratio, self.near, self.far);
+        let view = Mat4::look_at(self.eye, self.target, self.up);
+        let h = f32::cos(0.5 * self.fov_y) / f32::sin(0.5 * self.fov_y);
+        let w = h / aspect_ratio;
+        let r = self.far / (self.near - self.far);
+        let proj = Mat4::new(
+            Vec4::new(w, 0.0, 0.0, 0.0),
+            Vec4::new(0.0, h, 0.0, 0.0),
+            Vec4::new(0.0, 0.0, r, -1.0),
+            Vec4::new(0.0, 0.0, r * self.near, 0.0),
+        );
 
         OPENGL_TO_WGPU_MATRIX * proj * view
     }
 
-    pub fn position(&self) -> glam::Vec4 {
-        glam::Vec4::from((self.eye, 0.0))
+    pub fn position(&self) -> Vec4 {
+        Vec4::from(self.eye)
     }
 }

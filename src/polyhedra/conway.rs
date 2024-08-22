@@ -1,6 +1,6 @@
 use std::collections::{HashMap, VecDeque};
 
-use glam::Vec3;
+use ultraviolet::Vec3;
 
 pub use super::*;
 use std::collections::HashSet;
@@ -131,7 +131,7 @@ impl PolyGraph {
         }
         for cycle in cycles {
             let v = self.insert();
-            let mut vpos = Vec3::ZERO;
+            let mut vpos = Vec3::zero();
 
             for &u in cycle.iter() {
                 self.connect((v, u));

@@ -1,8 +1,8 @@
 use super::*;
 use crate::{scene::Vertex, ConwayMessage};
-use glam::{vec3, vec4, Vec3};
 use iced::Color;
 use std::time::{Duration, Instant};
+use ultraviolet::{Lerp, Vec3, Vec4};
 
 const TICK_SPEED: f32 = 800.0;
 
@@ -21,7 +21,7 @@ impl PolyGraph {
                         if contracting_edges.contains(&e) {
                             let v_position = self.positions[v];
                             let u_position = self.positions[u];
-                            let l = v_position.distance(u_position);
+                            let l = (v_position - u_position).mag();
                             let f = (self.edge_length / TICK_SPEED * 4.5) / l;
                             *self.positions.get_mut(v).unwrap() = v_position.lerp(u_position, f);
                             *self.positions.get_mut(u).unwrap() = u_position.lerp(v_position, f);
@@ -32,7 +32,7 @@ impl PolyGraph {
                         let l = l_diam * (d / diam);
                         let k = 1.0 / d;
                         let diff = self.positions[v] - self.positions[u];
-                        let dist = diff.length();
+                        let dist = diff.mag();
                         let distention = l - dist;
                         let restorative_force = k / 2.0 * distention;
                         let f = diff * restorative_force / TICK_SPEED;
@@ -54,7 +54,7 @@ impl PolyGraph {
 
     fn center(&mut self) {
         let shift =
-            self.positions.values().fold(Vec3::ZERO, |a, &b| a + b) / self.vertices.len() as f32;
+            self.positions.values().fold(Vec3::zero(), |a, &b| a + b) / self.vertices.len() as f32;
 
         for (_, v) in self.positions.iter_mut() {
             *v -= shift;
@@ -62,11 +62,7 @@ impl PolyGraph {
     }
 
     fn resize(&mut self) {
-        let mean_length = self
-            .positions
-            .values()
-            .map(|p| p.length())
-            .fold(0.0, f32::max);
+        let mean_length = self.positions.values().map(|p| p.mag()).fold(0.0, f32::max);
         let distance = mean_length - 1.0;
         self.edge_length -= distance / TICK_SPEED;
     }
@@ -88,7 +84,7 @@ impl PolyGraph {
     pub fn face_centroid(&self, face_index: usize) -> Vec3 {
         // All vertices associated with this face
         let vertices: Vec<_> = self.face_positions(face_index);
-        vertices.iter().fold(Vec3::ZERO, |a, &b| a + b) / vertices.len() as f32
+        vertices.iter().fold(Vec3::zero(), |a, &b| a + b) / vertices.len() as f32
     }
 
     fn face_triangle_positions(&self, face_index: usize) -> Vec<Vec3> {
@@ -118,9 +114,9 @@ impl PolyGraph {
         let positions = self.face_positions(face_index);
         let n = positions.len();
         match n {
-            3 => vec![vec3(1.0, 1.0, 1.0); 3],
-            4 => vec![vec3(1.0, 0.0, 1.0); 6],
-            _ => vec![vec3(0.0, 1.0, 0.0); n * 3],
+            3 => vec![Vec3::new(1.0, 1.0, 1.0); 3],
+            4 => vec![Vec3::new(1.0, 0.0, 1.0); 6],
+            _ => vec![Vec3::new(0.0, 1.0, 0.0); n * 3],
         }
     }
 
@@ -130,9 +126,9 @@ impl PolyGraph {
         })
     }
 
-    pub fn vertices(&self, clear_face: Option<usize>, palette: &[Color]) -> Vec<Vertex> {
+    pub fn vertices(&self, palette: &[Color]) -> Vec<Vertex> {
         let mut vertices = Vec::new();
-        let barycentric = [Vec3::X, Vec3::Y, Vec3::Z];
+        let barycentric = [Vec3::unit_x(), Vec3::unit_y(), Vec3::unit_z()];
 
         let mut polygon_sizes: Vec<usize> = self.cycles.iter().fold(Vec::new(), |mut acc, f| {
             if !acc.contains(&f.len()) {
@@ -151,22 +147,17 @@ impl PolyGraph {
 
             let n = polygon_sizes.get(color_index).unwrap();
             let color = palette[n % palette.len()];
-            let color = vec4(
-                color.r,
-                color.g,
-                color.b,
-                if Some(i) == clear_face { 0.0 } else { 1.0 },
-            );
+            let color = Vec4::new(color.r, color.g, color.b, 1.0);
             let sides = self.face_sides_buffer(i);
             let positions = self.face_triangle_positions(i);
 
             for j in 0..positions.len() {
-                let p = positions[j].normalize();
+                let p = positions[j].normalized();
                 let b = barycentric[j % barycentric.len()];
                 vertices.push(Vertex {
-                    normal: vec4(p.x, p.y, p.z, 0.0),
-                    sides: vec4(sides[j].x, sides[j].y, sides[j].z, 0.0),
-                    barycentric: vec4(b.x, b.y, b.z, 0.0),
+                    normal: Vec4::new(p.x, p.y, p.z, 0.0),
+                    sides: Vec4::new(sides[j].x, sides[j].y, sides[j].z, 0.0),
+                    barycentric: Vec4::new(b.x, b.y, b.z, 0.0),
                     color,
                 });
             }
@@ -184,7 +175,7 @@ impl PolyGraph {
                         if self.positions.contains_key(&e.v())
                             && self.positions.contains_key(&e.u())
                         {
-                            acc && self.positions[&e.v()].distance(self.positions[&e.u()]) < 0.08
+                            acc && (self.positions[&e.v()] - self.positions[&e.u()]).mag() < 0.08
                         } else {
                             acc
                         }

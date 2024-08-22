@@ -4,7 +4,7 @@ mod buffer;
 mod uniforms;
 mod vertex;
 
-use glam::Vec3;
+use ultraviolet::Vec3;
 pub use uniforms::{AllUniforms, FragUniforms, LightUniforms, ModelUniforms};
 
 use buffer::Buffer;
