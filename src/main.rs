@@ -4,8 +4,8 @@ mod polyhedra;
 mod scene;
 
 use std::time::Duration;
+use ultraviolet::Vec3;
 
-use glam::vec3;
 use iced::widget::slider;
 use iced_aw::menu::Item;
 use iced_aw::menu_bar;
@@ -91,7 +91,7 @@ impl Application for Polyblade {
                     self.scene.camera.fov_y = std::f32::consts::PI * 0.962;
                 } else {
                     self.scene.camera.fov_y = 1.0;
-                    self.scene.camera.eye = vec3(0.0, 2.0, 3.0);
+                    self.scene.camera.eye = Vec3::new(0.0, 2.0, 3.0);
                     self.scene.clear_face = None;
                 }
             }

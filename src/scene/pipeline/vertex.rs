@@ -1,5 +1,5 @@
 use crate::wgpu;
-use glam::{Vec3, Vec4};
+use ultraviolet::{Vec3, Vec4};
 
 use super::polyhedron;
 

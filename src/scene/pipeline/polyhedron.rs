@@ -1,14 +1,14 @@
 use crate::{polyhedra::PolyGraph, wgpu};
 
-use glam::{Mat3, Mat4, Quat, Vec3};
+use ultraviolet::{Mat3, Mat4, Vec3};
 
 use super::Vertex;
 
 #[derive(Clone, Copy, bytemuck::Pod, bytemuck::Zeroable, Debug)]
 #[repr(C)]
 pub struct Raw {
-    pub(crate) transformation: glam::Mat4,
-    normal: glam::Mat3,
+    pub(crate) transformation: Mat4,
+    normal: Mat3,
     _padding: [f32; 3],
 }
 
@@ -38,7 +38,7 @@ impl From<&Mat4> for Raw {
     fn from(value: &Mat4) -> Self {
         Self {
             transformation: *value,
-            normal: Mat3::from_quat(Quat::IDENTITY),
+            normal: Mat3::identity(),
             _padding: [0.0; 3],
         }
     }

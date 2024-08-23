@@ -4,7 +4,6 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-glam = { version = "0.25", features = ["bytemuck"] }
 bytemuck = { version = "1.0", features = [
 	"derive",
 	"zeroable_maybe_uninit",
@@ -21,9 +20,11 @@ iced_aw = { version = "0.8.0", default-features = false, features = [
 ] }
 image = { version = "0.24.9" }
 rand = "^0.8.5"
+# Enum iteration
 strum = "0.26.2"
 strum_macros = "0.26.2"
-
+# Vector and Matrix math
+ultraviolet = { version = "0.9.2", features = ["bytemuck"] }
 
 [dev-dependencies]
 test-case = { version = "^3.3.0" }
