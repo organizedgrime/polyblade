@@ -1,6 +1,6 @@
 use super::*;
 use crate::{scene::Vertex, ConwayMessage};
-use iced::Color;
+use iced::{widget::shader::wgpu, Color};
 use std::time::{Duration, Instant};
 use ultraviolet::{Lerp, Vec3, Vec4};
 
@@ -126,7 +126,7 @@ impl PolyGraph {
         })
     }
 
-    pub fn vertices(&self, palette: &[Color]) -> Vec<Vertex> {
+    pub fn vertices(&self, palette: &[wgpu::Color]) -> Vec<Vertex> {
         let mut vertices = Vec::new();
         let barycentric = [Vec3::unit_x(), Vec3::unit_y(), Vec3::unit_z()];
 
@@ -147,7 +147,7 @@ impl PolyGraph {
 
             let n = polygon_sizes.get(color_index).unwrap();
             let color = palette[n % palette.len()];
-            let color = Vec4::new(color.r, color.g, color.b, 1.0);
+            let color = Vec4::new(color.r as f32, color.g as f32, color.b as f32, 1.0);
             let sides = self.face_sides_buffer(i);
             let positions = self.face_triangle_positions(i);
 

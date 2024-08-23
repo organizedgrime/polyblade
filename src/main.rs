@@ -1,3 +1,4 @@
+mod color;
 mod menu;
 mod message;
 mod polyhedra;
@@ -6,6 +7,7 @@ mod scene;
 use std::time::Duration;
 use ultraviolet::Vec3;
 
+use color::*;
 use iced::widget::slider;
 use iced_aw::menu::Item;
 use iced_aw::menu_bar;

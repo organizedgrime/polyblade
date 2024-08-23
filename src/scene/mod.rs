@@ -2,7 +2,7 @@ mod camera;
 mod pipeline;
 use self::polyhedron::Descriptor;
 use crate::polyhedra::PolyGraph;
-use crate::wgpu;
+use crate::{wgpu, RGB};
 use camera::Camera;
 use iced::mouse;
 use iced::time::Duration;
@@ -23,7 +23,7 @@ pub struct Scene {
     pub polyhedron: PolyGraph,
     pub camera: Camera,
     pub light_color: Color,
-    pub palette: Vec<Color>,
+    pub palette: Vec<wgpu::Color>,
 }
 
 impl Scene {
@@ -36,14 +36,17 @@ impl Scene {
             polyhedron: PolyGraph::icosahedron(),
             camera: Camera::default(),
             palette: vec![
-                Color::from_rgb8(72, 132, 90),
-                Color::from_rgb8(163, 186, 112),
-                Color::from_rgb8(51, 81, 69),
-                Color::from_rgb8(254, 240, 134),
-                Color::from_rgb8(95, 155, 252),
-                Color::from_rgb8(244, 164, 231),
-                Color::from_rgb8(170, 137, 190),
-            ],
+                RGB::new(72, 132, 90),
+                RGB::new(163, 186, 112),
+                RGB::new(51, 81, 69),
+                RGB::new(254, 240, 134),
+                RGB::new(95, 155, 252),
+                RGB::new(244, 164, 231),
+                RGB::new(170, 137, 190),
+            ]
+            .into_iter()
+            .map(Into::<wgpu::Color>::into)
+            .collect(),
             light_color: Color::WHITE,
         }
     }
@@ -88,7 +91,7 @@ pub struct Primitive {
 }
 
 impl Primitive {
-    pub fn new(pg: &PolyGraph, palette: &[Color], rotation: &Mat4, camera: &Camera) -> Self {
+    pub fn new(pg: &PolyGraph, palette: &[wgpu::Color], rotation: &Mat4, camera: &Camera) -> Self {
         Self {
             descriptor: pg.into(),
             camera: *camera,
