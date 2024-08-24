@@ -32,7 +32,7 @@ pub struct AppState {
 impl Default for AppState {
     fn default() -> Self {
         Self {
-            polyhedron: Default::default(),
+            polyhedron: PolyGraph::dodecahedron(),
             palette: vec![
                 RGB::new(72, 132, 90),
                 RGB::new(163, 186, 112),
@@ -76,35 +76,40 @@ impl AppState {
 }
 
 impl<Message> shader::Program<Message> for Polyblade {
-    type State = AppState;
+    type State = ();
     type Primitive = Polygon;
 
     fn update(
         &self,
-        state: &mut Self::State,
+        _state: &mut Self::State,
         event: shader::Event,
         _bounds: Rectangle,
         _cursor: mouse::Cursor,
-        _shell: &mut Shell<'_, Message>,
+        shell: &mut Shell<'_, Message>,
     ) -> (event::Status, Option<Message>) {
         match event {
-            shader::Event::Mouse(_) => {}
+            /* shader::Event::Mouse(_) => {}
             shader::Event::Touch(_) => {}
-            shader::Event::Keyboard(_) => {}
+            shader::Event::Keyboard(_) => {} */
             shader::Event::RedrawRequested(time) => {
                 println!("redraw requested11");
-                state.update(time);
+                (event::Status::Captured, None)
             }
+            _ => (event::Status::Ignored, None),
         }
-        (event::Status::Ignored, None)
     }
 
     fn draw(
         &self,
-        state: &Self::State,
+        _state: &Self::State,
         _cursor: mouse::Cursor,
         _bounds: Rectangle,
     ) -> Self::Primitive {
-        Polygon::new(&state.polyhedron, &state.palette, &state.transform)
+        println!("{}", self.state.rotating);
+        Polygon::new(
+            &self.state.polyhedron,
+            &self.state.palette,
+            &self.state.transform,
+        )
     }
 }
