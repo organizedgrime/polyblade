@@ -21,7 +21,7 @@ pub struct Pipeline {
     positions: Buffer,
     vertices: Buffer,
     polyhedron: Buffer,
-    model_uniform: wgpu::Buffer,
+    model_uniform: Buffer,
     frag_uniform: wgpu::Buffer,
     light_uniform: wgpu::Buffer,
     uniform_group: wgpu::BindGroup,
@@ -60,13 +60,12 @@ impl Pipeline {
             std::mem::size_of::<Mat4>() as u64,
             wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::COPY_DST,
         );
-
-        let model_uniform = device.create_buffer(&wgpu::BufferDescriptor {
-            label: Some("Uniforms buf"),
-            size: std::mem::size_of::<ModelUniforms>() as u64,
-            usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
-            mapped_at_creation: false,
-        });
+        let model_uniform = Buffer::new(
+            device,
+            "Uniforms Buffer",
+            std::mem::size_of::<ModelUniforms>() as u64,
+            wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
+        );
         let frag_uniform = device.create_buffer(&wgpu::BufferDescriptor {
             label: Some("FragUniforms buf"),
             size: std::mem::size_of::<FragUniforms>() as u64,
@@ -139,7 +138,7 @@ impl Pipeline {
             entries: &[
                 wgpu::BindGroupEntry {
                     binding: 0,
-                    resource: model_uniform.as_entire_binding(),
+                    resource: model_uniform.raw.as_entire_binding(),
                 },
                 wgpu::BindGroupEntry {
                     binding: 1,
@@ -330,7 +329,11 @@ impl Pipeline {
         queue.write_buffer(&self.polyhedron.raw, 0, bytemuck::bytes_of(&data.transform));
 
         // Write uniforms
-        queue.write_buffer(&self.model_uniform, 0, bytemuck::bytes_of(&uniforms.model));
+        queue.write_buffer(
+            &self.model_uniform.raw,
+            0,
+            bytemuck::bytes_of(&uniforms.model),
+        );
         queue.write_buffer(&self.frag_uniform, 0, bytemuck::bytes_of(&uniforms.frag));
         queue.write_buffer(&self.light_uniform, 0, bytemuck::bytes_of(&uniforms.light));
     }
