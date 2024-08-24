@@ -39,31 +39,31 @@ impl Pipeline {
         target_size: Size<u32>,
         descriptor: &Descriptor,
     ) -> Self {
-        let positions = Buffer::new(
+        let positions = Buffer::new::<Vec3>(
             device,
             "Polyhedron position buffer",
-            descriptor.position_buffer_size,
+            descriptor.vertex_triangle_count,
             wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::COPY_DST,
         );
 
-        let vertices = Buffer::new(
+        let vertices = Buffer::new::<Vertex>(
             device,
             "Polyhedron vertex buffer",
-            descriptor.vertex_buffer_size,
+            descriptor.vertex_triangle_count,
             wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::COPY_DST,
         );
 
         // Polyhedron instance data
-        let polyhedron = Buffer::new(
+        let polyhedron = Buffer::new::<Mat4>(
             device,
             "Polyhedron instance buffer",
-            std::mem::size_of::<Mat4>() as u64,
+            1,
             wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::COPY_DST,
         );
-        let model_uniform = Buffer::new(
+        let model_uniform = Buffer::new::<ModelUniforms>(
             device,
             "Uniforms Buffer",
-            std::mem::size_of::<ModelUniforms>() as u64,
+            1,
             wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
         );
         let frag_uniform = device.create_buffer(&wgpu::BufferDescriptor {

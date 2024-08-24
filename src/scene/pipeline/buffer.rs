@@ -8,16 +8,16 @@ pub struct Buffer {
 }
 
 impl Buffer {
-    pub fn new(
+    pub fn new<T>(
         device: &wgpu::Device,
         label: &'static str,
-        size: u64,
+        count: u64,
         usage: wgpu::BufferUsages,
     ) -> Self {
         Self {
             raw: device.create_buffer(&wgpu::BufferDescriptor {
                 label: Some(label),
-                size,
+                size: std::mem::size_of::<T>() as u64 * count,
                 usage,
                 mapped_at_creation: false,
             }),
