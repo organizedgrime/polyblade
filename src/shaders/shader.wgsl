@@ -1,7 +1,6 @@
 struct Uniforms {
     model_mat: mat4x4<f32>,
     view_project_mat: mat4x4<f32>,
-    normal_mat: mat4x4<f32>,
 };
 @binding(0) @group(0) var<uniform> uniforms : Uniforms;
 
@@ -25,7 +24,7 @@ fn vs_main(
     var output: Output;
     let m_position: vec4<f32> = uniforms.model_mat * position;
     output.v_position = m_position;
-    output.v_normal = uniforms.normal_mat * normal;
+    output.v_normal = normal;
     output.v_barycentric = barycentric;
     output.v_sides = sides;
     output.v_color = color;

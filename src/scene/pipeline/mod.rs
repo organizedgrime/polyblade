@@ -4,7 +4,7 @@ mod buffer;
 mod uniforms;
 mod vertex;
 
-use ultraviolet::Vec3;
+use ultraviolet::{Mat4, Vec3};
 pub use uniforms::{AllUniforms, FragUniforms, LightUniforms, ModelUniforms};
 
 use buffer::Buffer;
@@ -57,7 +57,7 @@ impl Pipeline {
         let polyhedron = Buffer::new(
             device,
             "Polyhedron instance buffer",
-            std::mem::size_of::<polyhedron::Raw>() as u64,
+            std::mem::size_of::<Mat4>() as u64,
             wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::COPY_DST,
         );
 
@@ -180,8 +180,31 @@ impl Pipeline {
                             0 => Float32x3,
                         ],
                     },
-                    Vertex::desc(),
-                    polyhedron::Raw::desc(),
+                    wgpu::VertexBufferLayout {
+                        array_stride: std::mem::size_of::<Vertex>() as wgpu::BufferAddress,
+                        step_mode: wgpu::VertexStepMode::Vertex,
+                        attributes: &wgpu::vertex_attr_array![
+                            // normal
+                            1 => Float32x4,
+                            // barycentric
+                            2 => Float32x4,
+                            // sides
+                            3 => Float32x4,
+                            // color
+                            4 => Float32x4,
+                        ],
+                    },
+                    wgpu::VertexBufferLayout {
+                        array_stride: std::mem::size_of::<Mat4>() as wgpu::BufferAddress,
+                        step_mode: wgpu::VertexStepMode::Instance,
+                        attributes: &wgpu::vertex_attr_array![
+                            //cube transformation matrix
+                            5 => Float32x4,
+                            6 => Float32x4,
+                            7 => Float32x4,
+                            8 => Float32x4,
+                        ],
+                    },
                 ],
             },
             primitive: wgpu::PrimitiveState::default(),
@@ -304,7 +327,7 @@ impl Pipeline {
             bytemuck::cast_slice(&data.positions),
         );
         // Write rotation data
-        queue.write_buffer(&self.polyhedron.raw, 0, bytemuck::bytes_of(&data.raw));
+        queue.write_buffer(&self.polyhedron.raw, 0, bytemuck::bytes_of(&data.transform));
 
         // Write uniforms
         queue.write_buffer(&self.model_uniform, 0, bytemuck::bytes_of(&uniforms.model));

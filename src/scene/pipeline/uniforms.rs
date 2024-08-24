@@ -12,7 +12,6 @@ pub struct AllUniforms {
 pub struct ModelUniforms {
     pub(crate) model_mat: Mat4,
     pub(crate) view_projection_mat: Mat4,
-    pub(crate) normal_mat: Mat4,
 }
 
 #[derive(Copy, Default, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]
