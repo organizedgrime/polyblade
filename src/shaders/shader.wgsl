@@ -1,7 +1,6 @@
 struct Uniforms {
     model_mat: mat4x4<f32>,
     view_project_mat: mat4x4<f32>,
-    normal_mat: mat4x4<f32>,
 };
 @binding(0) @group(0) var<uniform> uniforms : Uniforms;
 

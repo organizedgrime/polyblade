@@ -18,15 +18,15 @@ pub struct Polygon {
 }
 
 impl Polygon {
-    pub fn new(pg: &PolyGraph, palette: &[wgpu::Color], rotation: &Mat4, camera: &Camera) -> Self {
+    pub fn new(pg: &PolyGraph, palette: &[wgpu::Color], transform: &Mat4, camera: &Camera) -> Self {
         Self {
             descriptor: pg.into(),
             camera: *camera,
-            rotation: *rotation,
+            rotation: *transform,
             data: PolyData {
                 positions: pg.positions(),
                 vertices: pg.vertices(palette),
-                raw: rotation.into(),
+                transform: *transform,
             },
         }
     }

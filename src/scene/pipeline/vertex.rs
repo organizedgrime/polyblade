@@ -1,6 +1,4 @@
-use ultraviolet::{Vec3, Vec4};
-
-use super::polyhedron::Transforms;
+use ultraviolet::{Mat4, Vec3, Vec4};
 
 #[derive(Debug, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
 #[repr(C)]
@@ -15,5 +13,5 @@ pub struct Vertex {
 pub struct PolyData {
     pub positions: Vec<Vec3>,
     pub vertices: Vec<Vertex>,
-    pub raw: Transforms,
+    pub transform: Mat4,
 }

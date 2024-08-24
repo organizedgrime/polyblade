@@ -4,7 +4,7 @@ mod buffer;
 mod uniforms;
 mod vertex;
 
-use ultraviolet::Vec3;
+use ultraviolet::{Mat4, Vec3};
 pub use uniforms::{AllUniforms, FragUniforms, LightUniforms, ModelUniforms};
 
 use buffer::Buffer;
@@ -14,7 +14,7 @@ use crate::wgpu;
 
 use iced::{widget::shader::wgpu::RenderPassDepthStencilAttachment, Rectangle, Size};
 
-use self::polyhedron::{Descriptor, Transforms};
+use self::polyhedron::Descriptor;
 
 pub struct Pipeline {
     pipeline: wgpu::RenderPipeline,
@@ -57,7 +57,7 @@ impl Pipeline {
         let polyhedron = Buffer::new(
             device,
             "Polyhedron instance buffer",
-            std::mem::size_of::<polyhedron::Transforms>() as u64,
+            std::mem::size_of::<Mat4>() as u64,
             wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::COPY_DST,
         );
 
@@ -195,7 +195,7 @@ impl Pipeline {
                         ],
                     },
                     wgpu::VertexBufferLayout {
-                        array_stride: std::mem::size_of::<Transforms>() as wgpu::BufferAddress,
+                        array_stride: std::mem::size_of::<Mat4>() as wgpu::BufferAddress,
                         step_mode: wgpu::VertexStepMode::Instance,
                         attributes: &wgpu::vertex_attr_array![
                             //cube transformation matrix
@@ -327,7 +327,7 @@ impl Pipeline {
             bytemuck::cast_slice(&data.positions),
         );
         // Write rotation data
-        queue.write_buffer(&self.polyhedron.raw, 0, bytemuck::bytes_of(&data.raw));
+        queue.write_buffer(&self.polyhedron.raw, 0, bytemuck::bytes_of(&data.transform));
 
         // Write uniforms
         queue.write_buffer(&self.model_uniform, 0, bytemuck::bytes_of(&uniforms.model));
