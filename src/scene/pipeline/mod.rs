@@ -194,7 +194,22 @@ impl Pipeline {
                             4 => Float32x4,
                         ],
                     },
-                    Transforms::desc(),
+                    wgpu::VertexBufferLayout {
+                        array_stride: std::mem::size_of::<Transforms>() as wgpu::BufferAddress,
+                        step_mode: wgpu::VertexStepMode::Instance,
+                        attributes: &wgpu::vertex_attr_array![
+                            //cube transformation matrix
+                            5 => Float32x4,
+                            6 => Float32x4,
+                            7 => Float32x4,
+                            8 => Float32x4,
+                            //normal rotation matrix
+                            9 => Float32x4,
+                            10 => Float32x4,
+                            11 => Float32x4,
+                            12 => Float32x4,
+                        ],
+                    },
                 ],
             },
             primitive: wgpu::PrimitiveState::default(),
