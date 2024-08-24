@@ -1,6 +1,6 @@
 use super::*;
 use crate::{scene::Vertex, ConwayMessage};
-use iced::{widget::shader::wgpu, Color};
+use iced::{widget::shader::wgpu};
 use std::time::{Duration, Instant};
 use ultraviolet::{Lerp, Vec3, Vec4};
 

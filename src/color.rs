@@ -3,6 +3,7 @@ use std::cmp::{max, min};
 use iced::widget::shader::wgpu;
 
 #[derive(Debug, Default)]
+#[allow(clippy::upper_case_acronyms)]
 pub struct HSL {
     /// Hue in 0-360 degree
     pub h: f32,
@@ -13,6 +14,7 @@ pub struct HSL {
 }
 
 #[derive(Debug, Default)]
+#[allow(clippy::upper_case_acronyms)]
 pub struct RGB {
     pub r: u8,
     pub g: u8,
@@ -32,10 +34,10 @@ impl HSL {
     }
 }
 
-impl Into<HSL> for RGB {
-    fn into(self) -> HSL {
+impl From<RGB> for HSL {
+    fn from(val: RGB) -> Self {
         let mut h: f32;
-        let (r, g, b) = (self.r, self.g, self.b);
+        let (r, g, b) = (val.r, val.g, val.b);
 
         let max = max(max(r, g), b);
         let min = min(min(r, g), b);
@@ -89,17 +91,17 @@ impl Into<HSL> for RGB {
     }
 }
 
-impl Into<RGB> for HSL {
-    fn into(self) -> RGB {
-        if self.s == 0.0 {
+impl From<HSL> for RGB {
+    fn from(val: HSL) -> Self {
+        if val.s == 0.0 {
             // Achromatic, i.e., grey.
-            let l = percent_to_byte(self.l);
+            let l = percent_to_byte(val.l);
             return RGB::new(l, l, l);
         }
 
-        let h = self.h / 360.0; // treat this as 0..1 instead of degrees
-        let s = self.s;
-        let l = self.l;
+        let h = val.h / 360.0; // treat this as 0..1 instead of degrees
+        let s = val.s;
+        let l = val.l;
 
         let q = if l < 0.5 {
             l * (1.0 + s)
@@ -116,19 +118,19 @@ impl Into<RGB> for HSL {
     }
 }
 
-impl Into<wgpu::Color> for RGB {
-    fn into(self) -> wgpu::Color {
+impl From<RGB> for wgpu::Color {
+    fn from(val: RGB) -> Self {
         wgpu::Color {
-            r: self.r as f64 / 255.0,
-            g: self.g as f64 / 255.0,
-            b: self.b as f64 / 255.0,
+            r: val.r as f64 / 255.0,
+            g: val.g as f64 / 255.0,
+            b: val.b as f64 / 255.0,
             a: 1.0,
         }
     }
 }
-impl Into<wgpu::Color> for HSL {
-    fn into(self) -> wgpu::Color {
-        Into::<RGB>::into(self).into()
+impl From<HSL> for wgpu::Color {
+    fn from(val: HSL) -> Self {
+        Into::<RGB>::into(val).into()
     }
 }
 
