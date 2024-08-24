@@ -4,6 +4,8 @@ mod message;
 mod polyhedra;
 mod scene;
 
+use iced::mouse;
+use iced::Rectangle;
 use ultraviolet::Vec3;
 
 use color::*;
@@ -14,6 +16,7 @@ use menu::*;
 use message::*;
 use polyhedra::Transaction;
 use scene::AppState;
+use scene::Polygon;
 
 use iced::widget::{checkbox, shader::wgpu, text};
 use iced::{
@@ -199,5 +202,44 @@ impl Application for Polyblade {
 
     fn theme(&self) -> Self::Theme {
         Theme::KanagawaLotus
+    }
+}
+
+impl<Message> shader::Program<Message> for Polyblade {
+    type State = ();
+    type Primitive = Polygon;
+
+    /* fn update(
+        &self,
+        _state: &mut Self::State,
+        event: shader::Event,
+        _bounds: Rectangle,
+        _cursor: mouse::Cursor,
+        shell: &mut Shell<'_, Message>,
+    ) -> (event::Status, Option<Message>) {
+        match event {
+            /* shader::Event::Mouse(_) => {}
+            shader::Event::Touch(_) => {}
+            shader::Event::Keyboard(_) => {} */
+            shader::Event::RedrawRequested(time) => {
+                println!("redraw requested11");
+                (event::Status::Captured, None)
+            }
+            _ => (event::Status::Ignored, None),
+        }
+    } */
+
+    fn draw(
+        &self,
+        _state: &Self::State,
+        _cursor: mouse::Cursor,
+        _bounds: Rectangle,
+    ) -> Self::Primitive {
+        Polygon::new(
+            &self.state.polyhedron,
+            &self.state.palette,
+            &self.state.transform,
+            &self.state.camera,
+        )
     }
 }
