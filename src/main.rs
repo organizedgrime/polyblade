@@ -4,7 +4,6 @@ mod message;
 mod polyhedra;
 mod scene;
 
-use std::time::Duration;
 use ultraviolet::Vec3;
 
 use color::*;
@@ -14,7 +13,7 @@ use iced_aw::menu_bar;
 use menu::*;
 use message::*;
 use polyhedra::Transaction;
-use scene::Scene;
+use scene::{AppState, Scene};
 
 use iced::widget::{checkbox, shader::wgpu, text};
 use iced::{
@@ -29,11 +28,8 @@ fn main() -> iced::Result {
 }
 
 struct Polyblade {
-    start: Instant,
     scene: Scene,
-    rotating: bool,
-    schlegel: bool,
-    rotation_duration: Duration,
+    state: AppState,
 }
 
 impl Application for Polyblade {
@@ -49,11 +45,8 @@ impl Application for Polyblade {
     fn new(_flags: Self::Flags) -> (Self, Command<Self::Message>) {
         (
             Self {
-                start: Instant::now(),
-                scene: Scene::new(),
-                rotating: true,
-                schlegel: false,
-                rotation_duration: Duration::from_secs(0),
+                scene: Scene::default(),
+                state: AppState::default(),
             },
             Command::batch(vec![
                 font::load(iced_aw::BOOTSTRAP_FONT_BYTES).map(Message::FontLoaded),
@@ -67,45 +60,40 @@ impl Application for Polyblade {
         match message {
             FontLoaded(_) => {}
             Tick(time) => {
-                if self.schlegel {
-                    self.scene.camera.eye = self.scene.polyhedron.face_centroid(0) * 1.1;
-                    self.scene.clear_face = Some(0);
+                if self.state.schlegel {
+                    self.state.camera.eye = self.state.polyhedron.face_centroid(0) * 1.1;
                 }
 
-                if self.rotating {
-                    self.scene
-                        .update(self.schlegel, time.duration_since(self.start));
-                } else {
-                    self.scene.update(self.schlegel, self.rotation_duration);
-                }
+                self.state.update(time);
             }
             Rotate(rotating) => {
-                self.rotating = rotating;
+                self.state.rotating = rotating;
                 if !rotating {
-                    self.rotation_duration = Instant::now().duration_since(self.start);
+                    self.state.rotation_duration = Instant::now().duration_since(self.state.start);
                 } else {
-                    self.start = Instant::now().checked_sub(self.rotation_duration).unwrap();
+                    self.state.start = Instant::now()
+                        .checked_sub(self.state.rotation_duration)
+                        .unwrap();
                 }
             }
             Schlegel(schlegel) => {
-                self.schlegel = schlegel;
+                self.state.schlegel = schlegel;
                 if schlegel {
-                    self.scene.camera.fov_y = std::f32::consts::PI * 0.962;
+                    self.state.camera.fov_y = std::f32::consts::PI * 0.962;
                 } else {
-                    self.scene.camera.fov_y = 1.0;
-                    self.scene.camera.eye = Vec3::new(0.0, 2.0, 3.0);
-                    self.scene.clear_face = None;
+                    self.state.camera.fov_y = 1.0;
+                    self.state.camera.eye = Vec3::new(0.0, 2.0, 3.0);
                 }
             }
             SizeChanged(size) => {
-                self.scene.size = size;
+                self.state.scale = size;
             }
             FovChanged(fov) => {
-                self.scene.camera.fov_y = fov;
+                self.state.camera.fov_y = fov;
             }
-            Preset(preset) => self.scene.polyhedron.change_shape(preset),
+            Preset(preset) => self.state.polyhedron.change_shape(preset),
             Conway(conway) => {
-                self.scene
+                self.state
                     .polyhedron
                     .transactions
                     .push(Transaction::Conway(conway));
@@ -123,17 +111,8 @@ impl Application for Polyblade {
                         bar("Conway"),
                         ConwayMessage::menu()
                     )),
-                    /*
-                    .style(|theme: &Theme| {
-                        menu::Appearance {
-                            bar_background: Color::WHITE.into(),
-                            menu_background: Color::WHITE.into(),
-                            ..theme.appearance(&MenuBarStyle::Default)
-                        }
-                    }),
-                    */
-                    checkbox("Rotating", self.rotating).on_toggle(Message::Rotate),
-                    checkbox("Schlegel Diagram", self.schlegel).on_toggle(Message::Schlegel)
+                    checkbox("Rotating", self.state.rotating).on_toggle(Message::Rotate),
+                    checkbox("Schlegel Diagram", self.state.schlegel).on_toggle(Message::Schlegel)
                 ]
                 .spacing(10.0),
                 // Actual shader of the program
@@ -148,25 +127,25 @@ impl Application for Polyblade {
                             text("Vertices:"),
                         ],
                         column![
-                            text(&self.scene.polyhedron.name),
-                            text(self.scene.polyhedron.cycles.len().to_string()),
-                            text(self.scene.polyhedron.edges.len().to_string(),),
-                            text(self.scene.polyhedron.vertices.len().to_string())
+                            text(&self.state.polyhedron.name),
+                            text(self.state.polyhedron.cycles.len().to_string()),
+                            text(self.state.polyhedron.edges.len().to_string(),),
+                            text(self.state.polyhedron.vertices.len().to_string())
                         ]
                     ]
                     .spacing(20)
                 ),
                 row![
                     text("Size: "),
-                    text(self.scene.size.to_string()),
-                    slider(1.0..=10.0, self.scene.size, Message::SizeChanged).step(0.1)
+                    text(self.state.scale.to_string()),
+                    slider(1.0..=10.0, self.state.scale, Message::SizeChanged).step(0.1)
                 ],
                 row![
                     text("FOV: "),
-                    text(self.scene.camera.fov_y.to_string()),
+                    text(self.state.camera.fov_y.to_string()),
                     slider(
                         0.0..=(std::f32::consts::PI),
-                        self.scene.camera.fov_y,
+                        self.state.camera.fov_y,
                         Message::FovChanged
                     )
                     .step(0.1)

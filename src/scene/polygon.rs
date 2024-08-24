@@ -12,16 +12,14 @@ use super::{AllUniforms, FragUniforms, LightUniforms, ModelUniforms, PolyData};
 #[derive(Debug)]
 pub struct Polygon {
     descriptor: Descriptor,
-    camera: Camera,
     transform: Mat4,
     data: PolyData,
 }
 
 impl Polygon {
-    pub fn new(pg: &PolyGraph, palette: &[wgpu::Color], transform: &Mat4, camera: &Camera) -> Self {
+    pub fn new(pg: &PolyGraph, palette: &[wgpu::Color], transform: &Mat4) -> Self {
         Self {
             descriptor: pg.into(),
-            camera: *camera,
             transform: *transform,
             data: PolyData {
                 positions: pg.positions(),
@@ -50,15 +48,16 @@ impl shader::Primitive for Polygon {
 
         // update uniform buffer
         let model_mat = self.transform;
-        let view_projection_mat = self.camera.build_view_proj_mat(bounds);
+        let camera = Camera::default();
+        let view_projection_mat = camera.build_view_proj_mat(bounds);
         let uniforms = AllUniforms {
             model: ModelUniforms {
                 model_mat,
                 view_projection_mat,
             },
             frag: FragUniforms {
-                light_position: self.camera.position(),
-                eye_position: self.camera.position() + Vec4::new(2.0, 2.0, 1.0, 0.0),
+                light_position: camera.position(),
+                eye_position: camera.position() + Vec4::new(2.0, 2.0, 1.0, 0.0),
             },
             light: LightUniforms::new(
                 Color::new(1.0, 1.0, 1.0, 1.0),
