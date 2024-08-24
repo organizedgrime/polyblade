@@ -2,7 +2,7 @@ mod camera;
 mod pipeline;
 mod polygon;
 use crate::polyhedra::PolyGraph;
-use crate::{wgpu, RGB};
+use crate::{wgpu, Polyblade, RGB};
 use camera::Camera;
 use iced::advanced::graphics::core::event;
 use iced::advanced::Shell;
@@ -75,10 +75,7 @@ impl AppState {
     }
 }
 
-#[derive(Clone, Default)]
-pub struct Scene {}
-
-impl<Message> shader::Program<Message> for Scene {
+impl<Message> shader::Program<Message> for Polyblade {
     type State = AppState;
     type Primitive = Polygon;
 

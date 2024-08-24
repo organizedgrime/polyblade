@@ -13,7 +13,7 @@ use iced_aw::menu_bar;
 use menu::*;
 use message::*;
 use polyhedra::Transaction;
-use scene::{AppState, Scene};
+use scene::AppState;
 
 use iced::widget::{checkbox, shader::wgpu, text};
 use iced::{
@@ -28,7 +28,6 @@ fn main() -> iced::Result {
 }
 
 struct Polyblade {
-    scene: Scene,
     state: AppState,
 }
 
@@ -45,7 +44,6 @@ impl Application for Polyblade {
     fn new(_flags: Self::Flags) -> (Self, Command<Self::Message>) {
         (
             Self {
-                scene: Scene::default(),
                 state: AppState::default(),
             },
             Command::batch(vec![
@@ -116,7 +114,7 @@ impl Application for Polyblade {
                 ]
                 .spacing(10.0),
                 // Actual shader of the program
-                shader(&self.scene).width(Length::Fill).height(Length::Fill),
+                shader(self).width(Length::Fill).height(Length::Fill),
                 // Info
                 container(
                     row![
