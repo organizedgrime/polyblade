@@ -6,13 +6,12 @@ use super::Vertex;
 
 #[derive(Clone, Copy, bytemuck::Pod, bytemuck::Zeroable, Debug)]
 #[repr(C)]
-pub struct Raw {
+pub struct Transforms {
     pub(crate) transformation: Mat4,
-    normal: Mat3,
-    _padding: [f32; 3],
+    normal: Mat4,
 }
 
-impl Raw {
+impl Transforms {
     const ATTRIBS: [wgpu::VertexAttribute; 7] = wgpu::vertex_attr_array![
         //cube transformation matrix
         5 => Float32x4,
@@ -34,12 +33,11 @@ impl Raw {
     }
 }
 
-impl From<&Mat4> for Raw {
+impl From<&Mat4> for Transforms {
     fn from(value: &Mat4) -> Self {
         Self {
             transformation: *value,
-            normal: Mat3::identity(),
-            _padding: [0.0; 3],
+            normal: Mat4::identity(),
         }
     }
 }

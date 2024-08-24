@@ -1,7 +1,7 @@
 use crate::wgpu;
 use ultraviolet::{Vec3, Vec4};
 
-use super::polyhedron;
+use super::polyhedron::{self, Transforms};
 
 #[derive(Debug, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
 #[repr(C)]
@@ -37,5 +37,5 @@ impl Vertex {
 pub struct PolyData {
     pub positions: Vec<Vec3>,
     pub vertices: Vec<Vertex>,
-    pub raw: polyhedron::Raw,
+    pub raw: Transforms,
 }

@@ -14,7 +14,7 @@ use crate::wgpu;
 
 use iced::{widget::shader::wgpu::RenderPassDepthStencilAttachment, Rectangle, Size};
 
-use self::polyhedron::Descriptor;
+use self::polyhedron::{Descriptor, Transforms};
 
 pub struct Pipeline {
     pipeline: wgpu::RenderPipeline,
@@ -57,7 +57,7 @@ impl Pipeline {
         let polyhedron = Buffer::new(
             device,
             "Polyhedron instance buffer",
-            std::mem::size_of::<polyhedron::Raw>() as u64,
+            std::mem::size_of::<polyhedron::Transforms>() as u64,
             wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::COPY_DST,
         );
 
@@ -181,7 +181,7 @@ impl Pipeline {
                         ],
                     },
                     Vertex::desc(),
-                    polyhedron::Raw::desc(),
+                    Transforms::desc(),
                 ],
             },
             primitive: wgpu::PrimitiveState::default(),

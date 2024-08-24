@@ -1,6 +1,6 @@
 mod camera;
 mod pipeline;
-mod primitive;
+mod polygon;
 use crate::polyhedra::PolyGraph;
 use crate::{wgpu, RGB};
 use camera::Camera;
@@ -14,6 +14,8 @@ use polyhedron::Descriptor;
 use std::f32::consts::PI;
 use std::time::Instant;
 use ultraviolet::{Mat4, Vec4};
+
+use polygon::Polygon;
 
 #[derive(Clone)]
 pub struct Scene {
@@ -66,7 +68,7 @@ impl Scene {
 
 impl<Message> shader::Program<Message> for Scene {
     type State = ();
-    type Primitive = Primitive;
+    type Primitive = Polygon;
 
     fn draw(
         &self,
@@ -74,7 +76,7 @@ impl<Message> shader::Program<Message> for Scene {
         _cursor: mouse::Cursor,
         _bounds: Rectangle,
     ) -> Self::Primitive {
-        Primitive::new(
+        Polygon::new(
             &self.polyhedron,
             &self.palette,
             &self.rotation,

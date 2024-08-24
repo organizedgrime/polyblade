@@ -10,14 +10,14 @@ use super::polyhedron::Descriptor;
 use super::{AllUniforms, FragUniforms, LightUniforms, ModelUniforms, PolyData};
 
 #[derive(Debug)]
-pub struct Primitive {
+pub struct Polygon {
     descriptor: Descriptor,
     camera: Camera,
     rotation: Mat4,
     data: PolyData,
 }
 
-impl Primitive {
+impl Polygon {
     pub fn new(pg: &PolyGraph, palette: &[wgpu::Color], rotation: &Mat4, camera: &Camera) -> Self {
         Self {
             descriptor: pg.into(),
@@ -32,7 +32,7 @@ impl Primitive {
     }
 }
 
-impl shader::Primitive for Primitive {
+impl shader::Primitive for Polygon {
     fn prepare(
         &self,
         format: wgpu::TextureFormat,
