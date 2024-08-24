@@ -180,7 +180,20 @@ impl Pipeline {
                             0 => Float32x3,
                         ],
                     },
-                    Vertex::desc(),
+                    wgpu::VertexBufferLayout {
+                        array_stride: std::mem::size_of::<Vertex>() as wgpu::BufferAddress,
+                        step_mode: wgpu::VertexStepMode::Vertex,
+                        attributes: &wgpu::vertex_attr_array![
+                            // normal
+                            1 => Float32x4,
+                            // barycentric
+                            2 => Float32x4,
+                            // sides
+                            3 => Float32x4,
+                            // color
+                            4 => Float32x4,
+                        ],
+                    },
                     Transforms::desc(),
                 ],
             },
