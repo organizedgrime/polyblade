@@ -25,7 +25,7 @@ fn vs_main(
     var output: Output;
     let m_position: vec4<f32> = uniforms.model_mat * position;
     output.v_position = m_position;
-    output.v_normal = uniforms.normal_mat * normal;
+    output.v_normal = normal;
     output.v_barycentric = barycentric;
     output.v_sides = sides;
     output.v_color = color;

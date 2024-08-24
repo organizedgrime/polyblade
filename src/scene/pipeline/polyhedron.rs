@@ -8,14 +8,12 @@ use super::Vertex;
 #[repr(C)]
 pub struct Transforms {
     pub(crate) transformation: Mat4,
-    normal: Mat4,
 }
 
 impl From<&Mat4> for Transforms {
     fn from(value: &Mat4) -> Self {
         Self {
             transformation: *value,
-            normal: Mat4::identity(),
         }
     }
 }
