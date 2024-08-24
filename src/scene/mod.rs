@@ -4,8 +4,6 @@ mod polygon;
 use crate::polyhedra::PolyGraph;
 use crate::{wgpu, Polyblade, RGB};
 use camera::Camera;
-use iced::advanced::graphics::core::event;
-use iced::advanced::Shell;
 use iced::mouse;
 use iced::time::Duration;
 use iced::widget::shader;
@@ -79,7 +77,7 @@ impl<Message> shader::Program<Message> for Polyblade {
     type State = ();
     type Primitive = Polygon;
 
-    fn update(
+    /* fn update(
         &self,
         _state: &mut Self::State,
         event: shader::Event,
@@ -97,7 +95,7 @@ impl<Message> shader::Program<Message> for Polyblade {
             }
             _ => (event::Status::Ignored, None),
         }
-    }
+    } */
 
     fn draw(
         &self,
@@ -105,11 +103,11 @@ impl<Message> shader::Program<Message> for Polyblade {
         _cursor: mouse::Cursor,
         _bounds: Rectangle,
     ) -> Self::Primitive {
-        println!("{}", self.state.rotating);
         Polygon::new(
             &self.state.polyhedron,
             &self.state.palette,
             &self.state.transform,
+            &self.state.camera,
         )
     }
 }

@@ -4,10 +4,6 @@ mod message;
 mod polyhedra;
 mod scene;
 
-use iced::advanced::{mouse, Shell};
-use iced::widget::button::update;
-use iced::widget::shader::Program;
-use iced::Rectangle;
 use ultraviolet::Vec3;
 
 use color::*;
@@ -65,20 +61,8 @@ impl Application for Polyblade {
                 if self.state.schlegel {
                     self.state.camera.eye = self.state.polyhedron.face_centroid(0) * 1.1;
                 }
+
                 self.state.update(time);
-
-                println!("tick tocked1");
-
-                /* shader::Program::<Polyblade>::update(
-                    &self,
-                    &mut (*self.state),
-                    shader::Event::RedrawRequested(time),
-                    Rectangle::default(),
-                    mouse::Cursor::Unavailable,
-                    &mut Shell::new(&mut vec![]),
-                ); */
-
-                //self.state.update(time);
             }
             Rotate(rotating) => {
                 self.state.rotating = rotating;

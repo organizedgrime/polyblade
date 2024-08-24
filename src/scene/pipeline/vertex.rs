@@ -1,3 +1,4 @@
+use crate::scene::camera::Camera;
 use ultraviolet::{Mat4, Vec3, Vec4};
 
 #[derive(Debug, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
@@ -14,4 +15,5 @@ pub struct PolyData {
     pub positions: Vec<Vec3>,
     pub vertices: Vec<Vertex>,
     pub transform: Mat4,
+    pub camera: Camera,
 }
