@@ -1,7 +1,7 @@
 use crate::wgpu;
 use ultraviolet::{Vec3, Vec4};
 
-use super::polyhedron::{self, Transforms};
+use super::polyhedron::Transforms;
 
 #[derive(Debug, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
 #[repr(C)]

@@ -7,13 +7,11 @@ use camera::Camera;
 use iced::mouse;
 use iced::time::Duration;
 use iced::widget::shader;
-use iced::{Color, Rectangle, Size};
-use pipeline::Pipeline;
+use iced::{Color, Rectangle};
 pub use pipeline::*;
-use polyhedron::Descriptor;
 use std::f32::consts::PI;
 use std::time::Instant;
-use ultraviolet::{Mat4, Vec4};
+use ultraviolet::Mat4;
 
 use polygon::Polygon;
 

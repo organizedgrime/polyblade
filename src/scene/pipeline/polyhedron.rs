@@ -1,6 +1,6 @@
 use crate::{polyhedra::PolyGraph, wgpu};
 
-use ultraviolet::{Mat3, Mat4, Vec3};
+use ultraviolet::{Mat4, Vec3};
 
 use super::Vertex;
 
