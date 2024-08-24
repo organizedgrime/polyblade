@@ -13,7 +13,7 @@ use super::{AllUniforms, FragUniforms, LightUniforms, ModelUniforms, PolyData};
 pub struct Polygon {
     descriptor: Descriptor,
     camera: Camera,
-    rotation: Mat4,
+    transform: Mat4,
     data: PolyData,
 }
 
@@ -22,7 +22,7 @@ impl Polygon {
         Self {
             descriptor: pg.into(),
             camera: *camera,
-            rotation: *transform,
+            transform: *transform,
             data: PolyData {
                 positions: pg.positions(),
                 vertices: pg.vertices(palette),
@@ -49,14 +49,12 @@ impl shader::Primitive for Polygon {
         let pipeline = storage.get_mut::<Pipeline>().unwrap();
 
         // update uniform buffer
-        let model_mat = self.rotation;
+        let model_mat = self.transform;
         let view_projection_mat = self.camera.build_view_proj_mat(bounds);
-        let normal_mat = (model_mat.inversed()).transposed();
         let uniforms = AllUniforms {
             model: ModelUniforms {
                 model_mat,
                 view_projection_mat,
-                normal_mat,
             },
             frag: FragUniforms {
                 light_position: self.camera.position(),

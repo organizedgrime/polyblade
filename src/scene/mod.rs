@@ -20,7 +20,7 @@ pub struct Scene {
     pub start: Instant,
     pub size: f32,
     pub clear_face: Option<usize>,
-    pub rotation: Mat4,
+    pub transform: Mat4,
     pub polyhedron: PolyGraph,
     pub camera: Camera,
     pub light_color: Color,
@@ -33,7 +33,7 @@ impl Scene {
             start: Instant::now(),
             size: 1.0,
             clear_face: None,
-            rotation: Mat4::default(),
+            transform: Mat4::default(),
             polyhedron: PolyGraph::icosahedron(),
             camera: Camera::default(),
             palette: vec![
@@ -55,9 +55,9 @@ impl Scene {
     pub fn update(&mut self, schlegel: bool, time: Duration) {
         self.polyhedron.update();
         let time = time.as_secs_f32();
-        self.rotation = Mat4::default();
+        self.transform = Mat4::default();
         if !schlegel {
-            self.rotation = Mat4::from_scale(self.size)
+            self.transform = Mat4::from_scale(self.size)
                 * Mat4::from_rotation_x(time / PI)
                 * Mat4::from_rotation_y(time / PI * 1.1);
         }
@@ -77,7 +77,7 @@ impl<Message> shader::Program<Message> for Scene {
         Polygon::new(
             &self.polyhedron,
             &self.palette,
-            &self.rotation,
+            &self.transform,
             &self.camera,
         )
     }

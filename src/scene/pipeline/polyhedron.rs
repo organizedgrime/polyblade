@@ -1,22 +1,6 @@
-use crate::polyhedra::PolyGraph;
-
-use ultraviolet::Vec3;
-
 use super::Vertex;
-
-/* #[derive(Clone, Copy, bytemuck::Pod, bytemuck::Zeroable, Debug)]
-#[repr(C)]
-pub struct Transforms {
-    pub(crate) transformation: Mat4,
-}
-
-impl From<&Mat4> for Transforms {
-    fn from(value: &Mat4) -> Self {
-        Self {
-            transformation: *value,
-        }
-    }
-} */
+use crate::polyhedra::PolyGraph;
+use ultraviolet::Vec3;
 
 #[derive(Debug)]
 pub struct Descriptor {
