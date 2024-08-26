@@ -1,5 +1,3 @@
-pub mod polyhedron;
-
 mod buffer;
 mod uniforms;
 mod vertex;
@@ -14,8 +12,6 @@ use crate::wgpu;
 
 use iced::{widget::shader::wgpu::RenderPassDepthStencilAttachment, Rectangle, Size};
 
-use self::polyhedron::Descriptor;
-
 pub struct Pipeline {
     pipeline: wgpu::RenderPipeline,
     positions: Buffer,
@@ -28,6 +24,7 @@ pub struct Pipeline {
     depth_texture_size: Size<u32>,
     depth_view: wgpu::TextureView,
     depth_pipeline: DepthPipeline,
+    /// Actual number of vertices when drawn using Triangles
     vertex_count: u64,
     initialized: bool,
 }
@@ -37,21 +34,21 @@ impl Pipeline {
         device: &wgpu::Device,
         format: wgpu::TextureFormat,
         target_size: Size<u32>,
-        descriptor: &Descriptor,
+        vertex_count: u64,
     ) -> Self {
         let vertex_usage = wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::COPY_DST;
         let uniform_usage = wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST;
         let positions = Buffer::new::<Vec3>(
             device,
             "Polyhedron position buffer",
-            descriptor.vertex_triangle_count,
+            vertex_count,
             vertex_usage,
         );
 
         let vertices = Buffer::new::<Vertex>(
             device,
             "Polyhedron vertex buffer",
-            descriptor.vertex_triangle_count,
+            vertex_count,
             vertex_usage,
         );
 
@@ -246,7 +243,7 @@ impl Pipeline {
             depth_view,
             depth_texture_size: target_size,
             depth_pipeline,
-            vertex_count: descriptor.vertex_triangle_count,
+            vertex_count,
             initialized: false,
         }
     }
@@ -283,7 +280,7 @@ impl Pipeline {
         device: &wgpu::Device,
         queue: &wgpu::Queue,
         target_size: Size<u32>,
-        descriptor: &Descriptor,
+        vertex_count: u64,
         uniforms: &AllUniforms,
         data: &PolyData,
     ) {
@@ -291,20 +288,18 @@ impl Pipeline {
         self.update_depth_texture(device, target_size);
 
         // Resize buffer if required
-        if self.positions.count != descriptor.vertex_triangle_count || !self.initialized {
+        if self.positions.count != vertex_count || !self.initialized {
             println!(
                 "positions count: {:?}; vtc: {}",
-                self.positions.count, descriptor.vertex_triangle_count
+                self.positions.count, vertex_count
             );
             println!("resizing buffer!");
             // Resize the position buffer
-            self.positions
-                .resize(device, descriptor.vertex_triangle_count);
+            self.positions.resize(device, vertex_count);
             // Resize the vertex buffer
-            self.vertices
-                .resize(device, descriptor.vertex_triangle_count);
+            self.vertices.resize(device, vertex_count);
             // Count that
-            self.vertex_count = descriptor.vertex_triangle_count;
+            self.vertex_count = vertex_count;
             // Write the vertices
             queue.write_buffer(&self.vertices.raw, 0, bytemuck::cast_slice(&data.vertices));
             // Initialized

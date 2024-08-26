@@ -6,19 +6,18 @@ use ultraviolet::{Mat4, Vec4};
 
 use super::camera::Camera;
 use super::pipeline::Pipeline;
-use super::polyhedron::Descriptor;
 use super::{AllUniforms, FragUniforms, LightUniforms, ModelUniforms, PolyData};
 
 #[derive(Debug)]
 pub struct Polygon {
-    descriptor: Descriptor,
+    vertex_count: u64,
     data: PolyData,
 }
 
 impl Polygon {
     pub fn new(pg: &PolyGraph, palette: &[wgpu::Color], transform: &Mat4, camera: &Camera) -> Self {
         Self {
-            descriptor: pg.into(),
+            vertex_count: pg.vertex_count(),
             data: PolyData {
                 positions: pg.positions(),
                 vertices: pg.vertices(palette),
@@ -41,7 +40,12 @@ impl shader::Primitive for Polygon {
         storage: &mut shader::Storage,
     ) {
         if !storage.has::<Pipeline>() {
-            storage.store(Pipeline::new(device, format, target_size, &self.descriptor));
+            storage.store(Pipeline::new(
+                device,
+                format,
+                target_size,
+                self.vertex_count,
+            ));
         }
         let pipeline = storage.get_mut::<Pipeline>().unwrap();
 
@@ -68,7 +72,7 @@ impl shader::Primitive for Polygon {
             device,
             queue,
             target_size,
-            &self.descriptor,
+            self.vertex_count,
             &uniforms,
             &self.data,
         );

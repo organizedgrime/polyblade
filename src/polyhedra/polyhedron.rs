@@ -87,6 +87,24 @@ impl PolyGraph {
         vertices.iter().fold(Vec3::zero(), |a, &b| a + b) / vertices.len() as f32
     }
 
+    pub fn vertex_count(&self) -> u64 {
+        let mut vertex_triangle_count = 0;
+        for face in self.cycles.iter() {
+            match face.len() {
+                3 => {
+                    vertex_triangle_count += 3;
+                }
+                4 => {
+                    vertex_triangle_count += 6;
+                }
+                _ => {
+                    vertex_triangle_count += 3 * face.len() as u64;
+                }
+            }
+        }
+        vertex_triangle_count
+    }
+
     fn face_triangle_positions(&self, face_index: usize) -> Vec<Vec3> {
         let positions = self.face_positions(face_index);
         let n = positions.len();
