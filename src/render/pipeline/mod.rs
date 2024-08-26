@@ -31,6 +31,8 @@ pub struct Pipeline {
     initialized: bool,
 }
 
+unsafe impl Send for Pipeline {}
+
 impl Pipeline {
     pub fn new(
         device: &wgpu::Device,
