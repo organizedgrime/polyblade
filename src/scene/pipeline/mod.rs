@@ -22,8 +22,8 @@ pub struct Pipeline {
     vertices: Buffer,
     polyhedron: Buffer,
     model_uniform: Buffer,
-    frag_uniform: wgpu::Buffer,
-    light_uniform: wgpu::Buffer,
+    frag_uniform: Buffer,
+    light_uniform: Buffer,
     uniform_group: wgpu::BindGroup,
     depth_texture_size: Size<u32>,
     depth_view: wgpu::TextureView,
@@ -66,18 +66,19 @@ impl Pipeline {
             1,
             wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
         );
-        let frag_uniform = device.create_buffer(&wgpu::BufferDescriptor {
-            label: Some("FragUniforms buf"),
-            size: std::mem::size_of::<FragUniforms>() as u64,
-            usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
-            mapped_at_creation: false,
-        });
-        let light_uniform = device.create_buffer(&wgpu::BufferDescriptor {
-            label: Some("LightUniforms buf"),
-            size: std::mem::size_of::<LightUniforms>() as u64,
-            usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
-            mapped_at_creation: false,
-        });
+
+        let frag_uniform = Buffer::new::<FragUniforms>(
+            device,
+            "FragUniforms Buffer",
+            1,
+            wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
+        );
+        let light_uniform = Buffer::new::<LightUniforms>(
+            device,
+            "LightUniforms Buffer",
+            1,
+            wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
+        );
         //depth buffer
         let depth_texture = device.create_texture(&wgpu::TextureDescriptor {
             label: Some("Depth texture"),
@@ -142,11 +143,11 @@ impl Pipeline {
                 },
                 wgpu::BindGroupEntry {
                     binding: 1,
-                    resource: frag_uniform.as_entire_binding(),
+                    resource: frag_uniform.raw.as_entire_binding(),
                 },
                 wgpu::BindGroupEntry {
                     binding: 2,
-                    resource: light_uniform.as_entire_binding(),
+                    resource: light_uniform.raw.as_entire_binding(),
                 },
             ],
         });
@@ -306,6 +307,7 @@ impl Pipeline {
 
         // Resize buffer if required
         if self.positions.raw.size() != descriptor.position_buffer_size || !self.initialized {
+            println!("resizing buffer!");
             // Resize the position buffer
             self.positions
                 .resize(device, descriptor.position_buffer_size);
@@ -334,8 +336,16 @@ impl Pipeline {
             0,
             bytemuck::bytes_of(&uniforms.model),
         );
-        queue.write_buffer(&self.frag_uniform, 0, bytemuck::bytes_of(&uniforms.frag));
-        queue.write_buffer(&self.light_uniform, 0, bytemuck::bytes_of(&uniforms.light));
+        queue.write_buffer(
+            &self.frag_uniform.raw,
+            0,
+            bytemuck::bytes_of(&uniforms.frag),
+        );
+        queue.write_buffer(
+            &self.light_uniform.raw,
+            0,
+            bytemuck::bytes_of(&uniforms.light),
+        );
     }
 
     pub fn render(
