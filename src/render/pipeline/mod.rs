@@ -1,15 +1,15 @@
 mod buffer;
-mod depth;
 mod polygon;
+mod texture;
 mod uniforms;
 mod vertex;
 
 use buffer::Buffer;
-use depth::DepthPipeline;
 use iced::{
     widget::shader::wgpu::{self, RenderPassDepthStencilAttachment},
     Rectangle, Size,
 };
+use texture::Texture;
 use ultraviolet::Vec3;
 
 pub use polygon::*;
@@ -26,10 +26,9 @@ pub struct Pipeline {
     model: Buffer,
     frag: Buffer,
     light: Buffer,
+    /// Depth Texture
+    depth_texture: Texture,
     uniform_group: wgpu::BindGroup,
-    depth_texture_size: Size<u32>,
-    depth_view: wgpu::TextureView,
-    depth_pipeline: depth::DepthPipeline,
     /// Actual number of vertices when drawn using Triangles
     vertex_count: u64,
     initialized: bool,
@@ -64,22 +63,7 @@ impl Pipeline {
         let frag = Buffer::new::<FragUniforms>(device, "FragUniforms", 1, uniform_usage);
         let light = Buffer::new::<LightUniforms>(device, "LightUniforms", 1, uniform_usage);
         //depth buffer
-        let depth_texture = device.create_texture(&wgpu::TextureDescriptor {
-            label: Some("Depth texture"),
-            size: wgpu::Extent3d {
-                width: target_size.width,
-                height: target_size.height,
-                depth_or_array_layers: 1,
-            },
-            mip_level_count: 1,
-            sample_count: 1,
-            dimension: wgpu::TextureDimension::D2,
-            format: wgpu::TextureFormat::Depth32Float,
-            usage: wgpu::TextureUsages::RENDER_ATTACHMENT | wgpu::TextureUsages::TEXTURE_BINDING,
-            view_formats: &[],
-        });
-        let depth_view = depth_texture.create_view(&wgpu::TextureViewDescriptor::default());
-
+        let depth_texture = Texture::create_depth_texture(device, &target_size, "meow");
         // Uniform layout for Vertex Shader
         let uniform_layout = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
             label: Some("Uniforms bgl"),
@@ -182,7 +166,7 @@ impl Pipeline {
             },
             primitive: wgpu::PrimitiveState::default(),
             depth_stencil: Some(wgpu::DepthStencilState {
-                format: wgpu::TextureFormat::Depth32Float,
+                format: Texture::DEPTH_FORMAT,
                 depth_write_enabled: true,
                 depth_compare: wgpu::CompareFunction::Less,
                 stencil: wgpu::StencilState::default(),
@@ -205,12 +189,6 @@ impl Pipeline {
             multiview: None,
         });
 
-        let depth_pipeline = DepthPipeline::new(
-            device,
-            format,
-            depth_texture.create_view(&wgpu::TextureViewDescriptor::default()),
-        );
-
         Self {
             pipeline,
             positions,
@@ -218,20 +196,19 @@ impl Pipeline {
             model,
             frag,
             light,
+            depth_texture,
             uniform_group,
-            depth_view,
-            depth_texture_size: target_size,
-            depth_pipeline,
             vertex_count,
             initialized: false,
         }
     }
 
-    fn update_depth_texture(&mut self, device: &wgpu::Device, size: Size<u32>) {
-        if self.depth_texture_size.height != size.height
-            || self.depth_texture_size.width != size.width
+    /* fn update_depth_texture(&mut self, device: &wgpu::Device, size: Size<u32>) {
+        if self.depth_texture.size.height != size.height
+            || self.depth_texture.size.width != size.width
         {
-            let text = device.create_texture(&wgpu::TextureDescriptor {
+
+            /* let text = device.create_texture(&wgpu::TextureDescriptor {
                 label: Some("depth texture"),
                 size: wgpu::Extent3d {
                     width: size.width,
@@ -250,9 +227,9 @@ impl Pipeline {
             self.depth_view = text.create_view(&wgpu::TextureViewDescriptor::default());
             self.depth_texture_size = size;
 
-            self.depth_pipeline.update(device, &text);
+            self.depth_pipeline.update(device, &text); */
         }
-    }
+    } */
 
     pub fn update(
         &mut self,
@@ -264,7 +241,8 @@ impl Pipeline {
         data: &PolyData,
     ) {
         // Update depth
-        self.update_depth_texture(device, target_size);
+        //self.update_depth_texture(device, target_size);
+        self.depth_texture = Texture::create_depth_texture(device, &target_size, "depth texture");
 
         // Resize buffer if required
         if self.positions.count != vertex_count || !self.initialized {
@@ -318,7 +296,7 @@ impl Pipeline {
                     },
                 })],
                 depth_stencil_attachment: Some(RenderPassDepthStencilAttachment {
-                    view: &self.depth_view,
+                    view: &self.depth_texture.view,
                     depth_ops: Some(wgpu::Operations {
                         load: wgpu::LoadOp::Clear(1.0),
                         store: wgpu::StoreOp::Store,
