@@ -6,16 +6,17 @@ use iced::widget::slider;
 use iced_aw::menu::Item;
 use iced_aw::menu_bar;
 
+use crate::{
+    bones::Transaction,
+    render::{menu::*, message::*, pipeline::PolyhedronPrimitive, state::AppState},
+    Instant,
+};
 use iced::widget::{checkbox, text};
 use iced::{
     executor, font,
-    time::Instant,
     widget::{column, container, row, shader},
     window, Application, Command, Element, Length, Subscription, Theme,
 };
-
-use crate::bones::Transaction;
-use crate::render::{menu::*, message::*, pipeline::PolyhedronPrimitive, state::AppState};
 
 pub struct Polyblade {
     state: AppState,

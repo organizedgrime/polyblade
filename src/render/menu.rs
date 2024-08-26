@@ -7,10 +7,12 @@ use iced_aw::{
     menu::{Item, Menu},
     Bootstrap, BOOTSTRAP_FONT,
 };
-use std::time::Instant;
 use strum::IntoEnumIterator;
 
-use crate::render::message::{ConwayMessage, Message, PresetMessage};
+use crate::{
+    render::message::{ConwayMessage, Message, PresetMessage},
+    Instant,
+};
 
 pub fn bar<'a>(label: &str) -> button::Button<'a, Message, Theme, Renderer> {
     button(row![

@@ -1,11 +1,11 @@
 use crate::{
     bones::PolyGraph,
     render::{camera::Camera, color::RGB},
+    Instant,
 };
 
 use iced::{time::Duration, widget::shader::wgpu};
 use std::f32::consts::PI;
-use std::time::Instant;
 use ultraviolet::Mat4;
 
 pub struct AppState {

@@ -3,6 +3,11 @@ mod render;
 use iced::{Application as _, Settings};
 use render::Polyblade;
 
+#[cfg(target_arch = "wasm32")]
+pub use iced::time::Instant;
+#[cfg(not(target_arch = "wasm32"))]
+pub use std::time::Instant;
+
 fn main() -> iced::Result {
     #[cfg(target_arch = "wasm32")]
     {
