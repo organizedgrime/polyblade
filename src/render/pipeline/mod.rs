@@ -210,7 +210,7 @@ impl Pipeline {
         target_size: Size<u32>,
         vertex_count: u64,
         uniforms: &AllUniforms,
-        data: &PolyData,
+        data: &Polygon,
     ) {
         // Update depth
         if target_size != self.depth_texture.size {
@@ -219,10 +219,6 @@ impl Pipeline {
 
         // Resize buffer if required
         if self.positions.count != vertex_count || !self.initialized {
-            println!(
-                "positions count: {:?}; vtc: {}",
-                self.positions.count, vertex_count
-            );
             println!("resizing buffer!");
             // Resize the position buffer
             self.positions.resize(device, vertex_count);
@@ -231,7 +227,11 @@ impl Pipeline {
             // Count that
             self.vertex_count = vertex_count;
             // Write the vertices
-            queue.write_buffer(&self.vertices.raw, 0, bytemuck::cast_slice(&data.vertices));
+            queue.write_buffer(
+                &self.vertices.raw,
+                0,
+                bytemuck::cast_slice(&data.polyhedron.vertices(&data.palette)),
+            );
             // Initialized
             self.initialized = true;
         }
@@ -240,7 +240,7 @@ impl Pipeline {
         queue.write_buffer(
             &self.positions.raw,
             0,
-            bytemuck::cast_slice(&data.positions),
+            bytemuck::cast_slice(&data.polyhedron.positions()),
         );
         // Write rotation data
         //queue.write_buffer(&self.transform.raw, 0, bytemuck::bytes_of(&data.transform));

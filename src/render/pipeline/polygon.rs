@@ -7,22 +7,10 @@ use super::{AllUniforms, FragUniforms, LightUniforms, ModelUniforms, Pipeline, P
 
 #[derive(Debug)]
 pub struct Polygon {
-    vertex_count: u64,
-    data: PolyData,
-}
-
-impl Polygon {
-    pub fn new(pg: &PolyGraph, palette: &[wgpu::Color], transform: &Mat4, camera: &Camera) -> Self {
-        Self {
-            vertex_count: pg.vertex_count(),
-            data: PolyData {
-                positions: pg.positions(),
-                vertices: pg.vertices(palette),
-                transform: *transform,
-                camera: *camera,
-            },
-        }
-    }
+    pub polyhedron: PolyGraph,
+    pub palette: Vec<wgpu::Color>,
+    pub transform: Mat4,
+    pub camera: Camera,
 }
 
 impl shader::Primitive for Polygon {
@@ -36,27 +24,23 @@ impl shader::Primitive for Polygon {
         _scale_factor: f32,
         storage: &mut shader::Storage,
     ) {
+        let vertex_count = self.polyhedron.vertex_count();
         if !storage.has::<Pipeline>() {
-            storage.store(Pipeline::new(
-                device,
-                format,
-                target_size,
-                self.vertex_count,
-            ));
+            storage.store(Pipeline::new(device, format, target_size, vertex_count));
         }
         let pipeline = storage.get_mut::<Pipeline>().unwrap();
 
         // update uniform buffer
-        let model_mat = self.data.transform;
-        let view_projection_mat = self.data.camera.build_view_proj_mat(bounds);
+        let model_mat = self.transform;
+        let view_projection_mat = self.camera.build_view_proj_mat(bounds);
         let uniforms = AllUniforms {
             model: ModelUniforms {
                 model_mat,
                 view_projection_mat,
             },
             frag: FragUniforms {
-                light_position: self.data.camera.position(),
-                eye_position: self.data.camera.position() + Vec4::new(2.0, 2.0, 1.0, 0.0),
+                light_position: self.camera.position(),
+                eye_position: self.camera.position() + Vec4::new(2.0, 2.0, 1.0, 0.0),
             },
             light: LightUniforms::new(
                 Color::new(1.0, 1.0, 1.0, 1.0),
@@ -65,14 +49,7 @@ impl shader::Primitive for Polygon {
         };
 
         //upload data to GPU
-        pipeline.update(
-            device,
-            queue,
-            target_size,
-            self.vertex_count,
-            &uniforms,
-            &self.data,
-        );
+        pipeline.update(device, queue, target_size, vertex_count, &uniforms, &self);
     }
 
     fn render(

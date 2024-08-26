@@ -222,11 +222,11 @@ impl<Message> shader::Program<Message> for Polyblade {
         _cursor: mouse::Cursor,
         _bounds: Rectangle,
     ) -> Self::Primitive {
-        Polygon::new(
-            &self.state.polyhedron,
-            &self.state.palette,
-            &self.state.transform,
-            &self.state.camera,
-        )
+        Self::Primitive {
+            polyhedron: self.state.polyhedron.clone(),
+            palette: self.state.palette.clone(),
+            transform: self.state.transform,
+            camera: self.state.camera,
+        }
     }
 }

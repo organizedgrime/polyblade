@@ -4,6 +4,7 @@ pub struct Texture {
     pub view: wgpu::TextureView,
     pub size: Size<u32>,
 }
+
 impl Texture {
     pub const DEPTH_FORMAT: wgpu::TextureFormat = wgpu::TextureFormat::Depth24Plus;
 
