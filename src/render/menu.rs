@@ -1,4 +1,3 @@
-use crate::{ConwayMessage, Message, PresetMessage};
 use iced::{
     alignment, theme,
     widget::{button, row, text},
@@ -6,15 +5,17 @@ use iced::{
 };
 use iced_aw::{
     menu::{Item, Menu},
-    BootstrapIcon, BOOTSTRAP_FONT,
+    Bootstrap, BOOTSTRAP_FONT,
 };
 use std::time::Instant;
 use strum::IntoEnumIterator;
 
+use crate::render::message::{ConwayMessage, Message, PresetMessage};
+
 pub fn bar<'a>(label: &str) -> button::Button<'a, Message, Theme, Renderer> {
     button(row![
         text(label).vertical_alignment(alignment::Vertical::Center),
-        text(BootstrapIcon::CaretDownFill)
+        text(Bootstrap::CaretDownFill)
             .size(18)
             .font(BOOTSTRAP_FONT)
             .height(Length::Shrink)
@@ -48,7 +49,7 @@ fn submenu_button<'a>(label: &str) -> button::Button<'a, Message, iced::Theme, i
             text(label)
                 .width(Length::Fill)
                 .vertical_alignment(alignment::Vertical::Center),
-            text(BootstrapIcon::CaretRightFill)
+            text(Bootstrap::CaretRightFill)
                 .font(BOOTSTRAP_FONT)
                 .width(Length::Shrink)
                 .vertical_alignment(alignment::Vertical::Center),

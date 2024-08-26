@@ -1,4 +1,4 @@
-use crate::PresetMessage;
+use crate::render::message::PresetMessage;
 
 use super::PolyGraph;
 
