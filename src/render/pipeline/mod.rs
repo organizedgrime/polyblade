@@ -8,7 +8,7 @@ use iced::{
     widget::shader::wgpu::{self, RenderPassDepthStencilAttachment},
     Rectangle, Size,
 };
-use ultraviolet::{Mat4, Vec3};
+use ultraviolet::Vec3;
 
 pub use polygon::*;
 pub use uniforms::*;
@@ -16,12 +16,14 @@ pub use vertex::*;
 
 pub struct Pipeline {
     pipeline: wgpu::RenderPipeline,
+    /// Raw XYZ position data for each vertex
     positions: Buffer,
+    /// Other vertex data
     vertices: Buffer,
-    polyhedron: Buffer,
-    model_uniform: Buffer,
-    frag_uniform: Buffer,
-    light_uniform: Buffer,
+    /// Uniform Buffers
+    model: Buffer,
+    frag: Buffer,
+    light: Buffer,
     uniform_group: wgpu::BindGroup,
     depth_texture_size: Size<u32>,
     depth_view: wgpu::TextureView,
@@ -38,6 +40,7 @@ impl Pipeline {
         target_size: Size<u32>,
         vertex_count: u64,
     ) -> Self {
+        println!("NEW PIPELINE");
         let vertex_usage = wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::COPY_DST;
         let uniform_usage = wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST;
         let positions = Buffer::new::<Vec3>(
@@ -54,15 +57,10 @@ impl Pipeline {
             vertex_usage,
         );
 
-        // Polyhedron instance data
-        let polyhedron = Buffer::new::<Mat4>(device, "Polyhedron instance buffer", 1, vertex_usage);
-        let model_uniform =
-            Buffer::new::<ModelUniforms>(device, "Uniforms Buffer", 1, uniform_usage);
-
-        let frag_uniform =
-            Buffer::new::<FragUniforms>(device, "FragUniforms Buffer", 1, uniform_usage);
-        let light_uniform =
-            Buffer::new::<LightUniforms>(device, "LightUniforms Buffer", 1, uniform_usage);
+        // Create Uniform Buffers
+        let model = Buffer::new::<ModelUniforms>(device, "ModelUniforms", 1, uniform_usage);
+        let frag = Buffer::new::<FragUniforms>(device, "FragUniforms", 1, uniform_usage);
+        let light = Buffer::new::<LightUniforms>(device, "LightUniforms", 1, uniform_usage);
         //depth buffer
         let depth_texture = device.create_texture(&wgpu::TextureDescriptor {
             label: Some("Depth texture"),
@@ -123,15 +121,15 @@ impl Pipeline {
             entries: &[
                 wgpu::BindGroupEntry {
                     binding: 0,
-                    resource: model_uniform.raw.as_entire_binding(),
+                    resource: model.raw.as_entire_binding(),
                 },
                 wgpu::BindGroupEntry {
                     binding: 1,
-                    resource: frag_uniform.raw.as_entire_binding(),
+                    resource: frag.raw.as_entire_binding(),
                 },
                 wgpu::BindGroupEntry {
                     binding: 2,
-                    resource: light_uniform.raw.as_entire_binding(),
+                    resource: light.raw.as_entire_binding(),
                 },
             ],
         });
@@ -178,17 +176,6 @@ impl Pipeline {
                             4 => Float32x4,
                         ],
                     },
-                    wgpu::VertexBufferLayout {
-                        array_stride: std::mem::size_of::<Mat4>() as wgpu::BufferAddress,
-                        step_mode: wgpu::VertexStepMode::Instance,
-                        attributes: &wgpu::vertex_attr_array![
-                            //cube transformation matrix
-                            5 => Float32x4,
-                            6 => Float32x4,
-                            7 => Float32x4,
-                            8 => Float32x4,
-                        ],
-                    },
                 ],
             },
             primitive: wgpu::PrimitiveState::default(),
@@ -209,18 +196,7 @@ impl Pipeline {
                 entry_point: "fs_main",
                 targets: &[Some(wgpu::ColorTargetState {
                     format,
-                    blend: Some(wgpu::BlendState {
-                        color: wgpu::BlendComponent {
-                            src_factor: wgpu::BlendFactor::SrcAlpha,
-                            dst_factor: wgpu::BlendFactor::OneMinusSrcAlpha,
-                            operation: wgpu::BlendOperation::Add,
-                        },
-                        alpha: wgpu::BlendComponent {
-                            src_factor: wgpu::BlendFactor::One,
-                            dst_factor: wgpu::BlendFactor::One,
-                            operation: wgpu::BlendOperation::Max,
-                        },
-                    }),
+                    blend: None,
                     write_mask: wgpu::ColorWrites::ALL,
                 })],
             }),
@@ -235,13 +211,12 @@ impl Pipeline {
 
         Self {
             pipeline,
-            polyhedron,
-            model_uniform,
-            frag_uniform,
-            light_uniform,
-            uniform_group,
             positions,
             vertices,
+            model,
+            frag,
+            light,
+            uniform_group,
             depth_view,
             depth_texture_size: target_size,
             depth_pipeline,
@@ -315,24 +290,12 @@ impl Pipeline {
             bytemuck::cast_slice(&data.positions),
         );
         // Write rotation data
-        queue.write_buffer(&self.polyhedron.raw, 0, bytemuck::bytes_of(&data.transform));
+        //queue.write_buffer(&self.transform.raw, 0, bytemuck::bytes_of(&data.transform));
 
         // Write uniforms
-        queue.write_buffer(
-            &self.model_uniform.raw,
-            0,
-            bytemuck::bytes_of(&uniforms.model),
-        );
-        queue.write_buffer(
-            &self.frag_uniform.raw,
-            0,
-            bytemuck::bytes_of(&uniforms.frag),
-        );
-        queue.write_buffer(
-            &self.light_uniform.raw,
-            0,
-            bytemuck::bytes_of(&uniforms.light),
-        );
+        queue.write_buffer(&self.model.raw, 0, bytemuck::bytes_of(&uniforms.model));
+        queue.write_buffer(&self.frag.raw, 0, bytemuck::bytes_of(&uniforms.frag));
+        queue.write_buffer(&self.light.raw, 0, bytemuck::bytes_of(&uniforms.light));
     }
 
     pub fn render(
@@ -369,7 +332,7 @@ impl Pipeline {
             pass.set_bind_group(0, &self.uniform_group, &[]);
             pass.set_vertex_buffer(0, self.positions.raw.slice(..));
             pass.set_vertex_buffer(1, self.vertices.raw.slice(..));
-            pass.set_vertex_buffer(2, self.polyhedron.raw.slice(..));
+            //pass.set_vertex_buffer(2, self.transform.raw.slice(..));
             pass.draw(0..self.vertex_count as u32, 0..1);
         }
     }
