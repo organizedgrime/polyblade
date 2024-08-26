@@ -1,4 +1,6 @@
+mod types;
 use iced::widget::shader::wgpu;
+pub use types::*;
 
 // A custom buffer container for dynamic resizing.
 pub struct Buffer {
@@ -41,5 +43,3 @@ impl Buffer {
         self.count = new_count;
     }
 }
-
-//impl wgpu::Device {}

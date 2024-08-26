@@ -1,8 +1,7 @@
 use super::*;
-use crate::render::{message::ConwayMessage, pipeline::Vertex};
-use iced::widget::shader::wgpu;
+use crate::render::message::ConwayMessage;
 use std::time::{Duration, Instant};
-use ultraviolet::{Lerp, Vec3, Vec4};
+use ultraviolet::{Lerp, Vec3};
 
 const TICK_SPEED: f32 = 800.0;
 
@@ -74,7 +73,7 @@ impl PolyGraph {
         self.apply_spring_forces();
     }
 
-    fn face_positions(&self, face_index: usize) -> Vec<Vec3> {
+    pub fn face_positions(&self, face_index: usize) -> Vec<Vec3> {
         self.cycles[face_index]
             .iter()
             .map(|v| self.positions[v])
@@ -103,85 +102,6 @@ impl PolyGraph {
             }
         }
         vertex_triangle_count
-    }
-
-    fn face_triangle_positions(&self, face_index: usize) -> Vec<Vec3> {
-        let positions = self.face_positions(face_index);
-        let n = positions.len();
-        match n {
-            3 => positions,
-            4 => vec![
-                positions[0],
-                positions[1],
-                positions[2],
-                positions[2],
-                positions[3],
-                positions[0],
-            ],
-            _ => {
-                let centroid = self.face_centroid(face_index);
-                let n = positions.len();
-                (0..n).fold(vec![], |acc, i| {
-                    [acc, vec![positions[i], centroid, positions[(i + 1) % n]]].concat()
-                })
-            }
-        }
-    }
-
-    fn face_sides_buffer(&self, face_index: usize) -> Vec<Vec3> {
-        let positions = self.face_positions(face_index);
-        let n = positions.len();
-        match n {
-            3 => vec![Vec3::new(1.0, 1.0, 1.0); 3],
-            4 => vec![Vec3::new(1.0, 0.0, 1.0); 6],
-            _ => vec![Vec3::new(0.0, 1.0, 0.0); n * 3],
-        }
-    }
-
-    pub fn positions(&self) -> Vec<Vec3> {
-        (0..self.cycles.len()).fold(Vec::new(), |acc, i| {
-            [acc, self.face_triangle_positions(i)].concat()
-        })
-    }
-
-    pub fn vertices(&self, palette: &[wgpu::Color]) -> Vec<Vertex> {
-        let mut vertices = Vec::new();
-        let barycentric = [Vec3::unit_x(), Vec3::unit_y(), Vec3::unit_z()];
-
-        let mut polygon_sizes: Vec<usize> = self.cycles.iter().fold(Vec::new(), |mut acc, f| {
-            if !acc.contains(&f.len()) {
-                acc.push(f.len());
-            }
-            acc
-        });
-
-        polygon_sizes.sort();
-
-        for i in 0..self.cycles.len() {
-            let color_index = polygon_sizes
-                .iter()
-                .position(|&x| x == self.cycles[i].len())
-                .unwrap();
-
-            let n = polygon_sizes.get(color_index).unwrap();
-            let color = palette[n % palette.len()];
-            let color = Vec4::new(color.r as f32, color.g as f32, color.b as f32, 1.0);
-            let sides = self.face_sides_buffer(i);
-            let positions = self.face_triangle_positions(i);
-
-            for j in 0..positions.len() {
-                let p = positions[j].normalized();
-                let b = barycentric[j % barycentric.len()];
-                vertices.push(Vertex {
-                    normal: Vec4::new(p.x, p.y, p.z, 0.0),
-                    sides: Vec4::new(sides[j].x, sides[j].y, sides[j].z, 0.0),
-                    barycentric: Vec4::new(b.x, b.y, b.z, 0.0),
-                    color,
-                });
-            }
-        }
-
-        vertices
     }
 
     pub fn process_transactions(&mut self) {

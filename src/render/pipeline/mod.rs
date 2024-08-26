@@ -1,8 +1,6 @@
 mod buffer;
-mod polygon;
+mod polyhedron_primitive;
 mod texture;
-mod uniforms;
-mod vertex;
 
 use buffer::Buffer;
 use iced::{
@@ -12,9 +10,8 @@ use iced::{
 use texture::Texture;
 use ultraviolet::Vec3;
 
-pub use polygon::*;
-pub use uniforms::*;
-pub use vertex::*;
+pub use buffer::*;
+pub use polyhedron_primitive::*;
 
 pub struct Pipeline {
     pipeline: wgpu::RenderPipeline,
@@ -210,7 +207,7 @@ impl Pipeline {
         target_size: Size<u32>,
         vertex_count: u64,
         uniforms: &AllUniforms,
-        data: &Polygon,
+        primitive: &PolyhedronPrimitive,
     ) {
         // Update depth
         if target_size != self.depth_texture.size {
@@ -230,7 +227,7 @@ impl Pipeline {
             queue.write_buffer(
                 &self.vertices.raw,
                 0,
-                bytemuck::cast_slice(&data.polyhedron.vertices(&data.palette)),
+                bytemuck::cast_slice(&primitive.vertices()),
             );
             // Initialized
             self.initialized = true;
@@ -240,10 +237,8 @@ impl Pipeline {
         queue.write_buffer(
             &self.positions.raw,
             0,
-            bytemuck::cast_slice(&data.polyhedron.positions()),
+            bytemuck::cast_slice(&primitive.positions()),
         );
-        // Write rotation data
-        //queue.write_buffer(&self.transform.raw, 0, bytemuck::bytes_of(&data.transform));
 
         // Write uniforms
         queue.write_buffer(&self.model.raw, 0, bytemuck::bytes_of(&uniforms.model));

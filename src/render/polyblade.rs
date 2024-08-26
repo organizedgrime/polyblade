@@ -15,7 +15,7 @@ use iced::{
 };
 
 use crate::bones::Transaction;
-use crate::render::{menu::*, message::*, pipeline::Polygon, state::AppState};
+use crate::render::{menu::*, message::*, pipeline::PolyhedronPrimitive, state::AppState};
 
 pub struct Polyblade {
     state: AppState,
@@ -194,7 +194,7 @@ impl Application for Polyblade {
 
 impl<Message> shader::Program<Message> for Polyblade {
     type State = ();
-    type Primitive = Polygon;
+    type Primitive = PolyhedronPrimitive;
 
     /* fn update(
         &self,
@@ -222,11 +222,11 @@ impl<Message> shader::Program<Message> for Polyblade {
         _cursor: mouse::Cursor,
         _bounds: Rectangle,
     ) -> Self::Primitive {
-        Self::Primitive {
-            polyhedron: self.state.polyhedron.clone(),
-            palette: self.state.palette.clone(),
-            transform: self.state.transform,
-            camera: self.state.camera,
-        }
+        Self::Primitive::new(
+            self.state.polyhedron.clone(),
+            self.state.palette.clone(),
+            self.state.transform,
+            self.state.camera,
+        )
     }
 }
