@@ -1,22 +1,25 @@
+mod app_state;
+mod camera;
 mod color;
 mod menu;
 mod message;
+mod pipeline;
 mod polyhedra;
-mod scene;
 
 use iced::mouse;
 use iced::Rectangle;
 use ultraviolet::Vec3;
 
+use app_state::AppState;
 use color::*;
 use iced::widget::slider;
 use iced_aw::menu::Item;
 use iced_aw::menu_bar;
 use menu::*;
 use message::*;
+use pipeline::*;
 use polyhedra::Transaction;
-use scene::AppState;
-use scene::Polygon;
+//use scene::Polygon;
 
 use iced::widget::{checkbox, shader::wgpu, text};
 use iced::{

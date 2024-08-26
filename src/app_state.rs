@@ -1,16 +1,10 @@
-mod camera;
-mod pipeline;
-mod polygon;
+use crate::camera::Camera;
 use crate::polyhedra::PolyGraph;
 use crate::{wgpu, RGB};
-use camera::Camera;
 use iced::time::Duration;
-pub use pipeline::*;
 use std::f32::consts::PI;
 use std::time::Instant;
 use ultraviolet::Mat4;
-
-pub use polygon::Polygon;
 
 pub struct AppState {
     pub polyhedron: PolyGraph,

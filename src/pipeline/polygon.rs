@@ -1,12 +1,11 @@
+use crate::camera::Camera;
 use crate::polyhedra::PolyGraph;
 use crate::wgpu;
 use iced::widget::shader;
 use iced::{Color, Rectangle, Size};
 use ultraviolet::{Mat4, Vec4};
 
-use super::camera::Camera;
-use super::pipeline::Pipeline;
-use super::{AllUniforms, FragUniforms, LightUniforms, ModelUniforms, PolyData};
+use super::{AllUniforms, FragUniforms, LightUniforms, ModelUniforms, Pipeline, PolyData};
 
 #[derive(Debug)]
 pub struct Polygon {
@@ -86,10 +85,10 @@ impl shader::Primitive for Polygon {
         viewport: Rectangle<u32>,
         encoder: &mut wgpu::CommandEncoder,
     ) {
-        //at this point our pipeline should always be initialized
+        // At this point our pipeline should always be initialized
         let pipeline = storage.get::<Pipeline>().unwrap();
 
-        //render primitive
+        // Render primitive
         pipeline.render(target, encoder, viewport);
     }
 }

@@ -1,16 +1,16 @@
 mod buffer;
+mod polygon;
 mod uniforms;
 mod vertex;
 
-use ultraviolet::{Mat4, Vec3};
-pub use uniforms::{AllUniforms, FragUniforms, LightUniforms, ModelUniforms};
-
-use buffer::Buffer;
-pub use vertex::{PolyData, Vertex};
-
 use crate::wgpu;
-
+use buffer::Buffer;
 use iced::{widget::shader::wgpu::RenderPassDepthStencilAttachment, Rectangle, Size};
+use ultraviolet::{Mat4, Vec3};
+
+pub use polygon::*;
+pub use uniforms::*;
+pub use vertex::*;
 
 pub struct Pipeline {
     pipeline: wgpu::RenderPipeline,
@@ -143,7 +143,7 @@ impl Pipeline {
         let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
             label: Some("Polyhedron shader"),
             source: wgpu::ShaderSource::Wgsl(std::borrow::Cow::Borrowed(include_str!(
-                "../../shaders/shader.wgsl"
+                "../shaders/shader.wgsl"
             ))),
         });
 
@@ -437,7 +437,7 @@ impl DepthPipeline {
         let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
             label: Some("cubes.depth_pipeline.shader"),
             source: wgpu::ShaderSource::Wgsl(std::borrow::Cow::Borrowed(include_str!(
-                "../../shaders/depth.wgsl"
+                "../shaders/depth.wgsl"
             ))),
         });
 
