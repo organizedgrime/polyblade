@@ -63,7 +63,7 @@ impl Pipeline {
         let frag = Buffer::new::<FragUniforms>(device, "FragUniforms", 1, uniform_usage);
         let light = Buffer::new::<LightUniforms>(device, "LightUniforms", 1, uniform_usage);
         //depth buffer
-        let depth_texture = Texture::create_depth_texture(device, &target_size, "meow");
+        let depth_texture = Texture::create_depth_texture(device, &target_size);
         // Uniform layout for Vertex Shader
         let uniform_layout = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
             label: Some("Uniforms bgl"),
@@ -203,34 +203,6 @@ impl Pipeline {
         }
     }
 
-    /* fn update_depth_texture(&mut self, device: &wgpu::Device, size: Size<u32>) {
-        if self.depth_texture.size.height != size.height
-            || self.depth_texture.size.width != size.width
-        {
-
-            /* let text = device.create_texture(&wgpu::TextureDescriptor {
-                label: Some("depth texture"),
-                size: wgpu::Extent3d {
-                    width: size.width,
-                    height: size.height,
-                    depth_or_array_layers: 1,
-                },
-                mip_level_count: 1,
-                sample_count: 1,
-                dimension: wgpu::TextureDimension::D2,
-                format: wgpu::TextureFormat::Depth32Float,
-                usage: wgpu::TextureUsages::RENDER_ATTACHMENT
-                    | wgpu::TextureUsages::TEXTURE_BINDING,
-                view_formats: &[],
-            });
-
-            self.depth_view = text.create_view(&wgpu::TextureViewDescriptor::default());
-            self.depth_texture_size = size;
-
-            self.depth_pipeline.update(device, &text); */
-        }
-    } */
-
     pub fn update(
         &mut self,
         device: &wgpu::Device,
@@ -241,8 +213,9 @@ impl Pipeline {
         data: &PolyData,
     ) {
         // Update depth
-        //self.update_depth_texture(device, target_size);
-        self.depth_texture = Texture::create_depth_texture(device, &target_size, "depth texture");
+        if target_size != self.depth_texture.size {
+            self.depth_texture = Texture::create_depth_texture(device, &target_size);
+        }
 
         // Resize buffer if required
         if self.positions.count != vertex_count || !self.initialized {
