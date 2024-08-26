@@ -5,6 +5,8 @@ pub struct Buffer {
     pub raw: wgpu::Buffer,
     label: &'static str,
     usage: wgpu::BufferUsages,
+    size_of_type: u64,
+    pub count: u64,
 }
 
 impl Buffer {
@@ -14,24 +16,30 @@ impl Buffer {
         count: u64,
         usage: wgpu::BufferUsages,
     ) -> Self {
+        let size_of_type = std::mem::size_of::<T>() as u64;
         Self {
             raw: device.create_buffer(&wgpu::BufferDescriptor {
                 label: Some(label),
-                size: std::mem::size_of::<T>() as u64 * count,
+                size: size_of_type * count,
                 usage,
                 mapped_at_creation: false,
             }),
             label,
             usage,
+            size_of_type,
+            count,
         }
     }
 
-    pub fn resize(&mut self, device: &wgpu::Device, new_size: u64) {
+    pub fn resize(&mut self, device: &wgpu::Device, new_count: u64) {
         self.raw = device.create_buffer(&wgpu::BufferDescriptor {
             label: Some(self.label),
-            size: new_size,
+            size: self.size_of_type * new_count,
             usage: self.usage,
             mapped_at_creation: false,
         });
+        self.count = new_count;
     }
 }
+
+//impl wgpu::Device {}

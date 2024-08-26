@@ -39,46 +39,31 @@ impl Pipeline {
         target_size: Size<u32>,
         descriptor: &Descriptor,
     ) -> Self {
+        let vertex_usage = wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::COPY_DST;
+        let uniform_usage = wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST;
         let positions = Buffer::new::<Vec3>(
             device,
             "Polyhedron position buffer",
             descriptor.vertex_triangle_count,
-            wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::COPY_DST,
+            vertex_usage,
         );
 
         let vertices = Buffer::new::<Vertex>(
             device,
             "Polyhedron vertex buffer",
             descriptor.vertex_triangle_count,
-            wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::COPY_DST,
+            vertex_usage,
         );
 
         // Polyhedron instance data
-        let polyhedron = Buffer::new::<Mat4>(
-            device,
-            "Polyhedron instance buffer",
-            1,
-            wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::COPY_DST,
-        );
-        let model_uniform = Buffer::new::<ModelUniforms>(
-            device,
-            "Uniforms Buffer",
-            1,
-            wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
-        );
+        let polyhedron = Buffer::new::<Mat4>(device, "Polyhedron instance buffer", 1, vertex_usage);
+        let model_uniform =
+            Buffer::new::<ModelUniforms>(device, "Uniforms Buffer", 1, uniform_usage);
 
-        let frag_uniform = Buffer::new::<FragUniforms>(
-            device,
-            "FragUniforms Buffer",
-            1,
-            wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
-        );
-        let light_uniform = Buffer::new::<LightUniforms>(
-            device,
-            "LightUniforms Buffer",
-            1,
-            wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
-        );
+        let frag_uniform =
+            Buffer::new::<FragUniforms>(device, "FragUniforms Buffer", 1, uniform_usage);
+        let light_uniform =
+            Buffer::new::<LightUniforms>(device, "LightUniforms Buffer", 1, uniform_usage);
         //depth buffer
         let depth_texture = device.create_texture(&wgpu::TextureDescriptor {
             label: Some("Depth texture"),
@@ -306,13 +291,18 @@ impl Pipeline {
         self.update_depth_texture(device, target_size);
 
         // Resize buffer if required
-        if self.positions.raw.size() != descriptor.position_buffer_size || !self.initialized {
+        if self.positions.count != descriptor.vertex_triangle_count || !self.initialized {
+            println!(
+                "positions count: {:?}; vtc: {}",
+                self.positions.count, descriptor.vertex_triangle_count
+            );
             println!("resizing buffer!");
             // Resize the position buffer
             self.positions
-                .resize(device, descriptor.position_buffer_size);
+                .resize(device, descriptor.vertex_triangle_count);
             // Resize the vertex buffer
-            self.vertices.resize(device, descriptor.vertex_buffer_size);
+            self.vertices
+                .resize(device, descriptor.vertex_triangle_count);
             // Count that
             self.vertex_count = descriptor.vertex_triangle_count;
             // Write the vertices

@@ -5,9 +5,9 @@ use ultraviolet::Vec3;
 #[derive(Debug)]
 pub struct Descriptor {
     /// Size of the buffer containing only position data
-    pub position_buffer_size: u64,
+    //pub position_buffer_size: u64,
     /// Size of the buffer containing remaining vertex data
-    pub vertex_buffer_size: u64,
+    //pub vertex_buffer_size: u64,
     /// Number of vertices when we represent the polyhedron as triangles
     pub vertex_triangle_count: u64,
 }
@@ -30,8 +30,8 @@ impl From<&PolyGraph> for Descriptor {
         }
 
         Self {
-            position_buffer_size: std::mem::size_of::<Vec3>() as u64 * vertex_triangle_count,
-            vertex_buffer_size: std::mem::size_of::<Vertex>() as u64 * vertex_triangle_count,
+            //position_buffer_size: std::mem::size_of::<Vec3>() as u64 * vertex_triangle_count,
+            //vertex_buffer_size: std::mem::size_of::<Vertex>() as u64 * vertex_triangle_count,
             vertex_triangle_count,
         }
     }
