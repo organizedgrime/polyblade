@@ -1,7 +1,9 @@
-use crate::camera::Camera;
-use crate::polyhedra::PolyGraph;
-use crate::{wgpu, RGB};
-use iced::time::Duration;
+use crate::{
+    bones::PolyGraph,
+    render::{camera::Camera, color::RGB},
+};
+
+use iced::{time::Duration, widget::shader::wgpu};
 use std::f32::consts::PI;
 use std::time::Instant;
 use ultraviolet::Mat4;

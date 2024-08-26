@@ -360,7 +360,7 @@ impl PolyGraph {
 
 #[cfg(test)]
 mod test {
-    use crate::polyhedra::{Face, PolyGraph};
+    use crate::bones::{Face, PolyGraph};
     use std::collections::HashSet;
     use test_case::test_case;
 

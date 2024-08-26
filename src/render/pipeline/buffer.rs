@@ -1,4 +1,4 @@
-use crate::wgpu;
+use iced::widget::shader::wgpu;
 
 // A custom buffer container for dynamic resizing.
 pub struct Buffer {

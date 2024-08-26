@@ -3,9 +3,11 @@ mod polygon;
 mod uniforms;
 mod vertex;
 
-use crate::wgpu;
 use buffer::Buffer;
-use iced::{widget::shader::wgpu::RenderPassDepthStencilAttachment, Rectangle, Size};
+use iced::{
+    widget::shader::wgpu::{self, RenderPassDepthStencilAttachment},
+    Rectangle, Size,
+};
 use ultraviolet::{Mat4, Vec3};
 
 pub use polygon::*;

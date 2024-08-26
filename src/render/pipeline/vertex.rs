@@ -1,4 +1,4 @@
-use crate::camera::Camera;
+use crate::render::camera::Camera;
 use ultraviolet::{Mat4, Vec3, Vec4};
 
 #[derive(Debug, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]

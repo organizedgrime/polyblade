@@ -1,4 +1,3 @@
-use crate::{ConwayMessage, Message, PresetMessage};
 use iced::{
     alignment, theme,
     widget::{button, row, text},
@@ -10,6 +9,8 @@ use iced_aw::{
 };
 use std::time::Instant;
 use strum::IntoEnumIterator;
+
+use crate::render::message::{ConwayMessage, Message, PresetMessage};
 
 pub fn bar<'a>(label: &str) -> button::Button<'a, Message, Theme, Renderer> {
     button(row![

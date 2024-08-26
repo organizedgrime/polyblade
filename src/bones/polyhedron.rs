@@ -1,5 +1,5 @@
 use super::*;
-use crate::{pipeline::Vertex, ConwayMessage};
+use crate::render::{message::ConwayMessage, pipeline::Vertex};
 use iced::widget::shader::wgpu;
 use std::time::{Duration, Instant};
 use ultraviolet::{Lerp, Vec3, Vec4};

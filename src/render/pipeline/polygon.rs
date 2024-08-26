@@ -1,7 +1,5 @@
-use crate::camera::Camera;
-use crate::polyhedra::PolyGraph;
-use crate::wgpu;
-use iced::widget::shader;
+use crate::{bones::PolyGraph, render::camera::Camera};
+use iced::widget::shader::{self, wgpu};
 use iced::{Color, Rectangle, Size};
 use ultraviolet::{Mat4, Vec4};
 
