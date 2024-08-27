@@ -1,4 +1,7 @@
+use std::io::Read;
+
 use iced::mouse;
+use iced::widget::button;
 use iced::Rectangle;
 use ultraviolet::Vec3;
 
@@ -8,7 +11,13 @@ use iced_aw::menu_bar;
 
 use crate::{
     bones::Transaction,
-    render::{menu::*, message::*, pipeline::PolyhedronPrimitive, state::AppState},
+    render::{
+        menu::*,
+        message::*,
+        pipeline::PolyhedronPrimitive,
+        polydex::{Entry, Polydex},
+        state::AppState,
+    },
     Instant,
 };
 use iced::widget::{checkbox, text};
@@ -20,6 +29,15 @@ use iced::{
 
 pub struct Polyblade {
     state: AppState,
+    polydex: Polydex,
+}
+
+pub fn load_polydex() -> Result<Polydex, Box<dyn std::error::Error>> {
+    let mut polydex = std::fs::File::open("polydex.ron")?;
+    let mut polydex_str = String::new();
+    polydex.read_to_string(&mut polydex_str)?;
+    let polydex: Vec<Entry> = ron::from_str(&polydex_str).map_err(|_| "Ron parsing error")?;
+    Ok(polydex)
 }
 
 impl Application for Polyblade {
@@ -36,10 +54,14 @@ impl Application for Polyblade {
         (
             Self {
                 state: AppState::default(),
+                polydex: vec![],
             },
             Command::batch(vec![
                 font::load(iced_aw::BOOTSTRAP_FONT_BYTES).map(Message::FontLoaded),
                 font::load(iced_aw::NERD_FONT_BYTES).map(Message::FontLoaded),
+                Command::perform(async { load_polydex() }, |polydex| {
+                    Message::PolydexLoaded(polydex.map_err(|err| err.to_string()))
+                }),
             ]),
         )
     }
@@ -48,9 +70,23 @@ impl Application for Polyblade {
         use Message::*;
         match message {
             FontLoaded(_) => {}
+            PolydexLoaded(polydex) => {
+                if let Ok(polydex) = polydex {
+                    self.polydex = polydex;
+                    self.state.info = self.state.polyhedron.polydex_entry(&self.polydex);
+                } else {
+                    //tracing_subscriber::warn
+                }
+            }
             Tick(time) => {
                 if self.state.schlegel {
                     self.state.camera.eye = self.state.polyhedron.face_centroid(0) * 1.1;
+                }
+
+                // If the polyhedron has changed
+                if self.state.info.conway != self.state.polyhedron.name {
+                    // Recompute its Polydex entry
+                    self.state.info = self.state.polyhedron.polydex_entry(&self.polydex);
                 }
 
                 self.state.update(time);
@@ -87,6 +123,9 @@ impl Application for Polyblade {
                     .transactions
                     .push(Transaction::Conway(conway));
             }
+            OpenWiki(wiki) => {
+                let _ = open::that(wiki).ok();
+            }
         }
 
         Command::none()
@@ -107,23 +146,26 @@ impl Application for Polyblade {
                 // Actual shader of the program
                 shader(self).width(Length::Fill).height(Length::Fill),
                 // Info
-                container(
+                container(column![
+                    button(text(self.state.info.name())).on_press(self.state.info.wiki_message()),
                     row![
                         column![
+                            text("Bowers:"),
                             text("Conway:"),
                             text("Faces:"),
                             text("Edges:"),
                             text("Vertices:"),
                         ],
                         column![
-                            text(&self.state.polyhedron.name),
-                            text(self.state.polyhedron.cycles.len().to_string()),
-                            text(self.state.polyhedron.edges.len().to_string(),),
-                            text(self.state.polyhedron.vertices.len().to_string())
+                            text(self.state.info.bowers()),
+                            text(&self.state.info.conway),
+                            text(&self.state.info.faces),
+                            text(&self.state.info.edges),
+                            text(&self.state.info.vertices),
                         ]
                     ]
                     .spacing(20)
-                ),
+                ]),
                 row![
                     text("Size: "),
                     text(self.state.scale.to_string()),
