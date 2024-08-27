@@ -1,6 +1,7 @@
 use std::io::Read;
 
 use iced::mouse;
+use iced::widget::button;
 use iced::Rectangle;
 use ultraviolet::Vec3;
 
@@ -115,6 +116,9 @@ impl Application for Polyblade {
                     .transactions
                     .push(Transaction::Conway(conway));
             }
+            OpenWiki(wiki) => {
+                let _ = open::that(wiki).ok();
+            }
         }
 
         Command::none()
@@ -159,16 +163,14 @@ impl Application for Polyblade {
                             text("Faces:"),
                             text("Edges:"),
                             text("Vertices:"),
-                            text("Wiki:"),
                         ],
                         column![
-                            text(name),
+                            button(text(name)).on_press(Message::OpenWiki(wiki)),
                             text(bowers),
                             text(&self.state.polyhedron.name),
                             text(self.state.polyhedron.cycles.len().to_string()),
                             text(self.state.polyhedron.edges.len().to_string(),),
                             text(self.state.polyhedron.vertices.len().to_string()),
-                            text(wiki)
                         ]
                     ]
                     .spacing(20)

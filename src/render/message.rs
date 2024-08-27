@@ -16,6 +16,7 @@ pub enum Message {
     Conway(ConwayMessage),
     FontLoaded(Result<(), font::Error>),
     PolydexLoaded(Result<Polydex, String>),
+    OpenWiki(String),
 }
 
 #[derive(Debug, Clone, EnumIter)]
