@@ -73,6 +73,7 @@ impl Application for Polyblade {
             PolydexLoaded(polydex) => {
                 if let Ok(polydex) = polydex {
                     self.polydex = polydex;
+                    self.state.info = self.state.polyhedron.polydex_entry(&self.polydex);
                 } else {
                     //tracing_subscriber::warn
                 }
@@ -80,6 +81,12 @@ impl Application for Polyblade {
             Tick(time) => {
                 if self.state.schlegel {
                     self.state.camera.eye = self.state.polyhedron.face_centroid(0) * 1.1;
+                }
+
+                // If the polyhedron has changed
+                if self.state.info.conway != self.state.polyhedron.name {
+                    // Recompute its Polydex entry
+                    self.state.info = self.state.polyhedron.polydex_entry(&self.polydex);
                 }
 
                 self.state.update(time);
@@ -125,21 +132,6 @@ impl Application for Polyblade {
     }
 
     fn view(&self) -> Element<'_, Self::Message> {
-        let entry = self
-            .polydex
-            .iter()
-            .find(|entry| entry.conway == self.state.polyhedron.name);
-
-        let (name, bowers, wiki) = if let Some(entry) = entry {
-            (entry.name.clone(), entry.bowers.clone(), entry.wiki.clone())
-        } else {
-            (
-                "Unknown".to_string(),
-                "Unknown".to_string(),
-                "Unknown".to_string(),
-            )
-        };
-
         container(
             column![
                 row![
@@ -154,10 +146,10 @@ impl Application for Polyblade {
                 // Actual shader of the program
                 shader(self).width(Length::Fill).height(Length::Fill),
                 // Info
-                container(
+                container(column![
+                    button(text(self.state.info.name())).on_press(self.state.info.wiki_message()),
                     row![
                         column![
-                            text("Name:"),
                             text("Bowers:"),
                             text("Conway:"),
                             text("Faces:"),
@@ -165,16 +157,15 @@ impl Application for Polyblade {
                             text("Vertices:"),
                         ],
                         column![
-                            button(text(name)).on_press(Message::OpenWiki(wiki)),
-                            text(bowers),
-                            text(&self.state.polyhedron.name),
-                            text(self.state.polyhedron.cycles.len().to_string()),
-                            text(self.state.polyhedron.edges.len().to_string(),),
-                            text(self.state.polyhedron.vertices.len().to_string()),
+                            text(self.state.info.bowers()),
+                            text(&self.state.info.conway),
+                            text(&self.state.info.faces),
+                            text(&self.state.info.edges),
+                            text(&self.state.info.vertices),
                         ]
                     ]
                     .spacing(20)
-                ),
+                ]),
                 row![
                     text("Size: "),
                     text(self.state.scale.to_string()),

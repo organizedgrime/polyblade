@@ -1,6 +1,6 @@
 use crate::{
     bones::PolyGraph,
-    render::{camera::Camera, color::RGB},
+    render::{camera::Camera, color::RGB, polydex::InfoBox},
     Instant,
 };
 
@@ -10,6 +10,7 @@ use ultraviolet::Mat4;
 
 pub struct AppState {
     pub polyhedron: PolyGraph,
+    pub info: InfoBox,
     pub palette: Vec<wgpu::Color>,
     pub transform: Mat4,
     pub scale: f32,
@@ -22,8 +23,11 @@ pub struct AppState {
 
 impl Default for AppState {
     fn default() -> Self {
+        let polyhedron = PolyGraph::dodecahedron();
+        let info = polyhedron.polydex_entry(&vec![]);
         Self {
-            polyhedron: PolyGraph::dodecahedron(),
+            polyhedron,
+            info,
             palette: vec![
                 RGB::new(72, 132, 90),
                 RGB::new(163, 186, 112),
