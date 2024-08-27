@@ -267,6 +267,7 @@ impl<Message> shader::Program<Message> for Polyblade {
     ) -> Self::Primitive {
         Self::Primitive::new(
             self.state.polyhedron.clone(),
+            self.state.schlegel,
             self.state.palette.clone(),
             self.state.transform,
             self.state.camera,

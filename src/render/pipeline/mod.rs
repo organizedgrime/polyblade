@@ -26,6 +26,8 @@ pub struct Pipeline {
     /// Depth Texture
     depth_texture: Texture,
     uniform_group: wgpu::BindGroup,
+    /// Number of vertices to skip in case of schlegel
+    starting_vertex: usize,
     /// Actual number of vertices when drawn using Triangles
     vertex_count: u64,
     initialized: bool,
@@ -197,6 +199,7 @@ impl Pipeline {
             light,
             depth_texture,
             uniform_group,
+            starting_vertex: 0,
             vertex_count,
             initialized: false,
         }
@@ -214,6 +217,12 @@ impl Pipeline {
         // Update depth
         if target_size != self.depth_texture.size {
             self.depth_texture = Texture::create_depth_texture(device, &target_size);
+        }
+
+        if primitive.schlegel {
+            self.starting_vertex = primitive.face_sides_buffer(0).len();
+        } else {
+            self.starting_vertex = 0;
         }
 
         // Resize buffer if required
@@ -282,7 +291,7 @@ impl Pipeline {
             pass.set_bind_group(0, &self.uniform_group, &[]);
             pass.set_vertex_buffer(0, self.positions.raw.slice(..));
             pass.set_vertex_buffer(1, self.vertices.raw.slice(..));
-            pass.draw(0..self.vertex_count as u32, 0..1);
+            pass.draw(self.starting_vertex as u32..self.vertex_count as u32, 0..1);
         }
     }
 }
