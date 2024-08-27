@@ -1,22 +1,23 @@
-mod bones;
-mod render;
-use iced::{Application as _, Settings};
-use render::Polyblade;
+mod polydex;
+use std::{fs::File, io::Write};
 
-#[cfg(target_arch = "wasm32")]
-pub use iced::time::Instant;
-#[cfg(not(target_arch = "wasm32"))]
-pub use std::time::Instant;
+use polydex::*;
 
-fn main() -> iced::Result {
-    #[cfg(target_arch = "wasm32")]
-    {
-        console_log::init().expect("Initialize logger");
-        std::panic::set_hook(Box::new(console_error_panic_hook::hook));
+fn main() -> Result<(), std::io::Error> {
+    let csv_file = File::open("polydex.csv")?;
+    let mut reader = csv::Reader::from_reader(csv_file);
+
+    let mut polydex = vec![];
+
+    for result in reader.deserialize() {
+        let record: Entry = result?;
+        polydex.push(record);
     }
 
-    #[cfg(not(target_arch = "wasm32"))]
-    tracing_subscriber::fmt::init();
+    let ron_str = ron::ser::to_string_pretty(&polydex, ron::ser::PrettyConfig::default()).unwrap();
 
-    Polyblade::run(Settings::default())
+    let mut ron_file = File::create("polydex.ron")?;
+    ron_file.write_all(ron_str.as_bytes())?;
+
+    Ok(())
 }
