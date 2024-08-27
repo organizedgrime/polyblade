@@ -104,7 +104,7 @@ impl Application for Polyblade {
             Schlegel(schlegel) => {
                 self.state.schlegel = schlegel;
                 if schlegel {
-                    self.state.camera.fov_y = std::f32::consts::PI * 0.962;
+                    self.state.camera.fov_y = 2.9;
                 } else {
                     self.state.camera.fov_y = 1.0;
                     self.state.camera.eye = Vec3::new(0.0, 2.0, 3.0);

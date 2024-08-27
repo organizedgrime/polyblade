@@ -62,7 +62,9 @@ impl AppState {
         self.polyhedron.update();
         let time = time.as_secs_f32();
         self.transform = Mat4::default();
-        if !self.schlegel {
+        if self.schlegel {
+            self.transform = Mat4::identity();
+        } else {
             self.transform = Mat4::from_scale(self.scale)
                 * Mat4::from_rotation_x(time / PI)
                 * Mat4::from_rotation_y(time / PI * 1.1);
