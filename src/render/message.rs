@@ -3,6 +3,8 @@ use iced::font;
 use std::fmt::Display;
 use strum_macros::{Display, EnumIter};
 
+use super::polydex::Polydex;
+
 #[derive(Debug, Clone)]
 pub enum Message {
     Tick(Instant),
@@ -13,6 +15,7 @@ pub enum Message {
     Preset(PresetMessage),
     Conway(ConwayMessage),
     FontLoaded(Result<(), font::Error>),
+    PolydexLoaded(Result<Polydex, String>),
 }
 
 #[derive(Debug, Clone, EnumIter)]
