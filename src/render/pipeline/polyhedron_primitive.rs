@@ -1,4 +1,7 @@
-use crate::{bones::PolyGraph, render::camera::Camera};
+use crate::{
+    bones::PolyGraph,
+    render::{camera::Camera, palette::Palette},
+};
 use iced::widget::shader::{self, wgpu};
 use iced::{Color, Rectangle, Size};
 use ultraviolet::{Mat4, Vec3, Vec4};
@@ -9,7 +12,7 @@ use super::{AllUniforms, FragUniforms, LightUniforms, ModelUniforms, Pipeline, V
 pub struct PolyhedronPrimitive {
     polyhedron: PolyGraph,
     pub schlegel: bool,
-    palette: Vec<wgpu::Color>,
+    palette: Palette,
     transform: Mat4,
     camera: Camera,
 }
@@ -18,7 +21,7 @@ impl PolyhedronPrimitive {
     pub fn new(
         polyhedron: PolyGraph,
         schlegel: bool,
-        palette: Vec<wgpu::Color>,
+        palette: Palette,
         transform: Mat4,
         camera: Camera,
     ) -> Self {
@@ -94,7 +97,8 @@ impl PolyhedronPrimitive {
                 .unwrap();
 
             let n = polygon_sizes.get(color_index).unwrap();
-            let color = self.palette[n % self.palette.len()];
+            let palette: Vec<wgpu::Color> = self.palette.clone().into();
+            let color = palette[n % palette.len()];
             let color = Vec4::new(color.r as f32, color.g as f32, color.b as f32, 1.0);
             let sides = self.face_sides_buffer(i);
             let positions = self.face_triangle_positions(i);

@@ -1,17 +1,17 @@
 use crate::{
     bones::PolyGraph,
-    render::{camera::Camera, color::RGB, polydex::InfoBox},
+    render::{camera::Camera, palette::Palette, polydex::InfoBox},
     Instant,
 };
 
-use iced::{time::Duration, widget::shader::wgpu};
+use iced::time::Duration;
 use std::f32::consts::PI;
 use ultraviolet::Mat4;
 
 pub struct AppState {
     pub polyhedron: PolyGraph,
     pub info: InfoBox,
-    pub palette: Vec<wgpu::Color>,
+    pub palette: Palette,
     pub transform: Mat4,
     pub scale: f32,
     pub camera: Camera,
@@ -28,18 +28,7 @@ impl Default for AppState {
         Self {
             polyhedron,
             info,
-            palette: vec![
-                RGB::new(72, 132, 90),
-                RGB::new(163, 186, 112),
-                RGB::new(51, 81, 69),
-                RGB::new(254, 240, 134),
-                RGB::new(95, 155, 252),
-                RGB::new(244, 164, 231),
-                RGB::new(170, 137, 190),
-            ]
-            .into_iter()
-            .map(Into::<wgpu::Color>::into)
-            .collect(),
+            palette: Palette::default(),
             transform: Mat4::identity(),
             scale: 1.0,
             camera: Camera::default(),

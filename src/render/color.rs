@@ -13,7 +13,7 @@ pub struct HSL {
     pub l: f32,
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug, Clone, Copy, Default)]
 #[allow(clippy::upper_case_acronyms)]
 pub struct RGB {
     pub r: u8,
