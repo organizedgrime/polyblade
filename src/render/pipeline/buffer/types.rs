@@ -1,13 +1,19 @@
 use iced::Color;
-use ultraviolet::{Mat4, Vec4};
+use ultraviolet::{Mat4, Vec3, Vec4};
 
 #[derive(Debug, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
 #[repr(C)]
-pub struct Vertex {
+pub struct MomentVertex {
+    pub position: Vec3,
+    pub color: Vec3,
+}
+
+#[derive(Debug, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
+#[repr(C)]
+pub struct ShapeVertex {
     pub normal: Vec4,
     pub barycentric: Vec4,
     pub sides: Vec4,
-    pub color: Vec4,
 }
 
 pub struct AllUniforms {

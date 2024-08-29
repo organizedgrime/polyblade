@@ -45,14 +45,14 @@ impl Pipeline {
         println!("NEW PIPELINE");
         let vertex_usage = wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::COPY_DST;
         let uniform_usage = wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST;
-        let positions = Buffer::new::<Vec3>(
+        let positions = Buffer::new::<MomentVertex>(
             device,
             "Polyhedron position buffer",
             vertex_count,
             vertex_usage,
         );
 
-        let vertices = Buffer::new::<Vertex>(
+        let vertices = Buffer::new::<ShapeVertex>(
             device,
             "Polyhedron vertex buffer",
             vertex_count,
@@ -142,24 +142,24 @@ impl Pipeline {
                 entry_point: "vs_main",
                 buffers: &[
                     wgpu::VertexBufferLayout {
-                        array_stride: std::mem::size_of::<Vec3>() as wgpu::BufferAddress,
+                        array_stride: std::mem::size_of::<MomentVertex>() as wgpu::BufferAddress,
                         step_mode: wgpu::VertexStepMode::Vertex,
                         attributes: &wgpu::vertex_attr_array![
                             // position
                             0 => Float32x3,
+                            // color
+                            1 => Float32x3,
                         ],
                     },
                     wgpu::VertexBufferLayout {
-                        array_stride: std::mem::size_of::<Vertex>() as wgpu::BufferAddress,
+                        array_stride: std::mem::size_of::<ShapeVertex>() as wgpu::BufferAddress,
                         step_mode: wgpu::VertexStepMode::Vertex,
                         attributes: &wgpu::vertex_attr_array![
                             // normal
-                            1 => Float32x4,
-                            // barycentric
                             2 => Float32x4,
-                            // sides
+                            // barycentric
                             3 => Float32x4,
-                            // color
+                            // sides
                             4 => Float32x4,
                         ],
                     },
@@ -244,7 +244,7 @@ impl Pipeline {
             self.initialized = true;
         }
 
-        // Write all position data
+        // Write all position and color data
         queue.write_buffer(
             &self.positions.raw,
             0,

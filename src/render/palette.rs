@@ -3,7 +3,7 @@ use crate::render::color::RGB;
 
 #[derive(Debug, Clone)]
 pub struct Palette {
-    colors: Vec<RGB>,
+    pub colors: Vec<RGB>,
 }
 
 

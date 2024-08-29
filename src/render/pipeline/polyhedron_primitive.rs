@@ -1,12 +1,16 @@
+use std::collections::HashMap;
+
 use crate::{
     bones::PolyGraph,
-    render::{camera::Camera, palette::Palette},
+    render::{camera::Camera, color::RGB, palette::Palette},
 };
 use iced::widget::shader::{self, wgpu};
 use iced::{Color, Rectangle, Size};
 use ultraviolet::{Mat4, Vec3, Vec4};
 
-use super::{AllUniforms, FragUniforms, LightUniforms, ModelUniforms, Pipeline, Vertex};
+use super::{
+    AllUniforms, FragUniforms, LightUniforms, ModelUniforms, MomentVertex, Pipeline, ShapeVertex,
+};
 
 #[derive(Debug)]
 pub struct PolyhedronPrimitive {
@@ -57,9 +61,49 @@ impl PolyhedronPrimitive {
         }
     }
 
-    pub fn positions(&self) -> Vec<Vec3> {
-        (0..self.polyhedron.cycles.len()).fold(Vec::new(), |acc, i| {
-            [acc, self.face_triangle_positions(i)].concat()
+    pub fn positions(&self) -> Vec<MomentVertex> {
+        let mut colors: HashMap<u32, RGB> = HashMap::new();
+
+        let data: Vec<(Vec<Vec3>, u32)> =
+            (0..self.polyhedron.cycles.len()).fold(Vec::new(), |mut acc, i| {
+                let positions = self.face_triangle_positions(i);
+                let mut area = 0.0;
+                for i in 0..positions.len() / 3 {
+                    let j = i * 3;
+                    let a = (positions[j] - positions[j + 1]).mag();
+                    let b = (positions[j + 1] - positions[j + 2]).mag();
+                    let c = (positions[j + 2] - positions[j]).mag();
+                    let s = (a + b + c) / 2.0;
+                    area += (s * (s - a) * (s - b) * (s - c)).sqrt();
+                }
+                let approx = (area * 100.0).round() as u32;
+                println!("area for face {i} is {area}, approx: {approx}");
+
+                if !colors.contains_key(&approx) {
+                    colors.insert(
+                        approx,
+                        self.palette.colors[colors.len() % self.palette.colors.len()],
+                    );
+                }
+
+                acc.push((positions, approx));
+                acc
+            });
+
+        data.into_iter().fold(vec![], |acc, (positions, approx)| {
+            let color = colors.get(&approx).unwrap();
+            let color = Vec3::new(color.r as f32, color.g as f32, color.b as f32);
+            [
+                acc,
+                positions
+                    .into_iter()
+                    .map(|p| MomentVertex {
+                        position: p.into(),
+                        color,
+                    })
+                    .collect(),
+            ]
+            .concat()
         })
     }
 
@@ -73,55 +117,21 @@ impl PolyhedronPrimitive {
         }
     }
 
-    pub fn vertices(&self) -> Vec<Vertex> {
+    pub fn vertices(&self) -> Vec<ShapeVertex> {
         let mut vertices = Vec::new();
         let barycentric = [Vec3::unit_x(), Vec3::unit_y(), Vec3::unit_z()];
 
-        let mut polygon_sizes: Vec<usize> =
-            self.polyhedron
-                .cycles
-                .iter()
-                .fold(Vec::new(), |mut acc, f| {
-                    if !acc.contains(&f.len()) {
-                        acc.push(f.len());
-                    }
-                    acc
-                });
-
-        polygon_sizes.sort();
-
         for i in 0..self.polyhedron.cycles.len() {
-            let color_index = polygon_sizes
-                .iter()
-                .position(|&x| x == self.polyhedron.cycles[i].len())
-                .unwrap();
-
-            let n = polygon_sizes.get(color_index).unwrap();
-            let palette: Vec<wgpu::Color> = self.palette.clone().into();
-            let color = palette[n % palette.len()];
-            let color = Vec4::new(color.r as f32, color.g as f32, color.b as f32, 1.0);
             let sides = self.face_sides_buffer(i);
             let positions = self.face_triangle_positions(i);
-
-            let mut area = 0.0;
-            for i in 0..positions.len() / 3 {
-                let j = i * 3;
-                let a = (positions[j] - positions[j + 1]).mag();
-                let b = (positions[j + 1] - positions[j + 2]).mag();
-                let c = (positions[j + 2] - positions[j]).mag();
-                let s = (a + b + c) / 2.0;
-                area += (s * (s - a) * (s - b) * (s - c)).sqrt();
-            }
-            println!("area for face {i} is {area}");
 
             for j in 0..positions.len() {
                 let p = positions[j].normalized();
                 let b = barycentric[j % barycentric.len()];
-                vertices.push(Vertex {
+                vertices.push(ShapeVertex {
                     normal: Vec4::new(p.x, p.y, p.z, 0.0),
                     sides: Vec4::new(sides[j].x, sides[j].y, sides[j].z, 0.0),
                     barycentric: Vec4::new(b.x, b.y, b.z, 0.0),
-                    color,
                 });
             }
         }
