@@ -104,7 +104,7 @@ impl Application for Polyblade {
             Schlegel(schlegel) => {
                 self.state.schlegel = schlegel;
                 if schlegel {
-                    self.state.camera.fov_y = std::f32::consts::PI * 0.962;
+                    self.state.camera.fov_y = 2.9;
                 } else {
                     self.state.camera.fov_y = 1.0;
                     self.state.camera.eye = Vec3::new(0.0, 2.0, 3.0);
@@ -267,6 +267,7 @@ impl<Message> shader::Program<Message> for Polyblade {
     ) -> Self::Primitive {
         Self::Primitive::new(
             self.state.polyhedron.clone(),
+            self.state.schlegel,
             self.state.palette.clone(),
             self.state.transform,
             self.state.camera,

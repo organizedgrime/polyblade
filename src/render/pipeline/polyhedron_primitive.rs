@@ -8,6 +8,7 @@ use super::{AllUniforms, FragUniforms, LightUniforms, ModelUniforms, Pipeline, V
 #[derive(Debug)]
 pub struct PolyhedronPrimitive {
     polyhedron: PolyGraph,
+    pub schlegel: bool,
     palette: Vec<wgpu::Color>,
     transform: Mat4,
     camera: Camera,
@@ -16,12 +17,14 @@ pub struct PolyhedronPrimitive {
 impl PolyhedronPrimitive {
     pub fn new(
         polyhedron: PolyGraph,
+        schlegel: bool,
         palette: Vec<wgpu::Color>,
         transform: Mat4,
         camera: Camera,
     ) -> Self {
         Self {
             polyhedron,
+            schlegel,
             palette,
             transform,
             camera,
@@ -57,7 +60,7 @@ impl PolyhedronPrimitive {
         })
     }
 
-    fn face_sides_buffer(&self, face_index: usize) -> Vec<Vec3> {
+    pub fn face_sides_buffer(&self, face_index: usize) -> Vec<Vec3> {
         let positions = self.polyhedron.face_positions(face_index);
         let n = positions.len();
         match n {
