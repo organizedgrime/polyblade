@@ -103,6 +103,17 @@ impl PolyhedronPrimitive {
             let sides = self.face_sides_buffer(i);
             let positions = self.face_triangle_positions(i);
 
+            let mut area = 0.0;
+            for i in 0..positions.len() / 3 {
+                let j = i * 3;
+                let a = (positions[j] - positions[j + 1]).mag();
+                let b = (positions[j + 1] - positions[j + 2]).mag();
+                let c = (positions[j + 2] - positions[j]).mag();
+                let s = (a + b + c) / 2.0;
+                area += (s * (s - a) * (s - b) * (s - c)).sqrt();
+            }
+            println!("area for face {i} is {area}");
+
             for j in 0..positions.len() {
                 let p = positions[j].normalized();
                 let b = barycentric[j % barycentric.len()];
