@@ -62,7 +62,7 @@ impl PolyhedronPrimitive {
     }
 
     pub fn positions(&self) -> Vec<MomentVertex> {
-        let mut colors: HashMap<u32, RGB> = HashMap::new();
+        let mut areas = vec![];
 
         let data: Vec<(Vec<Vec3>, u32)> =
             (0..self.polyhedron.cycles.len()).fold(Vec::new(), |mut acc, i| {
@@ -76,22 +76,22 @@ impl PolyhedronPrimitive {
                     let s = (a + b + c) / 2.0;
                     area += (s * (s - a) * (s - b) * (s - c)).sqrt();
                 }
-                let approx = (area * 100.0).round() as u32;
+                let approx = (area * 10000.0).round() as u32 / 500;
                 println!("area for face {i} is {area}, approx: {approx}");
 
-                if !colors.contains_key(&approx) {
-                    colors.insert(
-                        approx,
-                        self.palette.colors[colors.len() % self.palette.colors.len()],
-                    );
+                if !areas.contains(&approx) {
+                    areas.push(approx);
                 }
 
                 acc.push((positions, approx));
                 acc
             });
 
+        areas.sort();
+
         data.into_iter().fold(vec![], |acc, (positions, approx)| {
-            let color = colors.get(&approx).unwrap();
+            let i = areas.iter().position(|&a| a == approx).unwrap();
+            let color = self.palette.colors[i % self.palette.colors.len()];
             let color = Vec3::new(color.r as f32, color.g as f32, color.b as f32);
             [
                 acc,
