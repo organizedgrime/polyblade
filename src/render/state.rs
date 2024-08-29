@@ -28,7 +28,7 @@ impl Default for AppState {
         Self {
             polyhedron,
             info,
-            palette: Palette::default(),
+            palette: Palette::dream_haze(),
             transform: Mat4::identity(),
             scale: 1.0,
             camera: Camera::default(),

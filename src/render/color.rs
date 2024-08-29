@@ -1,4 +1,7 @@
-use std::cmp::{max, min};
+use std::{
+    cmp::{max, min},
+    num::ParseIntError,
+};
 
 use iced::widget::shader::wgpu;
 
@@ -24,6 +27,18 @@ pub struct RGB {
 impl RGB {
     pub fn new(r: u8, g: u8, b: u8) -> Self {
         Self { r, g, b }
+    }
+}
+
+impl TryFrom<&str> for RGB {
+    type Error = ParseIntError;
+
+    fn try_from(value: &str) -> Result<Self, Self::Error> {
+        let r = u8::from_str_radix(&value[1..3], 16)?;
+        let g = u8::from_str_radix(&value[3..5], 16)?;
+        let b = u8::from_str_radix(&value[5..7], 16)?;
+        println!("rgb: {r}, {g}, {b}");
+        Ok(Self { r, g, b })
     }
 }
 

@@ -7,6 +7,7 @@ pub struct Palette {
 }
 
 
+
 impl Default for Palette {
     fn default() -> Self {
         Self { colors: vec![
@@ -28,6 +29,37 @@ impl Into<Vec<wgpu::Color>> for Palette {
     }
 }
 
-/* impl Palette {
-    pub fn meow() {}
-} */
+
+impl Palette {
+    fn new(colors: &[&str]) -> Self {
+        Self {
+            colors: colors.into_iter().map(|&c| c.try_into().unwrap()).collect()
+        }
+    }
+    // https://lospec.com/palette-list/desatur8
+    pub fn desatur8() -> Self {
+        Self::new(&[
+            "#f0f0eb",
+            "#ffff8f", 
+            "#7be098",
+            "#849ad8",
+            "#e8b382",
+            "#d8828e",
+            "#a776c1",
+            "#545155"]
+        )
+    }
+
+    pub fn dream_haze() -> Self {
+        Self::new(&[
+            "#3c42c4",
+            "#6e51c8",
+            "#a065cd",
+            "#ce79d2",
+            "#d68fb8",
+            "#dda2a3",
+            "#eac4ae",
+            "#f4dfbe"]
+        )
+    }
+}
