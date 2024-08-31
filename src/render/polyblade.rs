@@ -1,13 +1,14 @@
 use std::io::Read;
 
-use iced::mouse;
-use iced::widget::button;
-use iced::Rectangle;
+use iced::advanced::Shell;
+use iced::widget::{button, Row};
+use iced::{event, mouse};
+use iced::{Rectangle, Renderer};
 use ultraviolet::Vec3;
 
 use iced::widget::slider;
-use iced_aw::menu::Item;
 use iced_aw::menu_bar;
+use iced_aw::{helpers::color_picker, menu::Item};
 
 use crate::{
     bones::Transaction,
@@ -26,6 +27,8 @@ use iced::{
     widget::{column, container, row, shader},
     window, Application, Command, Element, Length, Subscription, Theme,
 };
+
+use super::message;
 
 pub struct Polyblade {
     state: AppState,
@@ -126,12 +129,49 @@ impl Application for Polyblade {
             OpenWiki(wiki) => {
                 let _ = open::that(wiki).ok();
             }
+            ChooseColor(i) => {
+                self.state.show_picker = true;
+                self.state.picked_color = self.state.palette.colors[i].into();
+            }
+            SubmitColor(color) => {
+                self.state.picked_color = color;
+                self.state.show_picker = false;
+            }
+            CancelColor => {
+                self.state.show_picker = false;
+            }
         }
 
         Command::none()
     }
 
     fn view(&self) -> Element<'_, Self::Message> {
+        let but = button("")
+            .style(iced::theme::Button::Custom(Box::new(ColorPickerBox {
+                color: self.state.picked_color.clone().into(),
+            })))
+            .on_press(Message::ChooseColor(1));
+
+        let mut button_row = Row::new();
+
+        for (i, color) in self.state.palette.colors.iter().enumerate() {
+            button_row = button_row.push(
+                button("color")
+                    .style(iced::theme::Button::Custom(Box::new(ColorPickerBox {
+                        color: color.clone().into(),
+                    })))
+                    .on_press(Message::ChooseColor(i)),
+            );
+        }
+
+        let cp = color_picker(
+            self.state.show_picker,
+            self.state.picked_color,
+            but,
+            Message::CancelColor,
+            Message::SubmitColor,
+        );
+
         container(
             column![
                 row![
@@ -140,9 +180,10 @@ impl Application for Polyblade {
                         ConwayMessage::menu()
                     )),
                     checkbox("Rotating", self.state.rotating).on_toggle(Message::Rotate),
-                    checkbox("Schlegel Diagram", self.state.schlegel).on_toggle(Message::Schlegel)
+                    checkbox("Schlegel Diagram", self.state.schlegel).on_toggle(Message::Schlegel),
                 ]
                 .spacing(10.0),
+                button_row,
                 // Actual shader of the program
                 shader(self).width(Length::Fill).height(Length::Fill),
                 // Info
@@ -182,7 +223,9 @@ impl Application for Polyblade {
                     .step(0.1)
                 ]
             ]
-            .spacing(10),
+            .spacing(10)
+            .push(cp)
+            .push(text(format!("Color: {:?}", self.state.picked_color))),
         )
         .width(Length::Fill)
         .height(Length::Fill)
@@ -227,7 +270,11 @@ impl Application for Polyblade {
 
         let tick = window::frames().map(Message::Tick);
 
-        Subscription::batch(vec![tick, keyboard::on_key_press(handle_hotkey)])
+        if self.state.show_picker {
+            Subscription::batch(vec![keyboard::on_key_press(handle_hotkey)])
+        } else {
+            Subscription::batch(vec![tick, keyboard::on_key_press(handle_hotkey)])
+        }
     }
 
     fn theme(&self) -> Self::Theme {
@@ -239,9 +286,9 @@ impl<Message> shader::Program<Message> for Polyblade {
     type State = ();
     type Primitive = PolyhedronPrimitive;
 
-    /* fn update(
+    fn update(
         &self,
-        _state: &mut Self::State,
+        state: &mut Self::State,
         event: shader::Event,
         _bounds: Rectangle,
         _cursor: mouse::Cursor,
@@ -257,7 +304,7 @@ impl<Message> shader::Program<Message> for Polyblade {
             }
             _ => (event::Status::Ignored, None),
         }
-    } */
+    }
 
     fn draw(
         &self,
@@ -265,6 +312,7 @@ impl<Message> shader::Program<Message> for Polyblade {
         _cursor: mouse::Cursor,
         _bounds: Rectangle,
     ) -> Self::Primitive {
+        println!("drawing!");
         Self::Primitive::new(
             self.state.polyhedron.clone(),
             self.state.schlegel,

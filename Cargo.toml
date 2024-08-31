@@ -9,14 +9,17 @@ bytemuck = { version = "1.0", features = [
 	"zeroable_maybe_uninit",
 	"zeroable_atomics",
 ] }
-iced_aw = { version = "0.9.2", default-features = false, features = [
-	"color_picker",
-	"card",
-	"modal",
-	"menu",
-	"quad",
-	"icons",
-] }
+
+#iced_aw = { version = "0.9.3" }
+iced_aw = { path = "../iced_aw" }
+# iced_aw = { version = "0.9.3", default-features = false, features = [
+# 	"color_picker",
+# 	"card",
+# 	"modal",
+# 	"menu",
+# 	"quad",
+# 	"icons",
+# ] }
 image = { version = "0.24.9" }
 # Enum iteration
 strum = "0.26.2"

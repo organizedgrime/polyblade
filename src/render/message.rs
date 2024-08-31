@@ -1,5 +1,5 @@
-use crate::Instant;
-use iced::font;
+use crate::{render::color::RGB, Instant};
+use iced::{font, Color};
 use std::fmt::Display;
 use strum_macros::{Display, EnumIter};
 
@@ -8,15 +8,23 @@ use super::polydex::Polydex;
 #[derive(Debug, Clone)]
 pub enum Message {
     Tick(Instant),
+    // UI controls
     Rotate(bool),
     Schlegel(bool),
     SizeChanged(f32),
     FovChanged(f32),
+    // Shape modifications
     Preset(PresetMessage),
     Conway(ConwayMessage),
+    // Font
     FontLoaded(Result<(), font::Error>),
+    // Polydex
     PolydexLoaded(Result<Polydex, String>),
     OpenWiki(String),
+    // Color picking
+    ChooseColor(usize),
+    SubmitColor(Color),
+    CancelColor,
 }
 
 #[derive(Debug, Clone, EnumIter)]

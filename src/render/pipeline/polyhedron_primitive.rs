@@ -77,7 +77,7 @@ impl PolyhedronPrimitive {
                     area += (s * (s - a) * (s - b) * (s - c)).sqrt();
                 }
                 let approx = (area * 10000.0).round() as u32 / 500;
-                println!("area for face {i} is {area}, approx: {approx}");
+                //println!("area for face {i} is {area}, approx: {approx}");
 
                 if !areas.contains(&approx) {
                     areas.push(approx);

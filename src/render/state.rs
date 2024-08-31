@@ -4,7 +4,7 @@ use crate::{
     Instant,
 };
 
-use iced::time::Duration;
+use iced::{time::Duration, Color};
 use std::f32::consts::PI;
 use ultraviolet::Mat4;
 
@@ -12,6 +12,8 @@ pub struct AppState {
     pub polyhedron: PolyGraph,
     pub info: InfoBox,
     pub palette: Palette,
+    pub show_picker: bool,
+    pub picked_color: Color,
     pub transform: Mat4,
     pub scale: f32,
     pub camera: Camera,
@@ -30,6 +32,8 @@ impl Default for AppState {
             info,
             //palette: Palette::desatur8(),
             palette: Palette::default(),
+            show_picker: false,
+            picked_color: Color::from_rgba8(0, 0, 0, 1.0),
             transform: Mat4::identity(),
             scale: 1.0,
             camera: Camera::default(),

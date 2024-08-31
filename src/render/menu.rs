@@ -133,3 +133,18 @@ impl button::StyleSheet for LotusButton {
         }
     }
 }
+
+pub struct ColorPickerBox {
+    pub color: iced::Color,
+}
+
+impl button::StyleSheet for ColorPickerBox {
+    type Style = iced::Theme;
+
+    fn active(&self, _style: &Self::Style) -> button::Appearance {
+        button::Appearance {
+            background: Some(iced::Background::Color(self.color)),
+            ..Default::default()
+        }
+    }
+}

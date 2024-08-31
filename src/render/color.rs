@@ -133,6 +133,26 @@ impl From<HSL> for RGB {
     }
 }
 
+impl From<iced::Color> for RGB {
+    fn from(value: iced::Color) -> Self {
+        Self {
+            r: (value.r * 255.0) as u8,
+            g: (value.g * 255.0) as u8,
+            b: (value.b * 255.0) as u8,
+        }
+    }
+}
+impl From<RGB> for iced::Color {
+    fn from(value: RGB) -> Self {
+        Self {
+            r: value.r as f32 / 255.0,
+            g: value.g as f32 / 255.0,
+            b: value.b as f32 / 255.0,
+            a: 255.0,
+        }
+    }
+}
+
 impl From<RGB> for wgpu::Color {
     fn from(val: RGB) -> Self {
         wgpu::Color {
