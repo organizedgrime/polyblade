@@ -149,14 +149,16 @@ impl Application for Polyblade {
     }
 
     fn view(&self) -> Element<'_, Self::Message> {
-        let mut button_row = Row::new();
+        let mut button_row = Row::new().spacing(10);
 
         for (i, color) in self.state.palette.colors.iter().enumerate() {
             button_row = button_row.push(
-                button("color")
+                button("")
                     .style(iced::theme::Button::Custom(Box::new(ColorPickerBox {
                         color: color.clone().into(),
                     })))
+                    .width(20)
+                    .height(20)
                     .on_press(Message::ChooseColor(i)),
             );
         }
@@ -164,7 +166,7 @@ impl Application for Polyblade {
         let cp = color_picker(
             self.state.color_index.is_some(),
             self.state.picked_color,
-            text(""),
+            text("").width(0).height(0),
             Message::CancelColor,
             Message::SubmitColor,
         );
@@ -184,45 +186,47 @@ impl Application for Polyblade {
                 // Actual shader of the program
                 shader(self).width(Length::Fill).height(Length::Fill),
                 // Info
-                container(column![
-                    button(text(self.state.info.name())).on_press(self.state.info.wiki_message()),
-                    row![
-                        column![
-                            text("Bowers:"),
-                            text("Conway:"),
-                            text("Faces:"),
-                            text("Edges:"),
-                            text("Vertices:"),
-                        ],
-                        column![
-                            text(self.state.info.bowers()),
-                            text(&self.state.info.conway),
-                            text(&self.state.info.faces),
-                            text(&self.state.info.edges),
-                            text(&self.state.info.vertices),
+                column![
+                    container(column![
+                        button(text(self.state.info.name()))
+                            .on_press(self.state.info.wiki_message()),
+                        row![
+                            column![
+                                text("Bowers:"),
+                                text("Conway:"),
+                                text("Faces:"),
+                                text("Edges:"),
+                                text("Vertices:"),
+                            ],
+                            column![
+                                text(self.state.info.bowers()),
+                                text(&self.state.info.conway),
+                                text(&self.state.info.faces),
+                                text(&self.state.info.edges),
+                                text(&self.state.info.vertices),
+                            ]
                         ]
+                        .spacing(20)
+                    ]),
+                    row![
+                        text("Size: "),
+                        text(self.state.scale.to_string()),
+                        slider(1.0..=10.0, self.state.scale, Message::SizeChanged).step(0.1)
+                    ],
+                    row![
+                        text("FOV: "),
+                        text(self.state.camera.fov_y.to_string()),
+                        slider(
+                            0.0..=(std::f32::consts::PI),
+                            self.state.camera.fov_y,
+                            Message::FovChanged
+                        )
+                        .step(0.1)
                     ]
-                    .spacing(20)
-                ]),
-                row![
-                    text("Size: "),
-                    text(self.state.scale.to_string()),
-                    slider(1.0..=10.0, self.state.scale, Message::SizeChanged).step(0.1)
-                ],
-                row![
-                    text("FOV: "),
-                    text(self.state.camera.fov_y.to_string()),
-                    slider(
-                        0.0..=(std::f32::consts::PI),
-                        self.state.camera.fov_y,
-                        Message::FovChanged
-                    )
-                    .step(0.1)
                 ]
             ]
             .spacing(10)
-            .push(cp)
-            .push(text(format!("Color: {:?}", self.state.picked_color))),
+            .push(cp),
         )
         .width(Length::Fill)
         .height(Length::Fill)
