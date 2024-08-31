@@ -130,15 +130,18 @@ impl Application for Polyblade {
                 let _ = open::that(wiki).ok();
             }
             ChooseColor(i) => {
-                self.state.show_picker = true;
+                self.state.color_index = Some(i);
                 self.state.picked_color = self.state.palette.colors[i].into();
             }
             SubmitColor(color) => {
                 self.state.picked_color = color;
-                self.state.show_picker = false;
+                if let Some(i) = self.state.color_index {
+                    self.state.palette.colors[i] = color.into();
+                }
+                self.state.color_index = None;
             }
             CancelColor => {
-                self.state.show_picker = false;
+                self.state.color_index = None;
             }
         }
 
@@ -146,12 +149,6 @@ impl Application for Polyblade {
     }
 
     fn view(&self) -> Element<'_, Self::Message> {
-        let but = button("")
-            .style(iced::theme::Button::Custom(Box::new(ColorPickerBox {
-                color: self.state.picked_color.clone().into(),
-            })))
-            .on_press(Message::ChooseColor(1));
-
         let mut button_row = Row::new();
 
         for (i, color) in self.state.palette.colors.iter().enumerate() {
@@ -165,9 +162,9 @@ impl Application for Polyblade {
         }
 
         let cp = color_picker(
-            self.state.show_picker,
+            self.state.color_index.is_some(),
             self.state.picked_color,
-            but,
+            text(""),
             Message::CancelColor,
             Message::SubmitColor,
         );
@@ -270,7 +267,7 @@ impl Application for Polyblade {
 
         let tick = window::frames().map(Message::Tick);
 
-        if self.state.show_picker {
+        if self.state.color_index.is_some() {
             Subscription::batch(vec![keyboard::on_key_press(handle_hotkey)])
         } else {
             Subscription::batch(vec![tick, keyboard::on_key_press(handle_hotkey)])
