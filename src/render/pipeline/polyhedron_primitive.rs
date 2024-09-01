@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use crate::{
     bones::PolyGraph,
-    render::{camera::Camera, color::RGB, palette::Palette},
+    render::{camera::Camera, color::RGBA, palette::Palette},
 };
 use iced::widget::shader::{self, wgpu};
 use iced::{Color, Rectangle, Size};

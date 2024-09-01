@@ -31,7 +31,7 @@ impl Default for AppState {
             polyhedron,
             info,
             //palette: Palette::desatur8(),
-            palette: Palette::default(),
+            palette: Palette::desatur8(),
             color_index: None,
             picked_color: Color::from_rgba8(0, 0, 0, 1.0),
             transform: Mat4::identity(),

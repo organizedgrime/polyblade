@@ -1,6 +1,7 @@
 use std::{
     cmp::{max, min},
     num::ParseIntError,
+    u8,
 };
 
 use iced::widget::shader::wgpu;
@@ -18,27 +19,32 @@ pub struct HSL {
 
 #[derive(Debug, Clone, Copy, Default)]
 #[allow(clippy::upper_case_acronyms)]
-pub struct RGB {
+pub struct RGBA {
     pub r: u8,
     pub g: u8,
     pub b: u8,
+    pub a: u8,
 }
 
-impl RGB {
-    pub fn new(r: u8, g: u8, b: u8) -> Self {
-        Self { r, g, b }
+impl RGBA {
+    pub fn new(r: u8, g: u8, b: u8, a: u8) -> Self {
+        Self { r, g, b, a }
     }
 }
 
-impl TryFrom<&str> for RGB {
+impl TryFrom<&str> for RGBA {
     type Error = ParseIntError;
 
     fn try_from(value: &str) -> Result<Self, Self::Error> {
         let r = u8::from_str_radix(&value[1..3], 16)?;
         let g = u8::from_str_radix(&value[3..5], 16)?;
         let b = u8::from_str_radix(&value[5..7], 16)?;
-        println!("rgb: {r}, {g}, {b}");
-        Ok(Self { r, g, b })
+        Ok(Self {
+            r,
+            g,
+            b,
+            a: u8::MAX,
+        })
     }
 }
 
@@ -49,8 +55,8 @@ impl HSL {
     }
 }
 
-impl From<RGB> for HSL {
-    fn from(val: RGB) -> Self {
+impl From<RGBA> for HSL {
+    fn from(val: RGBA) -> Self {
         let mut h: f32;
         let (r, g, b) = (val.r, val.g, val.b);
 
@@ -106,12 +112,12 @@ impl From<RGB> for HSL {
     }
 }
 
-impl From<HSL> for RGB {
+impl From<HSL> for RGBA {
     fn from(val: HSL) -> Self {
         if val.s == 0.0 {
             // Achromatic, i.e., grey.
             let l = percent_to_byte(val.l);
-            return RGB::new(l, l, l);
+            return RGBA::new(l, l, l, u8::MAX);
         }
 
         let h = val.h / 360.0; // treat this as 0..1 instead of degrees
@@ -125,47 +131,49 @@ impl From<HSL> for RGB {
         };
         let p = 2.0 * l - q;
 
-        RGB::new(
+        RGBA::new(
             percent_to_byte(hue_to_rgb(p, q, h + 1.0 / 3.0)),
             percent_to_byte(hue_to_rgb(p, q, h)),
             percent_to_byte(hue_to_rgb(p, q, h - 1.0 / 3.0)),
+            u8::MAX,
         )
     }
 }
 
-impl From<iced::Color> for RGB {
+impl From<iced::Color> for RGBA {
     fn from(value: iced::Color) -> Self {
         Self {
             r: (value.r * 255.0) as u8,
             g: (value.g * 255.0) as u8,
             b: (value.b * 255.0) as u8,
+            a: (value.a * 255.0) as u8,
         }
     }
 }
-impl From<RGB> for iced::Color {
-    fn from(value: RGB) -> Self {
+impl From<RGBA> for iced::Color {
+    fn from(value: RGBA) -> Self {
         Self {
             r: value.r as f32 / 255.0,
             g: value.g as f32 / 255.0,
             b: value.b as f32 / 255.0,
-            a: 255.0,
+            a: value.a as f32 / 255.0,
         }
     }
 }
 
-impl From<RGB> for wgpu::Color {
-    fn from(val: RGB) -> Self {
+impl From<RGBA> for wgpu::Color {
+    fn from(val: RGBA) -> Self {
         wgpu::Color {
             r: val.r as f64 / 255.0,
             g: val.g as f64 / 255.0,
             b: val.b as f64 / 255.0,
-            a: 1.0,
+            a: val.a as f64 / 255.0,
         }
     }
 }
 impl From<HSL> for wgpu::Color {
     fn from(val: HSL) -> Self {
-        Into::<RGB>::into(val).into()
+        Into::<RGBA>::into(val).into()
     }
 }
 
