@@ -116,6 +116,9 @@ impl Application for Polyblade {
             SizeChanged(size) => {
                 self.state.scale = size;
             }
+            ColorsChanged(colors) => {
+                self.state.colors = colors;
+            }
             FovChanged(fov) => {
                 self.state.camera.fov_y = fov;
             }
@@ -209,6 +212,16 @@ impl Application for Polyblade {
                         .spacing(20)
                     ]),
                     row![
+                        text("Colors: "),
+                        text(self.state.colors.to_string()),
+                        slider(
+                            1..=self.state.palette.colors.len() as i16,
+                            self.state.colors,
+                            Message::ColorsChanged
+                        )
+                        .step(1i16)
+                    ],
+                    row![
                         text("Size: "),
                         text(self.state.scale.to_string()),
                         slider(1.0..=10.0, self.state.scale, Message::SizeChanged).step(0.1)
@@ -299,10 +312,7 @@ impl<Message> shader::Program<Message> for Polyblade {
             /* shader::Event::Mouse(_) => {}
             shader::Event::Touch(_) => {}
             shader::Event::Keyboard(_) => {} */
-            shader::Event::RedrawRequested(time) => {
-                println!("redraw requested11");
-                (event::Status::Captured, None)
-            }
+            shader::Event::RedrawRequested(time) => (event::Status::Captured, None),
             _ => (event::Status::Ignored, None),
         }
     }
@@ -313,10 +323,10 @@ impl<Message> shader::Program<Message> for Polyblade {
         _cursor: mouse::Cursor,
         _bounds: Rectangle,
     ) -> Self::Primitive {
-        println!("drawing!");
         Self::Primitive::new(
             self.state.polyhedron.clone(),
             self.state.schlegel,
+            self.state.colors,
             self.state.palette.clone(),
             self.state.transform,
             self.state.camera,

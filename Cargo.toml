@@ -30,6 +30,7 @@ rand = { version = "0.8.5" }
 serde = { version = "^1.0.0", features = ["derive"] }
 ron = { version = "0.8" }
 open = "5.3.0"
+ckmeans = "1.0.6"
 
 [dev-dependencies]
 test-case = { version = "^3.3.0" }

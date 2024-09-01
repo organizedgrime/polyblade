@@ -341,6 +341,18 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "613afe47fcd5fac7ccf1db93babcb082c5994d996f20b8b159f2ad1658eb5724"
 
 [[package]]
+name = "ckmeans"
+version = "1.0.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d8b4542d3393c68cedaea1ee1730f3a0867dae6afc5bde352a2905f42781d05c"
+dependencies = [
+ "js-sys",
+ "libc",
+ "num-traits",
+ "wasm-bindgen",
+]
+
+[[package]]
 name = "clipboard-win"
 version = "5.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2171,6 +2183,7 @@ name = "polyblade"
 version = "0.1.0"
 dependencies = [
  "bytemuck",
+ "ckmeans",
  "console_error_panic_hook",
  "console_log",
  "getrandom",

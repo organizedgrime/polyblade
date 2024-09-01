@@ -4,6 +4,7 @@ use crate::{
     bones::PolyGraph,
     render::{camera::Camera, color::RGBA, palette::Palette},
 };
+use ckmeans::ckmeans;
 use iced::widget::shader::{self, wgpu};
 use iced::{Color, Rectangle, Size};
 use ultraviolet::{Mat4, Vec3, Vec4};
@@ -16,6 +17,7 @@ use super::{
 pub struct PolyhedronPrimitive {
     polyhedron: PolyGraph,
     pub schlegel: bool,
+    colors: i16,
     palette: Palette,
     transform: Mat4,
     camera: Camera,
@@ -25,6 +27,7 @@ impl PolyhedronPrimitive {
     pub fn new(
         polyhedron: PolyGraph,
         schlegel: bool,
+        colors: i16,
         palette: Palette,
         transform: Mat4,
         camera: Camera,
@@ -32,6 +35,7 @@ impl PolyhedronPrimitive {
         Self {
             polyhedron,
             schlegel,
+            colors,
             palette,
             transform,
             camera,
@@ -62,48 +66,69 @@ impl PolyhedronPrimitive {
     }
 
     pub fn positions(&self) -> Vec<MomentVertex> {
-        let mut areas = vec![];
+        let mut kv = vec![];
 
-        let data: Vec<(Vec<Vec3>, u32)> =
-            (0..self.polyhedron.cycles.len()).fold(Vec::new(), |mut acc, i| {
-                let positions = self.face_triangle_positions(i);
-                let mut area = 0.0;
-                for i in 0..positions.len() / 3 {
-                    let j = i * 3;
-                    let a = (positions[j] - positions[j + 1]).mag();
-                    let b = (positions[j + 1] - positions[j + 2]).mag();
-                    let c = (positions[j + 2] - positions[j]).mag();
-                    let s = (a + b + c) / 2.0;
-                    area += (s * (s - a) * (s - b) * (s - c)).sqrt();
+        let areas: Vec<f32> = (0..self.polyhedron.cycles.len()).fold(Vec::new(), |mut acc, i| {
+            let positions = self.face_triangle_positions(i);
+            let mut area = 0.0;
+            for i in 0..positions.len() / 3 {
+                let j = i * 3;
+                let a = (positions[j] - positions[j + 1]).mag();
+                let b = (positions[j + 1] - positions[j + 2]).mag();
+                let c = (positions[j + 2] - positions[j]).mag();
+                let s = (a + b + c) / 2.0;
+                area += (s * (s - a) * (s - b) * (s - c)).sqrt();
+            }
+            let log = ((area * area).log10() * 20.0).abs();
+            kv.push((positions, log));
+            acc.push(log);
+            acc
+        });
+        let input = vec![
+            1.0, 12.0, 13.0, 14.0, 15.0, 16.0, 2.0, 2.0, 3.0, 5.0, 7.0, 1.0, 2.0, 5.0, 7.0, 1.0,
+            5.0, 82.0, 1.0, 1.3, 1.1, 78.0,
+        ];
+        let expected = vec![
+            vec![
+                1.0, 1.0, 1.0, 1.0, 1.1, 1.3, 2.0, 2.0, 2.0, 3.0, 5.0, 5.0, 5.0, 7.0, 7.0,
+            ],
+            vec![12.0, 13.0, 14.0, 15.0, 16.0],
+            vec![78.0, 82.0],
+        ];
+
+        let result = ckmeans(&input, 3).unwrap();
+        println!("meow: {result:?}");
+
+        let clusters = ckmeans(&areas[..], self.colors as u8).unwrap_or(vec![areas]);
+        // ckmeans(data, nclusters)
+
+        //areas.sort();
+
+        kv.into_iter().fold(vec![], |acc, (positions, approx)| {
+            for i in 0..clusters.len() {
+                if clusters[i].contains(&approx) {
+                    let color = self.palette.colors[i % self.palette.colors.len()];
+                    let color = Vec4::new(
+                        color.r as f32,
+                        color.g as f32,
+                        color.b as f32,
+                        color.a as f32,
+                    );
+                    return [
+                        acc,
+                        positions
+                            .into_iter()
+                            .map(|p| MomentVertex {
+                                position: p.into(),
+                                color,
+                            })
+                            .collect(),
+                    ]
+                    .concat();
                 }
-                let approx = (area * 10000.0).round() as u32 / 500;
-                //println!("area for face {i} is {area}, approx: {approx}");
+            }
 
-                if !areas.contains(&approx) {
-                    areas.push(approx);
-                }
-
-                acc.push((positions, approx));
-                acc
-            });
-
-        areas.sort();
-
-        data.into_iter().fold(vec![], |acc, (positions, approx)| {
-            let i = areas.iter().position(|&a| a == approx).unwrap();
-            let color = self.palette.colors[i % self.palette.colors.len()];
-            let color = Vec3::new(color.r as f32, color.g as f32, color.b as f32);
-            [
-                acc,
-                positions
-                    .into_iter()
-                    .map(|p| MomentVertex {
-                        position: p.into(),
-                        color,
-                    })
-                    .collect(),
-            ]
-            .concat()
+            acc
         })
     }
 

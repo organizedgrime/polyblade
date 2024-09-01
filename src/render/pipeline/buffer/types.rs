@@ -5,7 +5,7 @@ use ultraviolet::{Mat4, Vec3, Vec4};
 #[repr(C)]
 pub struct MomentVertex {
     pub position: Vec3,
-    pub color: Vec3,
+    pub color: Vec4,
 }
 
 #[derive(Debug, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]

@@ -68,7 +68,6 @@ impl PolyGraph {
         }
     }
 
-    #[allow(dead_code)]
     pub fn disconnect(&mut self, e: impl Into<Edge>) {
         self.edges.remove(&e.into());
     }

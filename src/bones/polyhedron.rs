@@ -149,7 +149,7 @@ impl PolyGraph {
                         Join => {
                             let edges = self.kis(Option::None);
                             vec![
-                                Wait(Instant::now() + Duration::from_secs(1)),
+                                //Wait(Instant::now() + Duration::from_secs(1)),
                                 Release(edges),
                                 Name('j'),
                             ]

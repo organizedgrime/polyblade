@@ -12,6 +12,7 @@ pub enum Message {
     Rotate(bool),
     Schlegel(bool),
     SizeChanged(f32),
+    ColorsChanged(i16),
     FovChanged(f32),
     // Shape modifications
     Preset(PresetMessage),
