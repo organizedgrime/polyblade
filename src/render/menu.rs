@@ -12,7 +12,7 @@ use iced_aw::{
 use strum::IntoEnumIterator;
 
 use crate::{
-    render::message::{ConwayMessage, PolybladeMessage, PresetMessage},
+    render::message::{ColoringStrategyMessage, ConwayMessage, PolybladeMessage, PresetMessage},
     Instant,
 };
 
@@ -38,9 +38,9 @@ pub trait MenuAble: Display + Clone + Sized {
         Menu::new(items).max_width(180.0).offset(10.0).spacing(5.0)
     }
 
-    fn basic_button<'a>(label: &str) -> button::Button<'a, PolybladeMessage, Theme, Renderer> {
+    fn title<'a>() -> Button<'a, PolybladeMessage, Theme, Renderer> {
         button(row![
-            text(label).vertical_alignment(alignment::Vertical::Center),
+            text(Self::TITLE).vertical_alignment(alignment::Vertical::Center),
             text(Bootstrap::CaretDownFill)
                 .size(18)
                 .font(BOOTSTRAP_FONT)
@@ -50,36 +50,17 @@ pub trait MenuAble: Display + Clone + Sized {
         .style(theme::Button::custom(LotusButton))
     }
 
-    fn title<'a>() -> Button<'a, PolybladeMessage, Theme, Renderer> {
-        Self::basic_button(Self::TITLE)
-    }
-
-    fn item_button<'a>(self) -> Item<'a, PolybladeMessage, Theme, Renderer> {
-        Item::new(Self::labeled_button_with_message(&self.to_string(), self))
-    }
-
-    fn button_with_message<'a>(
-        content: impl Into<Element<'a, PolybladeMessage, Theme, Renderer>>,
-        msg: Self,
-    ) -> button::Button<'a, PolybladeMessage, Theme, Renderer> {
-        button(content)
-            .padding([4, 8])
-            .on_press(Self::transform(msg))
-            .style(theme::Button::custom(LotusButton))
-    }
-
-    fn labeled_button_with_message<'a>(
-        label: &str,
-        msg: Self,
-    ) -> button::Button<'a, PolybladeMessage, Theme, Renderer> {
-        Self::button_with_message(
-            text(label).vertical_alignment(alignment::Vertical::Center),
-            msg,
+    fn button<'a>(self) -> Item<'a, PolybladeMessage, Theme, Renderer> {
+        Item::new(
+            button(text(self.to_string()).vertical_alignment(alignment::Vertical::Center))
+                .padding([4, 8])
+                .on_press(Self::transform(self))
+                .style(theme::Button::custom(LotusButton))
+                .width(Length::Fill),
         )
-        .width(Length::Fill)
     }
 
-    fn item_checkbox<'a, F>(
+    fn checkbox<'a, F>(
         label: &str,
         checked: bool,
         on_toggle: F,
@@ -94,7 +75,7 @@ pub trait MenuAble: Display + Clone + Sized {
         )
     }
 
-    fn item_slider<'a, F>(
+    fn slider<'a, F>(
         range: RangeInclusive<f32>,
         value: f32,
         on_slide: F,
@@ -105,28 +86,28 @@ pub trait MenuAble: Display + Clone + Sized {
         Item::new(slider(range, value, move |v| Self::transform(on_slide(v))))
     }
 
-    fn values_to_menu<'a>(items: Vec<Self>) -> Menu<'a, PolybladeMessage, Theme, Renderer> {
-        Self::new_menu(items.into_iter().map(Self::item_button).collect())
-    }
-
-    fn submenu_button<'a>(
+    fn submenu<'a>(
         label: &str,
-    ) -> button::Button<'a, PolybladeMessage, iced::Theme, iced::Renderer> {
-        button(
-            row![
-                text(label)
-                    .width(Length::Fill)
-                    .vertical_alignment(alignment::Vertical::Center),
-                text(Bootstrap::CaretRightFill)
-                    .font(BOOTSTRAP_FONT)
-                    .width(Length::Shrink)
-                    .vertical_alignment(alignment::Vertical::Center),
-            ]
-            .align_items(iced::Alignment::Center),
+        items: Vec<Self>,
+    ) -> Item<'a, PolybladeMessage, iced::Theme, iced::Renderer> {
+        Item::with_menu(
+            button(
+                row![
+                    text(label)
+                        .width(Length::Fill)
+                        .vertical_alignment(alignment::Vertical::Center),
+                    text(Bootstrap::CaretRightFill)
+                        .font(BOOTSTRAP_FONT)
+                        .width(Length::Shrink)
+                        .vertical_alignment(alignment::Vertical::Center),
+                ]
+                .align_items(iced::Alignment::Center),
+            )
+            .padding([4, 8])
+            .style(theme::Button::custom(LotusButton))
+            .width(Length::Fill),
+            Self::new_menu(items.into_iter().map(Self::button).collect()),
         )
-        .padding([4, 8])
-        .style(theme::Button::custom(LotusButton))
-        .width(Length::Fill)
     }
 }
 
@@ -139,26 +120,15 @@ impl MenuAble for PresetMessage {
     }
 
     fn menu_items<'a>(_: &()) -> Vec<Item<'a, PolybladeMessage, Theme, Renderer>> {
-        PresetMessage::iter()
-            .map(|message| {
-                use PresetMessage::*;
-                match message {
-                    Prism(_) => Item::with_menu(
-                        Self::submenu_button("Prism"),
-                        Self::values_to_menu((3..=8).map(Prism).collect()),
-                    ),
-                    AntiPrism(_) => Item::with_menu(
-                        Self::submenu_button("AntiPrism"),
-                        Self::values_to_menu((3..=8).map(AntiPrism).collect()),
-                    ),
-                    Pyramid(_) => Item::with_menu(
-                        Self::submenu_button("Pyramid"),
-                        Self::values_to_menu((3..=8).map(Pyramid).collect()),
-                    ),
-                    _ => Self::item_button(message),
-                }
-            })
-            .collect()
+        use PresetMessage::*;
+        vec![
+            Self::submenu("Prism", (3..=8).map(Prism).collect()),
+            Self::submenu("AntiPrism", (3..=8).map(AntiPrism).collect()),
+            Self::submenu("Pyramid", (3..=8).map(Pyramid).collect()),
+            Self::button(Octahedron),
+            Self::button(Dodecahedron),
+            Self::button(Icosahedron),
+        ]
     }
 }
 
@@ -171,7 +141,7 @@ impl MenuAble for ConwayMessage {
     }
 
     fn menu_items<'a>(_: &()) -> Vec<Item<'a, PolybladeMessage, Theme, Renderer>> {
-        ConwayMessage::iter().map(Self::item_button).collect()
+        ConwayMessage::iter().map(Self::button).collect()
     }
 }
 
@@ -184,13 +154,14 @@ impl MenuAble for RenderMessage {
     }
 
     fn menu_items<'a>(state: &Self::State) -> Vec<Item<'a, PolybladeMessage, Theme, Renderer>> {
+        use RenderMessage::*;
         vec![
-            Self::item_checkbox("Schlegel", state.schlegel, RenderMessage::Schlegel),
-            Self::item_checkbox("Rotating", state.rotating, RenderMessage::Rotating),
-            Self::item_slider(
-                0.0..=10.0,
-                state.line_thickness,
-                RenderMessage::LineThickness,
+            Self::checkbox("Schlegel", state.schlegel, Schlegel),
+            Self::checkbox("Rotating", state.rotating, Rotating),
+            Self::slider(0.0..=10.0, state.line_thickness, LineThickness),
+            Self::submenu(
+                "Coloring",
+                ColoringStrategyMessage::iter().map(ColorMethod).collect(),
             ),
         ]
     }
