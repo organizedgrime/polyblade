@@ -3,12 +3,12 @@ mod render;
 use iced::{Application as _, Settings};
 use render::Polyblade;
 
-#[rustfmt::skip::macros(menu_bar)]
 #[cfg(target_arch = "wasm32")]
 pub use iced::time::Instant;
 #[cfg(not(target_arch = "wasm32"))]
 pub use std::time::Instant;
 
+#[rustfmt::skip::macros(menu_bar)]
 fn main() -> iced::Result {
     #[cfg(target_arch = "wasm32")]
     {

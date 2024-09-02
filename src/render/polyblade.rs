@@ -100,12 +100,16 @@ impl Application for Polyblade {
 
         container(
             column![
-                row![menu_bar!(
-                    (bar("Preset"), PresetMessage::menu(&self.state))(
-                        bar("Conway"),
-                        ConwayMessage::menu(&self.state)
-                    )(bar("Rendering"), RenderMessage::menu(&self.state))
-                ),]
+                row![menu_bar!((
+                    PresetMessage::button("Preset"),
+                    PresetMessage::menu(&())
+                )(
+                    ConwayMessage::button("Conway"),
+                    ConwayMessage::menu(&())
+                )(
+                    RenderMessage::button("Render"),
+                    RenderMessage::menu(&self.state.render)
+                ))]
                 .spacing(10.0),
                 button_row,
                 // Actual shader of the program
