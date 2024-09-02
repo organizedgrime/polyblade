@@ -93,19 +93,13 @@ impl PolyhedronPrimitive {
             for i in 0..clusters.len() {
                 if clusters[i].contains(&approx) {
                     let color = self.palette.colors[i % self.palette.colors.len()];
-                    let color = Vec4::new(
-                        color.r as f32,
-                        color.g as f32,
-                        color.b as f32,
-                        color.a as f32,
-                    );
                     return [
                         acc,
                         positions
                             .into_iter()
                             .map(|p| MomentVertex {
                                 position: p.into(),
-                                color,
+                                color: color.into(),
                             })
                             .collect(),
                     ]

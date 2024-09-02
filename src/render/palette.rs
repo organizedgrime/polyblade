@@ -37,6 +37,13 @@ impl Palette {
             colors: colors.into_iter().map(|&c| c.try_into().unwrap()).collect(),
         }
     }
+
+    pub fn polyblade() -> Self {
+        Self::new(&[
+            "#48845A", "#A3BA70", "#335145", "#FEF086", "#5F9BFC", "#F4A4E7", "#AA89BE",
+        ])
+    }
+
     // https://lospec.com/palette-list/desatur8
     pub fn desatur8() -> Self {
         Self::new(&[

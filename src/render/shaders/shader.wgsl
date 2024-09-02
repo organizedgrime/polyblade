@@ -49,12 +49,12 @@ struct LightUniforms {
 };
 @binding(2) @group(0) var<uniform> light_uniforms : LightUniforms;
 
-fn edge_factor(v_barycentric: vec3<f32>, v_sides: vec3<f32>) -> vec3<f32> {
-    let line_width = 2.0;
+fn edge_factor(v_barycentric: vec3<f32>, v_sides: vec3<f32>) -> f32 {
+    let line_width = 7.0;
     let face: vec3<f32> = v_barycentric * v_sides;
     let r: vec3<f32> = fwidthFine(face) * line_width;
     let f: vec3<f32> = step(r, face);
-    return vec3(min(min(f.x, f.y), f.z));
+    return min(min(f.x, f.y), f.z);
 }
 
 @fragment
@@ -65,15 +65,11 @@ fn fs_main(
     @location(3) v_barycentric: vec4<f32>,
     @location(4) v_sides: vec4<f32>,
 ) -> @location(0) vec4<f32> {
-    let N: vec3<f32> = normalize(v_normal.xyz);
-    let L: vec3<f32> = normalize(frag_uniforms.light_position.xyz - v_position.xyz);
-    let V: vec3<f32> = normalize(frag_uniforms.eye_position.xyz - v_position.xyz);
-    let H: vec3<f32> = normalize(L + V);
-    let diffuse: f32 = light_uniforms.diffuse_intensity * max(dot(N, L), 0.0);
-    let specular: f32 = light_uniforms.specular_intensity * pow(max(dot(N, H), 0.0), light_uniforms.specular_shininess);
-    let ambient: f32 = light_uniforms.ambient_intensity;
-    let reflection_color = light_uniforms.color * (ambient + diffuse) + light_uniforms.specular_color * specular;
-    let lit_color = normalize(v_color.xyz + reflection_color.xyz * 0.2);
     let edge_color = edge_factor(v_barycentric.xyz, v_sides.xyz);
-    return vec4(min(edge_color, lit_color), v_color.w);
+
+    if edge_color == 0.0 {
+        return vec4(0.0, 0.0, 0.0, 1.0);
+    } else {
+        return v_color;
+    }
 }

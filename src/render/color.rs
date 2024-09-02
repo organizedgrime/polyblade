@@ -5,6 +5,7 @@ use std::{
 };
 
 use iced::widget::shader::wgpu;
+use ultraviolet::Vec4;
 
 #[derive(Debug, Default)]
 #[allow(clippy::upper_case_acronyms)]
@@ -158,6 +159,17 @@ impl From<RGBA> for iced::Color {
             b: value.b as f32 / 255.0,
             a: value.a as f32 / 255.0,
         }
+    }
+}
+
+impl From<RGBA> for Vec4 {
+    fn from(value: RGBA) -> Self {
+        Vec4::new(
+            value.r as f32 / 255.0,
+            value.g as f32 / 255.0,
+            value.b as f32 / 255.0,
+            value.a as f32 / 255.0,
+        )
     }
 }
 

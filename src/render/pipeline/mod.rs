@@ -148,7 +148,7 @@ impl Pipeline {
                             // position
                             0 => Float32x3,
                             // color
-                            1 => Float32x3,
+                            1 => Float32x4,
                         ],
                     },
                     wgpu::VertexBufferLayout {
