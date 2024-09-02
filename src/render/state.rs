@@ -8,7 +8,7 @@ use iced::{time::Duration, Color};
 use std::f32::consts::PI;
 use ultraviolet::Mat4;
 
-use super::polydex::Polydex;
+use super::{message::ColorMethodMessage, polydex::Polydex};
 
 pub struct AppState {
     pub model: ModelState,
@@ -25,6 +25,7 @@ pub struct RenderState {
     pub rotating: bool,
     pub schlegel: bool,
     pub line_thickness: f32,
+    pub method: ColorMethodMessage,
     pub picker: ColorPickerState,
 }
 
@@ -45,6 +46,7 @@ impl Default for RenderState {
             rotating: true,
             schlegel: false,
             line_thickness: 2.0,
+            method: ColorMethodMessage::Polygon,
             picker: ColorPickerState::default(),
         }
     }

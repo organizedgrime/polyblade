@@ -2,22 +2,17 @@ use iced::mouse;
 use iced::widget::{button, Row};
 use iced::Rectangle;
 use std::io::Read;
-use ultraviolet::Vec3;
 
 use iced::widget::slider;
 use iced_aw::menu_bar;
 use iced_aw::{helpers::color_picker, menu::Item};
 
-use crate::{
-    bones::Transaction,
-    render::{
-        menu::*,
-        message::*,
-        pipeline::PolyhedronPrimitive,
-        polydex::{Entry, Polydex},
-        state::AppState,
-    },
-    Instant,
+use crate::render::{
+    menu::*,
+    message::*,
+    pipeline::PolyhedronPrimitive,
+    polydex::{Entry, Polydex},
+    state::AppState,
 };
 use iced::widget::text;
 use iced::{
@@ -28,7 +23,6 @@ use iced::{
 
 pub struct Polyblade {
     state: AppState,
-    polydex: Polydex,
 }
 
 pub fn load_polydex() -> Result<Polydex, Box<dyn std::error::Error>> {
@@ -53,7 +47,6 @@ impl Application for Polyblade {
         (
             Self {
                 state: AppState::default(),
-                polydex: vec![],
             },
             Command::batch(vec![
                 font::load(iced_aw::BOOTSTRAP_FONT_BYTES).map(PolybladeMessage::FontLoaded),
@@ -143,7 +136,9 @@ impl Application for Polyblade {
                         slider(
                             1..=self.state.render.picker.palette.colors.len() as i16,
                             self.state.render.picker.colors,
-                            PolybladeMessage::ColorsChanged
+                            |x| PolybladeMessage::Render(RenderMessage::ColorPicker(
+                                ColorPickerMessage::ChangeNumber(x)
+                            ))
                         )
                         .step(1i16)
                     ],
@@ -155,16 +150,6 @@ impl Application for Polyblade {
                         })
                         .step(0.1)
                     ],
-                    row![
-                        text("FOV: "),
-                        text(self.state.render.camera.fov_y.to_string()),
-                        slider(
-                            0.0..=(std::f32::consts::PI),
-                            self.state.render.camera.fov_y,
-                            PolybladeMessage::FovChanged
-                        )
-                        .step(0.1)
-                    ]
                 ]
             ]
             .spacing(10)

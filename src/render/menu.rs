@@ -3,23 +3,17 @@ use std::{fmt::Display, ops::RangeInclusive};
 use iced::{
     alignment, theme,
     widget::{button, checkbox, row, slider, text, Button},
-    Border, Element, Length, Renderer, Theme,
+    Border, Length, Renderer, Theme,
 };
 use iced_aw::{
     menu::{Item, Menu},
-    menu_items, Bootstrap, BOOTSTRAP_FONT,
+    Bootstrap, BOOTSTRAP_FONT,
 };
 use strum::IntoEnumIterator;
 
-use crate::{
-    render::message::{ColoringStrategyMessage, ConwayMessage, PolybladeMessage, PresetMessage},
-    Instant,
-};
+use crate::render::message::{ColorMethodMessage, ConwayMessage, PolybladeMessage, PresetMessage};
 
-use super::{
-    message::RenderMessage,
-    state::{AppState, RenderState},
-};
+use super::{message::RenderMessage, state::RenderState};
 
 pub trait MenuAble: Display + Clone + Sized {
     type State;
@@ -32,9 +26,9 @@ pub trait MenuAble: Display + Clone + Sized {
         Self::new_menu(Self::menu_items(state))
     }
 
-    fn new_menu<'a>(
-        items: Vec<Item<'a, PolybladeMessage, Theme, Renderer>>,
-    ) -> Menu<'a, PolybladeMessage, Theme, Renderer> {
+    fn new_menu(
+        items: Vec<Item<'_, PolybladeMessage, Theme, Renderer>>,
+    ) -> Menu<'_, PolybladeMessage, Theme, Renderer> {
         Menu::new(items).max_width(180.0).offset(10.0).spacing(5.0)
     }
 
@@ -79,11 +73,12 @@ pub trait MenuAble: Display + Clone + Sized {
         range: RangeInclusive<f32>,
         value: f32,
         on_slide: F,
+        step: f32,
     ) -> Item<'a, PolybladeMessage, Theme, Renderer>
     where
         F: 'a + Fn(f32) -> Self,
     {
-        Item::new(slider(range, value, move |v| Self::transform(on_slide(v))))
+        Item::new(slider(range, value, move |v| Self::transform(on_slide(v))).step(step))
     }
 
     fn submenu<'a>(
@@ -158,10 +153,16 @@ impl MenuAble for RenderMessage {
         vec![
             Self::checkbox("Schlegel", state.schlegel, Schlegel),
             Self::checkbox("Rotating", state.rotating, Rotating),
-            Self::slider(0.0..=10.0, state.line_thickness, LineThickness),
+            Self::slider(0.0..=10.0, state.line_thickness, LineThickness, 1.0),
+            Self::slider(
+                0.0..=std::f32::consts::PI,
+                state.camera.fov_y,
+                FovChanged,
+                0.1,
+            ),
             Self::submenu(
-                "Coloring",
-                ColoringStrategyMessage::iter().map(ColorMethod).collect(),
+                "Color Method",
+                ColorMethodMessage::iter().map(ColorMethod).collect(),
             ),
         ]
     }

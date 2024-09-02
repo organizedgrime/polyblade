@@ -10,18 +10,11 @@ use ultraviolet::Vec3;
 use super::{
     polydex::Polydex,
     state::{AppState, ColorPickerState, ModelState, RenderState},
-    Polyblade,
 };
 
 #[derive(Debug, Clone)]
 pub enum PolybladeMessage {
     Tick(Instant),
-    // UI controls
-    // Rotate(bool),
-    // Schlegel(bool),
-    ColorsChanged(i16),
-    FovChanged(f32),
-    // Shape modifications
     Preset(PresetMessage),
     Conway(ConwayMessage),
     Render(RenderMessage),
@@ -104,29 +97,42 @@ pub enum ConwayMessage {
     Bevel,
 }
 
-#[derive(Debug, Clone, EnumIter, Display)]
+#[derive(Debug, Clone)]
 pub enum RenderMessage {
     Schlegel(bool),
     Rotating(bool),
+    FovChanged(f32),
     LineThickness(f32),
-    ColorMethod(ColoringStrategyMessage),
+    ColorMethod(ColorMethodMessage),
     ColorPicker(ColorPickerMessage),
 }
 
-#[derive(Debug, Default, Clone, EnumIter, Display)]
-pub enum ColoringStrategyMessage {
-    #[default]
+impl Display for RenderMessage {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        use RenderMessage::*;
+        let value = match &self {
+            ColorMethod(method) => method.to_string(),
+            _ => {
+                format!("{self:?}")
+            }
+        };
+        f.write_str(&value)
+    }
+}
+
+#[derive(Debug, Clone, EnumIter, Display)]
+pub enum ColorMethodMessage {
     Vertex,
     Edge,
     Polygon,
     Face,
 }
 
-#[derive(Debug, Default, Clone, EnumIter, Display)]
+#[derive(Debug, Clone, EnumIter, Display)]
 pub enum ColorPickerMessage {
+    ChangeNumber(i16),
     ChooseColor(usize),
     SubmitColor(Color),
-    #[default]
     CancelColor,
 }
 
@@ -187,6 +193,7 @@ impl ProcessMessage<RenderState> for RenderMessage {
                     state.camera.fov_y = 1.0;
                     state.camera.eye = Vec3::new(0.0, 2.0, 3.0);
                 }
+                Command::none()
             }
             Rotating(rotating) => {
                 state.rotating = *rotating;
@@ -195,16 +202,22 @@ impl ProcessMessage<RenderState> for RenderMessage {
                 } else {
                     state.start = Instant::now().checked_sub(state.rotation_duration).unwrap();
                 }
+                Command::none()
+            }
+            FovChanged(fov) => {
+                state.camera.fov_y = *fov;
+                Command::none()
             }
             LineThickness(thickness) => {
                 state.line_thickness = *thickness;
+                Command::none()
             }
-            ColorMethod(_) => todo!(),
-            ColorPicker(picker) => {
-                return picker.process(&mut state.picker);
+            ColorMethod(method) => {
+                state.method = method.clone();
+                Command::none()
             }
+            ColorPicker(picker) => picker.process(&mut state.picker),
         }
-        Command::none()
     }
 }
 
@@ -212,6 +225,9 @@ impl ProcessMessage<ColorPickerState> for ColorPickerMessage {
     fn process(&self, state: &mut ColorPickerState) -> Command<PolybladeMessage> {
         use ColorPickerMessage::*;
         match self {
+            ChangeNumber(colors) => {
+                state.colors = *colors;
+            }
             ChooseColor(i) => {
                 state.color_index = Some(*i);
                 state.picked_color = state.palette.colors[*i].into();
@@ -257,17 +273,9 @@ impl ProcessMessage<AppState> for PolybladeMessage {
                 state.update_state(*time);
                 Command::none()
             }
-            ColorsChanged(colors) => {
-                state.render.picker.colors = *colors;
-                Command::none()
-            }
-            FovChanged(fov) => {
-                state.render.camera.fov_y = *fov;
-                Command::none()
-            }
-            Preset(preset) => preset.process(&mut (*state).model),
+            Preset(preset) => preset.process(&mut state.model),
             Conway(conway) => conway.process(&mut state.model),
-            Render(render) => render.process(&mut (*state).render),
+            Render(render) => render.process(&mut state.render),
             Model(model) => model.process(&mut state.model),
             PolydexLoaded(polydex) => {
                 if let Ok(polydex) = polydex {

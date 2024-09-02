@@ -1,15 +1,8 @@
-use crate::{
-    bones::PolyGraph,
-    render::{
-        camera::Camera,
-        palette::Palette,
-        state::{ModelState, RenderState},
-    },
-};
+use crate::render::state::{ModelState, RenderState};
 use ckmeans::ckmeans;
 use iced::widget::shader::{self, wgpu};
-use iced::{Color, Rectangle, Size};
-use ultraviolet::{Mat4, Vec3, Vec4};
+use iced::{Rectangle, Size};
+use ultraviolet::{Vec3, Vec4};
 
 use super::{AllUniforms, FragUniforms, ModelUniforms, MomentVertex, Pipeline, ShapeVertex};
 
