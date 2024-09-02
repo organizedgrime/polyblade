@@ -15,10 +15,6 @@ pub struct AppState {
     pub render: RenderState,
     pub polydex: Polydex,
     pub info: InfoBox,
-    pub palette: Palette,
-    pub color_index: Option<usize>,
-    pub picked_color: Color,
-    pub colors: i16,
 }
 
 pub struct RenderState {
@@ -28,6 +24,14 @@ pub struct RenderState {
     pub rotating: bool,
     pub schlegel: bool,
     pub line_thickness: f32,
+    pub picker: ColorPickerState,
+}
+
+pub struct ColorPickerState {
+    pub palette: Palette,
+    pub color_index: Option<usize>,
+    pub picked_color: Color,
+    pub colors: i16,
 }
 
 impl Default for RenderState {
@@ -39,6 +43,18 @@ impl Default for RenderState {
             rotating: true,
             schlegel: false,
             line_thickness: 2.0,
+            picker: ColorPickerState::default(),
+        }
+    }
+}
+
+impl Default for ColorPickerState {
+    fn default() -> Self {
+        Self {
+            palette: Palette::polyblade(),
+            color_index: None,
+            picked_color: Color::from_rgba8(0, 0, 0, 1.0),
+            colors: 1,
         }
     }
 }
@@ -68,11 +84,6 @@ impl Default for AppState {
             render: RenderState::default(),
             polydex: vec![],
             info,
-            //palette: Palette::desatur8(),
-            palette: Palette::polyblade(),
-            color_index: None,
-            picked_color: Color::from_rgba8(0, 0, 0, 1.0),
-            colors: 1,
         }
     }
 }

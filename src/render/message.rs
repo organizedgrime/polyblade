@@ -9,7 +9,7 @@ use ultraviolet::Vec3;
 
 use super::{
     polydex::Polydex,
-    state::{AppState, ModelState, RenderState},
+    state::{AppState, ColorPickerState, ModelState, RenderState},
     Polyblade,
 };
 
@@ -31,10 +31,6 @@ pub enum PolybladeMessage {
     // Polydex
     PolydexLoaded(Result<Polydex, String>),
     OpenWiki(String),
-    // Color picking
-    ChooseColor(usize),
-    SubmitColor(Color),
-    CancelColor,
 }
 
 #[derive(Debug, Clone, EnumIter)]
@@ -113,6 +109,7 @@ pub enum RenderMessage {
     Schlegel(bool),
     Rotating(bool),
     ColorMethod(ColoringStrategyMessage),
+    ColorPicker(ColorPickerMessage),
 }
 
 #[derive(Debug, Default, Clone, EnumIter, Display)]
@@ -122,6 +119,14 @@ pub enum ColoringStrategyMessage {
     Edge,
     Polygon,
     Face,
+}
+
+#[derive(Debug, Default, Clone, EnumIter, Display)]
+pub enum ColorPickerMessage {
+    ChooseColor(usize),
+    SubmitColor(Color),
+    #[default]
+    CancelColor,
 }
 
 #[derive(Debug, Clone, EnumIter, Display)]
@@ -194,6 +199,32 @@ impl ProcessMessage<RenderState> for RenderMessage {
             //     state.render.line_thickness = *thickness;
             // }
             ColorMethod(_) => todo!(),
+            ColorPicker(picker) => {
+                return picker.process(&mut state.picker);
+            }
+        }
+        Command::none()
+    }
+}
+
+impl ProcessMessage<ColorPickerState> for ColorPickerMessage {
+    fn process(&self, state: &mut ColorPickerState) -> Command<PolybladeMessage> {
+        use ColorPickerMessage::*;
+        match self {
+            ChooseColor(i) => {
+                state.color_index = Some(*i);
+                state.picked_color = state.palette.colors[*i].into();
+            }
+            SubmitColor(color) => {
+                state.picked_color = *color;
+                if let Some(i) = state.color_index {
+                    state.palette.colors[i] = (*color).into();
+                }
+                state.color_index = None;
+            }
+            CancelColor => {
+                state.color_index = None;
+            }
         }
         Command::none()
     }
@@ -226,7 +257,7 @@ impl ProcessMessage<AppState> for PolybladeMessage {
                 Command::none()
             }
             ColorsChanged(colors) => {
-                state.colors = *colors;
+                state.render.picker.colors = *colors;
                 Command::none()
             }
             FovChanged(fov) => {
@@ -248,23 +279,6 @@ impl ProcessMessage<AppState> for PolybladeMessage {
             }
             OpenWiki(wiki) => {
                 let _ = open::that(wiki).ok();
-                Command::none()
-            }
-            ChooseColor(i) => {
-                state.color_index = Some(*i);
-                state.picked_color = state.palette.colors[*i].into();
-                Command::none()
-            }
-            SubmitColor(color) => {
-                state.picked_color = *color;
-                if let Some(i) = state.color_index {
-                    state.palette.colors[i] = (*color).into();
-                }
-                state.color_index = None;
-                Command::none()
-            }
-            CancelColor => {
-                state.color_index = None;
                 Command::none()
             }
             _ => Command::none(),

@@ -72,7 +72,7 @@ impl Application for Polyblade {
     fn view(&self) -> Element<'_, Self::Message> {
         let mut button_row = Row::new().spacing(10);
 
-        for (i, color) in self.state.palette.colors.iter().enumerate() {
+        for (i, color) in self.state.render.picker.palette.colors.iter().enumerate() {
             button_row = button_row.push(
                 button("")
                     .style(iced::theme::Button::Custom(Box::new(ColorPickerBox {
@@ -80,16 +80,22 @@ impl Application for Polyblade {
                     })))
                     .width(20)
                     .height(20)
-                    .on_press(PolybladeMessage::ChooseColor(i)),
+                    .on_press(PolybladeMessage::Render(RenderMessage::ColorPicker(
+                        ColorPickerMessage::ChooseColor(i),
+                    ))),
             );
         }
 
         let cp = color_picker(
-            self.state.color_index.is_some(),
-            self.state.picked_color,
+            self.state.render.picker.color_index.is_some(),
+            self.state.render.picker.picked_color,
             text("").width(0).height(0),
-            PolybladeMessage::CancelColor,
-            PolybladeMessage::SubmitColor,
+            PolybladeMessage::Render(RenderMessage::ColorPicker(ColorPickerMessage::CancelColor)),
+            |v| {
+                PolybladeMessage::Render(RenderMessage::ColorPicker(
+                    ColorPickerMessage::SubmitColor(v),
+                ))
+            },
         );
 
         container(
@@ -129,10 +135,10 @@ impl Application for Polyblade {
                     ]),
                     row![
                         text("Colors: "),
-                        text(self.state.colors.to_string()),
+                        text(self.state.render.picker.colors.to_string()),
                         slider(
-                            1..=self.state.palette.colors.len() as i16,
-                            self.state.colors,
+                            1..=self.state.render.picker.palette.colors.len() as i16,
+                            self.state.render.picker.colors,
                             PolybladeMessage::ColorsChanged
                         )
                         .step(1i16)
@@ -203,7 +209,7 @@ impl Application for Polyblade {
 
         let tick = window::frames().map(PolybladeMessage::Tick);
 
-        if self.state.color_index.is_some() {
+        if self.state.render.picker.color_index.is_some() {
             Subscription::batch(vec![keyboard::on_key_press(handle_hotkey)])
         } else {
             Subscription::batch(vec![tick, keyboard::on_key_press(handle_hotkey)])
@@ -245,8 +251,8 @@ impl<Message> shader::Program<Message> for Polyblade {
         Self::Primitive::new(
             self.state.model.polyhedron.clone(),
             self.state.render.schlegel,
-            self.state.colors,
-            self.state.palette.clone(),
+            self.state.render.picker.colors,
+            self.state.render.picker.palette.clone(),
             self.state.model.transform,
             self.state.render.camera,
         )
