@@ -139,10 +139,10 @@ impl Application for Polyblade {
                     ],
                     row![
                         text("Size: "),
-                        text(self.state.scale.to_string()),
-                        slider(1.0..=10.0, self.state.scale, |v| PolybladeMessage::Model(
-                            ModelMessage::ScaleChanged(v)
-                        ))
+                        text(self.state.model.scale.to_string()),
+                        slider(1.0..=10.0, self.state.model.scale, |v| {
+                            PolybladeMessage::Model(ModelMessage::ScaleChanged(v))
+                        })
                         .step(0.1)
                     ],
                     row![
@@ -243,11 +243,11 @@ impl<Message> shader::Program<Message> for Polyblade {
         _bounds: Rectangle,
     ) -> Self::Primitive {
         Self::Primitive::new(
-            self.state.polyhedron.clone(),
+            self.state.model.polyhedron.clone(),
             self.state.render.schlegel,
             self.state.colors,
             self.state.palette.clone(),
-            self.state.transform,
+            self.state.model.transform,
             self.state.render.camera,
         )
     }

@@ -11,16 +11,14 @@ use ultraviolet::Mat4;
 use super::polydex::Polydex;
 
 pub struct AppState {
-    pub polyhedron: PolyGraph,
+    pub model: ModelState,
+    pub render: RenderState,
     pub polydex: Polydex,
     pub info: InfoBox,
     pub palette: Palette,
     pub color_index: Option<usize>,
     pub picked_color: Color,
-    pub transform: Mat4,
-    pub scale: f32,
     pub colors: i16,
-    pub render: RenderState,
 }
 
 pub struct RenderState {
@@ -45,22 +43,36 @@ impl Default for RenderState {
     }
 }
 
+pub struct ModelState {
+    pub polyhedron: PolyGraph,
+    pub scale: f32,
+    pub transform: Mat4,
+}
+
+impl Default for ModelState {
+    fn default() -> Self {
+        Self {
+            polyhedron: PolyGraph::dodecahedron(),
+            scale: 1.0,
+            transform: Mat4::identity(),
+        }
+    }
+}
+
 impl Default for AppState {
     fn default() -> Self {
         let polyhedron = PolyGraph::dodecahedron();
         let info = polyhedron.polydex_entry(&vec![]);
         Self {
-            polyhedron,
+            model: ModelState::default(),
+            render: RenderState::default(),
             polydex: vec![],
             info,
             //palette: Palette::desatur8(),
             palette: Palette::polyblade(),
             color_index: None,
             picked_color: Color::from_rgba8(0, 0, 0, 1.0),
-            transform: Mat4::identity(),
-            scale: 1.0,
             colors: 1,
-            render: Default::default(),
         }
     }
 }
@@ -73,13 +85,13 @@ impl AppState {
             self.render.rotation_duration
         };
 
-        self.polyhedron.update();
+        self.model.polyhedron.update();
         let time = time.as_secs_f32();
-        self.transform = Mat4::default();
+        self.model.transform = Mat4::default();
         if self.render.schlegel {
-            self.transform = Mat4::identity();
+            self.model.transform = Mat4::identity();
         } else {
-            self.transform = Mat4::from_scale(self.scale)
+            self.model.transform = Mat4::from_scale(self.model.scale)
                 * Mat4::from_rotation_x(time / PI)
                 * Mat4::from_rotation_y(time / PI * 1.1);
         }

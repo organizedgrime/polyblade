@@ -9,7 +9,7 @@ use ultraviolet::Vec3;
 
 use super::{
     polydex::Polydex,
-    state::{AppState, RenderState},
+    state::{AppState, ModelState, RenderState},
     Polyblade,
 };
 
@@ -133,8 +133,8 @@ pub trait ProcessMessage<T> {
     fn process(&self, state: &mut T) -> Command<PolybladeMessage>;
 }
 
-impl ProcessMessage<AppState> for PresetMessage {
-    fn process(&self, state: &mut AppState) -> Command<PolybladeMessage> {
+impl ProcessMessage<ModelState> for PresetMessage {
+    fn process(&self, state: &mut ModelState) -> Command<PolybladeMessage> {
         use PresetMessage::*;
         match &self {
             Prism(n) => {
@@ -159,8 +159,8 @@ impl ProcessMessage<AppState> for PresetMessage {
     }
 }
 
-impl ProcessMessage<AppState> for ConwayMessage {
-    fn process(&self, state: &mut AppState) -> Command<PolybladeMessage> {
+impl ProcessMessage<ModelState> for ConwayMessage {
+    fn process(&self, state: &mut ModelState) -> Command<PolybladeMessage> {
         state
             .polyhedron
             .transactions
@@ -199,8 +199,8 @@ impl ProcessMessage<RenderState> for RenderMessage {
     }
 }
 
-impl ProcessMessage<AppState> for ModelMessage {
-    fn process(&self, state: &mut AppState) -> Command<PolybladeMessage> {
+impl ProcessMessage<ModelState> for ModelMessage {
+    fn process(&self, state: &mut ModelState) -> Command<PolybladeMessage> {
         match self {
             ModelMessage::ScaleChanged(scale) => state.scale = *scale,
         }
@@ -214,11 +214,11 @@ impl ProcessMessage<AppState> for PolybladeMessage {
         match self {
             Tick(time) => {
                 if state.render.schlegel {
-                    state.render.camera.eye = state.polyhedron.face_centroid(0) * 1.1;
+                    state.render.camera.eye = state.model.polyhedron.face_centroid(0) * 1.1;
                 }
 
                 // If the polyhedron has changed
-                if state.info.conway != state.polyhedron.name {
+                if state.info.conway != state.model.polyhedron.name {
                     // Recompute its Polydex entry
                     //state.info = state.polyhedron.polydex_entry(&state.polydex);
                 }
@@ -233,14 +233,14 @@ impl ProcessMessage<AppState> for PolybladeMessage {
                 state.render.camera.fov_y = *fov;
                 Command::none()
             }
-            Preset(preset) => preset.process(state),
-            Conway(conway) => conway.process(state),
+            Preset(preset) => preset.process(&mut (*state).model),
+            Conway(conway) => conway.process(&mut state.model),
             Render(render) => render.process(&mut (*state).render),
-            Model(model) => model.process(state),
+            Model(model) => model.process(&mut state.model),
             PolydexLoaded(polydex) => {
                 if let Ok(polydex) = polydex {
                     state.polydex = polydex.to_vec();
-                    state.info = state.polyhedron.polydex_entry(&state.polydex);
+                    state.info = state.model.polyhedron.polydex_entry(&state.polydex);
                 } else {
                     //tracing_subscriber::warn
                 }
