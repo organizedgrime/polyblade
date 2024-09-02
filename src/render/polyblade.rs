@@ -147,10 +147,10 @@ impl Application for Polyblade {
                     ],
                     row![
                         text("FOV: "),
-                        text(self.state.camera.fov_y.to_string()),
+                        text(self.state.render.camera.fov_y.to_string()),
                         slider(
                             0.0..=(std::f32::consts::PI),
-                            self.state.camera.fov_y,
+                            self.state.render.camera.fov_y,
                             PolybladeMessage::FovChanged
                         )
                         .step(0.1)
@@ -248,7 +248,7 @@ impl<Message> shader::Program<Message> for Polyblade {
             self.state.colors,
             self.state.palette.clone(),
             self.state.transform,
-            self.state.camera,
+            self.state.render.camera,
         )
     }
 }

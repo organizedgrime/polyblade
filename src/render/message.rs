@@ -169,12 +169,12 @@ impl ProcessMessage<AppState> for ConwayMessage {
     }
 }
 
-impl ProcessMessage<AppState> for RenderMessage {
-    fn process(&self, state: &mut AppState) -> Command<PolybladeMessage> {
+impl ProcessMessage<RenderState> for RenderMessage {
+    fn process(&self, state: &mut RenderState) -> Command<PolybladeMessage> {
         use RenderMessage::*;
         match &self {
             Schlegel(schlegel) => {
-                state.render.schlegel = *schlegel;
+                state.schlegel = *schlegel;
                 if *schlegel {
                     state.camera.fov_y = 2.9;
                 } else {
@@ -183,7 +183,7 @@ impl ProcessMessage<AppState> for RenderMessage {
                 }
             }
             Rotating(rotating) => {
-                state.render.rotating = *rotating;
+                state.rotating = *rotating;
                 if !rotating {
                     state.rotation_duration = Instant::now().duration_since(state.start);
                 } else {
@@ -214,7 +214,7 @@ impl ProcessMessage<AppState> for PolybladeMessage {
         match self {
             Tick(time) => {
                 if state.render.schlegel {
-                    state.camera.eye = state.polyhedron.face_centroid(0) * 1.1;
+                    state.render.camera.eye = state.polyhedron.face_centroid(0) * 1.1;
                 }
 
                 // If the polyhedron has changed
@@ -222,7 +222,7 @@ impl ProcessMessage<AppState> for PolybladeMessage {
                     // Recompute its Polydex entry
                     //state.info = state.polyhedron.polydex_entry(&state.polydex);
                 }
-                state.update(*time);
+                state.update_state(*time);
                 Command::none()
             }
             ColorsChanged(colors) => {
@@ -230,12 +230,12 @@ impl ProcessMessage<AppState> for PolybladeMessage {
                 Command::none()
             }
             FovChanged(fov) => {
-                state.camera.fov_y = *fov;
+                state.render.camera.fov_y = *fov;
                 Command::none()
             }
             Preset(preset) => preset.process(state),
             Conway(conway) => conway.process(state),
-            Render(render) => render.process(state),
+            Render(render) => render.process(&mut (*state).render),
             Model(model) => model.process(state),
             PolydexLoaded(polydex) => {
                 if let Ok(polydex) = polydex {

@@ -20,13 +20,13 @@ pub struct AppState {
     pub transform: Mat4,
     pub scale: f32,
     pub colors: i16,
-    pub camera: Camera,
     pub render: RenderState,
-    pub start: Instant,
-    pub rotation_duration: Duration,
 }
 
 pub struct RenderState {
+    pub camera: Camera,
+    pub start: Instant,
+    pub rotation_duration: Duration,
     pub rotating: bool,
     pub schlegel: bool,
     pub line_thickness: f32,
@@ -35,6 +35,9 @@ pub struct RenderState {
 impl Default for RenderState {
     fn default() -> Self {
         Self {
+            camera: Camera::default(),
+            start: Instant::now(),
+            rotation_duration: Duration::from_secs(0),
             rotating: true,
             schlegel: false,
             line_thickness: 2.0,
@@ -57,20 +60,17 @@ impl Default for AppState {
             transform: Mat4::identity(),
             scale: 1.0,
             colors: 1,
-            camera: Camera::default(),
             render: Default::default(),
-            start: Instant::now(),
-            rotation_duration: Duration::from_secs(0),
         }
     }
 }
 
 impl AppState {
-    pub fn update(&mut self, time: Instant) {
+    pub fn update_state(&mut self, time: Instant) {
         let time = if self.render.rotating {
-            time.duration_since(self.start)
+            time.duration_since(self.render.start)
         } else {
-            self.rotation_duration
+            self.render.rotation_duration
         };
 
         self.polyhedron.update();
