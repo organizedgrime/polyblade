@@ -29,6 +29,7 @@ pub struct AppState {
 pub struct RenderState {
     pub rotating: bool,
     pub schlegel: bool,
+    pub line_thickness: f32,
 }
 
 impl Default for RenderState {
@@ -36,6 +37,7 @@ impl Default for RenderState {
         Self {
             rotating: true,
             schlegel: false,
+            line_thickness: 2.0,
         }
     }
 }

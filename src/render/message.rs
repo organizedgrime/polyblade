@@ -7,7 +7,11 @@ use std::fmt::Display;
 use strum_macros::{Display, EnumIter};
 use ultraviolet::Vec3;
 
-use super::{polydex::Polydex, state::AppState, Polyblade};
+use super::{
+    polydex::Polydex,
+    state::{AppState, RenderState},
+    Polyblade,
+};
 
 #[derive(Debug, Clone)]
 pub enum PolybladeMessage {
@@ -125,11 +129,11 @@ pub enum ModelMessage {
     ScaleChanged(f32),
 }
 
-pub trait ProcessMessage {
-    fn process(&self, state: &mut AppState) -> Command<PolybladeMessage>;
+pub trait ProcessMessage<T> {
+    fn process(&self, state: &mut T) -> Command<PolybladeMessage>;
 }
 
-impl ProcessMessage for PresetMessage {
+impl ProcessMessage<AppState> for PresetMessage {
     fn process(&self, state: &mut AppState) -> Command<PolybladeMessage> {
         use PresetMessage::*;
         match &self {
@@ -155,7 +159,7 @@ impl ProcessMessage for PresetMessage {
     }
 }
 
-impl ProcessMessage for ConwayMessage {
+impl ProcessMessage<AppState> for ConwayMessage {
     fn process(&self, state: &mut AppState) -> Command<PolybladeMessage> {
         state
             .polyhedron
@@ -165,7 +169,7 @@ impl ProcessMessage for ConwayMessage {
     }
 }
 
-impl ProcessMessage for RenderMessage {
+impl ProcessMessage<AppState> for RenderMessage {
     fn process(&self, state: &mut AppState) -> Command<PolybladeMessage> {
         use RenderMessage::*;
         match &self {
@@ -186,13 +190,16 @@ impl ProcessMessage for RenderMessage {
                     state.start = Instant::now().checked_sub(state.rotation_duration).unwrap();
                 }
             }
+            // LineThickness(thickness) => {
+            //     state.render.line_thickness = *thickness;
+            // }
             ColorMethod(_) => todo!(),
         }
         Command::none()
     }
 }
 
-impl ProcessMessage for ModelMessage {
+impl ProcessMessage<AppState> for ModelMessage {
     fn process(&self, state: &mut AppState) -> Command<PolybladeMessage> {
         match self {
             ModelMessage::ScaleChanged(scale) => state.scale = *scale,
@@ -201,7 +208,7 @@ impl ProcessMessage for ModelMessage {
     }
 }
 
-impl ProcessMessage for PolybladeMessage {
+impl ProcessMessage<AppState> for PolybladeMessage {
     fn process(&self, state: &mut AppState) -> Command<PolybladeMessage> {
         use PolybladeMessage::*;
         match self {
