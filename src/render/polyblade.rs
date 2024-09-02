@@ -303,11 +303,11 @@ impl<Message> shader::Program<Message> for Polyblade {
 
     fn update(
         &self,
-        state: &mut Self::State,
+        _state: &mut Self::State,
         event: shader::Event,
         _bounds: Rectangle,
         _cursor: mouse::Cursor,
-        shell: &mut Shell<'_, Message>,
+        _shell: &mut Shell<'_, Message>,
     ) -> (event::Status, Option<Message>) {
         match event {
             /* shader::Event::Mouse(_) => {}

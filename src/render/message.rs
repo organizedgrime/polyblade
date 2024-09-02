@@ -1,4 +1,4 @@
-use crate::{render::color::RGBA, Instant};
+use crate::Instant;
 use iced::{font, Color};
 use std::fmt::Display;
 use strum_macros::{Display, EnumIter};

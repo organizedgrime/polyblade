@@ -22,9 +22,9 @@ pub struct Palette {
 //     }
 // }
 
-impl Into<Vec<wgpu::Color>> for Palette {
-    fn into(self) -> Vec<wgpu::Color> {
-        self.colors
+impl From<Palette> for Vec<wgpu::Color> {
+    fn from(val: Palette) -> Self {
+        val.colors
             .into_iter()
             .map(Into::<wgpu::Color>::into)
             .collect()
@@ -34,7 +34,7 @@ impl Into<Vec<wgpu::Color>> for Palette {
 impl Palette {
     fn new(colors: &[&str]) -> Self {
         Self {
-            colors: colors.into_iter().map(|&c| c.try_into().unwrap()).collect(),
+            colors: colors.iter().map(|&c| c.try_into().unwrap()).collect(),
         }
     }
 

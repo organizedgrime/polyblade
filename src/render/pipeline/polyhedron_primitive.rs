@@ -1,10 +1,9 @@
-use std::collections::HashMap;
 
 use crate::{
     bones::PolyGraph,
-    render::{camera::Camera, color::RGBA, palette::Palette},
+    render::{camera::Camera, palette::Palette},
 };
-use ckmeans::{ckmeans, CkNum};
+use ckmeans::ckmeans;
 use iced::widget::shader::{self, wgpu};
 use iced::{Color, Rectangle, Size};
 use ultraviolet::{Mat4, Vec3, Vec4};
@@ -98,7 +97,7 @@ impl PolyhedronPrimitive {
                         positions
                             .into_iter()
                             .map(|p| MomentVertex {
-                                position: p.into(),
+                                position: p,
                                 color: color.into(),
                             })
                             .collect(),

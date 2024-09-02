@@ -8,7 +8,6 @@ use iced::{
     Rectangle, Size,
 };
 use texture::Texture;
-use ultraviolet::Vec3;
 
 pub use buffer::*;
 pub use polyhedron_primitive::*;
