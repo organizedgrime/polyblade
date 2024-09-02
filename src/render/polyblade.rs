@@ -41,7 +41,7 @@ pub fn load_polydex() -> Result<Polydex, Box<dyn std::error::Error>> {
 
 impl Application for Polyblade {
     type Executor = executor::Default;
-    type Message = Message;
+    type Message = PolybladeMessage;
     type Theme = Theme;
     type Flags = ();
 
@@ -56,99 +56,17 @@ impl Application for Polyblade {
                 polydex: vec![],
             },
             Command::batch(vec![
-                font::load(iced_aw::BOOTSTRAP_FONT_BYTES).map(Message::FontLoaded),
-                font::load(iced_aw::NERD_FONT_BYTES).map(Message::FontLoaded),
+                font::load(iced_aw::BOOTSTRAP_FONT_BYTES).map(PolybladeMessage::FontLoaded),
+                font::load(iced_aw::NERD_FONT_BYTES).map(PolybladeMessage::FontLoaded),
                 Command::perform(async { load_polydex() }, |polydex| {
-                    Message::PolydexLoaded(polydex.map_err(|err| err.to_string()))
+                    PolybladeMessage::PolydexLoaded(polydex.map_err(|err| err.to_string()))
                 }),
             ]),
         )
     }
 
     fn update(&mut self, message: Self::Message) -> Command<Self::Message> {
-        use Message::*;
-        match message {
-            FontLoaded(_) => {}
-            PolydexLoaded(polydex) => {
-                if let Ok(polydex) = polydex {
-                    self.polydex = polydex;
-                    self.state.info = self.state.polyhedron.polydex_entry(&self.polydex);
-                } else {
-                    //tracing_subscriber::warn
-                }
-            }
-            Tick(time) => {
-                if self.state.render.schlegel {
-                    self.state.camera.eye = self.state.polyhedron.face_centroid(0) * 1.1;
-                }
-
-                // If the polyhedron has changed
-                if self.state.info.conway != self.state.polyhedron.name {
-                    // Recompute its Polydex entry
-                    self.state.info = self.state.polyhedron.polydex_entry(&self.polydex);
-                }
-
-                self.state.update(time);
-            }
-            SizeChanged(size) => {
-                self.state.scale = size;
-            }
-            ColorsChanged(colors) => {
-                self.state.colors = colors;
-            }
-            FovChanged(fov) => {
-                self.state.camera.fov_y = fov;
-            }
-            Preset(preset) => self.state.polyhedron.change_shape(preset),
-            Conway(conway) => {
-                self.state
-                    .polyhedron
-                    .transactions
-                    .push(Transaction::Conway(conway));
-            }
-            Render(render) => match render {
-                RenderMessage::Schlegel(schlegel) => {
-                    self.state.render.schlegel = schlegel;
-                    if schlegel {
-                        self.state.camera.fov_y = 2.9;
-                    } else {
-                        self.state.camera.fov_y = 1.0;
-                        self.state.camera.eye = Vec3::new(0.0, 2.0, 3.0);
-                    }
-                }
-                RenderMessage::Rotating(rotating) => {
-                    self.state.render.rotating = rotating;
-                    if !rotating {
-                        self.state.rotation_duration =
-                            Instant::now().duration_since(self.state.start);
-                    } else {
-                        self.state.start = Instant::now()
-                            .checked_sub(self.state.rotation_duration)
-                            .unwrap();
-                    }
-                }
-                RenderMessage::ColorMethod(_) => todo!(),
-            },
-            OpenWiki(wiki) => {
-                let _ = open::that(wiki).ok();
-            }
-            ChooseColor(i) => {
-                self.state.color_index = Some(i);
-                self.state.picked_color = self.state.palette.colors[i].into();
-            }
-            SubmitColor(color) => {
-                self.state.picked_color = color;
-                if let Some(i) = self.state.color_index {
-                    self.state.palette.colors[i] = color.into();
-                }
-                self.state.color_index = None;
-            }
-            CancelColor => {
-                self.state.color_index = None;
-            }
-        }
-
-        Command::none()
+        message.process(&mut self.state)
     }
 
     fn view(&self) -> Element<'_, Self::Message> {
@@ -162,7 +80,7 @@ impl Application for Polyblade {
                     })))
                     .width(20)
                     .height(20)
-                    .on_press(Message::ChooseColor(i)),
+                    .on_press(PolybladeMessage::ChooseColor(i)),
             );
         }
 
@@ -170,8 +88,8 @@ impl Application for Polyblade {
             self.state.color_index.is_some(),
             self.state.picked_color,
             text("").width(0).height(0),
-            Message::CancelColor,
-            Message::SubmitColor,
+            PolybladeMessage::CancelColor,
+            PolybladeMessage::SubmitColor,
         );
 
         container(
@@ -215,14 +133,17 @@ impl Application for Polyblade {
                         slider(
                             1..=self.state.palette.colors.len() as i16,
                             self.state.colors,
-                            Message::ColorsChanged
+                            PolybladeMessage::ColorsChanged
                         )
                         .step(1i16)
                     ],
                     row![
                         text("Size: "),
                         text(self.state.scale.to_string()),
-                        slider(1.0..=10.0, self.state.scale, Message::SizeChanged).step(0.1)
+                        slider(1.0..=10.0, self.state.scale, |v| PolybladeMessage::Model(
+                            ModelMessage::ScaleChanged(v)
+                        ))
+                        .step(0.1)
                     ],
                     row![
                         text("FOV: "),
@@ -230,7 +151,7 @@ impl Application for Polyblade {
                         slider(
                             0.0..=(std::f32::consts::PI),
                             self.state.camera.fov_y,
-                            Message::FovChanged
+                            PolybladeMessage::FovChanged
                         )
                         .step(0.1)
                     ]
@@ -247,7 +168,7 @@ impl Application for Polyblade {
         .into()
     }
 
-    fn subscription(&self) -> Subscription<Message> {
+    fn subscription(&self) -> Subscription<PolybladeMessage> {
         use iced::keyboard;
         use keyboard::key;
         let handle_hotkey = |key: key::Key, modifiers: keyboard::Modifiers| {
@@ -262,7 +183,7 @@ impl Application for Polyblade {
                     Character("i") => Some(Icosahedron),
                     _ => None,
                 };
-                pm.map(Message::Preset)
+                pm.map(PolybladeMessage::Preset)
             } else {
                 use ConwayMessage::*;
                 let cm = match key.as_ref() {
@@ -276,11 +197,11 @@ impl Application for Polyblade {
                     Character("b") => Some(Bevel),
                     _ => None,
                 };
-                cm.map(Message::Conway)
+                cm.map(PolybladeMessage::Conway)
             }
         };
 
-        let tick = window::frames().map(Message::Tick);
+        let tick = window::frames().map(PolybladeMessage::Tick);
 
         if self.state.color_index.is_some() {
             Subscription::batch(vec![keyboard::on_key_press(handle_hotkey)])

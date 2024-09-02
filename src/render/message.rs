@@ -1,23 +1,27 @@
-use crate::Instant;
-use iced::{font, Color};
+use crate::{
+    bones::{PolyGraph, Transaction},
+    Instant,
+};
+use iced::{font, Color, Command};
 use std::fmt::Display;
 use strum_macros::{Display, EnumIter};
+use ultraviolet::Vec3;
 
-use super::polydex::Polydex;
+use super::{polydex::Polydex, state::AppState, Polyblade};
 
 #[derive(Debug, Clone)]
-pub enum Message {
+pub enum PolybladeMessage {
     Tick(Instant),
     // UI controls
     // Rotate(bool),
     // Schlegel(bool),
-    SizeChanged(f32),
     ColorsChanged(i16),
     FovChanged(f32),
     // Shape modifications
     Preset(PresetMessage),
     Conway(ConwayMessage),
     Render(RenderMessage),
+    Model(ModelMessage),
     // Font
     FontLoaded(Result<(), font::Error>),
     // Polydex
@@ -114,4 +118,149 @@ pub enum ColoringStrategyMessage {
     Edge,
     Polygon,
     Face,
+}
+
+#[derive(Debug, Clone, EnumIter, Display)]
+pub enum ModelMessage {
+    ScaleChanged(f32),
+}
+
+pub trait ProcessMessage {
+    fn process(&self, state: &mut AppState) -> Command<PolybladeMessage>;
+}
+
+impl ProcessMessage for PresetMessage {
+    fn process(&self, state: &mut AppState) -> Command<PolybladeMessage> {
+        use PresetMessage::*;
+        match &self {
+            Prism(n) => {
+                state.polyhedron = PolyGraph::prism(*n);
+                if n == &4 {
+                    state.polyhedron.name = "C".into();
+                }
+            }
+            AntiPrism(n) => state.polyhedron = PolyGraph::anti_prism(*n),
+            Pyramid(n) => {
+                state.polyhedron = PolyGraph::pyramid(*n);
+                if n == &3 {
+                    state.polyhedron.name = "T".into();
+                }
+            }
+            Octahedron => state.polyhedron = PolyGraph::octahedron(),
+            Dodecahedron => state.polyhedron = PolyGraph::dodecahedron(),
+            Icosahedron => state.polyhedron = PolyGraph::icosahedron(),
+        }
+
+        Command::none()
+    }
+}
+
+impl ProcessMessage for ConwayMessage {
+    fn process(&self, state: &mut AppState) -> Command<PolybladeMessage> {
+        state
+            .polyhedron
+            .transactions
+            .push(Transaction::Conway(self.clone()));
+        Command::none()
+    }
+}
+
+impl ProcessMessage for RenderMessage {
+    fn process(&self, state: &mut AppState) -> Command<PolybladeMessage> {
+        use RenderMessage::*;
+        match &self {
+            Schlegel(schlegel) => {
+                state.render.schlegel = *schlegel;
+                if *schlegel {
+                    state.camera.fov_y = 2.9;
+                } else {
+                    state.camera.fov_y = 1.0;
+                    state.camera.eye = Vec3::new(0.0, 2.0, 3.0);
+                }
+            }
+            Rotating(rotating) => {
+                state.render.rotating = *rotating;
+                if !rotating {
+                    state.rotation_duration = Instant::now().duration_since(state.start);
+                } else {
+                    state.start = Instant::now().checked_sub(state.rotation_duration).unwrap();
+                }
+            }
+            ColorMethod(_) => todo!(),
+        }
+        Command::none()
+    }
+}
+
+impl ProcessMessage for ModelMessage {
+    fn process(&self, state: &mut AppState) -> Command<PolybladeMessage> {
+        match self {
+            ModelMessage::ScaleChanged(scale) => state.scale = *scale,
+        }
+        Command::none()
+    }
+}
+
+impl ProcessMessage for PolybladeMessage {
+    fn process(&self, state: &mut AppState) -> Command<PolybladeMessage> {
+        use PolybladeMessage::*;
+        match self {
+            Tick(time) => {
+                if state.render.schlegel {
+                    state.camera.eye = state.polyhedron.face_centroid(0) * 1.1;
+                }
+
+                // If the polyhedron has changed
+                if state.info.conway != state.polyhedron.name {
+                    // Recompute its Polydex entry
+                    //state.info = state.polyhedron.polydex_entry(&state.polydex);
+                }
+                state.update(*time);
+                Command::none()
+            }
+            ColorsChanged(colors) => {
+                state.colors = *colors;
+                Command::none()
+            }
+            FovChanged(fov) => {
+                state.camera.fov_y = *fov;
+                Command::none()
+            }
+            Preset(preset) => preset.process(state),
+            Conway(conway) => conway.process(state),
+            Render(render) => render.process(state),
+            Model(model) => model.process(state),
+            PolydexLoaded(polydex) => {
+                if let Ok(polydex) = polydex {
+                    state.polydex = polydex.to_vec();
+                    state.info = state.polyhedron.polydex_entry(&state.polydex);
+                } else {
+                    //tracing_subscriber::warn
+                }
+                Command::none()
+            }
+            OpenWiki(wiki) => {
+                let _ = open::that(wiki).ok();
+                Command::none()
+            }
+            ChooseColor(i) => {
+                state.color_index = Some(*i);
+                state.picked_color = state.palette.colors[*i].into();
+                Command::none()
+            }
+            SubmitColor(color) => {
+                state.picked_color = *color;
+                if let Some(i) = state.color_index {
+                    state.palette.colors[i] = (*color).into();
+                }
+                state.color_index = None;
+                Command::none()
+            }
+            CancelColor => {
+                state.color_index = None;
+                Command::none()
+            }
+            _ => Command::none(),
+        }
+    }
 }

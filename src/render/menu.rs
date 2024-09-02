@@ -10,13 +10,13 @@ use iced_aw::{
 use strum::IntoEnumIterator;
 
 use crate::{
-    render::message::{ConwayMessage, Message, PresetMessage},
+    render::message::{ConwayMessage, PolybladeMessage, PresetMessage},
     Instant,
 };
 
 use super::{message::RenderMessage, state::AppState};
 
-pub fn bar<'a>(label: &str) -> button::Button<'a, Message, Theme, Renderer> {
+pub fn bar<'a>(label: &str) -> button::Button<'a, PolybladeMessage, Theme, Renderer> {
     button(row![
         text(label).vertical_alignment(alignment::Vertical::Center),
         text(Bootstrap::CaretDownFill)
@@ -29,16 +29,19 @@ pub fn bar<'a>(label: &str) -> button::Button<'a, Message, Theme, Renderer> {
 }
 
 pub fn base<'a>(
-    content: impl Into<Element<'a, Message, Theme, Renderer>>,
-    msg: Message,
-) -> button::Button<'a, Message, Theme, Renderer> {
+    content: impl Into<Element<'a, PolybladeMessage, Theme, Renderer>>,
+    msg: PolybladeMessage,
+) -> button::Button<'a, PolybladeMessage, Theme, Renderer> {
     button(content)
         .padding([4, 8])
         .on_press(msg)
         .style(theme::Button::custom(LotusButton))
 }
 
-fn labeled<'a>(label: &str, msg: Message) -> button::Button<'a, Message, Theme, Renderer> {
+fn labeled<'a>(
+    label: &str,
+    msg: PolybladeMessage,
+) -> button::Button<'a, PolybladeMessage, Theme, Renderer> {
     base(
         text(label).vertical_alignment(alignment::Vertical::Center),
         msg,
@@ -46,12 +49,15 @@ fn labeled<'a>(label: &str, msg: Message) -> button::Button<'a, Message, Theme, 
     .width(Length::Fill)
 }
 
-fn base_menu(items: Vec<Item<'_, Message, Theme, Renderer>>) -> Menu<'_, Message, Theme, Renderer> {
-    Menu::new(items)
-    //.max_width(180.0).offset(10.0).spacing(5.0)
+fn base_menu(
+    items: Vec<Item<'_, PolybladeMessage, Theme, Renderer>>,
+) -> Menu<'_, PolybladeMessage, Theme, Renderer> {
+    Menu::new(items).max_width(180.0).offset(10.0).spacing(5.0)
 }
 
-fn submenu_button<'a>(label: &str) -> button::Button<'a, Message, iced::Theme, iced::Renderer> {
+fn submenu_button<'a>(
+    label: &str,
+) -> button::Button<'a, PolybladeMessage, iced::Theme, iced::Renderer> {
     base(
         row![
             text(label)
@@ -63,24 +69,24 @@ fn submenu_button<'a>(label: &str) -> button::Button<'a, Message, iced::Theme, i
                 .vertical_alignment(alignment::Vertical::Center),
         ]
         .align_items(iced::Alignment::Center),
-        Message::Tick(Instant::now()),
+        PolybladeMessage::Tick(Instant::now()),
     )
     .width(Length::Fill)
 }
 
 pub trait MenuAble {
-    fn menu<'a>(state: &AppState) -> Menu<'a, Message, Theme, Renderer>;
+    fn menu<'a>(state: &AppState) -> Menu<'a, PolybladeMessage, Theme, Renderer>;
 
-    fn item<'a>(self) -> Item<'a, Message, Theme, Renderer>;
+    fn item<'a>(self) -> Item<'a, PolybladeMessage, Theme, Renderer>;
 }
 
 impl MenuAble for PresetMessage {
-    fn item<'a>(self) -> Item<'a, Message, Theme, Renderer> {
-        Item::new(labeled(&self.to_string(), Message::Preset(self)))
+    fn item<'a>(self) -> Item<'a, PolybladeMessage, Theme, Renderer> {
+        Item::new(labeled(&self.to_string(), PolybladeMessage::Preset(self)))
     }
 
-    fn menu<'a>(_state: &AppState) -> Menu<'a, Message, Theme, Renderer> {
-        let items: Vec<Item<'a, Message, Theme, Renderer>> = PresetMessage::iter()
+    fn menu<'a>(_state: &AppState) -> Menu<'a, PolybladeMessage, Theme, Renderer> {
+        let items: Vec<Item<'a, PolybladeMessage, Theme, Renderer>> = PresetMessage::iter()
             .map(|message| {
                 use PresetMessage::*;
                 match message {
@@ -105,37 +111,37 @@ impl MenuAble for PresetMessage {
 }
 
 impl MenuAble for ConwayMessage {
-    fn item<'a>(self) -> Item<'a, Message, Theme, Renderer> {
-        Item::new(labeled(&self.to_string(), Message::Conway(self)).width(Length::Fill))
+    fn item<'a>(self) -> Item<'a, PolybladeMessage, Theme, Renderer> {
+        Item::new(labeled(&self.to_string(), PolybladeMessage::Conway(self)).width(Length::Fill))
     }
 
-    fn menu<'a>(_state: &AppState) -> Menu<'a, Message, Theme, Renderer> {
-        let items: Vec<Item<'a, Message, Theme, Renderer>> =
+    fn menu<'a>(_state: &AppState) -> Menu<'a, PolybladeMessage, Theme, Renderer> {
+        let items: Vec<Item<'a, PolybladeMessage, Theme, Renderer>> =
             ConwayMessage::iter().map(Self::item).collect();
         base_menu(items)
     }
 }
 
 impl MenuAble for RenderMessage {
-    fn item<'a>(self) -> Item<'a, Message, Theme, Renderer> {
-        Item::new(labeled(&self.to_string(), Message::Render(self)).width(Length::Fill))
+    fn item<'a>(self) -> Item<'a, PolybladeMessage, Theme, Renderer> {
+        Item::new(labeled(&self.to_string(), PolybladeMessage::Render(self)).width(Length::Fill))
     }
 
-    fn menu<'a>(state: &AppState) -> Menu<'a, Message, Theme, Renderer> {
+    fn menu<'a>(state: &AppState) -> Menu<'a, PolybladeMessage, Theme, Renderer> {
         base_menu(vec![
             Item::new(
                 checkbox(
                     RenderMessage::Schlegel(false).to_string(),
                     state.render.schlegel,
                 )
-                .on_toggle(|v| Message::Render(RenderMessage::Schlegel(v))),
+                .on_toggle(|v| PolybladeMessage::Render(RenderMessage::Schlegel(v))),
             ),
             Item::new(
                 checkbox(
                     RenderMessage::Rotating(false).to_string(),
                     state.render.rotating,
                 )
-                .on_toggle(|v| Message::Render(RenderMessage::Rotating(v))),
+                .on_toggle(|v| PolybladeMessage::Render(RenderMessage::Rotating(v))),
             ),
         ])
     }

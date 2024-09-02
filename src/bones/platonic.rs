@@ -11,30 +11,6 @@ use super::PolyGraph;
     D = gT (gyro tetrahedron)
 */
 
-impl PolyGraph {
-    pub fn change_shape(&mut self, message: PresetMessage) {
-        use PresetMessage::*;
-        match message {
-            Prism(n) => {
-                *self = PolyGraph::prism(n);
-                if n == 4 {
-                    self.name = "C".into();
-                }
-            }
-            AntiPrism(n) => *self = PolyGraph::anti_prism(n),
-            Pyramid(n) => {
-                *self = PolyGraph::pyramid(n);
-                if n == 3 {
-                    self.name = "T".into();
-                }
-            }
-            Octahedron => *self = PolyGraph::octahedron(),
-            Dodecahedron => *self = PolyGraph::dodecahedron(),
-            Icosahedron => *self = PolyGraph::icosahedron(),
-        }
-    }
-}
-
 // Platonic Solids
 impl PolyGraph {
     pub fn prism(n: usize) -> PolyGraph {

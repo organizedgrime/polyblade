@@ -8,8 +8,11 @@ use iced::{time::Duration, Color};
 use std::f32::consts::PI;
 use ultraviolet::Mat4;
 
+use super::polydex::Polydex;
+
 pub struct AppState {
     pub polyhedron: PolyGraph,
+    pub polydex: Polydex,
     pub info: InfoBox,
     pub palette: Palette,
     pub color_index: Option<usize>,
@@ -43,6 +46,7 @@ impl Default for AppState {
         let info = polyhedron.polydex_entry(&vec![]);
         Self {
             polyhedron,
+            polydex: vec![],
             info,
             //palette: Palette::desatur8(),
             palette: Palette::polyblade(),
