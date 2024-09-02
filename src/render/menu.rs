@@ -1,6 +1,6 @@
 use iced::{
     alignment, theme,
-    widget::{button, checkbox, row, text},
+    widget::{button, checkbox, row, slider, text},
     Border, Element, Length, Renderer, Theme,
 };
 use iced_aw::{
@@ -142,6 +142,12 @@ impl MenuAble for RenderMessage {
                     state.render.rotating,
                 )
                 .on_toggle(|v| PolybladeMessage::Render(RenderMessage::Rotating(v))),
+            ),
+            Item::new(
+                slider(1.0..=10.0, state.render.line_thickness, |v| {
+                    PolybladeMessage::Render(RenderMessage::LineThickness(v))
+                })
+                .step(0.1),
             ),
         ])
     }

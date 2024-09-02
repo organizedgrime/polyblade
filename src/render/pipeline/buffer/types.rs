@@ -31,6 +31,5 @@ pub struct ModelUniforms {
 #[derive(Copy, Default, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]
 #[repr(C)]
 pub struct FragUniforms {
-    pub(crate) light_position: Vec4,
-    pub(crate) eye_position: Vec4,
+    pub(crate) line_thickness: f32,
 }

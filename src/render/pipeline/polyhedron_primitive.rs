@@ -1,6 +1,10 @@
 use crate::{
     bones::PolyGraph,
-    render::{camera::Camera, palette::Palette},
+    render::{
+        camera::Camera,
+        palette::Palette,
+        state::{ModelState, RenderState},
+    },
 };
 use ckmeans::ckmeans;
 use iced::widget::shader::{self, wgpu};
@@ -11,35 +15,17 @@ use super::{AllUniforms, FragUniforms, ModelUniforms, MomentVertex, Pipeline, Sh
 
 #[derive(Debug)]
 pub struct PolyhedronPrimitive {
-    polyhedron: PolyGraph,
-    pub schlegel: bool,
-    colors: i16,
-    palette: Palette,
-    transform: Mat4,
-    camera: Camera,
+    pub model: ModelState,
+    pub render: RenderState,
 }
 
 impl PolyhedronPrimitive {
-    pub fn new(
-        polyhedron: PolyGraph,
-        schlegel: bool,
-        colors: i16,
-        palette: Palette,
-        transform: Mat4,
-        camera: Camera,
-    ) -> Self {
-        Self {
-            polyhedron,
-            schlegel,
-            colors,
-            palette,
-            transform,
-            camera,
-        }
+    pub fn new(model: ModelState, render: RenderState) -> Self {
+        Self { model, render }
     }
 
     fn face_triangle_positions(&self, face_index: usize) -> Vec<Vec3> {
-        let positions = self.polyhedron.face_positions(face_index);
+        let positions = self.model.polyhedron.face_positions(face_index);
         let n = positions.len();
         match n {
             3 => positions,
@@ -52,7 +38,7 @@ impl PolyhedronPrimitive {
                 positions[0],
             ],
             _ => {
-                let centroid = self.polyhedron.face_centroid(face_index);
+                let centroid = self.model.polyhedron.face_centroid(face_index);
                 let n = positions.len();
                 (0..n).fold(vec![], |acc, i| {
                     [acc, vec![positions[i], centroid, positions[(i + 1) % n]]].concat()
@@ -64,31 +50,33 @@ impl PolyhedronPrimitive {
     pub fn positions(&self) -> Vec<MomentVertex> {
         let mut kv = vec![];
 
-        let areas: Vec<f32> = (0..self.polyhedron.cycles.len()).fold(Vec::new(), |mut acc, i| {
-            let positions = self.face_triangle_positions(i);
-            let mut area = 0.0;
-            for i in 0..positions.len() / 3 {
-                let j = i * 3;
-                let a = (positions[j] - positions[j + 1]).mag();
-                let b = (positions[j + 1] - positions[j + 2]).mag();
-                let c = (positions[j + 2] - positions[j]).mag();
-                let s = (a + b + c) / 2.0;
-                area += (s * (s - a) * (s - b) * (s - c)).sqrt();
-            }
-            let mut log = ((area * area).log10() * 20.0).abs();
-            if log.is_nan() || log.is_infinite() {
-                log = 0.0;
-            }
-            kv.push((positions, log));
-            acc.push(log);
-            acc
-        });
+        let areas: Vec<f32> =
+            (0..self.model.polyhedron.cycles.len()).fold(Vec::new(), |mut acc, i| {
+                let positions = self.face_triangle_positions(i);
+                let mut area = 0.0;
+                for i in 0..positions.len() / 3 {
+                    let j = i * 3;
+                    let a = (positions[j] - positions[j + 1]).mag();
+                    let b = (positions[j + 1] - positions[j + 2]).mag();
+                    let c = (positions[j + 2] - positions[j]).mag();
+                    let s = (a + b + c) / 2.0;
+                    area += (s * (s - a) * (s - b) * (s - c)).sqrt();
+                }
+                let mut log = ((area * area).log10() * 20.0).abs();
+                if log.is_nan() || log.is_infinite() {
+                    log = 0.0;
+                }
+                kv.push((positions, log));
+                acc.push(log);
+                acc
+            });
         // println!("areas: {:?}", areas);
-        let clusters = ckmeans(&areas[..], self.colors as u8).unwrap_or(vec![areas]);
+        let clusters = ckmeans(&areas[..], self.render.picker.colors as u8).unwrap_or(vec![areas]);
         kv.into_iter().fold(vec![], |acc, (positions, approx)| {
             for (i, cluster) in clusters.iter().enumerate() {
                 if cluster.contains(&approx) {
-                    let color = self.palette.colors[i % self.palette.colors.len()];
+                    let color = self.render.picker.palette.colors
+                        [i % self.render.picker.palette.colors.len()];
                     return [
                         acc,
                         positions
@@ -108,7 +96,7 @@ impl PolyhedronPrimitive {
     }
 
     pub fn face_sides_buffer(&self, face_index: usize) -> Vec<Vec3> {
-        let positions = self.polyhedron.face_positions(face_index);
+        let positions = self.model.polyhedron.face_positions(face_index);
         let n = positions.len();
         match n {
             3 => vec![Vec3::new(1.0, 1.0, 1.0); 3],
@@ -121,7 +109,7 @@ impl PolyhedronPrimitive {
         let mut vertices = Vec::new();
         let barycentric = [Vec3::unit_x(), Vec3::unit_y(), Vec3::unit_z()];
 
-        for i in 0..self.polyhedron.cycles.len() {
+        for i in 0..self.model.polyhedron.cycles.len() {
             let sides = self.face_sides_buffer(i);
             let positions = self.face_triangle_positions(i);
 
@@ -151,27 +139,24 @@ impl shader::Primitive for PolyhedronPrimitive {
         _scale_factor: f32,
         storage: &mut shader::Storage,
     ) {
-        let vertex_count = self.polyhedron.vertex_count();
+        let vertex_count = self.model.polyhedron.vertex_count();
         if !storage.has::<Pipeline>() {
             storage.store(Pipeline::new(device, format, target_size, vertex_count));
         }
         let pipeline = storage.get_mut::<Pipeline>().unwrap();
 
-        // update uniform buffer
-        let model_mat = self.transform;
-        let view_projection_mat = self.camera.build_view_proj_mat(bounds);
+        // Construct new Unifrom Buffer
         let uniforms = AllUniforms {
             model: ModelUniforms {
-                model_mat,
-                view_projection_mat,
+                model_mat: self.model.transform,
+                view_projection_mat: self.render.camera.build_view_proj_mat(bounds),
             },
             frag: FragUniforms {
-                light_position: self.camera.position(),
-                eye_position: self.camera.position() + Vec4::new(2.0, 2.0, 1.0, 0.0),
+                line_thickness: self.render.line_thickness,
             },
         };
 
-        //upload data to GPU
+        // Update GPU data
         pipeline.update(device, queue, target_size, vertex_count, &uniforms, self);
     }
 

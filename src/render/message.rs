@@ -108,6 +108,7 @@ pub enum ConwayMessage {
 pub enum RenderMessage {
     Schlegel(bool),
     Rotating(bool),
+    LineThickness(f32),
     ColorMethod(ColoringStrategyMessage),
     ColorPicker(ColorPickerMessage),
 }
@@ -195,9 +196,9 @@ impl ProcessMessage<RenderState> for RenderMessage {
                     state.start = Instant::now().checked_sub(state.rotation_duration).unwrap();
                 }
             }
-            // LineThickness(thickness) => {
-            //     state.render.line_thickness = *thickness;
-            // }
+            LineThickness(thickness) => {
+                state.line_thickness = *thickness;
+            }
             ColorMethod(_) => todo!(),
             ColorPicker(picker) => {
                 return picker.process(&mut state.picker);

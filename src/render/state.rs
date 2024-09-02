@@ -17,6 +17,7 @@ pub struct AppState {
     pub info: InfoBox,
 }
 
+#[derive(Debug, Clone)]
 pub struct RenderState {
     pub camera: Camera,
     pub start: Instant,
@@ -27,6 +28,7 @@ pub struct RenderState {
     pub picker: ColorPickerState,
 }
 
+#[derive(Debug, Clone)]
 pub struct ColorPickerState {
     pub palette: Palette,
     pub color_index: Option<usize>,
@@ -59,6 +61,7 @@ impl Default for ColorPickerState {
     }
 }
 
+#[derive(Debug, Clone)]
 pub struct ModelState {
     pub polyhedron: PolyGraph,
     pub scale: f32,

@@ -201,7 +201,7 @@ impl Pipeline {
             self.depth_texture = Texture::create_depth_texture(device, &target_size);
         }
 
-        if primitive.schlegel {
+        if primitive.render.schlegel {
             self.starting_vertex = primitive.face_sides_buffer(0).len();
         } else {
             self.starting_vertex = 0;

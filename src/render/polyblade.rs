@@ -248,13 +248,6 @@ impl<Message> shader::Program<Message> for Polyblade {
         _cursor: mouse::Cursor,
         _bounds: Rectangle,
     ) -> Self::Primitive {
-        Self::Primitive::new(
-            self.state.model.polyhedron.clone(),
-            self.state.render.schlegel,
-            self.state.render.picker.colors,
-            self.state.render.picker.palette.clone(),
-            self.state.model.transform,
-            self.state.render.camera,
-        )
+        Self::Primitive::new(self.state.model.clone(), self.state.render.clone())
     }
 }

@@ -34,15 +34,13 @@ fn vs_main(
 }
 
 struct FragUniforms {
-    light_position: vec4<f32>,
-    eye_position: vec4<f32>,
+    line_thickness: f32
 };
 @binding(1) @group(0) var<uniform> frag_uniforms : FragUniforms;
 
 fn edge_factor(v_barycentric: vec3<f32>, v_sides: vec3<f32>) -> f32 {
-    let line_width = 7.0;
     let face: vec3<f32> = v_barycentric * v_sides;
-    let r: vec3<f32> = fwidthFine(face) * line_width;
+    let r: vec3<f32> = fwidthFine(face) * frag_uniforms.line_thickness;
     let f: vec3<f32> = step(r, face);
     return min(min(f.x, f.y), f.z);
 }
