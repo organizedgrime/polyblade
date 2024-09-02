@@ -1,7 +1,6 @@
 use std::{
     cmp::{max, min},
     num::ParseIntError,
-    u8,
 };
 
 use iced::widget::shader::wgpu;

@@ -179,7 +179,8 @@ impl PolyGraph {
                             vec![Contraction(edges), Name('b')]
                         }
                     };
-                    self.cycles.sort_by(|c, d| d.len().cmp(&c.len()));
+                    self.cycles.sort_by_key(|c| c.len());
+                    println!("cycles {:?}", self.cycles);
                     self.transactions = [new_transactions, self.transactions.clone()].concat();
                     self.pst();
                 }

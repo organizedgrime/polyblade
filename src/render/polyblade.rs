@@ -1,7 +1,6 @@
-use iced::advanced::Shell;
+use iced::mouse;
 use iced::widget::{button, Row};
-use iced::{event, mouse};
-use iced::{Rectangle, Renderer};
+use iced::Rectangle;
 use std::io::Read;
 use ultraviolet::Vec3;
 
@@ -20,14 +19,12 @@ use crate::{
     },
     Instant,
 };
-use iced::widget::{checkbox, text};
+use iced::widget::text;
 use iced::{
     executor, font,
     widget::{column, container, row, shader},
     window, Application, Command, Element, Length, Subscription, Theme,
 };
-
-use super::message;
 
 pub struct Polyblade {
     state: AppState,
@@ -161,7 +158,7 @@ impl Application for Polyblade {
             button_row = button_row.push(
                 button("")
                     .style(iced::theme::Button::Custom(Box::new(ColorPickerBox {
-                        color: color.clone().into(),
+                        color: (*color).into(),
                     })))
                     .width(20)
                     .height(20)
@@ -205,9 +202,9 @@ impl Application for Polyblade {
                             column![
                                 text(self.state.info.bowers()),
                                 text(&self.state.info.conway),
-                                text(&self.state.info.faces),
-                                text(&self.state.info.edges),
-                                text(&self.state.info.vertices),
+                                text(self.state.info.faces),
+                                text(self.state.info.edges),
+                                text(self.state.info.vertices),
                             ]
                         ]
                         .spacing(20)
@@ -301,7 +298,7 @@ impl<Message> shader::Program<Message> for Polyblade {
     type State = ();
     type Primitive = PolyhedronPrimitive;
 
-    fn update(
+    /* fn update(
         &self,
         _state: &mut Self::State,
         event: shader::Event,
@@ -316,7 +313,7 @@ impl<Message> shader::Program<Message> for Polyblade {
             shader::Event::RedrawRequested(time) => (event::Status::Captured, None),
             _ => (event::Status::Ignored, None),
         }
-    }
+    } */
 
     fn draw(
         &self,

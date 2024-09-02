@@ -1,4 +1,3 @@
-
 use crate::{
     bones::PolyGraph,
     render::{camera::Camera, palette::Palette},
@@ -86,11 +85,11 @@ impl PolyhedronPrimitive {
             acc.push(log);
             acc
         });
-        println!("areas: {:?}", areas);
+        // println!("areas: {:?}", areas);
         let clusters = ckmeans(&areas[..], self.colors as u8).unwrap_or(vec![areas]);
         kv.into_iter().fold(vec![], |acc, (positions, approx)| {
-            for i in 0..clusters.len() {
-                if clusters[i].contains(&approx) {
+            for (i, cluster) in clusters.iter().enumerate() {
+                if cluster.contains(&approx) {
                     let color = self.palette.colors[i % self.palette.colors.len()];
                     return [
                         acc,

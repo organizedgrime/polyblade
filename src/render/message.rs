@@ -77,12 +77,6 @@ impl Display for PresetMessage {
     }
 }
 
-trait HotKey: Display {
-    fn hotkey(&self) -> char {
-        self.to_string().to_lowercase().chars().nth(0).unwrap()
-    }
-}
-
 #[derive(Debug, Clone, EnumIter, Display)]
 pub enum ConwayMessage {
     // 1
@@ -121,6 +115,3 @@ pub enum ColoringStrategyMessage {
     Polygon,
     Face,
 }
-
-impl HotKey for PresetMessage {}
-impl HotKey for ConwayMessage {}
