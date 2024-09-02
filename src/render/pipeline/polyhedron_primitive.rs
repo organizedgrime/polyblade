@@ -7,9 +7,7 @@ use iced::widget::shader::{self, wgpu};
 use iced::{Color, Rectangle, Size};
 use ultraviolet::{Mat4, Vec3, Vec4};
 
-use super::{
-    AllUniforms, FragUniforms, LightUniforms, ModelUniforms, MomentVertex, Pipeline, ShapeVertex,
-};
+use super::{AllUniforms, FragUniforms, ModelUniforms, MomentVertex, Pipeline, ShapeVertex};
 
 #[derive(Debug)]
 pub struct PolyhedronPrimitive {
@@ -171,10 +169,6 @@ impl shader::Primitive for PolyhedronPrimitive {
                 light_position: self.camera.position(),
                 eye_position: self.camera.position() + Vec4::new(2.0, 2.0, 1.0, 0.0),
             },
-            light: LightUniforms::new(
-                Color::new(1.0, 1.0, 1.0, 1.0),
-                Color::new(1.0, 1.0, 1.0, 1.0),
-            ),
         };
 
         //upload data to GPU

@@ -21,7 +21,6 @@ pub struct Pipeline {
     /// Uniform Buffers
     model: Buffer,
     frag: Buffer,
-    light: Buffer,
     /// Depth Texture
     depth_texture: Texture,
     uniform_group: wgpu::BindGroup,
@@ -61,7 +60,6 @@ impl Pipeline {
         // Create Uniform Buffers
         let model = Buffer::new::<ModelUniforms>(device, "ModelUniforms", 1, uniform_usage);
         let frag = Buffer::new::<FragUniforms>(device, "FragUniforms", 1, uniform_usage);
-        let light = Buffer::new::<LightUniforms>(device, "LightUniforms", 1, uniform_usage);
         //depth buffer
         let depth_texture = Texture::create_depth_texture(device, &target_size);
         // Uniform layout for Vertex Shader
@@ -88,16 +86,6 @@ impl Pipeline {
                     },
                     count: None,
                 },
-                wgpu::BindGroupLayoutEntry {
-                    binding: 2,
-                    visibility: wgpu::ShaderStages::FRAGMENT,
-                    ty: wgpu::BindingType::Buffer {
-                        ty: wgpu::BufferBindingType::Uniform,
-                        has_dynamic_offset: false,
-                        min_binding_size: None,
-                    },
-                    count: None,
-                },
             ],
         });
 
@@ -112,10 +100,6 @@ impl Pipeline {
                 wgpu::BindGroupEntry {
                     binding: 1,
                     resource: frag.raw.as_entire_binding(),
-                },
-                wgpu::BindGroupEntry {
-                    binding: 2,
-                    resource: light.raw.as_entire_binding(),
                 },
             ],
         });
@@ -195,7 +179,6 @@ impl Pipeline {
             vertices,
             model,
             frag,
-            light,
             depth_texture,
             uniform_group,
             starting_vertex: 0,
@@ -253,7 +236,6 @@ impl Pipeline {
         // Write uniforms
         queue.write_buffer(&self.model.raw, 0, bytemuck::bytes_of(&uniforms.model));
         queue.write_buffer(&self.frag.raw, 0, bytemuck::bytes_of(&uniforms.frag));
-        queue.write_buffer(&self.light.raw, 0, bytemuck::bytes_of(&uniforms.light));
     }
 
     pub fn render(

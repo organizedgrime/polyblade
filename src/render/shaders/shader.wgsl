@@ -39,16 +39,6 @@ struct FragUniforms {
 };
 @binding(1) @group(0) var<uniform> frag_uniforms : FragUniforms;
 
-struct LightUniforms {
-    color: vec4<f32>,
-    specular_color: vec4<f32>,
-    ambient_intensity: f32,
-    diffuse_intensity: f32,
-    specular_intensity: f32,
-    specular_shininess: f32,
-};
-@binding(2) @group(0) var<uniform> light_uniforms : LightUniforms;
-
 fn edge_factor(v_barycentric: vec3<f32>, v_sides: vec3<f32>) -> f32 {
     let line_width = 7.0;
     let face: vec3<f32> = v_barycentric * v_sides;
