@@ -37,7 +37,7 @@ impl Default for AppState {
             picked_color: Color::from_rgba8(0, 0, 0, 1.0),
             transform: Mat4::identity(),
             scale: 1.0,
-            colors: 2,
+            colors: 1,
             camera: Camera::default(),
             rotating: true,
             schlegel: false,

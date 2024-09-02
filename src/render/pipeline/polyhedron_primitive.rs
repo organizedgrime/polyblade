@@ -4,7 +4,7 @@ use crate::{
     bones::PolyGraph,
     render::{camera::Camera, color::RGBA, palette::Palette},
 };
-use ckmeans::ckmeans;
+use ckmeans::{ckmeans, CkNum};
 use iced::widget::shader::{self, wgpu};
 use iced::{Color, Rectangle, Size};
 use ultraviolet::{Mat4, Vec3, Vec4};
@@ -79,31 +79,16 @@ impl PolyhedronPrimitive {
                 let s = (a + b + c) / 2.0;
                 area += (s * (s - a) * (s - b) * (s - c)).sqrt();
             }
-            let log = ((area * area).log10() * 20.0).abs();
+            let mut log = ((area * area).log10() * 20.0).abs();
+            if log.is_nan() || log.is_infinite() {
+                log = 0.0;
+            }
             kv.push((positions, log));
             acc.push(log);
             acc
         });
-        let input = vec![
-            1.0, 12.0, 13.0, 14.0, 15.0, 16.0, 2.0, 2.0, 3.0, 5.0, 7.0, 1.0, 2.0, 5.0, 7.0, 1.0,
-            5.0, 82.0, 1.0, 1.3, 1.1, 78.0,
-        ];
-        let expected = vec![
-            vec![
-                1.0, 1.0, 1.0, 1.0, 1.1, 1.3, 2.0, 2.0, 2.0, 3.0, 5.0, 5.0, 5.0, 7.0, 7.0,
-            ],
-            vec![12.0, 13.0, 14.0, 15.0, 16.0],
-            vec![78.0, 82.0],
-        ];
-
-        let result = ckmeans(&input, 3).unwrap();
-        println!("meow: {result:?}");
-
+        println!("areas: {:?}", areas);
         let clusters = ckmeans(&areas[..], self.colors as u8).unwrap_or(vec![areas]);
-        // ckmeans(data, nclusters)
-
-        //areas.sort();
-
         kv.into_iter().fold(vec![], |acc, (positions, approx)| {
             for i in 0..clusters.len() {
                 if clusters[i].contains(&approx) {
