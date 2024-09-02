@@ -101,13 +101,13 @@ impl Application for Polyblade {
         container(
             column![
                 row![menu_bar!((
-                    PresetMessage::button("Preset"),
+                    PresetMessage::title(),
                     PresetMessage::menu(&())
                 )(
-                    ConwayMessage::button("Conway"),
+                    ConwayMessage::title(),
                     ConwayMessage::menu(&())
                 )(
-                    RenderMessage::button("Render"),
+                    RenderMessage::title(),
                     RenderMessage::menu(&self.state.render)
                 ))]
                 .spacing(10.0),

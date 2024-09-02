@@ -2,7 +2,7 @@ use std::{fmt::Display, ops::RangeInclusive};
 
 use iced::{
     alignment, theme,
-    widget::{button, checkbox, row, slider, text},
+    widget::{button, checkbox, row, slider, text, Button},
     Border, Element, Length, Renderer, Theme,
 };
 use iced_aw::{
@@ -23,6 +23,7 @@ use super::{
 
 pub trait MenuAble: Display + Clone + Sized {
     type State;
+    const TITLE: &'static str;
 
     fn transform(message: Self) -> PolybladeMessage;
     fn menu_items<'a>(state: &Self::State) -> Vec<Item<'a, PolybladeMessage, Theme, Renderer>>;
@@ -37,11 +38,7 @@ pub trait MenuAble: Display + Clone + Sized {
         Menu::new(items).max_width(180.0).offset(10.0).spacing(5.0)
     }
 
-    fn item_button<'a>(self) -> Item<'a, PolybladeMessage, Theme, Renderer> {
-        Item::new(Self::labeled_button_with_message(&self.to_string(), self))
-    }
-
-    fn button<'a>(label: &str) -> button::Button<'a, PolybladeMessage, Theme, Renderer> {
+    fn basic_button<'a>(label: &str) -> button::Button<'a, PolybladeMessage, Theme, Renderer> {
         button(row![
             text(label).vertical_alignment(alignment::Vertical::Center),
             text(Bootstrap::CaretDownFill)
@@ -51,6 +48,14 @@ pub trait MenuAble: Display + Clone + Sized {
         ])
         .width(Length::Shrink)
         .style(theme::Button::custom(LotusButton))
+    }
+
+    fn title<'a>() -> Button<'a, PolybladeMessage, Theme, Renderer> {
+        Self::basic_button(Self::TITLE)
+    }
+
+    fn item_button<'a>(self) -> Item<'a, PolybladeMessage, Theme, Renderer> {
+        Item::new(Self::labeled_button_with_message(&self.to_string(), self))
     }
 
     fn button_with_message<'a>(
@@ -74,19 +79,6 @@ pub trait MenuAble: Display + Clone + Sized {
         .width(Length::Fill)
     }
 
-    fn labeled_checkbox_with_message<'a, F>(
-        label: &str,
-        checked: bool,
-        on_toggle: F,
-    ) -> checkbox::Checkbox<'a, PolybladeMessage, Theme, Renderer>
-    where
-        F: 'a + Fn(bool) -> Self,
-    {
-        checkbox(label, checked)
-            .on_toggle(move |v| Self::transform(on_toggle(v)))
-            .width(Length::Fill)
-    }
-
     fn item_checkbox<'a, F>(
         label: &str,
         checked: bool,
@@ -95,9 +87,11 @@ pub trait MenuAble: Display + Clone + Sized {
     where
         F: 'a + Fn(bool) -> Self,
     {
-        Item::new(Self::labeled_checkbox_with_message(
-            &label, checked, on_toggle,
-        ))
+        Item::new(
+            checkbox(label, checked)
+                .on_toggle(move |v| Self::transform(on_toggle(v)))
+                .width(Length::Fill),
+        )
     }
 
     fn item_slider<'a, F>(
@@ -138,6 +132,7 @@ pub trait MenuAble: Display + Clone + Sized {
 
 impl MenuAble for PresetMessage {
     type State = ();
+    const TITLE: &'static str = "Preset";
 
     fn transform(message: Self) -> PolybladeMessage {
         PolybladeMessage::Preset(message)
@@ -169,6 +164,7 @@ impl MenuAble for PresetMessage {
 
 impl MenuAble for ConwayMessage {
     type State = ();
+    const TITLE: &'static str = "Conway";
 
     fn transform(message: Self) -> PolybladeMessage {
         PolybladeMessage::Conway(message)
@@ -181,6 +177,7 @@ impl MenuAble for ConwayMessage {
 
 impl MenuAble for RenderMessage {
     type State = RenderState;
+    const TITLE: &'static str = "Render";
 
     fn transform(message: Self) -> PolybladeMessage {
         PolybladeMessage::Render(message)
