@@ -1,9 +1,8 @@
-use std::io::Read;
-
 use iced::advanced::Shell;
 use iced::widget::{button, Row};
 use iced::{event, mouse};
 use iced::{Rectangle, Renderer};
+use std::io::Read;
 use ultraviolet::Vec3;
 
 use iced::widget::slider;
@@ -82,7 +81,7 @@ impl Application for Polyblade {
                 }
             }
             Tick(time) => {
-                if self.state.schlegel {
+                if self.state.render.schlegel {
                     self.state.camera.eye = self.state.polyhedron.face_centroid(0) * 1.1;
                 }
 
@@ -93,25 +92,6 @@ impl Application for Polyblade {
                 }
 
                 self.state.update(time);
-            }
-            Rotate(rotating) => {
-                self.state.rotating = rotating;
-                if !rotating {
-                    self.state.rotation_duration = Instant::now().duration_since(self.state.start);
-                } else {
-                    self.state.start = Instant::now()
-                        .checked_sub(self.state.rotation_duration)
-                        .unwrap();
-                }
-            }
-            Schlegel(schlegel) => {
-                self.state.schlegel = schlegel;
-                if schlegel {
-                    self.state.camera.fov_y = 2.9;
-                } else {
-                    self.state.camera.fov_y = 1.0;
-                    self.state.camera.eye = Vec3::new(0.0, 2.0, 3.0);
-                }
             }
             SizeChanged(size) => {
                 self.state.scale = size;
@@ -129,6 +109,29 @@ impl Application for Polyblade {
                     .transactions
                     .push(Transaction::Conway(conway));
             }
+            Render(render) => match render {
+                RenderMessage::Schlegel(schlegel) => {
+                    self.state.render.schlegel = schlegel;
+                    if schlegel {
+                        self.state.camera.fov_y = 2.9;
+                    } else {
+                        self.state.camera.fov_y = 1.0;
+                        self.state.camera.eye = Vec3::new(0.0, 2.0, 3.0);
+                    }
+                }
+                RenderMessage::Rotating(rotating) => {
+                    self.state.render.rotating = rotating;
+                    if !rotating {
+                        self.state.rotation_duration =
+                            Instant::now().duration_since(self.state.start);
+                    } else {
+                        self.state.start = Instant::now()
+                            .checked_sub(self.state.rotation_duration)
+                            .unwrap();
+                    }
+                }
+                RenderMessage::ColorMethod(_) => todo!(),
+            },
             OpenWiki(wiki) => {
                 let _ = open::that(wiki).ok();
             }
@@ -176,14 +179,12 @@ impl Application for Polyblade {
 
         container(
             column![
-                row![
-                    menu_bar!((bar("Preset"), PresetMessage::menu())(
+                row![menu_bar!(
+                    (bar("Preset"), PresetMessage::menu(&self.state))(
                         bar("Conway"),
-                        ConwayMessage::menu()
-                    )),
-                    checkbox("Rotating", self.state.rotating).on_toggle(Message::Rotate),
-                    checkbox("Schlegel Diagram", self.state.schlegel).on_toggle(Message::Schlegel),
-                ]
+                        ConwayMessage::menu(&self.state)
+                    )(bar("Rendering"), RenderMessage::menu(&self.state))
+                ),]
                 .spacing(10.0),
                 button_row,
                 // Actual shader of the program
@@ -292,7 +293,7 @@ impl Application for Polyblade {
     }
 
     fn theme(&self) -> Self::Theme {
-        Theme::KanagawaLotus
+        Theme::Light
     }
 }
 
@@ -325,7 +326,7 @@ impl<Message> shader::Program<Message> for Polyblade {
     ) -> Self::Primitive {
         Self::Primitive::new(
             self.state.polyhedron.clone(),
-            self.state.schlegel,
+            self.state.render.schlegel,
             self.state.colors,
             self.state.palette.clone(),
             self.state.transform,

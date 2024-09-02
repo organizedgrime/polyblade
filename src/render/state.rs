@@ -18,10 +18,23 @@ pub struct AppState {
     pub scale: f32,
     pub colors: i16,
     pub camera: Camera,
-    pub rotating: bool,
-    pub schlegel: bool,
+    pub render: RenderState,
     pub start: Instant,
     pub rotation_duration: Duration,
+}
+
+pub struct RenderState {
+    pub rotating: bool,
+    pub schlegel: bool,
+}
+
+impl Default for RenderState {
+    fn default() -> Self {
+        Self {
+            rotating: true,
+            schlegel: false,
+        }
+    }
 }
 
 impl Default for AppState {
@@ -39,8 +52,7 @@ impl Default for AppState {
             scale: 1.0,
             colors: 1,
             camera: Camera::default(),
-            rotating: true,
-            schlegel: false,
+            render: Default::default(),
             start: Instant::now(),
             rotation_duration: Duration::from_secs(0),
         }
@@ -49,7 +61,7 @@ impl Default for AppState {
 
 impl AppState {
     pub fn update(&mut self, time: Instant) {
-        let time = if self.rotating {
+        let time = if self.render.rotating {
             time.duration_since(self.start)
         } else {
             self.rotation_duration
@@ -58,7 +70,7 @@ impl AppState {
         self.polyhedron.update();
         let time = time.as_secs_f32();
         self.transform = Mat4::default();
-        if self.schlegel {
+        if self.render.schlegel {
             self.transform = Mat4::identity();
         } else {
             self.transform = Mat4::from_scale(self.scale)

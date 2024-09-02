@@ -1,6 +1,6 @@
 use iced::{
     alignment, theme,
-    widget::{button, row, text},
+    widget::{button, checkbox, row, text},
     Border, Element, Length, Renderer, Theme,
 };
 use iced_aw::{
@@ -14,6 +14,8 @@ use crate::{
     Instant,
 };
 
+use super::{message::RenderMessage, state::AppState};
+
 pub fn bar<'a>(label: &str) -> button::Button<'a, Message, Theme, Renderer> {
     button(row![
         text(label).vertical_alignment(alignment::Vertical::Center),
@@ -25,6 +27,7 @@ pub fn bar<'a>(label: &str) -> button::Button<'a, Message, Theme, Renderer> {
     .width(Length::Shrink)
     .style(theme::Button::custom(LotusButton))
 }
+
 pub fn base<'a>(
     content: impl Into<Element<'a, Message, Theme, Renderer>>,
     msg: Message,
@@ -34,6 +37,7 @@ pub fn base<'a>(
         .on_press(msg)
         .style(theme::Button::custom(LotusButton))
 }
+
 fn labeled<'a>(label: &str, msg: Message) -> button::Button<'a, Message, Theme, Renderer> {
     base(
         text(label).vertical_alignment(alignment::Vertical::Center),
@@ -43,8 +47,10 @@ fn labeled<'a>(label: &str, msg: Message) -> button::Button<'a, Message, Theme, 
 }
 
 fn base_menu(items: Vec<Item<'_, Message, Theme, Renderer>>) -> Menu<'_, Message, Theme, Renderer> {
-    Menu::new(items).max_width(180.0).offset(0.0).spacing(5.0)
+    Menu::new(items)
+    //.max_width(180.0).offset(10.0).spacing(5.0)
 }
+
 fn submenu_button<'a>(label: &str) -> button::Button<'a, Message, iced::Theme, iced::Renderer> {
     base(
         row![
@@ -63,7 +69,7 @@ fn submenu_button<'a>(label: &str) -> button::Button<'a, Message, iced::Theme, i
 }
 
 pub trait MenuAble {
-    fn menu<'a>() -> Menu<'a, Message, Theme, Renderer>;
+    fn menu<'a>(state: &AppState) -> Menu<'a, Message, Theme, Renderer>;
 
     fn item<'a>(self) -> Item<'a, Message, Theme, Renderer>;
 }
@@ -73,7 +79,7 @@ impl MenuAble for PresetMessage {
         Item::new(labeled(&self.to_string(), Message::Preset(self)))
     }
 
-    fn menu<'a>() -> Menu<'a, Message, Theme, Renderer> {
+    fn menu<'a>(_state: &AppState) -> Menu<'a, Message, Theme, Renderer> {
         let items: Vec<Item<'a, Message, Theme, Renderer>> = PresetMessage::iter()
             .map(|message| {
                 use PresetMessage::*;
@@ -103,10 +109,35 @@ impl MenuAble for ConwayMessage {
         Item::new(labeled(&self.to_string(), Message::Conway(self)).width(Length::Fill))
     }
 
-    fn menu<'a>() -> Menu<'a, Message, Theme, Renderer> {
+    fn menu<'a>(_state: &AppState) -> Menu<'a, Message, Theme, Renderer> {
         let items: Vec<Item<'a, Message, Theme, Renderer>> =
             ConwayMessage::iter().map(Self::item).collect();
         base_menu(items)
+    }
+}
+
+impl MenuAble for RenderMessage {
+    fn item<'a>(self) -> Item<'a, Message, Theme, Renderer> {
+        Item::new(labeled(&self.to_string(), Message::Render(self)).width(Length::Fill))
+    }
+
+    fn menu<'a>(state: &AppState) -> Menu<'a, Message, Theme, Renderer> {
+        base_menu(vec![
+            Item::new(
+                checkbox(
+                    RenderMessage::Schlegel(false).to_string(),
+                    state.render.schlegel,
+                )
+                .on_toggle(|v| Message::Render(RenderMessage::Schlegel(v))),
+            ),
+            Item::new(
+                checkbox(
+                    RenderMessage::Rotating(false).to_string(),
+                    state.render.rotating,
+                )
+                .on_toggle(|v| Message::Render(RenderMessage::Rotating(v))),
+            ),
+        ])
     }
 }
 
@@ -115,7 +146,7 @@ impl button::StyleSheet for LotusButton {
     type Style = Theme;
 
     fn active(&self, _: &Self::Style) -> button::Appearance {
-        let palette = Theme::KanagawaLotus.extended_palette();
+        let palette = Theme::Light.extended_palette();
 
         button::Appearance {
             background: Some(palette.secondary.base.color.into()),
@@ -126,10 +157,10 @@ impl button::StyleSheet for LotusButton {
     }
 
     fn hovered(&self, _: &Self::Style) -> button::Appearance {
-        let palette = Theme::KanagawaLotus.extended_palette();
+        let palette = Theme::Light.extended_palette();
         button::Appearance {
             background: Some(palette.primary.base.color.into()),
-            ..self.active(&Theme::KanagawaLotus)
+            ..self.active(&Theme::Light)
         }
     }
 }

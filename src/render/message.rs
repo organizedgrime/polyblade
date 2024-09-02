@@ -9,14 +9,15 @@ use super::polydex::Polydex;
 pub enum Message {
     Tick(Instant),
     // UI controls
-    Rotate(bool),
-    Schlegel(bool),
+    // Rotate(bool),
+    // Schlegel(bool),
     SizeChanged(f32),
     ColorsChanged(i16),
     FovChanged(f32),
     // Shape modifications
     Preset(PresetMessage),
     Conway(ConwayMessage),
+    Render(RenderMessage),
     // Font
     FontLoaded(Result<(), font::Error>),
     // Polydex
@@ -41,41 +42,41 @@ pub enum PresetMessage {
 impl Display for PresetMessage {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         use PresetMessage::*;
-        match self {
+        let value = match self {
             Prism(n) => match n {
-                3 => f.write_str("Triangular"),
-                4 => f.write_str("Cube"),
-                5 => f.write_str("Pentagonal"),
-                6 => f.write_str("Hexagonal"),
-                7 => f.write_str("Heptagonal"),
-                8 => f.write_str("Octagonal"),
-                _ => f.write_str("?"),
+                3 => "Triangular",
+                4 => "Cube",
+                5 => "Pentagonal",
+                6 => "Hexagonal",
+                7 => "Heptagonal",
+                8 => "Octagonal",
+                _ => "?",
             },
             AntiPrism(n) => match n {
-                2 => f.write_str("Digonal"),
-                3 => f.write_str("Triangular"),
-                4 => f.write_str("Square"),
-                5 => f.write_str("Pentagonal"),
-                6 => f.write_str("Hexagonal"),
-                7 => f.write_str("Heptagonal"),
-                8 => f.write_str("Octagonal"),
-                _ => f.write_str("?"),
+                2 => "Digonal",
+                3 => "Triangular",
+                4 => "Square",
+                5 => "Pentagonal",
+                6 => "Hexagonal",
+                7 => "Heptagonal",
+                8 => "Octagonal",
+                _ => "?",
             },
             Pyramid(n) => match n {
-                3 => f.write_str("Tetrahedron"),
-                4 => f.write_str("Square"),
-                5 => f.write_str("Pentagonal"),
-                6 => f.write_str("Hexagonal"),
-                7 => f.write_str("Heptagonal"),
-                8 => f.write_str("Octagonal"),
-                _ => f.write_str("?"),
+                3 => "Tetrahedron",
+                4 => "Square",
+                5 => "Pentagonal",
+                6 => "Hexagonal",
+                7 => "Heptagonal",
+                8 => "Octagonal",
+                _ => "?",
             },
-            _ => f.write_fmt(format_args!("{self:?}")),
-        }
+            _ => &format!("{self:?}"),
+        };
+        f.write_str(value)
     }
 }
 
-#[allow(dead_code)]
 trait HotKey: Display {
     fn hotkey(&self) -> char {
         self.to_string().to_lowercase().chars().nth(0).unwrap()
@@ -103,6 +104,22 @@ pub enum ConwayMessage {
     // // 6
     // Meta,
     Bevel,
+}
+
+#[derive(Debug, Clone, EnumIter, Display)]
+pub enum RenderMessage {
+    Schlegel(bool),
+    Rotating(bool),
+    ColorMethod(ColoringStrategyMessage),
+}
+
+#[derive(Debug, Default, Clone, EnumIter, Display)]
+pub enum ColoringStrategyMessage {
+    #[default]
+    Vertex,
+    Edge,
+    Polygon,
+    Face,
 }
 
 impl HotKey for PresetMessage {}
