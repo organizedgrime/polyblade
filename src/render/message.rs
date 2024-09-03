@@ -268,7 +268,7 @@ impl ProcessMessage<AppState> for PolybladeMessage {
                 // If the polyhedron has changed
                 if state.info.conway != state.model.polyhedron.name {
                     // Recompute its Polydex entry
-                    //state.info = state.polyhedron.polydex_entry(&state.polydex);
+                    state.info = state.model.polyhedron.polydex_entry(&state.polydex);
                 }
                 state.update_state(*time);
                 Command::none()
