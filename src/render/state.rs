@@ -55,7 +55,7 @@ impl Default for RenderState {
 impl Default for ColorPickerState {
     fn default() -> Self {
         Self {
-            palette: Palette::polyblade(),
+            palette: Palette::clement(),
             color_index: None,
             picked_color: Color::from_rgba8(0, 0, 0, 1.0),
             colors: 1,
