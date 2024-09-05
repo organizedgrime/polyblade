@@ -156,17 +156,13 @@ impl Pipeline {
                 stencil: wgpu::StencilState::default(),
                 bias: wgpu::DepthBiasState::default(),
             }),
-            multisample: wgpu::MultisampleState {
-                count: 1,
-                mask: !0,
-                alpha_to_coverage_enabled: false,
-            },
+            multisample: wgpu::MultisampleState::default(),
             fragment: Some(wgpu::FragmentState {
                 module: &shader,
                 entry_point: "fs_main",
                 targets: &[Some(wgpu::ColorTargetState {
                     format,
-                    blend: None,
+                    blend: Some(wgpu::BlendState::ALPHA_BLENDING),
                     write_mask: wgpu::ColorWrites::ALL,
                 })],
             }),
@@ -230,7 +226,7 @@ impl Pipeline {
         queue.write_buffer(
             &self.positions.raw,
             0,
-            bytemuck::cast_slice(&primitive.positions()),
+            bytemuck::cast_slice(&primitive.moment_vertices()),
         );
 
         // Write uniforms

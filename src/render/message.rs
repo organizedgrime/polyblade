@@ -12,7 +12,7 @@ use super::{
     state::{AppState, ColorPickerState, ModelState, RenderState},
 };
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Display)]
 pub enum PolybladeMessage {
     Tick(Instant),
     Preset(PresetMessage),
@@ -262,7 +262,8 @@ impl ProcessMessage<AppState> for PolybladeMessage {
         match self {
             Tick(time) => {
                 if state.render.schlegel {
-                    state.render.camera.eye = state.model.polyhedron.face_centroid(0) * 1.1;
+                    state.render.camera.eye =
+                        state.model.polyhedron.face_centroid(0) * state.model.scale;
                 }
 
                 // If the polyhedron has changed

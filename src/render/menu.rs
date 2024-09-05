@@ -1,5 +1,5 @@
-use std::{fmt::Display, ops::RangeInclusive};
-
+use super::{message::RenderMessage, state::RenderState};
+use crate::render::message::{ColorMethodMessage, ConwayMessage, PolybladeMessage, PresetMessage};
 use iced::{
     alignment, theme,
     widget::{button, checkbox, row, slider, text, Button},
@@ -9,11 +9,8 @@ use iced_aw::{
     menu::{Item, Menu},
     Bootstrap, BOOTSTRAP_FONT,
 };
+use std::{fmt::Display, ops::RangeInclusive};
 use strum::IntoEnumIterator;
-
-use crate::render::message::{ColorMethodMessage, ConwayMessage, PolybladeMessage, PresetMessage};
-
-use super::{message::RenderMessage, state::RenderState};
 
 pub trait MenuAble: Display + Clone + Sized {
     type State;
@@ -155,7 +152,7 @@ impl MenuAble for RenderMessage {
             Self::checkbox("Rotating", state.rotating, Rotating),
             Self::slider(0.0..=10.0, state.line_thickness, LineThickness, 1.0),
             Self::slider(
-                0.0..=std::f32::consts::PI,
+                0.0..=(std::f32::consts::PI * 2.0),
                 state.camera.fov_y,
                 FovChanged,
                 0.1,
