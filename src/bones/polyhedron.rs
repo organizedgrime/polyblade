@@ -86,7 +86,7 @@ impl PolyGraph {
         vertices.iter().fold(Vec3::zero(), |a, &b| a + b) / vertices.len() as f32
     }
 
-    pub fn vertex_count(&self) -> u64 {
+    pub fn index_count(&self) -> u64 {
         let mut vertex_triangle_count = 0;
         for face in self.cycles.iter() {
             match face.len() {

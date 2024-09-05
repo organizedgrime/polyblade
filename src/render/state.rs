@@ -73,7 +73,7 @@ pub struct ModelState {
 impl Default for ModelState {
     fn default() -> Self {
         Self {
-            polyhedron: PolyGraph::dodecahedron(),
+            polyhedron: PolyGraph::pyramid(4),
             scale: 1.0,
             transform: Mat4::identity(),
         }
@@ -82,8 +82,7 @@ impl Default for ModelState {
 
 impl Default for AppState {
     fn default() -> Self {
-        let polyhedron = PolyGraph::dodecahedron();
-        let info = polyhedron.polydex_entry(&vec![]);
+        let info = PolyGraph::default().polydex_entry(&vec![]);
         Self {
             model: ModelState::default(),
             render: RenderState::default(),
