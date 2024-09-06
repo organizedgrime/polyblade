@@ -8,25 +8,25 @@ struct Output {
     @builtin(position) position: vec4<f32>,
     @location(0) v_position: vec4<f32>,
     @location(1) v_color: vec4<f32>,
-    @location(2) v_normal: vec4<f32>,
-    @location(3) v_barycentric: vec4<f32>,
-    @location(4) v_sides: vec4<f32>,
+    // @location(2) v_normal: vec4<f32>,
+    // @location(3) v_barycentric: vec4<f32>,
+    // @location(4) v_sides: vec4<f32>,
 };
 
 @vertex
 fn vs_main(
     @location(0) position: vec4<f32>,
     @location(1) color: vec4<f32>,
-    @location(2) normal: vec4<f32>,
-    @location(3) barycentric: vec4<f32>,
-    @location(4) sides: vec4<f32>,
+    // @location(2) normal: vec4<f32>,
+    // @location(3) barycentric: vec4<f32>,
+    // @location(4) sides: vec4<f32>,
 ) -> Output {
     var output: Output;
     let m_position: vec4<f32> = uniforms.model_mat * position;
+    // output.v_normal = normal;
+    // output.v_barycentric = barycentric;
+    // output.v_sides = sides;
     output.v_position = m_position;
-    output.v_normal = normal;
-    output.v_barycentric = barycentric;
-    output.v_sides = sides;
     output.v_color = color;
 
     output.position = uniforms.view_project_mat * m_position;
@@ -49,15 +49,16 @@ fn edge_factor(v_barycentric: vec3<f32>, v_sides: vec3<f32>) -> f32 {
 fn fs_main(
     @location(0) v_position: vec4<f32>,
     @location(1) v_color: vec4<f32>,
-    @location(2) v_normal: vec4<f32>,
-    @location(3) v_barycentric: vec4<f32>,
-    @location(4) v_sides: vec4<f32>,
+    // @location(2) v_normal: vec4<f32>,
+    // @location(3) v_barycentric: vec4<f32>,
+    // @location(4) v_sides: vec4<f32>,
 ) -> @location(0) vec4<f32> {
-    let edge_color = edge_factor(v_barycentric.xyz, v_sides.xyz);
+    //let edge_color = edge_factor(v_barycentric.xyz, v_sides.xyz);
 
-    if edge_color == 0.0 {
-        return vec4(0.0, 0.0, 0.0, 1.0);
-    } else {
-        return v_color;
-    }
+    // if edge_color == 0.0 {
+    //     return vec4(0.0, 0.0, 0.0, 1.0);
+    // } else {
+    //     return v_color;
+    // }
+    return v_color;
 }

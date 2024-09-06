@@ -15,11 +15,11 @@ pub use polyhedron_primitive::*;
 pub struct Pipeline {
     pipeline: wgpu::RenderPipeline,
     /// Indices
-    indices: Buffer,
+    index_buf: Buffer,
     /// Raw XYZ position data for each vertex
-    positions: Buffer,
+    vertex_buf: Buffer,
     /// Other vertex data
-    vertices: Buffer,
+    // vertices: Buffer,
     /// Uniform Buffers
     model: Buffer,
     frag: Buffer,
@@ -28,7 +28,6 @@ pub struct Pipeline {
     uniform_group: wgpu::BindGroup,
     /// Number of vertices to skip in case of schlegel
     starting_vertex: usize,
-    vertex_count: u64,
     index_count: u64,
     initialized: bool,
 }
@@ -42,13 +41,13 @@ impl Pipeline {
         let vertex_usage = wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::COPY_DST;
         let uniform_usage = wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST;
 
-        let indices = Buffer::new::<u16>(device, "Index Buffer", 1, index_usage);
-        let positions = Buffer::new::<MomentVertex>(device, "Position Buffer", 1, vertex_usage);
-        let vertices = Buffer::new::<ShapeVertex>(device, "Vertex buffer", 1, vertex_usage);
+        let indices = Buffer::new::<u16>(device, "Index Buffer", index_usage);
+        let vertex_buf = Buffer::new::<MomentVertex>(device, "Vertex Buffer", vertex_usage);
+        // let vertices = Buffer::new::<ShapeVertex>(device, "Vertex buffer", vertex_usage);
 
         // Create Uniform Buffers
-        let model = Buffer::new::<ModelUniforms>(device, "ModelUniforms", 1, uniform_usage);
-        let frag = Buffer::new::<FragUniforms>(device, "FragUniforms", 1, uniform_usage);
+        let model = Buffer::new::<ModelUniforms>(device, "ModelUniforms", uniform_usage);
+        let frag = Buffer::new::<FragUniforms>(device, "FragUniforms", uniform_usage);
         //depth buffer
         let depth_texture = Texture::create_depth_texture(device, &target_size);
         // Uniform layout for Vertex Shader
@@ -123,7 +122,7 @@ impl Pipeline {
                             1 => Float32x4,
                         ],
                     },
-                    wgpu::VertexBufferLayout {
+                    /* wgpu::VertexBufferLayout {
                         array_stride: std::mem::size_of::<ShapeVertex>() as wgpu::BufferAddress,
                         step_mode: wgpu::VertexStepMode::Vertex,
                         attributes: &wgpu::vertex_attr_array![
@@ -134,7 +133,7 @@ impl Pipeline {
                             // sides
                             4 => Float32x4,
                         ],
-                    },
+                    }, */
                 ],
             },
             primitive: wgpu::PrimitiveState::default(),
@@ -151,7 +150,7 @@ impl Pipeline {
                 entry_point: "fs_main",
                 targets: &[Some(wgpu::ColorTargetState {
                     format,
-                    blend: Some(wgpu::BlendState::ALPHA_BLENDING),
+                    blend: None,
                     write_mask: wgpu::ColorWrites::ALL,
                 })],
             }),
@@ -160,15 +159,14 @@ impl Pipeline {
 
         Self {
             pipeline,
-            indices,
-            positions,
-            vertices,
+            index_buf: indices,
+            vertex_buf,
+            // vertices,
             model,
             frag,
             depth_texture,
             uniform_group,
             starting_vertex: 0,
-            vertex_count: 1,
             index_count: 1,
             initialized: false,
         }
@@ -196,29 +194,29 @@ impl Pipeline {
         let (moment_vertices, indices) = primitive.moment_vertices();
 
         // Resize buffer if required
-        if self.vertices.count != self.vertex_count || !self.initialized {
+        if self.index_buf.count != self.index_count || !self.initialized {
             println!("resizing buffer!");
-            self.indices.resize(device, indices.len() as u64);
-            // Resize the position buffer
-            self.positions.resize(device, moment_vertices.len() as u64);
+            self.index_buf.resize(device, indices.len() as u64);
             // Resize the vertex buffer
-            self.vertices.resize(device, moment_vertices.len() as u64);
+            self.vertex_buf.resize(device, moment_vertices.len() as u64);
+            // Resize the vertex buffer
+            //self.vertex_buf.resize(device, moment_vertices.len() as u64);
             // Count that
-            self.vertex_count = self.vertices.count;
+            self.index_count = indices.len() as u64;
             // Write the vertices
-            queue.write_buffer(
-                &self.vertices.raw,
-                0,
-                bytemuck::cast_slice(&primitive.vertices()),
-            );
+            // queue.write_buffer(
+            //     &self.vertices.raw,
+            //     0,
+            //     bytemuck::cast_slice(&primitive.vertices()),
+            // );
             // Initialized
             self.initialized = true;
         }
 
         // Write all position and color data
-        queue.write_buffer(&self.indices.raw, 0, bytemuck::cast_slice(&indices));
+        queue.write_buffer(&self.index_buf.raw, 0, bytemuck::cast_slice(&indices));
         queue.write_buffer(
-            &self.positions.raw,
+            &self.vertex_buf.raw,
             0,
             bytemuck::cast_slice(&moment_vertices),
         );
@@ -260,9 +258,9 @@ impl Pipeline {
             pass.set_scissor_rect(viewport.x, viewport.y, viewport.width, viewport.height);
             pass.set_pipeline(&self.pipeline);
             pass.set_bind_group(0, &self.uniform_group, &[]);
-            pass.set_index_buffer(self.indices.raw.slice(..), wgpu::IndexFormat::Uint16);
-            pass.set_vertex_buffer(0, self.positions.raw.slice(..));
-            pass.set_vertex_buffer(1, self.vertices.raw.slice(..));
+            pass.set_index_buffer(self.index_buf.raw.slice(..), wgpu::IndexFormat::Uint16);
+            pass.set_vertex_buffer(0, self.vertex_buf.raw.slice(..));
+            //pass.set_vertex_buffer(1, self.vertices.raw.slice(..));
             pass.draw_indexed(
                 self.starting_vertex as u32..self.index_count as u32,
                 0,

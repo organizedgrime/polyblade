@@ -87,115 +87,62 @@ impl PolyhedronPrimitive {
         // Iterate through every face and accumulate a list of indices
         let mut indices = vec![];
         for cycle in &polyhedron.cycles {
-            for i in 0..cycle.len() {
-                let triangle = vec![
-                    // Before
-                    verts.iter().position(|&v| v == cycle[i]).unwrap() as u16,
-                    // Centroid index
-                    moment_vertices.len() as u16,
-                    // After
-                    verts
-                        .iter()
-                        .position(|&v| v == cycle[(i + 1) % cycle.len()])
-                        .unwrap() as u16,
-                ];
-                indices.extend(triangle);
-            }
-            // Compute the centroid
-            let centroid = cycle
+            let cycle_indices: Vec<u16> = cycle
                 .iter()
-                .fold(Vec3::zero(), |acc, v| acc + polyhedron.positions[v])
-                / cycle.len() as f32;
-            // Add it to the moment vertices
-            moment_vertices.push(MomentVertex {
-                position: centroid,
-                color: Vec4::new(1.0, 1.0, 1.0, 1.0),
-            })
+                .map(|c| verts.iter().position(|v| v == c).unwrap() as u16)
+                .collect();
+
+            match cycle.len() {
+                3 => {
+                    indices.extend(cycle_indices);
+                }
+                4 => {
+                    indices.extend(vec![
+                        cycle_indices[0],
+                        cycle_indices[1],
+                        cycle_indices[2],
+                        cycle_indices[2],
+                        cycle_indices[3],
+                        cycle_indices[0],
+                    ]);
+                }
+                _ => {
+                    for i in 0..cycle_indices.len() {
+                        let triangle = vec![
+                            // Before
+                            cycle_indices[i],
+                            // Centroid index
+                            moment_vertices.len() as u16,
+                            // After
+                            cycle_indices[(i + 1) % cycle_indices.len()],
+                        ];
+                        indices.extend(triangle);
+                    }
+                    // Compute the centroid
+                    let centroid = cycle
+                        .iter()
+                        .fold(Vec3::zero(), |acc, v| acc + polyhedron.positions[v])
+                        / cycle.len() as f32;
+                    // Add it to the moment vertices
+                    moment_vertices.push(MomentVertex {
+                        position: centroid,
+                        color: Vec4::new(1.0, 1.0, 1.0, 1.0),
+                    })
+                }
+            }
         }
-        println!("moment_vertices_final: {:?}", moment_vertices);
+
+        println!(
+            "moment_vertices_final: {:?}",
+            moment_vertices
+                .iter()
+                .map(|mv| mv.position)
+                .collect::<Vec<_>>()
+        );
         println!("indices: {:?}", indices);
 
         (moment_vertices, indices)
     }
-
-    /*
-        pub fn positions(&self) -> Vec<MomentVertex> {
-            let mut kv = vec![];
-
-            // println!("areas: {:?}", areas);
-
-            match self.render.method {
-                ColorMethodMessage::Vertex => {
-                    (0..self.model.polyhedron.cycles.len()).fold(Vec::new(), |mut acc, i| {
-                        for position in self.face_triangle_positions(i) {
-                            let color: Vec4 = self.render.picker.palette.colors
-                                [acc.len() % self.render.picker.palette.colors.len()]
-                            .into();
-                            acc.push(MomentVertex { position, color });
-                        }
-                        acc
-                    })
-                }
-                ColorMethodMessage::Edge => {
-                    (0..self.model.polyhedron.cycles.len()).fold(Vec::new(), |mut acc, i| {
-                        for position in self.face_triangle_positions(i) {
-                            let color: Vec4 = self.render.picker.palette.colors
-                                [i % self.render.picker.palette.colors.len()]
-                            .into();
-                            acc.push(MomentVertex { position, color });
-                        }
-                        acc
-                    })
-                }
-                ColorMethodMessage::Polygon => todo!(),
-                ColorMethodMessage::Face => {
-                    let areas: Vec<f32> =
-                        (0..self.model.polyhedron.cycles.len()).fold(Vec::new(), |mut acc, i| {
-                            let positions = self.face_triangle_positions(i);
-                            let mut area = 0.0;
-                            for i in 0..positions.len() / 3 {
-                                let j = i * 3;
-                                let a = (positions[j] - positions[j + 1]).mag();
-                                let b = (positions[j + 1] - positions[j + 2]).mag();
-                                let c = (positions[j + 2] - positions[j]).mag();
-                                let s = (a + b + c) / 2.0;
-                                area += (s * (s - a) * (s - b) * (s - c)).sqrt();
-                            }
-                            let mut log = ((area * area).log10() * 20.0).abs();
-                            if log.is_nan() || log.is_infinite() {
-                                log = 0.0;
-                            }
-                            kv.push((positions, log));
-                            acc.push(log);
-                            acc
-                        });
-                    let clusters =
-                        ckmeans(&areas[..], self.render.picker.colors as u8).unwrap_or(vec![areas]);
-                    kv.into_iter().fold(vec![], |acc, (positions, approx)| {
-                        for (i, cluster) in clusters.iter().enumerate() {
-                            if cluster.contains(&approx) {
-                                let color = self.render.picker.palette.colors
-                                    [i % self.render.picker.palette.colors.len()];
-                                return [
-                                    acc,
-                                    positions
-                                        .into_iter()
-                                        .map(|p| MomentVertex {
-                                            position: p,
-                                            color: color.into(),
-                                        })
-                                        .collect(),
-                                ]
-                                .concat();
-                            }
-                        }
-
-                        acc
-                    })
-                }
-            }
-        }
-    */
 
     pub fn face_sides_buffer(&self, face_index: usize) -> Vec<Vec3> {
         let positions = self.model.polyhedron.face_positions(face_index);
@@ -209,16 +156,14 @@ impl PolyhedronPrimitive {
 
     pub fn vertices(&self) -> Vec<ShapeVertex> {
         let (x, _) = self.moment_vertices();
-        let mut vertices = Vec::new();
-        for x in 0..x.len() {
-            vertices.push(ShapeVertex {
+        vec![
+            ShapeVertex {
                 normal: Vec4::new(1.0, 1.0, 1.0, 0.0),
                 sides: Vec4::new(1.0, 1.0, 1.0, 0.0),
                 barycentric: Vec4::new(1.0, 1.0, 1.0, 0.0),
-            });
-        }
-
-        vertices
+            };
+            x.len()
+        ]
     }
 }
 
