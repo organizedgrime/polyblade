@@ -192,17 +192,17 @@ impl Pipeline {
         }
 
         let (moment_vertices, indices) = primitive.moment_vertices();
+        self.index_count = indices.len() as u64;
 
         // Resize buffer if required
         if self.index_buf.count != self.index_count || !self.initialized {
             println!("resizing buffer!");
-            self.index_buf.resize(device, indices.len() as u64);
+            self.index_buf.resize(device, self.index_count);
             // Resize the vertex buffer
             self.vertex_buf.resize(device, moment_vertices.len() as u64);
             // Resize the vertex buffer
             //self.vertex_buf.resize(device, moment_vertices.len() as u64);
             // Count that
-            self.index_count = indices.len() as u64;
             // Write the vertices
             // queue.write_buffer(
             //     &self.vertices.raw,
