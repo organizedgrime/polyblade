@@ -1,5 +1,5 @@
 mod types;
-use iced::widget::shader::wgpu;
+use iced::widget::shader::wgpu::{self, RenderPass};
 pub use types::*;
 
 // A custom buffer container for dynamic resizing.
@@ -107,6 +107,12 @@ impl IndexBuffer {
         queue.write_buffer(&self.data_raw, 0, bytemuck::cast_slice(&data));
         queue.write_buffer(&self.index_raw, 0, bytemuck::cast_slice(&indices));
     }
+
+    // pub fn draw<'pass>(&self, pass: &mut RenderPass<'pass>) {
+    //     RenderPass::set_vertex_buffer(pass, 0, self.data_raw.slice(..));
+    //     RenderPass::set_index_buffer(pass, self.index_raw.slice(..), wgpu::IndexFormat::Uint16);
+    //     RenderPass::draw_indexed(pass, 0..self.index_count as u32, 0, 0..1);
+    // }
 
     // pub fn resize_data(&mut self, device: &wgpu::Device, new_count: u64) {
     //     self.data_raw = device.create_buffer(&wgpu::BufferDescriptor {

@@ -9,7 +9,7 @@ struct Output {
     @location(0) v_position: vec4<f32>,
     @location(1) v_color: vec4<f32>,
     @location(2) v_barycentric: vec4<f32>,
-    // @location(3) v_sides: vec4<f32>,
+    @location(3) v_sides: vec4<f32>,
 };
 
 @vertex
@@ -17,7 +17,7 @@ fn vs_main(
     @location(0) position: vec4<f32>,
     @location(1) color: vec4<f32>,
     @location(2) barycentric: vec4<f32>,
-    // @location(3) sides: vec4<f32>,
+    @location(3) sides: vec4<f32>,
 ) -> Output {
     var output: Output;
     let m_position: vec4<f32> = uniforms.model_mat * position;
@@ -34,10 +34,10 @@ struct FragUniforms {
 };
 @binding(1) @group(0) var<uniform> frag_uniforms : FragUniforms;
 
-fn edge_factor(v_barycentric: vec3<f32>, v_sides: vec3<f32>) -> f32 {
-    let face: vec3<f32> = v_barycentric * v_sides;
-    let r: vec3<f32> = fwidthFine(face) * frag_uniforms.line_thickness;
-    let f: vec3<f32> = step(r, face);
+fn edge_factor(v_barycentric: vec4<f32>, v_sides: vec4<f32>) -> f32 {
+    let face: vec4<f32> = v_barycentric * v_sides;
+    let r: vec4<f32> = fwidthFine(face) * frag_uniforms.line_thickness;
+    let f: vec4<f32> = step(r, face);
     return min(min(f.x, f.y), f.z);
 }
 
@@ -46,9 +46,9 @@ fn fs_main(
     @location(0) v_position: vec4<f32>,
     @location(1) v_color: vec4<f32>,
     @location(2) v_barycentric: vec4<f32>,
-    // @location(3) v_sides: vec4<f32>,
+    @location(3) v_sides: vec4<f32>,
 ) -> @location(0) vec4<f32> {
-    let edge_color = edge_factor(v_barycentric.xyz, vec3(1.0, 1.0, 1.0));
+    let edge_color = edge_factor(v_barycentric, v_sides);
 
     if edge_color == 0.0 {
         return vec4(0.0, 0.0, 0.0, 1.0);

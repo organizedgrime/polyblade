@@ -145,10 +145,10 @@ impl Application for Polyblade {
                     row![
                         text("Size: "),
                         text(self.state.model.scale.to_string()),
-                        slider(1.0..=10.0, self.state.model.scale, |v| {
+                        slider(0.0..=10.0, self.state.model.scale, |v| {
                             PolybladeMessage::Model(ModelMessage::ScaleChanged(v))
                         })
-                        .step(0.1)
+                        .step(0.03)
                     ],
                 ]
             ]

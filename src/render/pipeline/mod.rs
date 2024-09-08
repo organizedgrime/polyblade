@@ -18,6 +18,7 @@ pub struct Pipeline {
     position_buf: IndexBuffer,
     color_buf: IndexBuffer,
     barycentric_buf: IndexBuffer,
+    sides_buf: IndexBuffer,
     /// Uniform Buffers
     model_buf: Buffer,
     frag_buf: Buffer,
@@ -39,6 +40,7 @@ impl Pipeline {
         let position_buf = IndexBuffer::new::<Vec4>(device, "position_buf", vertex_usage);
         let color_buf = IndexBuffer::new::<Vec4>(device, "color_buf", vertex_usage);
         let barycentric_buf = IndexBuffer::new::<Vec4>(device, "barycentric_buf", vertex_usage);
+        let sides_buf = IndexBuffer::new::<Vec4>(device, "sides_buf", vertex_usage);
 
         // Create Uniform Buffers
         let model_buf = Buffer::new::<ModelUniforms>(device, "ModelUniforms", uniform_usage);
@@ -116,8 +118,8 @@ impl Pipeline {
                         1 => Float32x4,
                         // barycentric
                         2 => Float32x4,
-                        // // sides
-                        // 3 => Float32x4,
+                        // sides
+                        3 => Float32x4,
                     ],
                 }],
             },
@@ -147,6 +149,7 @@ impl Pipeline {
             position_buf,
             color_buf,
             barycentric_buf,
+            sides_buf,
             model_buf,
             frag_buf,
             depth_texture,
@@ -182,7 +185,7 @@ impl Pipeline {
 
         // Write uniforms
         self.model_buf.write(queue, &uniforms.model);
-        self.model_buf.write(queue, &uniforms.frag);
+        self.frag_buf.write(queue, &uniforms.frag);
     }
 
     pub fn render(
@@ -241,6 +244,13 @@ impl Pipeline {
             );
             pass.set_vertex_buffer(1, self.barycentric_buf.data_raw.slice(..));
             pass.draw_indexed(0..self.barycentric_buf.index_count as u32, 0, 0..1);
+
+            pass.set_index_buffer(
+                self.sides_buf.index_raw.slice(..),
+                wgpu::IndexFormat::Uint16,
+            );
+            pass.set_vertex_buffer(1, self.sides_buf.data_raw.slice(..));
+            pass.draw_indexed(0..self.sides_buf.index_count as u32, 0, 0..1);
         }
     }
 }

@@ -154,9 +154,25 @@ impl PolyhedronPrimitive {
         (barycentric, indices)
     }
 
+    pub fn sides_buf(&self) -> (Vec<Vec4>, Vec<u16>) {
+        let sides = vec![
+            Vec4::new(1.0, 1.0, 1.0, 0.0),
+            Vec4::new(1.0, 0.0, 1.0, 0.0),
+            Vec4::new(0.0, 1.0, 0.0, 0.0),
+        ];
+        let mut indices = vec![];
+        for cycle in &self.model.polyhedron.cycles {
+            indices.extend(match cycle.len() {
+                3 => vec![0; 3],
+                4 => vec![1; 6],
+                _ => vec![2; cycle.len() * 3],
+            });
+        }
+        (sides, indices)
+    }
+
     pub fn face_sides_buffer(&self, face_index: usize) -> Vec<Vec3> {
-        let positions = self.model.polyhedron.face_positions(face_index);
-        let n = positions.len();
+        let n = self.model.polyhedron.cycles[face_index].len();
         match n {
             3 => vec![Vec3::new(1.0, 1.0, 1.0); 3],
             4 => vec![Vec3::new(1.0, 0.0, 1.0); 6],
