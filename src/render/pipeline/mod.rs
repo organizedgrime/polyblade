@@ -182,6 +182,7 @@ impl Pipeline {
         self.color_buf.write(device, queue, primitive.color_buf());
         self.barycentric_buf
             .write(device, queue, primitive.barycentric_buf());
+        self.sides_buf.write(device, queue, primitive.sides_buf());
 
         // Write uniforms
         self.model_buf.write(queue, &uniforms.model);
@@ -225,14 +226,14 @@ impl Pipeline {
             pass.set_vertex_buffer(0, self.position_buf.data_raw.slice(..));
             pass.set_index_buffer(
                 self.position_buf.index_raw.slice(..),
-                wgpu::IndexFormat::Uint16,
+                wgpu::IndexFormat::Uint32,
             );
             pass.draw_indexed(0..self.position_buf.index_count as u32, 0, 0..1);
 
             // Draw Colors
             pass.set_index_buffer(
                 self.color_buf.index_raw.slice(..),
-                wgpu::IndexFormat::Uint16,
+                wgpu::IndexFormat::Uint32,
             );
             pass.set_vertex_buffer(1, self.color_buf.data_raw.slice(..));
             pass.draw_indexed(0..self.color_buf.index_count as u32, 0, 0..1);
@@ -240,14 +241,14 @@ impl Pipeline {
             // Draw Barycentric
             pass.set_index_buffer(
                 self.barycentric_buf.index_raw.slice(..),
-                wgpu::IndexFormat::Uint16,
+                wgpu::IndexFormat::Uint32,
             );
             pass.set_vertex_buffer(1, self.barycentric_buf.data_raw.slice(..));
             pass.draw_indexed(0..self.barycentric_buf.index_count as u32, 0, 0..1);
 
             pass.set_index_buffer(
                 self.sides_buf.index_raw.slice(..),
-                wgpu::IndexFormat::Uint16,
+                wgpu::IndexFormat::Uint32,
             );
             pass.set_vertex_buffer(1, self.sides_buf.data_raw.slice(..));
             pass.draw_indexed(0..self.sides_buf.index_count as u32, 0, 0..1);

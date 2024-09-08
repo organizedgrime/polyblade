@@ -21,7 +21,7 @@ impl PolyhedronPrimitive {
     }
 
     /// All the vertices that will change moment to moment
-    pub fn position_buf(&self) -> (Vec<Vec4>, Vec<u16>) {
+    pub fn position_buf(&self) -> (Vec<Vec4>, Vec<u32>) {
         let polyhedron = &self.model.polyhedron;
         let mut verts: Vec<usize> = polyhedron.vertices.clone().into_iter().collect();
         verts.sort();
@@ -35,13 +35,13 @@ impl PolyhedronPrimitive {
         // Iterate through every face and accumulate a list of indices
         let mut indices = vec![];
         for cycle in &polyhedron.cycles {
-            let cycle_indices: Vec<u16> = cycle
+            let cycle_indices: Vec<u32> = cycle
                 .iter()
                 .map(|c| {
                     positions
                         .iter()
                         .position(|&v| v == polyhedron.positions[c])
-                        .unwrap() as u16
+                        .unwrap() as u32
                 })
                 .collect();
 
@@ -65,7 +65,7 @@ impl PolyhedronPrimitive {
                             // Before
                             cycle_indices[i],
                             // Centroid index
-                            positions.len() as u16,
+                            positions.len() as u32,
                             // After
                             cycle_indices[(i + 1) % cycle_indices.len()],
                         ];
@@ -94,18 +94,24 @@ impl PolyhedronPrimitive {
         // let barycentric = [Vec4::unit_x(), Vec4::unit_y(), Vec4::unit_z()];
         // for (i, idx) in indices.iter().enumerate() {
         //     moment_vertices[*idx as usize].barycentric = barycentric[i % barycentric.len()];
-        //     if *idx > verts.len() as u16 {
+        //     if *idx > verts.len() as u32 {
         //         moment_vertices[*idx as usize].sides = Vec4::zero();
         //     } else {
         //         moment_vertices[*idx as usize].sides = Vec4::new(1.0, 1.0, 1.0, 1.0);
         //     }
         // }
 
-        (positions.iter().map(|&x| x.into()).collect(), indices)
+        (
+            positions
+                .iter()
+                .map(|&x| Vec4::new(x.x, x.y, x.y, 0.0))
+                .collect(),
+            indices,
+        )
         //(positions, indices)
     }
 
-    pub fn color_buf(&self) -> (Vec<Vec4>, Vec<u16>) {
+    pub fn color_buf(&self) -> (Vec<Vec4>, Vec<u32>) {
         let colors: Vec<Vec4> = self
             .render
             .picker
@@ -120,33 +126,33 @@ impl PolyhedronPrimitive {
         for (i, cycle) in polyhedron.cycles.iter().enumerate() {
             match cycle.len() {
                 3 => {
-                    indices.extend(vec![(i % colors.len()) as u16; 3]);
+                    indices.extend(vec![(i % colors.len()) as u32; 3]);
                 }
                 4 => {
-                    indices.extend(vec![(i % colors.len()) as u16; 6]);
+                    indices.extend(vec![(i % colors.len()) as u32; 6]);
                 }
                 _ => {
-                    indices.extend(vec![(i % colors.len()) as u16; cycle.len() * 3]);
+                    indices.extend(vec![(i % colors.len()) as u32; cycle.len() * 3]);
                 }
             }
         }
 
         (colors, indices)
     }
-    pub fn barycentric_buf(&self) -> (Vec<Vec4>, Vec<u16>) {
+    pub fn barycentric_buf(&self) -> (Vec<Vec4>, Vec<u32>) {
         let barycentric: Vec<Vec4> = vec![Vec4::unit_x(), Vec4::unit_y(), Vec4::unit_z()];
         let mut indices = vec![];
         let polyhedron = &self.model.polyhedron;
         for (i, cycle) in polyhedron.cycles.iter().enumerate() {
             match cycle.len() {
                 3 => {
-                    indices.extend(vec![(i % barycentric.len()) as u16; 3]);
+                    indices.extend(vec![(i % barycentric.len()) as u32; 3]);
                 }
                 4 => {
-                    indices.extend(vec![(i % barycentric.len()) as u16; 6]);
+                    indices.extend(vec![(i % barycentric.len()) as u32; 6]);
                 }
                 _ => {
-                    indices.extend(vec![(i % barycentric.len()) as u16; cycle.len() * 3]);
+                    indices.extend(vec![(i % barycentric.len()) as u32; cycle.len() * 3]);
                 }
             }
         }
@@ -154,7 +160,7 @@ impl PolyhedronPrimitive {
         (barycentric, indices)
     }
 
-    pub fn sides_buf(&self) -> (Vec<Vec4>, Vec<u16>) {
+    pub fn sides_buf(&self) -> (Vec<Vec4>, Vec<u32>) {
         let sides = vec![
             Vec4::new(1.0, 1.0, 1.0, 0.0),
             Vec4::new(1.0, 0.0, 1.0, 0.0),

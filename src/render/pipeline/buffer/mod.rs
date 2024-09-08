@@ -65,7 +65,7 @@ impl IndexBuffer {
             }),
             index_raw: device.create_buffer(&wgpu::BufferDescriptor {
                 label: Some(&format!("{}_index", label)),
-                size: std::mem::size_of::<u16>() as u64 * 1,
+                size: std::mem::size_of::<u32>() as u64 * 1,
                 usage: wgpu::BufferUsages::INDEX | wgpu::BufferUsages::COPY_DST,
                 mapped_at_creation: false,
             }),
@@ -88,7 +88,7 @@ impl IndexBuffer {
         self.index_count = index_count as u64;
         self.index_raw = device.create_buffer(&wgpu::BufferDescriptor {
             label: Some(&format!("{}_index", self.label)),
-            size: std::mem::size_of::<u16>() as u64 * self.index_count,
+            size: std::mem::size_of::<u32>() as u64 * self.index_count,
             usage: wgpu::BufferUsages::INDEX | wgpu::BufferUsages::COPY_DST,
             mapped_at_creation: false,
         });
@@ -98,7 +98,7 @@ impl IndexBuffer {
         &mut self,
         device: &wgpu::Device,
         queue: &wgpu::Queue,
-        buf: (Vec<T>, Vec<u16>),
+        buf: (Vec<T>, Vec<u32>),
     ) {
         let (data, indices) = buf;
         if indices.len() as u64 != self.index_count {
