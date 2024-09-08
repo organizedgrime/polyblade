@@ -27,7 +27,7 @@ impl PolyhedronPrimitive {
         verts.sort();
 
         // Accumulate a list of all the positions we know to expect
-        let mut moment_vertices = verts.iter().fold(vec![], |mut acc, v| {
+        let mut positions = verts.iter().fold(vec![], |mut acc, v| {
             acc.push(polyhedron.positions[v]);
             acc
         });
@@ -37,7 +37,12 @@ impl PolyhedronPrimitive {
         for cycle in &polyhedron.cycles {
             let cycle_indices: Vec<u16> = cycle
                 .iter()
-                .map(|c| verts.iter().position(|v| v == c).unwrap() as u16)
+                .map(|c| {
+                    positions
+                        .iter()
+                        .position(|&v| v == polyhedron.positions[c])
+                        .unwrap() as u16
+                })
                 .collect();
 
             match cycle.len() {
@@ -60,7 +65,7 @@ impl PolyhedronPrimitive {
                             // Before
                             cycle_indices[i],
                             // Centroid index
-                            moment_vertices.len() as u16,
+                            positions.len() as u16,
                             // After
                             cycle_indices[(i + 1) % cycle_indices.len()],
                         ];
@@ -72,7 +77,7 @@ impl PolyhedronPrimitive {
                         .fold(Vec3::zero(), |acc, v| acc + polyhedron.positions[v])
                         / cycle.len() as f32;
                     // Add it to the moment vertices
-                    moment_vertices.push(centroid);
+                    positions.push(centroid);
                 }
             }
         }
@@ -96,7 +101,8 @@ impl PolyhedronPrimitive {
         //     }
         // }
 
-        (moment_vertices.iter().map(|&x| x.into()).collect(), indices)
+        (positions.iter().map(|&x| x.into()).collect(), indices)
+        //(positions, indices)
     }
 
     pub fn color_buf(&self) -> (Vec<Vec4>, Vec<u16>) {
@@ -117,7 +123,7 @@ impl PolyhedronPrimitive {
                     indices.extend(vec![(i % colors.len()) as u16; 3]);
                 }
                 4 => {
-                    indices.extend(vec![(i % colors.len()) as u16; 4]);
+                    indices.extend(vec![(i % colors.len()) as u16; 6]);
                 }
                 _ => {
                     indices.extend(vec![(i % colors.len()) as u16; cycle.len() * 3]);
@@ -137,7 +143,7 @@ impl PolyhedronPrimitive {
                     indices.extend(vec![(i % barycentric.len()) as u16; 3]);
                 }
                 4 => {
-                    indices.extend(vec![(i % barycentric.len()) as u16; 4]);
+                    indices.extend(vec![(i % barycentric.len()) as u16; 6]);
                 }
                 _ => {
                     indices.extend(vec![(i % barycentric.len()) as u16; cycle.len() * 3]);

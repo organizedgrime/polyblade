@@ -73,23 +73,42 @@ impl IndexBuffer {
         }
     }
 
-    pub fn resize_data(&mut self, device: &wgpu::Device, new_count: u64) {
-        self.data_raw = device.create_buffer(&wgpu::BufferDescriptor {
-            label: Some(self.label),
-            size: self.size_of_type * new_count,
-            usage: self.usage,
-            mapped_at_creation: false,
-        });
-        self.data_count = new_count;
+    pub fn resize(&mut self, device: &wgpu::Device, data_count: usize, index_count: usize) {
+        if index_count as u64 != self.index_count {
+            self.data_count = data_count as u64;
+            self.data_raw = device.create_buffer(&wgpu::BufferDescriptor {
+                label: Some(self.label),
+                size: self.size_of_type * self.data_count,
+                usage: self.usage,
+                mapped_at_creation: false,
+            });
+            self.index_count = index_count as u64;
+            self.index_raw = device.create_buffer(&wgpu::BufferDescriptor {
+                label: Some(&format!("{}_index", self.label)),
+                size: std::mem::size_of::<u16>() as u64 * self.index_count,
+                usage: wgpu::BufferUsages::INDEX | wgpu::BufferUsages::COPY_DST,
+                mapped_at_creation: false,
+            });
+        }
     }
 
-    pub fn resize_index(&mut self, device: &wgpu::Device, new_count: u64) {
-        self.index_raw = device.create_buffer(&wgpu::BufferDescriptor {
-            label: Some(&format!("{}_index", self.label)),
-            size: std::mem::size_of::<u16>() as u64 * new_count,
-            usage: wgpu::BufferUsages::INDEX | wgpu::BufferUsages::COPY_DST,
-            mapped_at_creation: false,
-        });
-        self.index_count = new_count;
-    }
+    // pub fn resize_data(&mut self, device: &wgpu::Device, new_count: u64) {
+    //     self.data_raw = device.create_buffer(&wgpu::BufferDescriptor {
+    //         label: Some(self.label),
+    //         size: self.size_of_type * new_count,
+    //         usage: self.usage,
+    //         mapped_at_creation: false,
+    //     });
+    //     self.data_count = new_count;
+    // }
+    //
+    // pub fn resize_index(&mut self, device: &wgpu::Device, new_count: u64) {
+    //     self.index_raw = device.create_buffer(&wgpu::BufferDescriptor {
+    //         label: Some(&format!("{}_index", self.label)),
+    //         size: std::mem::size_of::<u16>() as u64 * new_count,
+    //         usage: wgpu::BufferUsages::INDEX | wgpu::BufferUsages::COPY_DST,
+    //         mapped_at_creation: false,
+    //     });
+    //     self.index_count = new_count;
+    // }
 }

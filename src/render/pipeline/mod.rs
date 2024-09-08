@@ -176,12 +176,8 @@ impl Pipeline {
 
         let (position_data, position_indices) = primitive.position_buf();
         println!("position_indices.len(): {}", position_indices.len());
-        if self.position_buf.index_count != position_indices.len() as u64 {
-            self.position_buf
-                .resize_index(device, position_indices.len() as u64);
-            self.position_buf
-                .resize_data(device, position_data.len() as u64);
-        }
+        self.position_buf
+            .resize(device, position_data.len(), position_indices.len());
         // Write all position and color data
         queue.write_buffer(
             &self.position_buf.index_raw,
@@ -196,11 +192,8 @@ impl Pipeline {
 
         let (color_data, color_indices) = primitive.color_buf();
         println!("color_indices.len(): {}", color_indices.len());
-        if self.color_buf.index_count != color_indices.len() as u64 {
-            self.color_buf
-                .resize_index(device, color_indices.len() as u64);
-            self.color_buf.resize_data(device, color_data.len() as u64);
-        }
+        self.color_buf
+            .resize(device, color_data.len(), color_indices.len());
         queue.write_buffer(
             &self.color_buf.index_raw,
             0,
@@ -214,12 +207,8 @@ impl Pipeline {
 
         let (barycentric_data, barycentric_indices) = primitive.barycentric_buf();
         println!("barycentric_indices.len(): {}", barycentric_indices.len());
-        if self.barycentric_buf.index_count != barycentric_indices.len() as u64 {
-            self.barycentric_buf
-                .resize_index(device, barycentric_indices.len() as u64);
-            self.barycentric_buf
-                .resize_data(device, barycentric_data.len() as u64);
-        }
+        self.barycentric_buf
+            .resize(device, barycentric_data.len(), barycentric_indices.len());
         queue.write_buffer(
             &self.barycentric_buf.index_raw,
             0,
@@ -286,6 +275,12 @@ impl Pipeline {
             pass.draw_indexed(0..self.color_buf.index_count as u32, 0, 0..1);
 
             // Draw Barycentric
+            pass.set_index_buffer(
+                self.barycentric_buf.index_raw.slice(..),
+                wgpu::IndexFormat::Uint16,
+            );
+            pass.set_vertex_buffer(1, self.barycentric_buf.data_raw.slice(..));
+            pass.draw_indexed(0..self.barycentric_buf.index_count as u32, 0, 0..1);
         }
     }
 }
