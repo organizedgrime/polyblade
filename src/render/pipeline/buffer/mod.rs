@@ -8,7 +8,7 @@ pub struct Buffer {
     label: &'static str,
     usage: wgpu::BufferUsages,
     size_of_type: u64,
-    pub count: u64,
+    pub count: u32,
 }
 // A custom buffer container for dynamic resizing.
 pub struct IndexBuffer {
@@ -17,8 +17,8 @@ pub struct IndexBuffer {
     label: &'static str,
     usage: wgpu::BufferUsages,
     size_of_type: u64,
-    pub data_count: u64,
-    pub index_count: u64,
+    pub data_count: u32,
+    pub index_count: u32,
 }
 
 impl Buffer {
@@ -38,10 +38,10 @@ impl Buffer {
         }
     }
 
-    pub fn resize(&mut self, device: &wgpu::Device, new_count: u64) {
+    pub fn resize(&mut self, device: &wgpu::Device, new_count: u32) {
         self.raw = device.create_buffer(&wgpu::BufferDescriptor {
             label: Some(self.label),
-            size: self.size_of_type * new_count,
+            size: self.size_of_type * new_count as u64,
             usage: self.usage,
             mapped_at_creation: false,
         });
@@ -77,23 +77,6 @@ impl IndexBuffer {
         }
     }
 
-    pub fn resize(&mut self, device: &wgpu::Device, data_count: usize, index_count: usize) {
-        self.data_count = data_count as u64;
-        self.data_raw = device.create_buffer(&wgpu::BufferDescriptor {
-            label: Some(self.label),
-            size: self.size_of_type * self.data_count,
-            usage: self.usage,
-            mapped_at_creation: false,
-        });
-        self.index_count = index_count as u64;
-        self.index_raw = device.create_buffer(&wgpu::BufferDescriptor {
-            label: Some(&format!("{}_index", self.label)),
-            size: std::mem::size_of::<u32>() as u64 * self.index_count,
-            usage: wgpu::BufferUsages::INDEX | wgpu::BufferUsages::COPY_DST,
-            mapped_at_creation: false,
-        });
-    }
-
     pub fn write<T: bytemuck::Pod>(
         &mut self,
         device: &wgpu::Device,
@@ -101,9 +84,27 @@ impl IndexBuffer {
         buf: (Vec<T>, Vec<u32>),
     ) {
         let (data, indices) = buf;
-        if indices.len() as u64 != self.index_count {
-            self.resize(device, data.len(), indices.len());
+        // Resize the index buffer if necessary
+        if indices.len() as u32 != self.index_count {
+            self.index_count = indices.len() as u32;
+            self.index_raw = device.create_buffer(&wgpu::BufferDescriptor {
+                label: Some(&format!("{}_index", self.label)),
+                size: std::mem::size_of::<u32>() as u64 * self.index_count as u64,
+                usage: wgpu::BufferUsages::INDEX | wgpu::BufferUsages::COPY_DST,
+                mapped_at_creation: false,
+            });
         }
+        // Resize the data buffer if necessary
+        if data.len() as u32 != self.data_count {
+            self.data_count = data.len() as u32;
+            self.data_raw = device.create_buffer(&wgpu::BufferDescriptor {
+                label: Some(self.label),
+                size: self.size_of_type * self.data_count as u64,
+                usage: self.usage,
+                mapped_at_creation: false,
+            });
+        }
+        // Write to the buffers
         queue.write_buffer(&self.data_raw, 0, bytemuck::cast_slice(&data));
         queue.write_buffer(&self.index_raw, 0, bytemuck::cast_slice(&indices));
     }
