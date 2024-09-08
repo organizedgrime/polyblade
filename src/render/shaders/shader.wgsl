@@ -14,10 +14,9 @@ struct Output {
 
 @vertex
 fn vs_main(
-    @builtin(vertex_index) v_index: u32,
     @location(0) position: vec4<f32>,
     @location(1) color: vec4<f32>,
-    // @location(2) barycentric: vec4<f32>,
+    @location(2) barycentric: vec4<f32>,
     // @location(3) sides: vec4<f32>,
 ) -> Output {
     var output: Output;
@@ -25,16 +24,6 @@ fn vs_main(
 
     output.v_position = m_position;
     output.v_color = color;
-
-    if v_index % 3 == 0 {
-        output.v_barycentric = vec4(1.0, 0.0, 0.0, 0.0);
-    } else if v_index % 3 == 1 {
-        output.v_barycentric = vec4(0.0, 1.0, 0.0, 0.0);
-    } else {
-        output.v_barycentric = vec4(0.0, 1.0, 1.0, 0.0);
-    }
-
-    // output.v_sides = sides;
 
     output.position = uniforms.view_project_mat * m_position;
     return output;

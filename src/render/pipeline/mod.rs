@@ -17,6 +17,7 @@ pub struct Pipeline {
     pipeline: wgpu::RenderPipeline,
     position_buf: IndexBuffer,
     color_buf: IndexBuffer,
+    barycentric_buf: IndexBuffer,
     /// Uniform Buffers
     model_buf: Buffer,
     frag_buf: Buffer,
@@ -25,8 +26,6 @@ pub struct Pipeline {
     uniform_group: wgpu::BindGroup,
     /// Number of vertices to skip in case of schlegel
     starting_vertex: usize,
-    position_index_count: u64,
-    color_index_count: u64,
 }
 
 unsafe impl Send for Pipeline {}
@@ -39,6 +38,7 @@ impl Pipeline {
 
         let position_buf = IndexBuffer::new::<Vec4>(device, "position_buf", vertex_usage);
         let color_buf = IndexBuffer::new::<Vec4>(device, "color_buf", vertex_usage);
+        let barycentric_buf = IndexBuffer::new::<Vec4>(device, "barycentric_buf", vertex_usage);
 
         // Create Uniform Buffers
         let model_buf = Buffer::new::<ModelUniforms>(device, "ModelUniforms", uniform_usage);
@@ -111,11 +111,11 @@ impl Pipeline {
                     step_mode: wgpu::VertexStepMode::Vertex,
                     attributes: &wgpu::vertex_attr_array![
                         // position
-                        0 => Float32x3,
+                        0 => Float32x4,
                         // color
                         1 => Float32x4,
-                        // // barycentric
-                        // 2 => Float32x4,
+                        // barycentric
+                        2 => Float32x4,
                         // // sides
                         // 3 => Float32x4,
                     ],
@@ -146,13 +146,12 @@ impl Pipeline {
             pipeline,
             position_buf,
             color_buf,
+            barycentric_buf,
             model_buf,
             frag_buf,
             depth_texture,
             uniform_group,
             starting_vertex: 0,
-            position_index_count: 1,
-            color_index_count: 1,
         }
     }
 
@@ -176,22 +175,13 @@ impl Pipeline {
         }
 
         let (position_data, position_indices) = primitive.position_buf();
-        self.position_index_count = position_indices.len() as u64;
-
-        if self.position_buf.index_count != self.position_index_count {
+        println!("position_indices.len(): {}", position_indices.len());
+        if self.position_buf.index_count != position_indices.len() as u64 {
             self.position_buf
-                .resize_index(device, self.position_index_count);
+                .resize_index(device, position_indices.len() as u64);
             self.position_buf
                 .resize_data(device, position_data.len() as u64);
         }
-
-        let (color_data, color_indices) = primitive.color_buf();
-        self.color_index_count = position_indices.len() as u64;
-        if self.color_buf.index_count != self.color_index_count {
-            self.color_buf.resize_index(device, self.color_index_count);
-            self.color_buf.resize_data(device, color_data.len() as u64);
-        }
-
         // Write all position and color data
         queue.write_buffer(
             &self.position_buf.index_raw,
@@ -203,6 +193,14 @@ impl Pipeline {
             0,
             bytemuck::cast_slice(&position_data),
         );
+
+        let (color_data, color_indices) = primitive.color_buf();
+        println!("color_indices.len(): {}", color_indices.len());
+        if self.color_buf.index_count != color_indices.len() as u64 {
+            self.color_buf
+                .resize_index(device, color_indices.len() as u64);
+            self.color_buf.resize_data(device, color_data.len() as u64);
+        }
         queue.write_buffer(
             &self.color_buf.index_raw,
             0,
@@ -212,6 +210,25 @@ impl Pipeline {
             &self.color_buf.data_raw,
             0,
             bytemuck::cast_slice(&color_data),
+        );
+
+        let (barycentric_data, barycentric_indices) = primitive.barycentric_buf();
+        println!("barycentric_indices.len(): {}", barycentric_indices.len());
+        if self.barycentric_buf.index_count != barycentric_indices.len() as u64 {
+            self.barycentric_buf
+                .resize_index(device, barycentric_indices.len() as u64);
+            self.barycentric_buf
+                .resize_data(device, barycentric_data.len() as u64);
+        }
+        queue.write_buffer(
+            &self.barycentric_buf.index_raw,
+            0,
+            bytemuck::cast_slice(&barycentric_indices),
+        );
+        queue.write_buffer(
+            &self.barycentric_buf.data_raw,
+            0,
+            bytemuck::cast_slice(&barycentric_data),
         );
 
         // Write uniforms
@@ -251,28 +268,24 @@ impl Pipeline {
             pass.set_scissor_rect(viewport.x, viewport.y, viewport.width, viewport.height);
             pass.set_pipeline(&self.pipeline);
             pass.set_bind_group(0, &self.uniform_group, &[]);
+
+            // Draw Positions
+            pass.set_vertex_buffer(0, self.position_buf.data_raw.slice(..));
             pass.set_index_buffer(
                 self.position_buf.index_raw.slice(..),
                 wgpu::IndexFormat::Uint16,
             );
-            pass.set_vertex_buffer(0, self.position_buf.data_raw.slice(..));
-            //pass.set_vertex_buffer(1, self.vertices.raw.slice(..));
-            pass.draw_indexed(
-                self.starting_vertex as u32..self.position_index_count as u32,
-                0,
-                0..1,
-            );
+            pass.draw_indexed(0..self.position_buf.index_count as u32, 0, 0..1);
 
+            // Draw Colors
             pass.set_index_buffer(
                 self.color_buf.index_raw.slice(..),
                 wgpu::IndexFormat::Uint16,
             );
             pass.set_vertex_buffer(1, self.color_buf.data_raw.slice(..));
-            pass.draw_indexed(
-                self.starting_vertex as u32..self.position_index_count as u32,
-                0,
-                0..1,
-            );
+            pass.draw_indexed(0..self.color_buf.index_count as u32, 0, 0..1);
+
+            // Draw Barycentric
         }
     }
 }

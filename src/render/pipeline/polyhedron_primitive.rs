@@ -127,6 +127,26 @@ impl PolyhedronPrimitive {
 
         (colors, indices)
     }
+    pub fn barycentric_buf(&self) -> (Vec<Vec4>, Vec<u16>) {
+        let barycentric: Vec<Vec4> = vec![Vec4::unit_x(), Vec4::unit_y(), Vec4::unit_z()];
+        let mut indices = vec![];
+        let polyhedron = &self.model.polyhedron;
+        for (i, cycle) in polyhedron.cycles.iter().enumerate() {
+            match cycle.len() {
+                3 => {
+                    indices.extend(vec![(i % barycentric.len()) as u16; 3]);
+                }
+                4 => {
+                    indices.extend(vec![(i % barycentric.len()) as u16; 4]);
+                }
+                _ => {
+                    indices.extend(vec![(i % barycentric.len()) as u16; cycle.len() * 3]);
+                }
+            }
+        }
+
+        (barycentric, indices)
+    }
 
     pub fn face_sides_buffer(&self, face_index: usize) -> Vec<Vec3> {
         let positions = self.model.polyhedron.face_positions(face_index);

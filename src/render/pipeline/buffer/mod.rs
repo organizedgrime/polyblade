@@ -85,7 +85,7 @@ impl IndexBuffer {
 
     pub fn resize_index(&mut self, device: &wgpu::Device, new_count: u64) {
         self.index_raw = device.create_buffer(&wgpu::BufferDescriptor {
-            label: Some(self.label),
+            label: Some(&format!("{}_index", self.label)),
             size: std::mem::size_of::<u16>() as u64 * new_count,
             usage: wgpu::BufferUsages::INDEX | wgpu::BufferUsages::COPY_DST,
             mapped_at_creation: false,
