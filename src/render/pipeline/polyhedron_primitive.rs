@@ -21,18 +21,14 @@ impl PolyhedronPrimitive {
     }
 
     /// All the vertices that will change moment to moment
-    pub fn moment_vertices(&self) -> (Vec<Vertex>, Vec<u16>) {
+    pub fn position_buf(&self) -> (Vec<Vec4>, Vec<u16>) {
         let polyhedron = &self.model.polyhedron;
         let mut verts: Vec<usize> = polyhedron.vertices.clone().into_iter().collect();
         verts.sort();
 
         // Accumulate a list of all the positions we know to expect
         let mut moment_vertices = verts.iter().fold(vec![], |mut acc, v| {
-            acc.push(Vertex::new(
-                polyhedron.positions[v],
-                self.render.picker.palette.colors[v % self.render.picker.palette.colors.len()]
-                    .into(),
-            ));
+            acc.push(polyhedron.positions[v]);
             acc
         });
 
@@ -76,7 +72,7 @@ impl PolyhedronPrimitive {
                         .fold(Vec3::zero(), |acc, v| acc + polyhedron.positions[v])
                         / cycle.len() as f32;
                     // Add it to the moment vertices
-                    moment_vertices.push(Vertex::new(centroid, Vec4::new(1.0, 1.0, 1.0, 1.0)));
+                    moment_vertices.push(centroid);
                 }
             }
         }
@@ -100,7 +96,36 @@ impl PolyhedronPrimitive {
         //     }
         // }
 
-        (moment_vertices, indices)
+        (moment_vertices.iter().map(|&x| x.into()).collect(), indices)
+    }
+
+    pub fn color_buf(&self) -> (Vec<Vec4>, Vec<u16>) {
+        let colors: Vec<Vec4> = self
+            .render
+            .picker
+            .palette
+            .colors
+            .iter()
+            .map(|&c| c.into())
+            .collect();
+
+        let mut indices = vec![];
+        let polyhedron = &self.model.polyhedron;
+        for (i, cycle) in polyhedron.cycles.iter().enumerate() {
+            match cycle.len() {
+                3 => {
+                    indices.extend(vec![(i % colors.len()) as u16; 3]);
+                }
+                4 => {
+                    indices.extend(vec![(i % colors.len()) as u16; 4]);
+                }
+                _ => {
+                    indices.extend(vec![(i % colors.len()) as u16; cycle.len() * 3]);
+                }
+            }
+        }
+
+        (colors, indices)
     }
 
     pub fn face_sides_buffer(&self, face_index: usize) -> Vec<Vec3> {

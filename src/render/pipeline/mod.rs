@@ -11,12 +11,12 @@ use texture::Texture;
 
 pub use buffer::*;
 pub use polyhedron_primitive::*;
+use ultraviolet::{Vec3, Vec4};
 
 pub struct Pipeline {
     pipeline: wgpu::RenderPipeline,
-    /// Indices
-    //index_buf: Buffer,
-    vertex_buf: IndexBuffer,
+    position_buf: IndexBuffer,
+    color_buf: IndexBuffer,
     /// Uniform Buffers
     model_buf: Buffer,
     frag_buf: Buffer,
@@ -25,7 +25,8 @@ pub struct Pipeline {
     uniform_group: wgpu::BindGroup,
     /// Number of vertices to skip in case of schlegel
     starting_vertex: usize,
-    index_count: u64,
+    position_index_count: u64,
+    color_index_count: u64,
 }
 
 unsafe impl Send for Pipeline {}
@@ -33,12 +34,11 @@ unsafe impl Send for Pipeline {}
 impl Pipeline {
     pub fn new(device: &wgpu::Device, format: wgpu::TextureFormat, target_size: Size<u32>) -> Self {
         println!("NEW PIPELINE");
-        let index_usage = wgpu::BufferUsages::INDEX | wgpu::BufferUsages::COPY_DST;
         let vertex_usage = wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::COPY_DST;
         let uniform_usage = wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST;
 
-        //let index_buf = Buffer::new::<u16>(device, "index_buf", index_usage);
-        let vertex_buf = IndexBuffer::new::<Vertex>(device, "vertex_buf", vertex_usage);
+        let position_buf = IndexBuffer::new::<Vec4>(device, "position_buf", vertex_usage);
+        let color_buf = IndexBuffer::new::<Vec4>(device, "color_buf", vertex_usage);
 
         // Create Uniform Buffers
         let model_buf = Buffer::new::<ModelUniforms>(device, "ModelUniforms", uniform_usage);
@@ -144,14 +144,15 @@ impl Pipeline {
 
         Self {
             pipeline,
-            //index_buf,
-            vertex_buf,
+            position_buf,
+            color_buf,
             model_buf,
             frag_buf,
             depth_texture,
             uniform_group,
             starting_vertex: 0,
-            index_count: 1,
+            position_index_count: 1,
+            color_index_count: 1,
         }
     }
 
@@ -174,37 +175,43 @@ impl Pipeline {
             self.starting_vertex = 0;
         }
 
-        let (moment_vertices, indices) = primitive.moment_vertices();
-        self.index_count = indices.len() as u64;
+        let (position_data, position_indices) = primitive.position_buf();
+        self.position_index_count = position_indices.len() as u64;
 
-        // Resize buffer if required
-        if self.vertex_buf.index_count != self.index_count {
-            println!("resizing buffer!");
-            self.vertex_buf.resize_index(device, self.index_count);
-            // Resize the vertex buffer
-            self.vertex_buf
-                .resize_data(device, moment_vertices.len() as u64);
-            // Resize the vertex buffer
-            //self.vertex_buf.resize(device, moment_vertices.len() as u64);
-            // Count that
-            // Write the vertices
-            // queue.write_buffer(
-            //     &self.vertices.raw,
-            //     0,
-            //     bytemuck::cast_slice(&primitive.vertices()),
-            // );
+        if self.position_buf.index_count != self.position_index_count {
+            self.position_buf
+                .resize_index(device, self.position_index_count);
+            self.position_buf
+                .resize_data(device, position_data.len() as u64);
+        }
+
+        let (color_data, color_indices) = primitive.color_buf();
+        self.color_index_count = position_indices.len() as u64;
+        if self.color_buf.index_count != self.color_index_count {
+            self.color_buf.resize_index(device, self.color_index_count);
+            self.color_buf.resize_data(device, color_data.len() as u64);
         }
 
         // Write all position and color data
         queue.write_buffer(
-            &self.vertex_buf.index_raw,
+            &self.position_buf.index_raw,
             0,
-            bytemuck::cast_slice(&indices),
+            bytemuck::cast_slice(&position_indices),
         );
         queue.write_buffer(
-            &self.vertex_buf.data_raw,
+            &self.position_buf.data_raw,
             0,
-            bytemuck::cast_slice(&moment_vertices),
+            bytemuck::cast_slice(&position_data),
+        );
+        queue.write_buffer(
+            &self.color_buf.index_raw,
+            0,
+            bytemuck::cast_slice(&color_indices),
+        );
+        queue.write_buffer(
+            &self.color_buf.data_raw,
+            0,
+            bytemuck::cast_slice(&color_data),
         );
 
         // Write uniforms
@@ -245,13 +252,24 @@ impl Pipeline {
             pass.set_pipeline(&self.pipeline);
             pass.set_bind_group(0, &self.uniform_group, &[]);
             pass.set_index_buffer(
-                self.vertex_buf.index_raw.slice(..),
+                self.position_buf.index_raw.slice(..),
                 wgpu::IndexFormat::Uint16,
             );
-            pass.set_vertex_buffer(0, self.vertex_buf.data_raw.slice(..));
+            pass.set_vertex_buffer(0, self.position_buf.data_raw.slice(..));
             //pass.set_vertex_buffer(1, self.vertices.raw.slice(..));
             pass.draw_indexed(
-                self.starting_vertex as u32..self.index_count as u32,
+                self.starting_vertex as u32..self.position_index_count as u32,
+                0,
+                0..1,
+            );
+
+            pass.set_index_buffer(
+                self.color_buf.index_raw.slice(..),
+                wgpu::IndexFormat::Uint16,
+            );
+            pass.set_vertex_buffer(1, self.color_buf.data_raw.slice(..));
+            pass.draw_indexed(
+                self.starting_vertex as u32..self.position_index_count as u32,
                 0,
                 0..1,
             );
