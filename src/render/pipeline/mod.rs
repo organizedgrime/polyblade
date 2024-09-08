@@ -174,55 +174,15 @@ impl Pipeline {
             self.starting_vertex = 0;
         }
 
-        let (position_data, position_indices) = primitive.position_buf();
-        println!("position_indices.len(): {}", position_indices.len());
         self.position_buf
-            .resize(device, position_data.len(), position_indices.len());
-        // Write all position and color data
-        queue.write_buffer(
-            &self.position_buf.index_raw,
-            0,
-            bytemuck::cast_slice(&position_indices),
-        );
-        queue.write_buffer(
-            &self.position_buf.data_raw,
-            0,
-            bytemuck::cast_slice(&position_data),
-        );
-
-        let (color_data, color_indices) = primitive.color_buf();
-        println!("color_indices.len(): {}", color_indices.len());
-        self.color_buf
-            .resize(device, color_data.len(), color_indices.len());
-        queue.write_buffer(
-            &self.color_buf.index_raw,
-            0,
-            bytemuck::cast_slice(&color_indices),
-        );
-        queue.write_buffer(
-            &self.color_buf.data_raw,
-            0,
-            bytemuck::cast_slice(&color_data),
-        );
-
-        let (barycentric_data, barycentric_indices) = primitive.barycentric_buf();
-        println!("barycentric_indices.len(): {}", barycentric_indices.len());
+            .write(device, queue, primitive.position_buf());
+        self.color_buf.write(device, queue, primitive.color_buf());
         self.barycentric_buf
-            .resize(device, barycentric_data.len(), barycentric_indices.len());
-        queue.write_buffer(
-            &self.barycentric_buf.index_raw,
-            0,
-            bytemuck::cast_slice(&barycentric_indices),
-        );
-        queue.write_buffer(
-            &self.barycentric_buf.data_raw,
-            0,
-            bytemuck::cast_slice(&barycentric_data),
-        );
+            .write(device, queue, primitive.barycentric_buf());
 
         // Write uniforms
-        queue.write_buffer(&self.model_buf.raw, 0, bytemuck::bytes_of(&uniforms.model));
-        queue.write_buffer(&self.frag_buf.raw, 0, bytemuck::bytes_of(&uniforms.frag));
+        self.model_buf.write(queue, &uniforms.model);
+        self.model_buf.write(queue, &uniforms.frag);
     }
 
     pub fn render(
