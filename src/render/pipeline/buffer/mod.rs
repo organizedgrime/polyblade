@@ -10,6 +10,16 @@ pub struct Buffer {
     size_of_type: u64,
     pub count: u64,
 }
+// A custom buffer container for dynamic resizing.
+pub struct IndexBuffer {
+    pub data_raw: wgpu::Buffer,
+    pub index_raw: wgpu::Buffer,
+    label: &'static str,
+    usage: wgpu::BufferUsages,
+    size_of_type: u64,
+    pub data_count: u64,
+    pub index_count: u64,
+}
 
 impl Buffer {
     pub fn new<T>(device: &wgpu::Device, label: &'static str, usage: wgpu::BufferUsages) -> Self {
@@ -36,5 +46,50 @@ impl Buffer {
             mapped_at_creation: false,
         });
         self.count = new_count;
+    }
+}
+
+impl IndexBuffer {
+    pub fn new<T>(device: &wgpu::Device, label: &'static str, usage: wgpu::BufferUsages) -> Self {
+        let size_of_type = std::mem::size_of::<T>() as u64;
+        Self {
+            data_raw: device.create_buffer(&wgpu::BufferDescriptor {
+                label: Some(label),
+                size: size_of_type * 1,
+                usage,
+                mapped_at_creation: false,
+            }),
+            index_raw: device.create_buffer(&wgpu::BufferDescriptor {
+                label: Some(&format!("{}_index", label)),
+                size: std::mem::size_of::<u16>() as u64 * 1,
+                usage: wgpu::BufferUsages::INDEX | wgpu::BufferUsages::COPY_DST,
+                mapped_at_creation: false,
+            }),
+            label,
+            usage,
+            size_of_type,
+            data_count: 1,
+            index_count: 1,
+        }
+    }
+
+    pub fn resize_data(&mut self, device: &wgpu::Device, new_count: u64) {
+        self.data_raw = device.create_buffer(&wgpu::BufferDescriptor {
+            label: Some(self.label),
+            size: self.size_of_type * new_count,
+            usage: self.usage,
+            mapped_at_creation: false,
+        });
+        self.data_count = new_count;
+    }
+
+    pub fn resize_index(&mut self, device: &wgpu::Device, new_count: u64) {
+        self.index_raw = device.create_buffer(&wgpu::BufferDescriptor {
+            label: Some(self.label),
+            size: std::mem::size_of::<u16>() as u64 * new_count,
+            usage: wgpu::BufferUsages::INDEX | wgpu::BufferUsages::COPY_DST,
+            mapped_at_creation: false,
+        });
+        self.index_count = new_count;
     }
 }

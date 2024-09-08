@@ -2,18 +2,23 @@ use ultraviolet::{Mat4, Vec3, Vec4};
 
 #[derive(Debug, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
 #[repr(C)]
-pub struct MomentVertex {
+pub struct Vertex {
     pub position: Vec3,
     pub color: Vec4,
 }
 
-#[derive(Debug, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
+impl Vertex {
+    pub fn new(position: Vec3, color: Vec4) -> Self {
+        Self { position, color }
+    }
+}
+
+/* #[derive(Debug, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
 #[repr(C)]
 pub struct ShapeVertex {
-    pub normal: Vec4,
     pub barycentric: Vec4,
     pub sides: Vec4,
-}
+} */
 
 pub struct AllUniforms {
     pub model: ModelUniforms,

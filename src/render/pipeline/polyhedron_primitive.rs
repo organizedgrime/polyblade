@@ -7,7 +7,7 @@ use iced::widget::shader::{self, wgpu};
 use iced::{Rectangle, Size};
 use ultraviolet::{Vec3, Vec4};
 
-use super::{AllUniforms, FragUniforms, ModelUniforms, MomentVertex, Pipeline, ShapeVertex};
+use super::{AllUniforms, FragUniforms, ModelUniforms, Pipeline, Vertex};
 
 #[derive(Debug)]
 pub struct PolyhedronPrimitive {
@@ -20,69 +20,21 @@ impl PolyhedronPrimitive {
         Self { model, render }
     }
 
-    /* pub fn indices(&self) -> Vec<u16> {
-        //let mut vertices = self.model.polyhedron.vertices.iter().collect::<Vec<_>>();
-        //vertices.sort();
-
-        self.model
-            .polyhedron
-            .cycles
-            .iter()
-            .map(|cycle| {
-                cycle
-                    .iter()
-                    .map(|c| vertices.iter().position(|&v| v == c).unwrap() as u16)
-                    .collect()
-            })
-            .fold(vec![], |acc, indices| match indices.len() {
-                3 => indices,
-                4 => vec![
-                    indices[0], indices[1], indices[2], indices[2], indices[3], indices[0],
-                ],
-                _ => {
-                    let centroid_color = face_moments
-                        .iter()
-                        .fold(Vec4::zero(), |acc, fm| acc + fm.color)
-                        / face_moments.len() as f32;
-
-                    let centroid = MomentVertex {
-                        position: polyhedron.face_centroid(i),
-                        color: centroid_color,
-                    };
-
-                    (0..face_moments.len()).fold(vec![], |acc, j| {
-                        [
-                            acc,
-                            vec![
-                                face_moments[j],
-                                centroid,
-                                face_moments[(j + 1) % face_moments.len()],
-                            ],
-                        ]
-                        .concat()
-                    })
-                }
-            })
-    } */
-
     /// All the vertices that will change moment to moment
-    pub fn moment_vertices(&self) -> (Vec<MomentVertex>, Vec<u16>) {
+    pub fn moment_vertices(&self) -> (Vec<Vertex>, Vec<u16>) {
         let polyhedron = &self.model.polyhedron;
         let mut verts: Vec<usize> = polyhedron.vertices.clone().into_iter().collect();
         verts.sort();
 
         // Accumulate a list of all the positions we know to expect
         let mut moment_vertices = verts.iter().fold(vec![], |mut acc, v| {
-            acc.push(MomentVertex {
-                position: polyhedron.positions[v],
-                color: self.render.picker.palette.colors
-                    [v % self.render.picker.palette.colors.len()]
-                .into(),
-            });
+            acc.push(Vertex::new(
+                polyhedron.positions[v],
+                self.render.picker.palette.colors[v % self.render.picker.palette.colors.len()]
+                    .into(),
+            ));
             acc
         });
-
-        println!("moment_vertices: {:?}", moment_vertices);
 
         // Iterate through every face and accumulate a list of indices
         let mut indices = vec![];
@@ -124,22 +76,29 @@ impl PolyhedronPrimitive {
                         .fold(Vec3::zero(), |acc, v| acc + polyhedron.positions[v])
                         / cycle.len() as f32;
                     // Add it to the moment vertices
-                    moment_vertices.push(MomentVertex {
-                        position: centroid,
-                        color: Vec4::new(1.0, 1.0, 1.0, 1.0),
-                    })
+                    moment_vertices.push(Vertex::new(centroid, Vec4::new(1.0, 1.0, 1.0, 1.0)));
                 }
             }
         }
 
-        println!(
-            "moment_vertices_final: {:?}",
-            moment_vertices
-                .iter()
-                .map(|mv| mv.position)
-                .collect::<Vec<_>>()
-        );
+        // println!(
+        //     "moment_vertices_final: {:?}",
+        //     moment_vertices
+        //         .iter()
+        //         .map(|mv| mv.position)
+        //         .collect::<Vec<_>>()
+        // );
         println!("indices: {:?}", indices);
+
+        // let barycentric = [Vec4::unit_x(), Vec4::unit_y(), Vec4::unit_z()];
+        // for (i, idx) in indices.iter().enumerate() {
+        //     moment_vertices[*idx as usize].barycentric = barycentric[i % barycentric.len()];
+        //     if *idx > verts.len() as u16 {
+        //         moment_vertices[*idx as usize].sides = Vec4::zero();
+        //     } else {
+        //         moment_vertices[*idx as usize].sides = Vec4::new(1.0, 1.0, 1.0, 1.0);
+        //     }
+        // }
 
         (moment_vertices, indices)
     }
@@ -152,18 +111,6 @@ impl PolyhedronPrimitive {
             4 => vec![Vec3::new(1.0, 0.0, 1.0); 6],
             _ => vec![Vec3::new(0.0, 1.0, 0.0); n * 3],
         }
-    }
-
-    pub fn vertices(&self) -> Vec<ShapeVertex> {
-        let (x, _) = self.moment_vertices();
-        vec![
-            ShapeVertex {
-                normal: Vec4::new(1.0, 1.0, 1.0, 0.0),
-                sides: Vec4::new(1.0, 1.0, 1.0, 0.0),
-                barycentric: Vec4::new(1.0, 1.0, 1.0, 0.0),
-            };
-            x.len()
-        ]
     }
 }
 

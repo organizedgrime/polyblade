@@ -15,21 +15,17 @@ pub use polyhedron_primitive::*;
 pub struct Pipeline {
     pipeline: wgpu::RenderPipeline,
     /// Indices
-    index_buf: Buffer,
-    /// Raw XYZ position data for each vertex
-    vertex_buf: Buffer,
-    /// Other vertex data
-    // vertices: Buffer,
+    //index_buf: Buffer,
+    vertex_buf: IndexBuffer,
     /// Uniform Buffers
-    model: Buffer,
-    frag: Buffer,
+    model_buf: Buffer,
+    frag_buf: Buffer,
     /// Depth Texture
     depth_texture: Texture,
     uniform_group: wgpu::BindGroup,
     /// Number of vertices to skip in case of schlegel
     starting_vertex: usize,
     index_count: u64,
-    initialized: bool,
 }
 
 unsafe impl Send for Pipeline {}
@@ -41,13 +37,12 @@ impl Pipeline {
         let vertex_usage = wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::COPY_DST;
         let uniform_usage = wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST;
 
-        let indices = Buffer::new::<u16>(device, "Index Buffer", index_usage);
-        let vertex_buf = Buffer::new::<MomentVertex>(device, "Vertex Buffer", vertex_usage);
-        // let vertices = Buffer::new::<ShapeVertex>(device, "Vertex buffer", vertex_usage);
+        //let index_buf = Buffer::new::<u16>(device, "index_buf", index_usage);
+        let vertex_buf = IndexBuffer::new::<Vertex>(device, "vertex_buf", vertex_usage);
 
         // Create Uniform Buffers
-        let model = Buffer::new::<ModelUniforms>(device, "ModelUniforms", uniform_usage);
-        let frag = Buffer::new::<FragUniforms>(device, "FragUniforms", uniform_usage);
+        let model_buf = Buffer::new::<ModelUniforms>(device, "ModelUniforms", uniform_usage);
+        let frag_buf = Buffer::new::<FragUniforms>(device, "FragUniforms", uniform_usage);
         //depth buffer
         let depth_texture = Texture::create_depth_texture(device, &target_size);
         // Uniform layout for Vertex Shader
@@ -83,11 +78,11 @@ impl Pipeline {
             entries: &[
                 wgpu::BindGroupEntry {
                     binding: 0,
-                    resource: model.raw.as_entire_binding(),
+                    resource: model_buf.raw.as_entire_binding(),
                 },
                 wgpu::BindGroupEntry {
                     binding: 1,
-                    resource: frag.raw.as_entire_binding(),
+                    resource: frag_buf.raw.as_entire_binding(),
                 },
             ],
         });
@@ -111,30 +106,20 @@ impl Pipeline {
             vertex: wgpu::VertexState {
                 module: &shader,
                 entry_point: "vs_main",
-                buffers: &[
-                    wgpu::VertexBufferLayout {
-                        array_stride: std::mem::size_of::<MomentVertex>() as wgpu::BufferAddress,
-                        step_mode: wgpu::VertexStepMode::Vertex,
-                        attributes: &wgpu::vertex_attr_array![
-                            // position
-                            0 => Float32x3,
-                            // color
-                            1 => Float32x4,
-                        ],
-                    },
-                    /* wgpu::VertexBufferLayout {
-                        array_stride: std::mem::size_of::<ShapeVertex>() as wgpu::BufferAddress,
-                        step_mode: wgpu::VertexStepMode::Vertex,
-                        attributes: &wgpu::vertex_attr_array![
-                            // normal
-                            2 => Float32x4,
-                            // barycentric
-                            3 => Float32x4,
-                            // sides
-                            4 => Float32x4,
-                        ],
-                    }, */
-                ],
+                buffers: &[wgpu::VertexBufferLayout {
+                    array_stride: std::mem::size_of::<Vertex>() as wgpu::BufferAddress,
+                    step_mode: wgpu::VertexStepMode::Vertex,
+                    attributes: &wgpu::vertex_attr_array![
+                        // position
+                        0 => Float32x3,
+                        // color
+                        1 => Float32x4,
+                        // // barycentric
+                        // 2 => Float32x4,
+                        // // sides
+                        // 3 => Float32x4,
+                    ],
+                }],
             },
             primitive: wgpu::PrimitiveState::default(),
             depth_stencil: Some(wgpu::DepthStencilState {
@@ -159,16 +144,14 @@ impl Pipeline {
 
         Self {
             pipeline,
-            index_buf: indices,
+            //index_buf,
             vertex_buf,
-            // vertices,
-            model,
-            frag,
+            model_buf,
+            frag_buf,
             depth_texture,
             uniform_group,
             starting_vertex: 0,
             index_count: 1,
-            initialized: false,
         }
     }
 
@@ -195,11 +178,12 @@ impl Pipeline {
         self.index_count = indices.len() as u64;
 
         // Resize buffer if required
-        if self.index_buf.count != self.index_count || !self.initialized {
+        if self.vertex_buf.index_count != self.index_count {
             println!("resizing buffer!");
-            self.index_buf.resize(device, self.index_count);
+            self.vertex_buf.resize_index(device, self.index_count);
             // Resize the vertex buffer
-            self.vertex_buf.resize(device, moment_vertices.len() as u64);
+            self.vertex_buf
+                .resize_data(device, moment_vertices.len() as u64);
             // Resize the vertex buffer
             //self.vertex_buf.resize(device, moment_vertices.len() as u64);
             // Count that
@@ -209,21 +193,23 @@ impl Pipeline {
             //     0,
             //     bytemuck::cast_slice(&primitive.vertices()),
             // );
-            // Initialized
-            self.initialized = true;
         }
 
         // Write all position and color data
-        queue.write_buffer(&self.index_buf.raw, 0, bytemuck::cast_slice(&indices));
         queue.write_buffer(
-            &self.vertex_buf.raw,
+            &self.vertex_buf.index_raw,
+            0,
+            bytemuck::cast_slice(&indices),
+        );
+        queue.write_buffer(
+            &self.vertex_buf.data_raw,
             0,
             bytemuck::cast_slice(&moment_vertices),
         );
 
         // Write uniforms
-        queue.write_buffer(&self.model.raw, 0, bytemuck::bytes_of(&uniforms.model));
-        queue.write_buffer(&self.frag.raw, 0, bytemuck::bytes_of(&uniforms.frag));
+        queue.write_buffer(&self.model_buf.raw, 0, bytemuck::bytes_of(&uniforms.model));
+        queue.write_buffer(&self.frag_buf.raw, 0, bytemuck::bytes_of(&uniforms.frag));
     }
 
     pub fn render(
@@ -258,8 +244,11 @@ impl Pipeline {
             pass.set_scissor_rect(viewport.x, viewport.y, viewport.width, viewport.height);
             pass.set_pipeline(&self.pipeline);
             pass.set_bind_group(0, &self.uniform_group, &[]);
-            pass.set_index_buffer(self.index_buf.raw.slice(..), wgpu::IndexFormat::Uint16);
-            pass.set_vertex_buffer(0, self.vertex_buf.raw.slice(..));
+            pass.set_index_buffer(
+                self.vertex_buf.index_raw.slice(..),
+                wgpu::IndexFormat::Uint16,
+            );
+            pass.set_vertex_buffer(0, self.vertex_buf.data_raw.slice(..));
             //pass.set_vertex_buffer(1, self.vertices.raw.slice(..));
             pass.draw_indexed(
                 self.starting_vertex as u32..self.index_count as u32,
