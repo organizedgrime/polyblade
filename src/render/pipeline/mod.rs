@@ -104,13 +104,13 @@ impl Pipeline {
                     step_mode: wgpu::VertexStepMode::Vertex,
                     attributes: &wgpu::vertex_attr_array![
                         // position
-                        0 => Float32x4,
+                        0 => Float32x3,
                         // color
-                        1 => Float32x4,
+                        1 => Float32x3,
                         // barycentric
-                        2 => Float32x4,
+                        2 => Float32x3,
                         // sides
-                        3 => Float32x4,
+                        3 => Float32x3,
                     ],
                 }],
             },

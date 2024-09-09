@@ -1,12 +1,13 @@
-use ultraviolet::{Mat4, Vec4};
+use ultraviolet::{Mat4, Vec3, Vec4};
 
 #[derive(Debug, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
-#[repr(C, align(16))]
+//#[repr(C, align(16))]
+#[repr(C)]
 pub struct Vertex {
-    pub position: Vec4,
+    pub position: Vec3,
     pub color: Vec4,
-    pub barycentric: Vec4,
-    pub sides: Vec4,
+    pub barycentric: Vec3,
+    pub sides: Vec3,
 }
 
 /* impl Vertex {

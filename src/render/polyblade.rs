@@ -106,7 +106,7 @@ impl Application for Polyblade {
                 .spacing(10.0),
                 button_row,
                 // Actual shader of the program
-                shader(self).width(Length::Fill).height(Length::Fill),
+                container(shader(self).width(Length::Fill).height(Length::Fill)),
                 // Info
                 column![
                     container(column![

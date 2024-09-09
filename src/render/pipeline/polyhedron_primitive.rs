@@ -46,7 +46,7 @@ impl PolyhedronPrimitive {
                 let mut verts: Vec<usize> = polyhedron.vertices.clone().into_iter().collect();
                 verts.sort();
                 let colors = &self.render.picker.palette.colors;
-                let barycentric = [Vec4::unit_x(), Vec4::unit_y(), Vec4::unit_z()];
+                let barycentric = [Vec3::unit_x(), Vec3::unit_y(), Vec3::unit_z()];
                 let sides = Vec3::new(1.0, 1.0, 1.0);
 
                 // Accumulate a list of all the positions we know to expect
@@ -55,7 +55,7 @@ impl PolyhedronPrimitive {
                     vertices.push(Vertex {
                         position: polyhedron.positions[v].into(),
                         color: colors[i % colors.len()].into(),
-                        barycentric: barycentric[i % barycentric.len()],
+                        barycentric: barycentric[i % barycentric.len()].into(),
                         sides: sides.into(),
                     });
                 }
