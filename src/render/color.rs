@@ -4,7 +4,7 @@ use std::{
 };
 
 use iced::widget::shader::wgpu;
-use ultraviolet::Vec4;
+use ultraviolet::{Vec3, Vec4};
 
 #[derive(Debug, Default)]
 #[allow(clippy::upper_case_acronyms)]
@@ -161,13 +161,17 @@ impl From<RGBA> for iced::Color {
     }
 }
 
+fn srgb(x: f32) -> f32 {
+    ((x / 255.0 + 0.055) / 1.055).powf(2.4)
+}
+
 impl From<RGBA> for Vec4 {
     fn from(value: RGBA) -> Self {
         Vec4::new(
-            value.r as f32 / 255.0,
-            value.g as f32 / 255.0,
-            value.b as f32 / 255.0,
-            value.a as f32 / 255.0,
+            srgb(value.r as f32),
+            srgb(value.g as f32),
+            srgb(value.b as f32),
+            srgb(value.a as f32),
         )
     }
 }

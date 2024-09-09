@@ -68,12 +68,7 @@ impl PolyhedronPrimitive {
         for cycle in &polyhedron.cycles {
             let cycle_indices: Vec<u32> = cycle
                 .iter()
-                .map(|c| {
-                    vertices
-                        .iter()
-                        .position(|&v| v.position == polyhedron.positions[c].into())
-                        .unwrap() as u32
-                })
+                .map(|c| verts.iter().position(|v| v == c).unwrap() as u32)
                 .collect();
 
             match cycle.len() {
@@ -126,6 +121,7 @@ impl PolyhedronPrimitive {
         //         .collect::<Vec<_>>()
         // );
         println!("indices: {:?}", indices);
+        println!("vertices: {:?}", vertices);
 
         // let barycentric = [Vec4::unit_x(), Vec4::unit_y(), Vec4::unit_z()];
         // for (i, idx) in indices.iter().enumerate() {

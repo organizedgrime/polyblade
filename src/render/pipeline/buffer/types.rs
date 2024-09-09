@@ -1,9 +1,9 @@
 use ultraviolet::{Mat4, Vec3, Vec4};
 
 #[derive(Debug, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
-#[repr(C)]
+#[repr(C, align(16))]
 pub struct Vertex {
-    pub position: Vec3,
+    pub position: Vec4,
     pub color: Vec4,
     pub barycentric: Vec4,
     pub sides: Vec4,

@@ -31,12 +31,12 @@ unsafe impl Send for Pipeline {}
 
 impl Pipeline {
     pub fn new(device: &wgpu::Device, format: wgpu::TextureFormat, target_size: Size<u32>) -> Self {
-        let vertex_buf = Buffer::new::<Vertex>(device, "vertex_buf", BufferKind::Vertex);
         let index_buf = Buffer::new::<u32>(device, "index", BufferKind::Index);
+        let vertex_buf = Buffer::new::<Vertex>(device, "vertex_buf", BufferKind::Vertex);
 
         // Create Uniform Buffers
-        let model_buf = Buffer::new::<ModelUniforms>(device, "ModelUniforms", BufferKind::Uniform);
-        let frag_buf = Buffer::new::<FragUniforms>(device, "FragUniforms", BufferKind::Uniform);
+        let model_buf = Buffer::new::<ModelUniforms>(device, "model", BufferKind::Uniform);
+        let frag_buf = Buffer::new::<FragUniforms>(device, "frag", BufferKind::Uniform);
         //depth buffer
         let depth_texture = Texture::create_depth_texture(device, &target_size);
         // Uniform layout for Vertex Shader
@@ -168,8 +168,8 @@ impl Pipeline {
         }
 
         let (vertices, indices) = primitive.vertices();
-        self.index_buf.write_vec(device, queue, indices);
         self.vertex_buf.write_vec(device, queue, vertices);
+        self.index_buf.write_vec(device, queue, indices);
 
         // Write uniforms
         self.model_buf.write_data(queue, &uniforms.model);
