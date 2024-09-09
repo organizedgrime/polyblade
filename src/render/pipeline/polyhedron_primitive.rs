@@ -3,6 +3,7 @@ use std::collections::HashMap;
 use crate::bones::Face;
 use crate::render::message::ColorMethodMessage;
 use crate::render::state::{ModelState, RenderState};
+use iced::widget::canvas::path::lyon_path::geom::euclid::vec3;
 use iced::widget::shader::{self, wgpu};
 use iced::{Rectangle, Size};
 use ultraviolet::{Vec3, Vec4};
@@ -135,16 +136,20 @@ impl PolyhedronPrimitive {
                 let mut vertices = Vec::new();
                 let mut indices = Vec::new();
                 let barycentric = [Vec3::unit_x(), Vec3::unit_y(), Vec3::unit_z()];
-                for (i, cycle) in polyhedron.cycles.iter().enumerate() {
+                for cycle in &polyhedron.cycles {
                     let color = *color_map.get(&cycle.len()).unwrap();
-                    let sides = self.face_sides_buffer(i);
+                    let sides = match cycle.len() {
+                        3 => Vec3::new(1.0, 1.0, 1.0),
+                        4 => Vec3::new(1.0, 0.0, 1.0),
+                        _ => Vec3::new(0.0, 1.0, 0.0),
+                    };
                     let positions = self.face_triangle_positions(cycle);
 
                     for j in 0..positions.len() {
                         indices.push(vertices.len() as u32);
                         vertices.push(Vertex {
                             position: positions[j].into(),
-                            sides: sides[j].into(),
+                            sides: sides.into(),
                             barycentric: barycentric[j % barycentric.len()].into(),
                             color,
                         });
