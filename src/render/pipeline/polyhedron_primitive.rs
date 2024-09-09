@@ -20,14 +20,45 @@ impl PolyhedronPrimitive {
         Self { model, render }
     }
 
+    /* pub fn indices(&self) -> Vec<u32> {
+        match self.render.method {
+            // Reference data is one per vertex
+            ColorMethodMessage::Vertex => self
+                .model
+                .polyhedron
+                .vertices
+                .iter()
+                .map(|v| self.model.polyhedron.positions[v])
+                .collect(),
+            // Reference data is one per unique vertex, face pair
+            ColorMethodMessage::Polygon => todo!(),
+            // Todo
+            ColorMethodMessage::Edge => todo!(),
+            ColorMethodMessage::Face => todo!(),
+        }
+    } */
+
     /// All the vertices that will change moment to moment
-    pub fn position_buf(&self) -> (Vec<Vec4>, Vec<u32>) {
+    pub fn vertices(&self) -> (Vec<Vertex>, Vec<u32>) {
         let polyhedron = &self.model.polyhedron;
         let mut verts: Vec<usize> = polyhedron.vertices.clone().into_iter().collect();
         verts.sort();
+        let colors = &self.render.picker.palette.colors;
+        let barycentric = vec![Vec4::unit_x(), Vec4::unit_y(), Vec4::unit_z()];
+        let sides = Vec3::new(1.0, 1.0, 1.0);
 
         // Accumulate a list of all the positions we know to expect
-        let mut positions = verts.iter().fold(vec![], |mut acc, v| {
+        let mut vertices = vec![];
+        for (i, v) in verts.iter().enumerate() {
+            vertices.push(Vertex {
+                position: polyhedron.positions[v].into(),
+                color: colors[i % colors.len()].into(),
+                barycentric: barycentric[i % barycentric.len()],
+                sides: sides.into(),
+            });
+        }
+
+        verts.iter().fold(vec![], |mut acc, v| {
             acc.push(polyhedron.positions[v]);
             acc
         });
@@ -38,9 +69,9 @@ impl PolyhedronPrimitive {
             let cycle_indices: Vec<u32> = cycle
                 .iter()
                 .map(|c| {
-                    positions
+                    vertices
                         .iter()
-                        .position(|&v| v == polyhedron.positions[c])
+                        .position(|&v| v.position == polyhedron.positions[c].into())
                         .unwrap() as u32
                 })
                 .collect();
@@ -65,7 +96,7 @@ impl PolyhedronPrimitive {
                             // Before
                             cycle_indices[i],
                             // Centroid index
-                            positions.len() as u32,
+                            vertices.len() as u32,
                             // After
                             cycle_indices[(i + 1) % cycle_indices.len()],
                         ];
@@ -77,7 +108,12 @@ impl PolyhedronPrimitive {
                         .fold(Vec3::zero(), |acc, v| acc + polyhedron.positions[v])
                         / cycle.len() as f32;
                     // Add it to the moment vertices
-                    positions.push(centroid);
+                    vertices.push(Vertex {
+                        position: centroid.into(),
+                        color: colors[0].into(),
+                        barycentric: barycentric[0].into(),
+                        sides: sides.into(),
+                    });
                 }
             }
         }
@@ -101,14 +137,7 @@ impl PolyhedronPrimitive {
         //     }
         // }
 
-        (
-            positions
-                .iter()
-                .map(|&x| Vec4::new(x.x, x.y, x.y, 0.0))
-                .collect(),
-            indices,
-        )
-        //(positions, indices)
+        (vertices, indices)
     }
 
     pub fn color_buf(&self) -> (Vec<Vec4>, Vec<u32>) {

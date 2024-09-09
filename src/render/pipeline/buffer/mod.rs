@@ -2,6 +2,22 @@ mod types;
 use iced::widget::shader::wgpu::{self, RenderPass};
 pub use types::*;
 
+pub enum BufferKind {
+    Uniform,
+    Index,
+    Vertex,
+}
+
+impl Into<wgpu::BufferUsages> for BufferKind {
+    fn into(self) -> wgpu::BufferUsages {
+        match self {
+            BufferKind::Uniform => wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
+            BufferKind::Index => wgpu::BufferUsages::INDEX | wgpu::BufferUsages::COPY_DST,
+            BufferKind::Vertex => wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::COPY_DST,
+        }
+    }
+}
+
 // A custom buffer container for dynamic resizing.
 pub struct Buffer {
     pub raw: wgpu::Buffer,
@@ -10,7 +26,7 @@ pub struct Buffer {
     size_of_type: u64,
     pub count: u32,
 }
-// A custom buffer container for dynamic resizing.
+/* // A custom buffer container for dynamic resizing.
 pub struct IndexBuffer {
     pub data_raw: wgpu::Buffer,
     pub index_raw: wgpu::Buffer,
@@ -19,11 +35,12 @@ pub struct IndexBuffer {
     size_of_type: u64,
     pub data_count: u32,
     pub index_count: u32,
-}
+} */
 
 impl Buffer {
-    pub fn new<T>(device: &wgpu::Device, label: &'static str, usage: wgpu::BufferUsages) -> Self {
+    pub fn new<T>(device: &wgpu::Device, label: &'static str, kind: BufferKind) -> Self {
         let size_of_type = std::mem::size_of::<T>() as u64;
+        let usage = kind.into();
         Self {
             raw: device.create_buffer(&wgpu::BufferDescriptor {
                 label: Some(label),
@@ -48,12 +65,27 @@ impl Buffer {
         self.count = new_count;
     }
 
-    pub fn write<T: bytemuck::Pod>(&mut self, queue: &wgpu::Queue, data: &T) {
+    pub fn write_data<T: bytemuck::Pod>(&mut self, queue: &wgpu::Queue, data: &T) {
         queue.write_buffer(&self.raw, 0, bytemuck::bytes_of(data));
+    }
+
+    pub fn write_vec<T: bytemuck::Pod>(
+        &mut self,
+        device: &wgpu::Device,
+        queue: &wgpu::Queue,
+        data: Vec<T>,
+    ) {
+        let count = data.len() as u32;
+        // Resize the index buffer if necessary
+        if self.count != count {
+            self.resize(device, count);
+        }
+        // Write to the buffers
+        queue.write_buffer(&self.raw, 0, bytemuck::cast_slice(&data));
     }
 }
 
-impl IndexBuffer {
+/* impl IndexBuffer {
     pub fn new<T>(device: &wgpu::Device, label: &'static str, usage: wgpu::BufferUsages) -> Self {
         let size_of_type = std::mem::size_of::<T>() as u64;
         Self {
@@ -134,4 +166,4 @@ impl IndexBuffer {
     //     });
     //     self.index_count = new_count;
     // }
-}
+} */

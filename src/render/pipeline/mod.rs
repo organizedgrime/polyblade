@@ -15,10 +15,8 @@ use ultraviolet::{Vec3, Vec4};
 
 pub struct Pipeline {
     pipeline: wgpu::RenderPipeline,
-    position_buf: IndexBuffer,
-    color_buf: IndexBuffer,
-    barycentric_buf: IndexBuffer,
-    sides_buf: IndexBuffer,
+    index_buf: Buffer,
+    vertex_buf: Buffer,
     /// Uniform Buffers
     model_buf: Buffer,
     frag_buf: Buffer,
@@ -33,18 +31,12 @@ unsafe impl Send for Pipeline {}
 
 impl Pipeline {
     pub fn new(device: &wgpu::Device, format: wgpu::TextureFormat, target_size: Size<u32>) -> Self {
-        println!("NEW PIPELINE");
-        let vertex_usage = wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::COPY_DST;
-        let uniform_usage = wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST;
-
-        let position_buf = IndexBuffer::new::<Vec4>(device, "position_buf", vertex_usage);
-        let color_buf = IndexBuffer::new::<Vec4>(device, "color_buf", vertex_usage);
-        let barycentric_buf = IndexBuffer::new::<Vec4>(device, "barycentric_buf", vertex_usage);
-        let sides_buf = IndexBuffer::new::<Vec4>(device, "sides_buf", vertex_usage);
+        let vertex_buf = Buffer::new::<Vertex>(device, "vertex_buf", BufferKind::Vertex);
+        let index_buf = Buffer::new::<u32>(device, "index", BufferKind::Index);
 
         // Create Uniform Buffers
-        let model_buf = Buffer::new::<ModelUniforms>(device, "ModelUniforms", uniform_usage);
-        let frag_buf = Buffer::new::<FragUniforms>(device, "FragUniforms", uniform_usage);
+        let model_buf = Buffer::new::<ModelUniforms>(device, "ModelUniforms", BufferKind::Uniform);
+        let frag_buf = Buffer::new::<FragUniforms>(device, "FragUniforms", BufferKind::Uniform);
         //depth buffer
         let depth_texture = Texture::create_depth_texture(device, &target_size);
         // Uniform layout for Vertex Shader
@@ -146,10 +138,8 @@ impl Pipeline {
 
         Self {
             pipeline,
-            position_buf,
-            color_buf,
-            barycentric_buf,
-            sides_buf,
+            index_buf,
+            vertex_buf,
             model_buf,
             frag_buf,
             depth_texture,
@@ -177,16 +167,13 @@ impl Pipeline {
             self.starting_vertex = 0;
         }
 
-        self.position_buf
-            .write(device, queue, primitive.position_buf());
-        self.color_buf.write(device, queue, primitive.color_buf());
-        self.barycentric_buf
-            .write(device, queue, primitive.barycentric_buf());
-        self.sides_buf.write(device, queue, primitive.sides_buf());
+        let (vertices, indices) = primitive.vertices();
+        self.index_buf.write_vec(device, queue, indices);
+        self.vertex_buf.write_vec(device, queue, vertices);
 
         // Write uniforms
-        self.model_buf.write(queue, &uniforms.model);
-        self.frag_buf.write(queue, &uniforms.frag);
+        self.model_buf.write_data(queue, &uniforms.model);
+        self.frag_buf.write_data(queue, &uniforms.frag);
     }
 
     pub fn render(
@@ -223,36 +210,9 @@ impl Pipeline {
             pass.set_bind_group(0, &self.uniform_group, &[]);
 
             // Draw Positions
-            pass.set_vertex_buffer(0, self.position_buf.data_raw.slice(..));
-            pass.set_vertex_buffer(1, self.color_buf.data_raw.slice(..));
-            pass.set_vertex_buffer(2, self.barycentric_buf.data_raw.slice(..));
-            pass.set_vertex_buffer(3, self.sides_buf.data_raw.slice(..));
-
-            pass.set_index_buffer(
-                self.position_buf.index_raw.slice(..),
-                wgpu::IndexFormat::Uint32,
-            );
-            pass.draw_indexed(0..self.position_buf.index_count, 0, 0..1);
-
-            // Draw Colors
-            pass.set_index_buffer(
-                self.color_buf.index_raw.slice(..),
-                wgpu::IndexFormat::Uint32,
-            );
-            pass.draw_indexed(0..self.color_buf.index_count, 0, 0..1);
-
-            // Draw Barycentric
-            pass.set_index_buffer(
-                self.barycentric_buf.index_raw.slice(..),
-                wgpu::IndexFormat::Uint32,
-            );
-            pass.draw_indexed(0..self.barycentric_buf.index_count, 0, 0..1);
-
-            pass.set_index_buffer(
-                self.sides_buf.index_raw.slice(..),
-                wgpu::IndexFormat::Uint32,
-            );
-            pass.draw_indexed(0..self.sides_buf.index_count, 0, 0..1);
+            pass.set_vertex_buffer(0, self.vertex_buf.raw.slice(..));
+            pass.set_index_buffer(self.index_buf.raw.slice(..), wgpu::IndexFormat::Uint32);
+            pass.draw_indexed(0..self.index_buf.count, 0, 0..1);
         }
     }
 }
