@@ -134,23 +134,27 @@ impl PolyhedronPrimitive {
                 }
 
                 let mut vertices = Vec::new();
+                let mut indices = Vec::new();
                 let barycentric = [Vec3::unit_x(), Vec3::unit_y(), Vec3::unit_z()];
                 for (i, cycle) in polyhedron.cycles.iter().enumerate() {
                     let color = color_map.get(&cycle.len()).unwrap().clone();
                     let sides = self.face_sides_buffer(i);
                     let positions = self.face_triangle_positions(i);
+
                     for j in 0..positions.len() {
-                        let b = barycentric[j % barycentric.len()];
+                        indices.push(vertices.len() as u32);
                         vertices.push(Vertex {
                             position: positions[j].into(),
-                            sides: Vec4::new(sides[j].x, sides[j].y, sides[j].z, 0.0),
-                            barycentric: Vec4::new(b.x, b.y, b.z, 0.0),
+                            sides: sides[j].into(),
+                            barycentric: barycentric[j % barycentric.len()].into(),
                             color,
                         });
                     }
                 }
 
-                let indices = (0..vertices.len()).into_iter().map(|i| i as u32).collect();
+                println!("vertices: {:?}", vertices);
+                println!("indices: {:?}", indices);
+
                 (vertices, indices)
             }
             ColorMethodMessage::Face => todo!(),
