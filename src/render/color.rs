@@ -4,7 +4,7 @@ use std::{
 };
 
 use iced::widget::shader::wgpu;
-use ultraviolet::{Vec3, Vec4};
+use ultraviolet::Vec4;
 
 #[derive(Debug, Default)]
 #[allow(clippy::upper_case_acronyms)]

@@ -11,7 +11,6 @@ use texture::Texture;
 
 pub use buffer::*;
 pub use polyhedron_primitive::*;
-use ultraviolet::{Vec3, Vec4};
 
 pub struct Pipeline {
     pipeline: wgpu::RenderPipeline,

@@ -1,9 +1,7 @@
 use std::collections::HashMap;
-use std::ptr::eq;
 
 use crate::render::message::ColorMethodMessage;
 use crate::render::state::{ModelState, RenderState};
-use ckmeans::ckmeans;
 use iced::widget::shader::{self, wgpu};
 use iced::{Rectangle, Size};
 use ultraviolet::{Vec3, Vec4};
@@ -48,7 +46,7 @@ impl PolyhedronPrimitive {
                 let mut verts: Vec<usize> = polyhedron.vertices.clone().into_iter().collect();
                 verts.sort();
                 let colors = &self.render.picker.palette.colors;
-                let barycentric = vec![Vec4::unit_x(), Vec4::unit_y(), Vec4::unit_z()];
+                let barycentric = [Vec4::unit_x(), Vec4::unit_y(), Vec4::unit_z()];
                 let sides = Vec3::new(1.0, 1.0, 1.0);
 
                 // Accumulate a list of all the positions we know to expect
@@ -110,7 +108,7 @@ impl PolyhedronPrimitive {
                             vertices.push(Vertex {
                                 position: centroid.into(),
                                 color: colors[0].into(),
-                                barycentric: barycentric[0].into(),
+                                barycentric: barycentric[0],
                                 sides: sides.into(),
                             });
                         }
@@ -137,7 +135,7 @@ impl PolyhedronPrimitive {
                 let mut indices = Vec::new();
                 let barycentric = [Vec3::unit_x(), Vec3::unit_y(), Vec3::unit_z()];
                 for (i, cycle) in polyhedron.cycles.iter().enumerate() {
-                    let color = color_map.get(&cycle.len()).unwrap().clone();
+                    let color = *color_map.get(&cycle.len()).unwrap();
                     let sides = self.face_sides_buffer(i);
                     let positions = self.face_triangle_positions(i);
 

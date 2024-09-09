@@ -1,5 +1,5 @@
 mod types;
-use iced::widget::shader::wgpu::{self, RenderPass};
+use iced::widget::shader::wgpu::{self};
 pub use types::*;
 
 pub enum BufferKind {
@@ -8,9 +8,9 @@ pub enum BufferKind {
     Vertex,
 }
 
-impl Into<wgpu::BufferUsages> for BufferKind {
-    fn into(self) -> wgpu::BufferUsages {
-        match self {
+impl From<BufferKind> for wgpu::BufferUsages {
+    fn from(val: BufferKind) -> Self {
+        match val {
             BufferKind::Uniform => wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
             BufferKind::Index => wgpu::BufferUsages::INDEX | wgpu::BufferUsages::COPY_DST,
             BufferKind::Vertex => wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::COPY_DST,
@@ -44,7 +44,7 @@ impl Buffer {
         Self {
             raw: device.create_buffer(&wgpu::BufferDescriptor {
                 label: Some(label),
-                size: size_of_type * 1,
+                size: size_of_type,
                 usage,
                 mapped_at_creation: false,
             }),
