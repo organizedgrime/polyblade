@@ -111,7 +111,6 @@ impl Pipeline {
                         2 => Float32x4,
                         // sides
                         3 => Float32x4,
-                        4 => Float32
                     ],
                 }],
             },

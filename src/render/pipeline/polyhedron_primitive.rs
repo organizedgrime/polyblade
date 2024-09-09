@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+use crate::bones::Face;
 use crate::render::message::ColorMethodMessage;
 use crate::render::state::{ModelState, RenderState};
 use iced::widget::shader::{self, wgpu};
@@ -137,7 +138,7 @@ impl PolyhedronPrimitive {
                 for (i, cycle) in polyhedron.cycles.iter().enumerate() {
                     let color = *color_map.get(&cycle.len()).unwrap();
                     let sides = self.face_sides_buffer(i);
-                    let positions = self.face_triangle_positions(i);
+                    let positions = self.face_triangle_positions(cycle);
 
                     for j in 0..positions.len() {
                         indices.push(vertices.len() as u32);
@@ -159,10 +160,14 @@ impl PolyhedronPrimitive {
         }
     }
 
-    fn face_triangle_positions(&self, face_index: usize) -> Vec<Vec3> {
-        let positions = self.model.polyhedron.face_positions(face_index);
-        let n = positions.len();
-        match n {
+    fn face_triangle_positions(&self, cycle: &Face) -> Vec<Vec3> {
+        let positions: Vec<Vec3> = cycle
+            .iter()
+            .map(|c| self.model.polyhedron.positions[&c])
+            .collect();
+        let centroid = positions.iter().fold(Vec3::zero(), |a, &b| a + b) / positions.len() as f32;
+
+        match cycle.len() {
             3 => positions,
             4 => vec![
                 positions[0],
@@ -172,80 +177,14 @@ impl PolyhedronPrimitive {
                 positions[3],
                 positions[0],
             ],
-            _ => {
-                let centroid = self.model.polyhedron.face_centroid(face_index);
-                let n = positions.len();
-                (0..n).fold(vec![], |acc, i| {
-                    [acc, vec![positions[i], centroid, positions[(i + 1) % n]]].concat()
-                })
-            }
+            _ => (0..cycle.len()).fold(vec![], |acc, i| {
+                [
+                    acc,
+                    vec![positions[i], centroid, positions[(i + 1) % cycle.len()]],
+                ]
+                .concat()
+            }),
         }
-    }
-
-    pub fn color_buf(&self) -> (Vec<Vec4>, Vec<u32>) {
-        let colors: Vec<Vec4> = self
-            .render
-            .picker
-            .palette
-            .colors
-            .iter()
-            .map(|&c| c.into())
-            .collect();
-
-        let mut indices = vec![];
-        let polyhedron = &self.model.polyhedron;
-        for (i, cycle) in polyhedron.cycles.iter().enumerate() {
-            match cycle.len() {
-                3 => {
-                    indices.extend(vec![(i % colors.len()) as u32; 3]);
-                }
-                4 => {
-                    indices.extend(vec![(i % colors.len()) as u32; 6]);
-                }
-                _ => {
-                    indices.extend(vec![(i % colors.len()) as u32; cycle.len() * 3]);
-                }
-            }
-        }
-
-        (colors, indices)
-    }
-    pub fn barycentric_buf(&self) -> (Vec<Vec4>, Vec<u32>) {
-        let barycentric: Vec<Vec4> = vec![Vec4::unit_x(), Vec4::unit_y(), Vec4::unit_z()];
-        let mut indices = vec![];
-        let polyhedron = &self.model.polyhedron;
-        for (i, cycle) in polyhedron.cycles.iter().enumerate() {
-            match cycle.len() {
-                3 => {
-                    indices.extend(vec![(i % barycentric.len()) as u32; 3]);
-                }
-                4 => {
-                    indices.extend(vec![(i % barycentric.len()) as u32; 6]);
-                }
-                _ => {
-                    indices.extend(vec![(i % barycentric.len()) as u32; cycle.len() * 3]);
-                }
-            }
-        }
-
-        (barycentric, indices)
-    }
-
-    pub fn sides_buf(&self) -> (Vec<Vec4>, Vec<u32>) {
-        let sides = vec![
-            Vec4::new(1.0, 1.0, 1.0, 0.0),
-            Vec4::new(1.0, 0.0, 1.0, 0.0),
-            Vec4::new(0.0, 1.0, 0.0, 0.0),
-        ];
-        let mut indices = vec![];
-        for cycle in &self.model.polyhedron.cycles {
-            indices.extend(match cycle.len() {
-                3 => vec![0; 3],
-                4 => vec![1; 6],
-                _ => vec![2; cycle.len() * 3],
-            });
-        }
-        (sides, indices)
     }
 
     pub fn face_sides_buffer(&self, face_index: usize) -> Vec<Vec3> {

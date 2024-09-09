@@ -86,24 +86,6 @@ impl PolyGraph {
         vertices.iter().fold(Vec3::zero(), |a, &b| a + b) / vertices.len() as f32
     }
 
-    pub fn index_count(&self) -> u64 {
-        let mut vertex_triangle_count = 0;
-        for face in self.cycles.iter() {
-            match face.len() {
-                3 => {
-                    vertex_triangle_count += 3;
-                }
-                4 => {
-                    vertex_triangle_count += 6;
-                }
-                _ => {
-                    vertex_triangle_count += 3 * face.len() as u64;
-                }
-            }
-        }
-        vertex_triangle_count
-    }
-
     pub fn process_transactions(&mut self) {
         if let Some(transaction) = self.transactions.first().cloned() {
             use Transaction::*;
