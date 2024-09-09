@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::ptr::eq;
 
 use crate::render::message::ColorMethodMessage;
@@ -41,99 +42,142 @@ impl PolyhedronPrimitive {
     /// All the vertices that will change moment to moment
     pub fn vertices(&self) -> (Vec<Vertex>, Vec<u32>) {
         let polyhedron = &self.model.polyhedron;
-        let mut verts: Vec<usize> = polyhedron.vertices.clone().into_iter().collect();
-        verts.sort();
-        let colors = &self.render.picker.palette.colors;
-        let barycentric = vec![Vec4::unit_x(), Vec4::unit_y(), Vec4::unit_z()];
-        let sides = Vec3::new(1.0, 1.0, 1.0);
 
-        // Accumulate a list of all the positions we know to expect
-        let mut vertices = vec![];
-        for (i, v) in verts.iter().enumerate() {
-            vertices.push(Vertex {
-                position: polyhedron.positions[v].into(),
-                color: colors[i % colors.len()].into(),
-                barycentric: barycentric[i % barycentric.len()],
-                sides: sides.into(),
-            });
-        }
+        match self.render.method {
+            ColorMethodMessage::Vertex => {
+                let mut verts: Vec<usize> = polyhedron.vertices.clone().into_iter().collect();
+                verts.sort();
+                let colors = &self.render.picker.palette.colors;
+                let barycentric = vec![Vec4::unit_x(), Vec4::unit_y(), Vec4::unit_z()];
+                let sides = Vec3::new(1.0, 1.0, 1.0);
 
-        verts.iter().fold(vec![], |mut acc, v| {
-            acc.push(polyhedron.positions[v]);
-            acc
-        });
-
-        // Iterate through every face and accumulate a list of indices
-        let mut indices = vec![];
-        for cycle in &polyhedron.cycles {
-            let cycle_indices: Vec<u32> = cycle
-                .iter()
-                .map(|c| verts.iter().position(|v| v == c).unwrap() as u32)
-                .collect();
-
-            match cycle.len() {
-                3 => {
-                    indices.extend(cycle_indices);
-                }
-                4 => {
-                    indices.extend(vec![
-                        cycle_indices[0],
-                        cycle_indices[1],
-                        cycle_indices[2],
-                        cycle_indices[2],
-                        cycle_indices[3],
-                        cycle_indices[0],
-                    ]);
-                }
-                _ => {
-                    for i in 0..cycle_indices.len() {
-                        let triangle = vec![
-                            // Before
-                            cycle_indices[i],
-                            // Centroid index
-                            vertices.len() as u32,
-                            // After
-                            cycle_indices[(i + 1) % cycle_indices.len()],
-                        ];
-                        indices.extend(triangle);
-                    }
-                    // Compute the centroid
-                    let centroid = cycle
-                        .iter()
-                        .fold(Vec3::zero(), |acc, v| acc + polyhedron.positions[v])
-                        / cycle.len() as f32;
-                    // Add it to the moment vertices
+                // Accumulate a list of all the positions we know to expect
+                let mut vertices = vec![];
+                for (i, v) in verts.iter().enumerate() {
                     vertices.push(Vertex {
-                        position: centroid.into(),
-                        color: colors[0].into(),
-                        barycentric: barycentric[0].into(),
+                        position: polyhedron.positions[v].into(),
+                        color: colors[i % colors.len()].into(),
+                        barycentric: barycentric[i % barycentric.len()],
                         sides: sides.into(),
                     });
                 }
+
+                verts.iter().fold(vec![], |mut acc, v| {
+                    acc.push(polyhedron.positions[v]);
+                    acc
+                });
+
+                // Iterate through every face and accumulate a list of indices
+                let mut indices = vec![];
+                for cycle in &polyhedron.cycles {
+                    let cycle_indices: Vec<u32> = cycle
+                        .iter()
+                        .map(|c| verts.iter().position(|v| v == c).unwrap() as u32)
+                        .collect();
+
+                    match cycle.len() {
+                        3 => {
+                            indices.extend(cycle_indices);
+                        }
+                        4 => {
+                            indices.extend(vec![
+                                cycle_indices[0],
+                                cycle_indices[1],
+                                cycle_indices[2],
+                                cycle_indices[2],
+                                cycle_indices[3],
+                                cycle_indices[0],
+                            ]);
+                        }
+                        _ => {
+                            for i in 0..cycle_indices.len() {
+                                let triangle = vec![
+                                    // Before
+                                    cycle_indices[i],
+                                    // Centroid index
+                                    vertices.len() as u32,
+                                    // After
+                                    cycle_indices[(i + 1) % cycle_indices.len()],
+                                ];
+                                indices.extend(triangle);
+                            }
+                            // Compute the centroid
+                            let centroid = cycle
+                                .iter()
+                                .fold(Vec3::zero(), |acc, v| acc + polyhedron.positions[v])
+                                / cycle.len() as f32;
+                            // Add it to the moment vertices
+                            vertices.push(Vertex {
+                                position: centroid.into(),
+                                color: colors[0].into(),
+                                barycentric: barycentric[0].into(),
+                                sides: sides.into(),
+                            });
+                        }
+                    }
+                }
+                println!("indices: {:?}", indices);
+                println!("vertices: {:?}", vertices);
+
+                (vertices, indices)
+            }
+            ColorMethodMessage::Edge => todo!(),
+            ColorMethodMessage::Polygon => {
+                // hashmap of polygon length to color
+                let colors = &self.render.picker.palette.colors;
+                let mut color_map: HashMap<usize, Vec4> = HashMap::new();
+                for cycle in &polyhedron.cycles {
+                    if !color_map.contains_key(&cycle.len()) {
+                        color_map
+                            .insert(cycle.len(), colors[color_map.len() % colors.len()].into());
+                    }
+                }
+
+                let mut vertices = Vec::new();
+                let barycentric = [Vec3::unit_x(), Vec3::unit_y(), Vec3::unit_z()];
+                for (i, cycle) in polyhedron.cycles.iter().enumerate() {
+                    let color = color_map.get(&cycle.len()).unwrap().clone();
+                    let sides = self.face_sides_buffer(i);
+                    let positions = self.face_triangle_positions(i);
+                    for j in 0..positions.len() {
+                        let b = barycentric[j % barycentric.len()];
+                        vertices.push(Vertex {
+                            position: positions[j].into(),
+                            sides: Vec4::new(sides[j].x, sides[j].y, sides[j].z, 0.0),
+                            barycentric: Vec4::new(b.x, b.y, b.z, 0.0),
+                            color,
+                        });
+                    }
+                }
+
+                let indices = (0..vertices.len()).into_iter().map(|i| i as u32).collect();
+                (vertices, indices)
+            }
+            ColorMethodMessage::Face => todo!(),
+        }
+    }
+
+    fn face_triangle_positions(&self, face_index: usize) -> Vec<Vec3> {
+        let positions = self.model.polyhedron.face_positions(face_index);
+        let n = positions.len();
+        match n {
+            3 => positions,
+            4 => vec![
+                positions[0],
+                positions[1],
+                positions[2],
+                positions[2],
+                positions[3],
+                positions[0],
+            ],
+            _ => {
+                let centroid = self.model.polyhedron.face_centroid(face_index);
+                let n = positions.len();
+                (0..n).fold(vec![], |acc, i| {
+                    [acc, vec![positions[i], centroid, positions[(i + 1) % n]]].concat()
+                })
             }
         }
-
-        // println!(
-        //     "moment_vertices_final: {:?}",
-        //     moment_vertices
-        //         .iter()
-        //         .map(|mv| mv.position)
-        //         .collect::<Vec<_>>()
-        // );
-        println!("indices: {:?}", indices);
-        println!("vertices: {:?}", vertices);
-
-        // let barycentric = [Vec4::unit_x(), Vec4::unit_y(), Vec4::unit_z()];
-        // for (i, idx) in indices.iter().enumerate() {
-        //     moment_vertices[*idx as usize].barycentric = barycentric[i % barycentric.len()];
-        //     if *idx > verts.len() as u32 {
-        //         moment_vertices[*idx as usize].sides = Vec4::zero();
-        //     } else {
-        //         moment_vertices[*idx as usize].sides = Vec4::new(1.0, 1.0, 1.0, 1.0);
-        //     }
-        // }
-
-        (vertices, indices)
     }
 
     pub fn color_buf(&self) -> (Vec<Vec4>, Vec<u32>) {
