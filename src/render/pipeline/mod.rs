@@ -106,11 +106,12 @@ impl Pipeline {
                         // position
                         0 => Float32x3,
                         // color
-                        1 => Float32x3,
+                        1 => Float32x4,
                         // barycentric
-                        2 => Float32x3,
+                        2 => Float32x4,
                         // sides
-                        3 => Float32x3,
+                        3 => Float32x4,
+                        4 => Float32
                     ],
                 }],
             },
@@ -128,7 +129,7 @@ impl Pipeline {
                 entry_point: "fs_main",
                 targets: &[Some(wgpu::ColorTargetState {
                     format,
-                    blend: None,
+                    blend: Some(wgpu::BlendState::ALPHA_BLENDING),
                     write_mask: wgpu::ColorWrites::ALL,
                 })],
             }),

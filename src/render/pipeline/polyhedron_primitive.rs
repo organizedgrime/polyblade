@@ -108,7 +108,7 @@ impl PolyhedronPrimitive {
                             vertices.push(Vertex {
                                 position: centroid.into(),
                                 color: colors[0].into(),
-                                barycentric: barycentric[0],
+                                barycentric: barycentric[0].into(),
                                 sides: sides.into(),
                             });
                         }

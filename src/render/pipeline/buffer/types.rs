@@ -6,8 +6,8 @@ use ultraviolet::{Mat4, Vec3, Vec4};
 pub struct Vertex {
     pub position: Vec3,
     pub color: Vec4,
-    pub barycentric: Vec3,
-    pub sides: Vec3,
+    pub barycentric: Vec4,
+    pub sides: Vec4,
 }
 
 /* impl Vertex {
