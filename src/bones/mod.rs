@@ -1,6 +1,9 @@
-mod conway;
-mod edge;
 mod face;
+/// RenderGraph
+/// ConwayGraph
+/// MetaGraph
+/// Graph
+mod graphs;
 mod platonic;
 mod polygraph;
 mod polyhedron;
