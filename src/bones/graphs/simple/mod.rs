@@ -67,4 +67,8 @@ impl Simple {
             .filter_map(|e| if e.other(v).is_some() { Some(*e) } else { None })
             .collect()
     }
+
+    pub fn face_count(&self) -> i64 {
+        2 + self.edges.len() as i64 - self.vertices.len() as i64
+    }
 }
