@@ -148,7 +148,7 @@ impl Application for Polyblade {
                         slider(0.0..=10.0, self.state.model.scale, |v| {
                             PolybladeMessage::Model(ModelMessage::ScaleChanged(v))
                         })
-                        .step(0.03)
+                        .step(0.1)
                     ],
                 ]
             ]

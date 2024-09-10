@@ -128,6 +128,17 @@ pub enum ColorMethodMessage {
     Face,
 }
 
+impl Into<f32> for ColorMethodMessage {
+    fn into(self) -> f32 {
+        match self {
+            ColorMethodMessage::Vertex => 0.0,
+            ColorMethodMessage::Edge => 1.0,
+            ColorMethodMessage::Polygon => 2.0,
+            ColorMethodMessage::Face => 2.0,
+        }
+    }
+}
+
 #[derive(Debug, Clone, EnumIter, Display)]
 pub enum ColorPickerMessage {
     ChangeNumber(i16),

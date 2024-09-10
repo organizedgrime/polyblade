@@ -44,4 +44,5 @@ pub struct ModelUniforms {
 #[repr(C)]
 pub struct FragUniforms {
     pub(crate) line_thickness: f32,
+    pub(crate) line_mode: f32,
 }

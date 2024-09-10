@@ -32,15 +32,24 @@ fn vs_main(
 }
 
 struct FragUniforms {
-    line_thickness: f32
+    line_thickness: f32,
+	line_mode: f32,
 };
 @binding(1) @group(0) var<uniform> frag_uniforms : FragUniforms;
 
 fn edge(v_barycentric: vec3<f32>, v_sides: vec3<f32>) -> bool {
     let face: vec3<f32> = v_barycentric * v_sides;
+    //let face: vec3<f32> = v_barycentric * vec3(1.0, 1.0, 1.0);
     let r: vec3<f32> = fwidthFine(face) * frag_uniforms.line_thickness;
     let f: vec3<f32> = step(r, face);
     return min(min(f.x, f.y), f.z) == 0.0;
+}
+
+fn vertex(v_barycentric: vec3<f32>, v_sides: vec3<f32>) -> vec3<f32> {
+    let face: vec3<f32> = v_barycentric * v_sides;
+    let r: vec3<f32> = fwidthFine(face) * frag_uniforms.line_thickness;
+    let f: vec3<f32> = step(r, face);
+    return step(v_barycentric, v_sides);
 }
 
 @fragment
@@ -50,9 +59,17 @@ fn fs_main(
     @location(2) v_barycentric: vec4<f32>,
     @location(3) v_sides: vec4<f32>,
 ) -> @location(0) vec4<f32> {
-    if edge(v_barycentric.xyz, v_sides.xyz) {
-        return vec4(0.0, 0.0, 0.0, 1.0);
+    if frag_uniforms.line_mode != 0.0 {
+        if edge(v_barycentric.xyz, v_sides.xyz) {
+            return vec4(0.0, 0.0, 0.0, 1.0);
+        } else {
+            return v_color;
+        }
     } else {
-        return v_color;
+        if edge(v_barycentric.xyz, v_sides.xyz) {
+            return v_color;
+        } else {
+            return vec4(0.0, 0.0, 0.0, 1.0);
+        }
     }
 }

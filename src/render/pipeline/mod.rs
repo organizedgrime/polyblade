@@ -14,7 +14,6 @@ pub use polyhedron_primitive::*;
 
 pub struct Pipeline {
     pipeline: wgpu::RenderPipeline,
-    index_buf: Buffer,
     vertex_buf: Buffer,
     /// Uniform Buffers
     model_buf: Buffer,
@@ -30,7 +29,6 @@ unsafe impl Send for Pipeline {}
 
 impl Pipeline {
     pub fn new(device: &wgpu::Device, format: wgpu::TextureFormat, target_size: Size<u32>) -> Self {
-        let index_buf = Buffer::new::<u32>(device, "index", BufferKind::Index);
         let vertex_buf = Buffer::new::<Vertex>(device, "vertex_buf", BufferKind::Vertex);
 
         // Create Uniform Buffers
@@ -137,7 +135,6 @@ impl Pipeline {
 
         Self {
             pipeline,
-            index_buf,
             vertex_buf,
             model_buf,
             frag_buf,
@@ -166,9 +163,8 @@ impl Pipeline {
             self.starting_vertex = 0;
         }
 
-        let (vertices, indices) = primitive.vertices();
+        let vertices = primitive.vertices();
         self.vertex_buf.write_vec(device, queue, vertices);
-        self.index_buf.write_vec(device, queue, indices);
 
         // Write uniforms
         self.model_buf.write_data(queue, &uniforms.model);
@@ -210,8 +206,7 @@ impl Pipeline {
 
             // Draw Positions
             pass.set_vertex_buffer(0, self.vertex_buf.raw.slice(..));
-            pass.set_index_buffer(self.index_buf.raw.slice(..), wgpu::IndexFormat::Uint32);
-            pass.draw_indexed(0..self.index_buf.count, 0, 0..1);
+            pass.draw(self.starting_vertex as u32..self.vertex_buf.count, 0..1);
         }
     }
 }
