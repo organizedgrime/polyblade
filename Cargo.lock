@@ -2204,16 +2204,23 @@ dependencies = [
  "iced_aw",
  "image",
  "open",
- "quote",
+ "polyblade-derive",
  "rand",
  "ron",
  "serde",
  "strum",
  "strum_macros",
- "syn 2.0.77",
  "test-case",
  "tracing-subscriber",
  "ultraviolet",
+]
+
+[[package]]
+name = "polyblade-derive"
+version = "0.0.0"
+dependencies = [
+ "quote",
+ "syn 2.0.77",
 ]
 
 [[package]]

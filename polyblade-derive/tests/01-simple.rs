@@ -1,18 +1,18 @@
-use polyblade_derive::Meow;
+use polyblade_derive::Simple;
 
 pub trait SimpleGraph {
     fn insert(&mut self) -> usize;
 }
 
-#[derive(Meow)]
+#[derive(Simple)]
 pub struct Complex {
     #[internal]
-    pub graph: Simple,
+    pub graph: Nya,
     pub dogs: f32,
 }
 
-pub struct Simple {}
-impl SimpleGraph for Simple {
+pub struct Nya {}
+impl SimpleGraph for Nya {
     fn insert(&mut self) -> usize {
         353
     }
@@ -20,7 +20,7 @@ impl SimpleGraph for Simple {
 
 fn main() {
     let mut c = Complex {
-        graph: Simple {},
+        graph: Nya {},
         dogs: 2.0,
     };
 
