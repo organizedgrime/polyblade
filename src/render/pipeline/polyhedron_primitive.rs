@@ -100,19 +100,13 @@ impl PolyhedronPrimitive {
                                     .into_iter()
                                     .map(|i| {
                                         vec![
-                                            MomentVertex {
-                                                position: positions[i],
-                                                color,
-                                            },
-                                            MomentVertex {
-                                                position: centroid,
-                                                color,
-                                            },
-                                            MomentVertex {
-                                                position: positions[(i + 1) % cycle.len()],
-                                                color,
-                                            },
+                                            positions[i],
+                                            centroid,
+                                            positions[(i + 1) % positions.len()],
                                         ]
+                                        .into_iter()
+                                        .map(|position| MomentVertex { position, color })
+                                        .collect()
                                     })
                                     .collect::<Vec<Vec<MomentVertex>>>()
                                     .concat()
