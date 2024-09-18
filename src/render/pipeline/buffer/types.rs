@@ -1,19 +1,23 @@
-use iced::Color;
-use ultraviolet::{Mat4, Vec4};
+use ultraviolet::{Mat4, Vec3, Vec4};
+
+#[derive(Debug, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
+//#[repr(C, align(16))]
+#[repr(C)]
+pub struct MomentVertex {
+    pub position: Vec3,
+    pub color: Vec4,
+}
 
 #[derive(Debug, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
 #[repr(C)]
-pub struct Vertex {
-    pub normal: Vec4,
+pub struct ShapeVertex {
     pub barycentric: Vec4,
     pub sides: Vec4,
-    pub color: Vec4,
 }
 
 pub struct AllUniforms {
     pub model: ModelUniforms,
     pub frag: FragUniforms,
-    pub light: LightUniforms,
 }
 
 #[derive(Copy, Default, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]
@@ -26,30 +30,6 @@ pub struct ModelUniforms {
 #[derive(Copy, Default, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]
 #[repr(C)]
 pub struct FragUniforms {
-    pub(crate) light_position: Vec4,
-    pub(crate) eye_position: Vec4,
-}
-
-#[derive(Copy, Default, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]
-#[repr(C)]
-pub struct LightUniforms {
-    color: Vec4,
-    specular_color: Vec4,
-    ambient_intensity: f32,
-    diffuse_intensity: f32,
-    specular_intensity: f32,
-    specular_shininess: f32,
-}
-
-impl LightUniforms {
-    pub fn new(light_color: Color, specular_color: Color) -> Self {
-        Self {
-            color: Vec4::from(light_color.into_linear()),
-            specular_color: Vec4::from(specular_color.into_linear()),
-            ambient_intensity: 0.1,
-            diffuse_intensity: 0.6,
-            specular_intensity: 0.3,
-            specular_shininess: 30.0,
-        }
-    }
+    pub(crate) line_thickness: f32,
+    pub(crate) line_mode: f32,
 }

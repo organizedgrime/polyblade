@@ -1,4 +1,4 @@
-use super::message::Message;
+use super::message::PolybladeMessage;
 use crate::{bones::PolyGraph, Instant};
 use serde::{Deserialize, Serialize};
 
@@ -33,11 +33,11 @@ impl InfoBox {
         self.bowers.clone().unwrap_or(Self::UNKNOWN.to_string())
     }
 
-    pub fn wiki_message(&self) -> Message {
+    pub fn wiki_message(&self) -> PolybladeMessage {
         self.wiki
             .clone()
-            .map(Message::OpenWiki)
-            .unwrap_or(Message::Tick(Instant::now()))
+            .map(PolybladeMessage::OpenWiki)
+            .unwrap_or(PolybladeMessage::Tick(Instant::now()))
     }
 }
 

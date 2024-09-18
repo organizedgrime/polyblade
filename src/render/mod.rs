@@ -2,6 +2,7 @@ mod camera;
 mod color;
 mod menu;
 pub(crate) mod message;
+mod palette;
 pub(crate) mod pipeline;
 mod polyblade;
 mod polydex;

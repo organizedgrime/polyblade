@@ -86,24 +86,6 @@ impl PolyGraph {
         vertices.iter().fold(Vec3::zero(), |a, &b| a + b) / vertices.len() as f32
     }
 
-    pub fn vertex_count(&self) -> u64 {
-        let mut vertex_triangle_count = 0;
-        for face in self.cycles.iter() {
-            match face.len() {
-                3 => {
-                    vertex_triangle_count += 3;
-                }
-                4 => {
-                    vertex_triangle_count += 6;
-                }
-                _ => {
-                    vertex_triangle_count += 3 * face.len() as u64;
-                }
-            }
-        }
-        vertex_triangle_count
-    }
-
     pub fn process_transactions(&mut self) {
         if let Some(transaction) = self.transactions.first().cloned() {
             use Transaction::*;
@@ -149,7 +131,7 @@ impl PolyGraph {
                         Join => {
                             let edges = self.kis(Option::None);
                             vec![
-                                Wait(Instant::now() + Duration::from_secs(1)),
+                                //Wait(Instant::now() + Duration::from_secs(1)),
                                 Release(edges),
                                 Name('j'),
                             ]
@@ -179,7 +161,7 @@ impl PolyGraph {
                             vec![Contraction(edges), Name('b')]
                         }
                     };
-                    self.cycles.sort_by(|c, d| d.len().cmp(&c.len()));
+                    self.cycles.sort_by_key(|c| usize::MAX - c.len());
                     self.transactions = [new_transactions, self.transactions.clone()].concat();
                     self.pst();
                 }

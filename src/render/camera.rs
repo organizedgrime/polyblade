@@ -33,9 +33,7 @@ pub const OPENGL_TO_WGPU_MATRIX: Mat4 = Mat4::new(
 
 impl Camera {
     pub fn build_view_proj_mat(&self, bounds: Rectangle) -> Mat4 {
-        //TODO looks distorted without padding; base on surface texture size instead?
-        let aspect_ratio = bounds.width / (bounds.height + 150.0);
-
+        let aspect_ratio = bounds.width / bounds.height;
         let view = Mat4::look_at(self.eye, self.target, self.up);
         let h = f32::cos(0.5 * self.fov_y) / f32::sin(0.5 * self.fov_y);
         let w = h / aspect_ratio;
@@ -50,6 +48,7 @@ impl Camera {
         OPENGL_TO_WGPU_MATRIX * proj * view
     }
 
+    #[allow(dead_code)]
     pub fn position(&self) -> Vec4 {
         Vec4::from(self.eye)
     }
