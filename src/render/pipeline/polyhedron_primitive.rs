@@ -8,7 +8,7 @@ use iced::widget::shader::{self, wgpu};
 use iced::{Rectangle, Size};
 use ultraviolet::{Vec3, Vec4};
 
-use super::{AllUniforms, FragUniforms, ModelUniforms, Pipeline, Vertex};
+use super::{AllUniforms, FragUniforms, ModelUniforms, MomentVertex, Pipeline, ShapeVertex};
 
 #[derive(Debug)]
 pub struct PolyhedronPrimitive {
@@ -39,8 +39,26 @@ impl PolyhedronPrimitive {
         }
     } */
 
+    pub fn surface_area(&self, face_index: usize) -> f32 {
+        let positions: Vec<Vec3> = self.model.polyhedron.cycles[face_index]
+            .iter()
+            .map(|i| self.model.polyhedron.positions[i])
+            .collect();
+        let mut area = 0.0;
+        for i in 0..positions.len() / 3 {
+            let j = i * 3;
+            let a = (positions[j] - positions[j + 1]).mag();
+            let b = (positions[j + 1] - positions[j + 2]).mag();
+            let c = (positions[j + 2] - positions[j]).mag();
+            let s = (a + b + c) / 2.0;
+            area += (s * (s - a) * (s - b) * (s - c)).sqrt();
+        }
+        println!("area for face {face_index} is {area}");
+        area
+    }
+
     /// All the vertices that will change moment to moment
-    pub fn vertices(&self) -> Vec<Vertex> {
+    pub fn moment_vertices(&self) -> Vec<MomentVertex> {
         let polyhedron = &self.model.polyhedron;
 
         // hashmap of polygon length to color
@@ -53,16 +71,8 @@ impl PolyhedronPrimitive {
         }
 
         let mut vertices = Vec::new();
-        let barycentric = [Vec3::unit_x(), Vec3::unit_y(), Vec3::unit_z()];
         for cycle in &polyhedron.cycles {
             let color = *color_map.get(&cycle.len()).unwrap();
-
-            let sides: Vec4 = match cycle.len() {
-                3 => Vec3::new(1.0, 1.0, 1.0),
-                4 => Vec3::new(1.0, 0.0, 1.0),
-                _ => Vec3::new(0.0, 1.0, 0.0),
-            }
-            .into();
 
             let positions: Vec<(usize, Vec3)> = cycle
                 .iter()
@@ -82,25 +92,19 @@ impl PolyhedronPrimitive {
                 })
                 .collect();
 
-            let triangles: Vec<Vertex> = match cycle.len() {
+            let triangles: Vec<MomentVertex> = match cycle.len() {
                 3 => positions
                     .iter()
-                    .enumerate()
-                    .map(|(i, (c, p))| Vertex {
+                    .map(|(c, p)| MomentVertex {
                         position: *p,
                         color: color_maaap[c],
-                        barycentric: barycentric[i].into(),
-                        sides,
                     })
                     .collect(),
                 4 => vec![0usize, 1, 2, 2, 3, 0]
                     .iter()
-                    .enumerate()
-                    .map(|(i, &j)| Vertex {
+                    .map(|&j| MomentVertex {
                         position: positions[j].1,
                         color: color_maaap[&positions[j].0],
-                        barycentric: barycentric[i % barycentric.len()].into(),
-                        sides,
                     })
                     .collect(),
                 _ => {
@@ -112,33 +116,76 @@ impl PolyhedronPrimitive {
                     let mut triangles = vec![];
                     for i in 0..cycle.len() {
                         triangles.extend(vec![
-                            Vertex {
+                            MomentVertex {
                                 position: positions[i].1,
                                 color: color_maaap[&positions[i].0],
-                                barycentric: barycentric[0].into(),
-                                sides,
                             },
-                            Vertex {
+                            MomentVertex {
                                 position: centroid,
                                 color: centroid_color,
-                                barycentric: barycentric[1].into(),
-                                sides,
                             },
-                            Vertex {
+                            MomentVertex {
                                 position: positions[(i + 1) % cycle.len()].1,
                                 color: color_maaap[&positions[(i + 1) % cycle.len()].0],
-                                barycentric: barycentric[2].into(),
-                                sides,
                             },
                         ]);
                     }
                     triangles
                 }
             };
+
+            /* println!(
+                "this cycle had len {} and now has {} moment vertices",
+                cycle.len(),
+                triangles.len()
+            ); */
             vertices.extend(triangles);
         }
 
-        println!("vertices: {:?}", vertices);
+        vertices
+    }
+
+    pub fn shape_vertices(&self) -> Vec<ShapeVertex> {
+        let polyhedron = &self.model.polyhedron;
+        let mut vertices = Vec::new();
+        let barycentric = [Vec3::unit_x(), Vec3::unit_y(), Vec3::unit_z()];
+        for cycle in &polyhedron.cycles {
+            let sides: Vec4 = match cycle.len() {
+                3 => Vec3::new(1.0, 1.0, 1.0),
+                4 => Vec3::new(1.0, 1.0, 1.0),
+                _ => Vec3::new(1.0, 1.0, 1.0),
+            }
+            .into();
+
+            let b_shapes: Vec<ShapeVertex> = barycentric
+                .iter()
+                .map(|&b| ShapeVertex {
+                    barycentric: b.into(),
+                    sides,
+                })
+                .collect();
+
+            let cycle_shapes = match cycle.len() {
+                3 => b_shapes.clone(),
+                4 => (0..6)
+                    .into_iter()
+                    .map(|i| ShapeVertex {
+                        barycentric: barycentric[i % 3].into(),
+                        sides,
+                    })
+                    .collect(),
+                _ => vec![b_shapes; cycle.len()].concat(),
+            };
+
+            println!(
+                "this cycle had len {} and now has {} shape vertices",
+                cycle.len(),
+                cycle_shapes.len()
+            );
+
+            vertices.extend(cycle_shapes);
+        }
+        println!("{vertices:?}");
 
         vertices
     }

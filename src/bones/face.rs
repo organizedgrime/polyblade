@@ -1,3 +1,5 @@
+use ultraviolet::{Vec3, Vec4};
+
 use super::{Edge, VertexId};
 use std::{
     collections::HashSet,
@@ -66,6 +68,15 @@ impl Face {
 
     pub fn push(&mut self, value: VertexId) {
         self.0.push(value)
+    }
+
+    pub fn sides(&self) -> Vec4 {
+        match self.len() {
+            3 => Vec3::new(1.0, 1.0, 1.0),
+            4 => Vec3::new(1.0, 0.0, 1.0),
+            _ => Vec3::new(0.0, 1.0, 0.0),
+        }
+        .into()
     }
 }
 

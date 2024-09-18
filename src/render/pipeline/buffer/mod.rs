@@ -71,15 +71,10 @@ impl Buffer {
 
     pub fn write_vec<T: bytemuck::Pod>(
         &mut self,
-        device: &wgpu::Device,
+        //device: &wgpu::Device,
         queue: &wgpu::Queue,
         data: Vec<T>,
     ) {
-        let count = data.len() as u32;
-        // Resize the index buffer if necessary
-        if self.count != count {
-            self.resize(device, count);
-        }
         // Write to the buffers
         queue.write_buffer(&self.raw, 0, bytemuck::cast_slice(&data));
     }

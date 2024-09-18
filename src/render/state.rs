@@ -73,7 +73,7 @@ pub struct ModelState {
 impl Default for ModelState {
     fn default() -> Self {
         Self {
-            polyhedron: PolyGraph::pyramid(3),
+            polyhedron: PolyGraph::dodecahedron(),
             scale: 1.0,
             transform: Mat4::identity(),
         }

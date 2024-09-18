@@ -14,7 +14,8 @@ pub use polyhedron_primitive::*;
 
 pub struct Pipeline {
     pipeline: wgpu::RenderPipeline,
-    vertex_buf: Buffer,
+    moment_buf: Buffer,
+    shape_buf: Buffer,
     /// Uniform Buffers
     model_buf: Buffer,
     frag_buf: Buffer,
@@ -29,7 +30,8 @@ unsafe impl Send for Pipeline {}
 
 impl Pipeline {
     pub fn new(device: &wgpu::Device, format: wgpu::TextureFormat, target_size: Size<u32>) -> Self {
-        let vertex_buf = Buffer::new::<Vertex>(device, "vertex_buf", BufferKind::Vertex);
+        let moment_buf = Buffer::new::<MomentVertex>(device, "moment", BufferKind::Vertex);
+        let shape_buf = Buffer::new::<ShapeVertex>(device, "shape", BufferKind::Vertex);
 
         // Create Uniform Buffers
         let model_buf = Buffer::new::<ModelUniforms>(device, "model", BufferKind::Uniform);
@@ -97,20 +99,28 @@ impl Pipeline {
             vertex: wgpu::VertexState {
                 module: &shader,
                 entry_point: "vs_main",
-                buffers: &[wgpu::VertexBufferLayout {
-                    array_stride: std::mem::size_of::<Vertex>() as wgpu::BufferAddress,
-                    step_mode: wgpu::VertexStepMode::Vertex,
-                    attributes: &wgpu::vertex_attr_array![
-                        // position
-                        0 => Float32x3,
-                        // color
-                        1 => Float32x4,
-                        // barycentric
-                        2 => Float32x4,
-                        // sides
-                        3 => Float32x4,
-                    ],
-                }],
+                buffers: &[
+                    wgpu::VertexBufferLayout {
+                        array_stride: std::mem::size_of::<MomentVertex>() as wgpu::BufferAddress,
+                        step_mode: wgpu::VertexStepMode::Vertex,
+                        attributes: &wgpu::vertex_attr_array![
+                            // position
+                            0 => Float32x3,
+                            // color
+                            1 => Float32x4,
+                        ],
+                    },
+                    wgpu::VertexBufferLayout {
+                        array_stride: std::mem::size_of::<MomentVertex>() as wgpu::BufferAddress,
+                        step_mode: wgpu::VertexStepMode::Vertex,
+                        attributes: &wgpu::vertex_attr_array![
+                            // barycentric
+                            2 => Float32x4,
+                            // sides
+                            3 => Float32x4,
+                        ],
+                    },
+                ],
             },
             primitive: wgpu::PrimitiveState::default(),
             depth_stencil: Some(wgpu::DepthStencilState {
@@ -135,7 +145,8 @@ impl Pipeline {
 
         Self {
             pipeline,
-            vertex_buf,
+            moment_buf,
+            shape_buf,
             model_buf,
             frag_buf,
             depth_texture,
@@ -163,9 +174,16 @@ impl Pipeline {
             self.starting_vertex = 0;
         }
 
-        let vertices = primitive.vertices();
-        self.vertex_buf.write_vec(device, queue, vertices);
+        let moments = primitive.moment_vertices();
+        if self.moment_buf.count != moments.len() as u32 {
+            self.moment_buf.resize(device, moments.len() as u32);
 
+            let shapes = primitive.shape_vertices();
+            self.shape_buf.resize(device, shapes.len() as u32);
+            queue.write_buffer(&self.shape_buf.raw, 0, bytemuck::cast_slice(&shapes));
+        }
+
+        queue.write_buffer(&self.moment_buf.raw, 0, bytemuck::cast_slice(&moments));
         // Write uniforms
         self.model_buf.write_data(queue, &uniforms.model);
         self.frag_buf.write_data(queue, &uniforms.frag);
@@ -205,8 +223,9 @@ impl Pipeline {
             pass.set_bind_group(0, &self.uniform_group, &[]);
 
             // Draw Positions
-            pass.set_vertex_buffer(0, self.vertex_buf.raw.slice(..));
-            pass.draw(self.starting_vertex as u32..self.vertex_buf.count, 0..1);
+            pass.set_vertex_buffer(0, self.moment_buf.raw.slice(..));
+            pass.set_vertex_buffer(1, self.shape_buf.raw.slice(..));
+            pass.draw(self.starting_vertex as u32..self.moment_buf.count, 0..1);
         }
     }
 }
