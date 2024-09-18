@@ -46,7 +46,7 @@ impl Default for RenderState {
             rotating: true,
             schlegel: false,
             line_thickness: 2.0,
-            method: ColorMethodMessage::Vertex,
+            method: ColorMethodMessage::Polygon,
             picker: ColorPickerState::default(),
         }
     }

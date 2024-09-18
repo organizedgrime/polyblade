@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use crate::bones::Face;
 use crate::render::message::ColorMethodMessage;
@@ -60,15 +60,73 @@ impl PolyhedronPrimitive {
     /// All the vertices that will change moment to moment
     pub fn moment_vertices(&self) -> Vec<MomentVertex> {
         let polyhedron = &self.model.polyhedron;
-
-        // hashmap of polygon length to color
         let colors = &self.render.picker.palette.colors;
-        let mut color_map: HashMap<usize, Vec4> = HashMap::new();
-        for cycle in &polyhedron.cycles {
-            if !color_map.contains_key(&cycle.len()) {
-                color_map.insert(cycle.len(), colors[color_map.len() % colors.len()].into());
+
+        match self.render.method {
+            ColorMethodMessage::Vertex => todo!(),
+            ColorMethodMessage::Edge => todo!(),
+            ColorMethodMessage::Polygon => {
+                // Polygon side count -> color
+                let color_map: HashMap<usize, Vec4> =
+                    polyhedron.cycles.iter().fold(HashMap::new(), |mut acc, c| {
+                        if !acc.contains_key(&c.len()) {
+                            acc.insert(c.len(), colors[acc.len() % colors.len()].into());
+                        }
+                        acc
+                    });
+                polyhedron
+                    .cycles
+                    .iter()
+                    .map(|cycle| {
+                        let color = *color_map.get(&cycle.len()).unwrap();
+                        let positions: Vec<Vec3> =
+                            cycle.iter().map(|&c| polyhedron.positions[&c]).collect();
+
+                        match cycle.len() {
+                            3 => positions
+                                .iter()
+                                .map(|&position| MomentVertex { position, color })
+                                .collect(),
+                            4 => vec![0usize, 1, 2, 2, 3, 0]
+                                .iter()
+                                .map(|&i| positions[i])
+                                .map(|position| MomentVertex { position, color })
+                                .collect(),
+                            _ => {
+                                let centroid: Vec3 =
+                                    positions.iter().fold(Vec3::zero(), |a, &b| a + b)
+                                        / positions.len() as f32;
+                                (0..cycle.len())
+                                    .into_iter()
+                                    .map(|i| {
+                                        vec![
+                                            MomentVertex {
+                                                position: positions[i],
+                                                color,
+                                            },
+                                            MomentVertex {
+                                                position: centroid,
+                                                color,
+                                            },
+                                            MomentVertex {
+                                                position: positions[(i + 1) % cycle.len()],
+                                                color,
+                                            },
+                                        ]
+                                    })
+                                    .collect::<Vec<Vec<MomentVertex>>>()
+                                    .concat()
+                            }
+                        }
+                    })
+                    .collect::<Vec<Vec<MomentVertex>>>()
+                    .concat()
             }
+            ColorMethodMessage::Face => todo!(),
         }
+    }
+
+    /* {
 
         let mut vertices = Vec::new();
         for cycle in &polyhedron.cycles {
@@ -134,16 +192,11 @@ impl PolyhedronPrimitive {
                 }
             };
 
-            /* println!(
-                "this cycle had len {} and now has {} moment vertices",
-                cycle.len(),
-                triangles.len()
-            ); */
             vertices.extend(triangles);
         }
 
         vertices
-    }
+    } */
 
     pub fn shape_vertices(&self) -> Vec<ShapeVertex> {
         let barycentric = [Vec3::unit_x(), Vec3::unit_y(), Vec3::unit_z()];
