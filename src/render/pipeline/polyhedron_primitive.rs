@@ -1,9 +1,7 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 
-use crate::bones::Face;
 use crate::render::message::ColorMethodMessage;
 use crate::render::state::{ModelState, RenderState};
-use iced::widget::canvas::path::lyon_path::geom::euclid::vec3;
 use iced::widget::shader::{self, wgpu};
 use iced::{Rectangle, Size};
 use ultraviolet::{Vec3, Vec4};
@@ -21,24 +19,7 @@ impl PolyhedronPrimitive {
         Self { model, render }
     }
 
-    /* pub fn indices(&self) -> Vec<u32> {
-        match self.render.method {
-            // Reference data is one per vertex
-            ColorMethodMessage::Vertex => self
-                .model
-                .polyhedron
-                .vertices
-                .iter()
-                .map(|v| self.model.polyhedron.positions[v])
-                .collect(),
-            // Reference data is one per unique vertex, face pair
-            ColorMethodMessage::Polygon => todo!(),
-            // Todo
-            ColorMethodMessage::Edge => todo!(),
-            ColorMethodMessage::Face => todo!(),
-        }
-    } */
-
+    #[allow(dead_code)]
     pub fn surface_area(&self, face_index: usize) -> f32 {
         let positions: Vec<Vec3> = self.model.polyhedron.cycles[face_index]
             .iter()
@@ -87,7 +68,7 @@ impl PolyhedronPrimitive {
                                 .iter()
                                 .map(|&position| MomentVertex { position, color })
                                 .collect(),
-                            4 => vec![0usize, 1, 2, 2, 3, 0]
+                            4 => [0usize, 1, 2, 2, 3, 0]
                                 .iter()
                                 .map(|&i| positions[i])
                                 .map(|position| MomentVertex { position, color })
@@ -97,7 +78,6 @@ impl PolyhedronPrimitive {
                                     positions.iter().fold(Vec3::zero(), |a, &b| a + b)
                                         / positions.len() as f32;
                                 (0..cycle.len())
-                                    .into_iter()
                                     .map(|i| {
                                         vec![
                                             positions[i],
@@ -119,78 +99,6 @@ impl PolyhedronPrimitive {
             ColorMethodMessage::Face => todo!(),
         }
     }
-
-    /* {
-
-        let mut vertices = Vec::new();
-        for cycle in &polyhedron.cycles {
-            let color = *color_map.get(&cycle.len()).unwrap();
-
-            let positions: Vec<(usize, Vec3)> = cycle
-                .iter()
-                .map(|&c| (c, polyhedron.positions[&c]))
-                .collect();
-
-            let color_maaap: HashMap<usize, Vec4> = cycle
-                .iter()
-                .map(|&i| {
-                    (
-                        i,
-                        match self.render.method {
-                            ColorMethodMessage::Vertex => colors[i % colors.len()].into(),
-                            _ => color,
-                        },
-                    )
-                })
-                .collect();
-
-            let triangles: Vec<MomentVertex> = match cycle.len() {
-                3 => positions
-                    .iter()
-                    .map(|(c, p)| MomentVertex {
-                        position: *p,
-                        color: color_maaap[c],
-                    })
-                    .collect(),
-                4 => vec![0usize, 1, 2, 2, 3, 0]
-                    .iter()
-                    .map(|&j| MomentVertex {
-                        position: positions[j].1,
-                        color: color_maaap[&positions[j].0],
-                    })
-                    .collect(),
-                _ => {
-                    let centroid: Vec3 = positions.iter().fold(Vec3::zero(), |a, &b| a + b.1)
-                        / positions.len() as f32;
-                    let centroid_color: Vec4 =
-                        cycle.iter().fold(Vec4::zero(), |a, &b| a + color_maaap[&b])
-                            / cycle.len() as f32;
-                    let mut triangles = vec![];
-                    for i in 0..cycle.len() {
-                        triangles.extend(vec![
-                            MomentVertex {
-                                position: positions[i].1,
-                                color: color_maaap[&positions[i].0],
-                            },
-                            MomentVertex {
-                                position: centroid,
-                                color: centroid_color,
-                            },
-                            MomentVertex {
-                                position: positions[(i + 1) % cycle.len()].1,
-                                color: color_maaap[&positions[(i + 1) % cycle.len()].0],
-                            },
-                        ]);
-                    }
-                    triangles
-                }
-            };
-
-            vertices.extend(triangles);
-        }
-
-        vertices
-    } */
 
     pub fn shape_vertices(&self) -> Vec<ShapeVertex> {
         let barycentric = [Vec3::unit_x(), Vec3::unit_y(), Vec3::unit_z()];
@@ -217,7 +125,6 @@ impl PolyhedronPrimitive {
                 match cycle.len() {
                     3 => b_shapes.clone(),
                     4 => (0..6)
-                        .into_iter()
                         .map(|i| ShapeVertex {
                             barycentric: barycentric[i % 3].into(),
                             sides,

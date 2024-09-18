@@ -128,9 +128,9 @@ pub enum ColorMethodMessage {
     Face,
 }
 
-impl Into<f32> for ColorMethodMessage {
-    fn into(self) -> f32 {
-        match self {
+impl From<ColorMethodMessage> for f32 {
+    fn from(val: ColorMethodMessage) -> Self {
+        match val {
             ColorMethodMessage::Vertex => 0.0,
             ColorMethodMessage::Edge => 1.0,
             ColorMethodMessage::Polygon => 2.0,

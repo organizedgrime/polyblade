@@ -48,6 +48,7 @@ impl Camera {
         OPENGL_TO_WGPU_MATRIX * proj * view
     }
 
+    #[allow(dead_code)]
     pub fn position(&self) -> Vec4 {
         Vec4::from(self.eye)
     }
