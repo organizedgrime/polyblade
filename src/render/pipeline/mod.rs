@@ -111,7 +111,7 @@ impl Pipeline {
                         ],
                     },
                     wgpu::VertexBufferLayout {
-                        array_stride: std::mem::size_of::<MomentVertex>() as wgpu::BufferAddress,
+                        array_stride: std::mem::size_of::<ShapeVertex>() as wgpu::BufferAddress,
                         step_mode: wgpu::VertexStepMode::Vertex,
                         attributes: &wgpu::vertex_attr_array![
                             // barycentric

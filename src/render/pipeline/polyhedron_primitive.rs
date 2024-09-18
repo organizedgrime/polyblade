@@ -146,48 +146,41 @@ impl PolyhedronPrimitive {
     }
 
     pub fn shape_vertices(&self) -> Vec<ShapeVertex> {
-        let polyhedron = &self.model.polyhedron;
-        let mut vertices = Vec::new();
         let barycentric = [Vec3::unit_x(), Vec3::unit_y(), Vec3::unit_z()];
-        for cycle in &polyhedron.cycles {
-            let sides: Vec4 = match cycle.len() {
-                3 => Vec3::new(1.0, 1.0, 1.0),
-                4 => Vec3::new(1.0, 1.0, 1.0),
-                _ => Vec3::new(1.0, 1.0, 1.0),
-            }
-            .into();
+        self.model
+            .polyhedron
+            .cycles
+            .iter()
+            .map(|cycle| {
+                let sides: Vec4 = match cycle.len() {
+                    3 => Vec3::new(1.0, 1.0, 1.0),
+                    4 => Vec3::new(1.0, 0.0, 1.0),
+                    _ => Vec3::new(0.0, 1.0, 0.0),
+                }
+                .into();
 
-            let b_shapes: Vec<ShapeVertex> = barycentric
-                .iter()
-                .map(|&b| ShapeVertex {
-                    barycentric: b.into(),
-                    sides,
-                })
-                .collect();
-
-            let cycle_shapes = match cycle.len() {
-                3 => b_shapes.clone(),
-                4 => (0..6)
-                    .into_iter()
-                    .map(|i| ShapeVertex {
-                        barycentric: barycentric[i % 3].into(),
+                let b_shapes: Vec<ShapeVertex> = barycentric
+                    .iter()
+                    .map(|&b| ShapeVertex {
+                        barycentric: b.into(),
                         sides,
                     })
-                    .collect(),
-                _ => vec![b_shapes; cycle.len()].concat(),
-            };
+                    .collect();
 
-            println!(
-                "this cycle had len {} and now has {} shape vertices",
-                cycle.len(),
-                cycle_shapes.len()
-            );
-
-            vertices.extend(cycle_shapes);
-        }
-        println!("{vertices:?}");
-
-        vertices
+                match cycle.len() {
+                    3 => b_shapes.clone(),
+                    4 => (0..6)
+                        .into_iter()
+                        .map(|i| ShapeVertex {
+                            barycentric: barycentric[i % 3].into(),
+                            sides,
+                        })
+                        .collect(),
+                    _ => vec![b_shapes; cycle.len()].concat(),
+                }
+            })
+            .collect::<Vec<Vec<ShapeVertex>>>()
+            .concat()
     }
 
     pub fn face_sides_buffer(&self, face_index: usize) -> Vec<Vec3> {
