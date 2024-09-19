@@ -1,0 +1,78 @@
+# This file configures `cargo deny` for validating that dependencies are secure
+# (do not have security advisories), exclusively using licenses that we allow,
+# and are not in our banned crates list.
+#
+# It is worth calling out that `cargo deny` only looks at metadata of packages,
+# `cargo audit` performs the same security advisory checks but performs deep
+# scans on the content of the code as well to provide additional detections on
+# whether a vulnerability is present. The two tools should be used together.
+
+# Collect metadata using all the features available in this repository. We do
+# not want security vulnerabilities in any of our subset of builds.
+[graph]
+all-features = true
+
+[advisories]
+
+# If we accept an advisory either because no fix is available and we need to
+# continue development, or because a vulnerability doesn't effect how we use
+# the other crate their identifier should be added to this list. It should be
+# periodically reviewed and cleaned out as fixes become available.
+ignore = []
+
+[licenses]
+allow = [
+	"Apache-2.0",
+	"MIT",
+	"Zlib",
+	"BSL-1.0",
+	"MPL-2.0",
+	"ISC",
+	"CC0-1.0",
+	"BSD-3-Clause",
+	"BSD-2-Clause",
+	"Unicode-DFS-2016",
+]
+
+# If we need to use a crate that violates our general policy, we can add that
+# to the list here to accept it.
+# The `ring` license is being pulled in by banyanfs so I'm assuming it's fine here too
+# https://github.com/briansmith/ring/blob/HEAD/LICENSE
+
+# [[licenses.clarify]]
+# name = "ring"
+# expression = "MIT AND ISC AND OpenSSL"
+# license-files = [{ path = "LICENSE", hash = 0xbd0eed23 }]
+
+[bans]
+multiple-versions = "allow"
+wildcards = "deny"
+
+# Crates/versions that are always allowed regardless of which checks they trigger
+allow = [
+	# Usage example:
+	#{ name = "ansi_term", version = "=0.11.0" },
+]
+
+# Crates and versions that are explicitly denied from use in this project
+deny = [
+	# Usage example:
+	#{ name = "ansi_term", version = "=0.11.0" },
+]
+
+# Certain crates/versions that will be skipped when doing duplicate detection.
+# They just couldn't be resolved ourselves.
+skip = []
+
+[sources]
+# We do not allow registries other than the official crates one which is known
+# by default.
+unknown-registry = "deny"
+
+# Using a git repository as a crate source is denied by default, to use a git
+# repo as a dependency source they must be reviewed and approved
+unknown-git = "deny"
+
+# Allow all crates that we have made
+# [sources.allow-org]
+# github = ["banyancomputer"]
