@@ -23,12 +23,13 @@ Using the PST distance algorithm for efficient all pairs shortest paths in the u
 
 #### Other goals
 - [x] Replace all hardcoded presets with prisms, antiprisms, and pyramids that have undergone modification.
+- [ ] Implement Vertex Coloring and Edge Coloring
 - [ ] Fix Fibonnaci lattice distribution for new shapes
 - [ ] Tesselations / tilings using Wythoff
 - [ ] "Undo" button
 - [ ] Save and load animations and cycles of `Transaction`s
 - [ ] Schlegel diagrams
-- [ ] Color pickers
+- [x] Color pickers
 - [ ] Pokedex entries for polyhedra, point users to wikipedia or polytope wiki when they stumble onto a known entry
 - [x] Create WASM deployment and add to website as git submodule
 - [x] Setup some basic CI integrations
