@@ -191,6 +191,8 @@ jobs:
             ${{ runner.os }}-${{ github.workflow }}-${{ inputs.cache_version }}-rust-${{ github.job }}-${{ hashFiles('**/Cargo.toml', '**/Cargo.lock') }}-
             ${{ runner.os }}-${{ github.workflow }}-${{ inputs.cache_version }}-rust-${{ github.job }}-
       - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
       # easily install any rust bins without building them
       - uses: cargo-bins/cargo-binstall@main
       # install cargo-auditable to produce the binary
