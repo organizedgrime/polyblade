@@ -18,15 +18,15 @@ iced_aw = { version = "=0.9.2", default-features = false, features = [
 ] }
 image = { version = "0.24.9" }
 # Enum iteration
-strum = "0.26.2"
-strum_macros = "0.26.2"
+strum = { version = "0.26.2" }
+strum_macros = { version = "0.26.2" }
 # Vector and Matrix math
 ultraviolet = { version = "0.9.2", features = ["bytemuck"] }
 rand = { version = "0.8.5" }
 serde = { version = "^1.0.0", features = ["derive"] }
 ron = { version = "0.8" }
-open = "5.3.0"
-ckmeans = "1.0.6"
+ckmeans = { version = "1.0.6" }
+webbrowser = { version = "1.0.2" }
 
 [dev-dependencies]
 test-case = { version = "^3.3.0" }

@@ -299,7 +299,7 @@ impl ProcessMessage<AppState> for PolybladeMessage {
                 Command::none()
             }
             OpenWiki(wiki) => {
-                let _ = open::that(wiki).ok();
+                let _ = webbrowser::open(wiki).ok();
                 Command::none()
             }
             _ => Command::none(),
