@@ -30,6 +30,7 @@ Using the PST distance algorithm for efficient all pairs shortest paths in the u
 - [ ] Save and load animations and cycles of `Transaction`s
 - [ ] Schlegel diagrams
 - [x] Color pickers
-- [ ] Pokedex entries for polyhedra, point users to wikipedia or polytope wiki when they stumble onto a known entry
+- [x] Pokedex entries for polyhedra, point users to wikipedia or polytope wiki when they stumble onto a known entry
+  - [ ] Expand pokedex to include more shapes and improve overlap on isomorphic conway strings
 - [x] Create WASM deployment and add to website as git submodule
 - [x] Setup some basic CI integrations
