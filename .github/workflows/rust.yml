@@ -172,3 +172,33 @@ jobs:
         run: mold -run cargo deny check bans licenses sources
       - name: advisories
         run: mold -run cargo deny check advisories
+
+  wasm:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/cache@v4
+        with:
+          key: ${{ runner.os }}-${{ github.workflow }}-${{ inputs.cache_version }}-rust-${{ github.job }}-${{ hashFiles('**/Cargo.toml', '**/Cargo.lock') }}-${{ github.sha }}
+          path: |
+            ~/.cache/sccache
+            ~/.cargo/bin/
+            ~/.cargo/registry/cache/
+            ~/.cargo/registry/index/
+            ~/.cargo/git/db/
+            target/
+          restore-keys: |
+            ${{ runner.os }}-${{ github.workflow }}-${{ inputs.cache_version }}-rust-${{ github.job }}-${{ hashFiles('**/Cargo.toml', '**/Cargo.lock') }}-
+            ${{ runner.os }}-${{ github.workflow }}-${{ inputs.cache_version }}-rust-${{ github.job }}-
+      - uses: dtolnay/rust-toolchain@stable
+      # easily install any rust bins without building them
+      - uses: cargo-bins/cargo-binstall@main
+      # install cargo-auditable to produce the binary
+      - run: cargo binstall -y trunk 
+      # install sccache (compilation cache)
+      - uses: mozilla-actions/sccache-action@v0.0.4
+      # install mold (linker)
+      - uses: rui314/setup-mold@v1
+      - run: ld --version
+      - name: trunk build
+        run: trunk build
