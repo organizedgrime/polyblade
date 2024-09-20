@@ -34,4 +34,4 @@ See also:
 - [ ] Color pickers
 - [ ] Pokedex entries for polyhedra, point users to wikipedia or polytope wiki when they stumble onto a known entry
 - [x] Create WASM deployment and add to website as git submodule
-- [ ] Setup some basic CI integrations
+- [x] Setup some basic CI integrations
