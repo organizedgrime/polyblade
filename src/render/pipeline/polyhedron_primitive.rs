@@ -66,12 +66,12 @@ impl PolyhedronPrimitive {
                         match cycle.len() {
                             3 => positions
                                 .iter()
-                                .map(|&position| MomentVertex { position, color })
+                                .map(|&position| MomentVertex::new(position, color))
                                 .collect(),
                             4 => [0usize, 1, 2, 2, 3, 0]
                                 .iter()
                                 .map(|&i| positions[i])
-                                .map(|position| MomentVertex { position, color })
+                                .map(|position| MomentVertex::new(position, color))
                                 .collect(),
                             _ => {
                                 let centroid: Vec3 =
@@ -85,7 +85,7 @@ impl PolyhedronPrimitive {
                                             positions[(i + 1) % positions.len()],
                                         ]
                                         .into_iter()
-                                        .map(|position| MomentVertex { position, color })
+                                        .map(|position| MomentVertex::new(position, color))
                                         .collect()
                                     })
                                     .collect::<Vec<Vec<MomentVertex>>>()
@@ -169,10 +169,10 @@ impl shader::Primitive for PolyhedronPrimitive {
                 model_mat: self.model.transform,
                 view_projection_mat: self.render.camera.build_view_proj_mat(bounds),
             },
-            frag: FragUniforms {
-                line_thickness: self.render.line_thickness,
-                line_mode: self.render.method.clone().into(),
-            },
+            frag: FragUniforms::new(
+                self.render.line_thickness,
+                self.render.method.clone().into(),
+            ),
         };
 
         // Update GPU data

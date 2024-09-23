@@ -53,7 +53,7 @@ impl Palette {
 
     pub fn clement() -> Self {
         Self::new(&[
-            "#000871", "#8854f3", "#639bff", "#63ffba", "#ff8c5c", "#ff79ae", "#fff982", "#ffffff",
+            "#639bff", "#8854f3", "#ff79ae", "#ff8c5c", "#fff982", "#63ffba",
         ])
     }
     pub fn dream_haze() -> Self {
