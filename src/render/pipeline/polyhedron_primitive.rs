@@ -6,8 +6,9 @@ use iced::widget::shader::{self, wgpu, Viewport};
 use iced::{Rectangle, Size};
 use ultraviolet::{Vec3, Vec4};
 
-use super::{AllUniforms, FragUniforms, ModelUniforms, MomentVertex, Pipeline, ShapeVertex};
+use super::{AllUniforms, FragUniforms, ModelUniforms, MomentVertex, ShapeVertex};
 
+/*
 #[derive(Debug)]
 pub struct PolyhedronPrimitive {
     pub model: ModelState,
@@ -193,3 +194,4 @@ impl shader::Primitive for PolyhedronPrimitive {
         pipeline.render(target, encoder, clip_bounds);
     }
 }
+*/

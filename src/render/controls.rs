@@ -2,7 +2,7 @@ use iced::alignment::{Horizontal, Vertical};
 use iced::Length;
 use iced_aw::{color_picker, menu::Item, menu_bar};
 use iced_wgpu::Renderer;
-use iced_widget::{button, column, container, row, shader, slider, text, text_input, Button, Row};
+use iced_widget::{button, column, container, row, shader, slider, text, Row};
 use iced_winit::core::{Color, Element, Length::*, Theme};
 use iced_winit::runtime::{Program, Task};
 
@@ -16,24 +16,36 @@ pub struct Controls {
     pub state: AppState,
 }
 
+impl Controls {
+    pub fn new() -> Self {
+        Self {
+            state: AppState::default(),
+        }
+    }
+
+    pub fn background_color(&self) -> Color {
+        self.state.render.background_color
+    }
+}
+
 impl Program for Controls {
     type Renderer = Renderer;
     type Theme = Theme;
     type Message = PolybladeMessage;
 
     fn update(&mut self, message: Self::Message) -> Task<Self::Message> {
-        message.process(self)
+        message.process(&mut self.state)
     }
 
-    fn view(&self) -> Element<'_, Self::Message, Self::Theme, Self::Renderer> {
+    fn view(&self) -> Element<Self::Message, Self::Theme, Self::Renderer> {
         let mut button_row = Row::new().spacing(10);
 
         for (i, color) in self.state.render.picker.palette.colors.iter().enumerate() {
             button_row = button_row.push(
                 button("")
-                    .style(Button::Custom(Box::new(ColorPickerBox {
-                        color: (*color).into(),
-                    })))
+                    // .style(Button::Custom(Box::new(ColorPickerBox {
+                    //     color: (*color).into(),
+                    // })))
                     .width(20)
                     .height(20)
                     .on_press(PolybladeMessage::Render(RenderMessage::ColorPicker(
@@ -69,7 +81,7 @@ impl Program for Controls {
                 .spacing(10.0),
                 button_row,
                 // Actual shader of the program
-                container(shader(self).width(Length::Fill).height(Length::Fill)),
+                // container(shader(self.state).width(Length::Fill).height(Length::Fill)),
                 // Info
                 column![
                     container(column![
@@ -118,11 +130,15 @@ impl Program for Controls {
             .spacing(10)
             .push(cp),
         )
-        .width(Length::Fill)
-        .height(Length::Fill)
-        .align_x(Horizontal::Center)
-        .align_y(Vertical::Center)
-        .padding(10)
-        .into()
+        // .width(Length::Fill)
+        // .height(Length::Fill)
+        // .align_x(Horizontal::Center)
+        // .align_y(Vertical::Center)
+        .padding(10);
+
+        container(column![text("Background color").color(Color::WHITE),].spacing(10))
+            .padding(10)
+            .align_bottom(Fill)
+            .into()
     }
 }

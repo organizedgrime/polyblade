@@ -9,5 +9,4 @@ mod polyblade;
 mod polydex;
 mod runner;
 mod state;
-pub use polyblade::Polyblade;
 pub use runner::Runner;

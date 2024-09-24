@@ -27,6 +27,7 @@ pub struct RenderState {
     pub line_thickness: f32,
     pub method: ColorMethodMessage,
     pub picker: ColorPickerState,
+    pub background_color: Color,
 }
 
 #[derive(Debug, Clone)]
@@ -48,6 +49,7 @@ impl Default for RenderState {
             line_thickness: 2.0,
             method: ColorMethodMessage::Polygon,
             picker: ColorPickerState::default(),
+            background_color: Color::WHITE,
         }
     }
 }

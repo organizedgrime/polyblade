@@ -1,7 +1,8 @@
 use super::{message::RenderMessage, state::RenderState};
 use crate::render::message::{ColorMethodMessage, ConwayMessage, PolybladeMessage, PresetMessage};
 use iced::{
-    alignment, theme,
+    alignment::{self, Vertical},
+    theme,
     widget::{button, checkbox, row, slider, text, Button},
     Border, Length, Renderer, Theme,
 };
@@ -31,11 +32,10 @@ pub trait MenuAble: Display + Clone + Sized {
 
     fn title<'a>() -> Button<'a, PolybladeMessage, Theme, Renderer> {
         button(row![
-            text(Self::TITLE).vertical_alignment(alignment::Vertical::Center),
-            // text(Bootstrap::CaretDownFill)
-            //     .size(18)
-            //     .font(BOOTSTRAP_FONT)
-            //     .height(Length::Shrink)
+            text(Self::TITLE).align_y(Vertical::Center) // text(Bootstrap::CaretDownFill)
+                                                        //     .size(18)
+                                                        //     .font(BOOTSTRAP_FONT)
+                                                        //     .height(Length::Shrink)
         ])
         .width(Length::Shrink)
         // .style(theme::Button::custom(LotusButton))
@@ -43,7 +43,7 @@ pub trait MenuAble: Display + Clone + Sized {
 
     fn button<'a>(self) -> Item<'a, PolybladeMessage, Theme, Renderer> {
         Item::new(
-            button(text(self.to_string()).vertical_alignment(alignment::Vertical::Center))
+            button(text(self.to_string()).align_y(Vertical::Center))
                 .padding([4, 8])
                 .on_press(Self::transform(self))
                 // .style(theme::Button::custom(LotusButton))
@@ -79,21 +79,17 @@ pub trait MenuAble: Display + Clone + Sized {
     }
 
     fn submenu<'a>(
-        label: &str,
+        label: &'a str,
         items: Vec<Self>,
     ) -> Item<'a, PolybladeMessage, iced::Theme, iced::Renderer> {
         Item::with_menu(
             button(
                 row![
-                    text(label)
-                        .width(Length::Fill)
-                        .vertical_alignment(alignment::Vertical::Center),
-                    // text(Bootstrap::CaretRightFill)
-                    //     .font(BOOTSTRAP_FONT)
-                    //     .width(Length::Shrink)
-                    //     .vertical_alignment(alignment::Vertical::Center),
-                ]
-                .align_items(iced::Alignment::Center),
+                    text(label).width(Length::Fill).align_y(Vertical::Center) // text(Bootstrap::CaretRightFill)
+                                                                              //     .font(BOOTSTRAP_FONT)
+                                                                              //     .width(Length::Shrink)
+                                                                              //     .vertical_alignment(alignment::Vertical::Center),
+                ], // .align_x(Horizontal::Center),
             )
             .padding([4, 8])
             // .style(theme::Button::custom(LotusButton))
