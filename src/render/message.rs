@@ -2,7 +2,7 @@ use crate::{
     bones::{PolyGraph, Transaction},
     Instant,
 };
-use iced::{font, Color, Command};
+use iced::{font, Color, Task};
 use std::fmt::Display;
 use strum_macros::{Display, EnumIter};
 use ultraviolet::Vec3;
@@ -153,11 +153,11 @@ pub enum ModelMessage {
 }
 
 pub trait ProcessMessage<T> {
-    fn process(&self, state: &mut T) -> Command<PolybladeMessage>;
+    fn process(&self, state: &mut T) -> Task<PolybladeMessage>;
 }
 
 impl ProcessMessage<ModelState> for PresetMessage {
-    fn process(&self, state: &mut ModelState) -> Command<PolybladeMessage> {
+    fn process(&self, state: &mut ModelState) -> Task<PolybladeMessage> {
         use PresetMessage::*;
         match &self {
             Prism(n) => {
@@ -178,22 +178,22 @@ impl ProcessMessage<ModelState> for PresetMessage {
             Icosahedron => state.polyhedron = PolyGraph::icosahedron(),
         }
 
-        Command::none()
+        Task::none()
     }
 }
 
 impl ProcessMessage<ModelState> for ConwayMessage {
-    fn process(&self, state: &mut ModelState) -> Command<PolybladeMessage> {
+    fn process(&self, state: &mut ModelState) -> Task<PolybladeMessage> {
         state
             .polyhedron
             .transactions
             .push(Transaction::Conway(self.clone()));
-        Command::none()
+        Task::none()
     }
 }
 
 impl ProcessMessage<RenderState> for RenderMessage {
-    fn process(&self, state: &mut RenderState) -> Command<PolybladeMessage> {
+    fn process(&self, state: &mut RenderState) -> Task<PolybladeMessage> {
         use RenderMessage::*;
         match &self {
             Schlegel(schlegel) => {
@@ -204,7 +204,7 @@ impl ProcessMessage<RenderState> for RenderMessage {
                     state.camera.fov_y = 1.0;
                     state.camera.eye = Vec3::new(0.0, 2.0, 3.0);
                 }
-                Command::none()
+                Task::none()
             }
             Rotating(rotating) => {
                 state.rotating = *rotating;
@@ -213,19 +213,19 @@ impl ProcessMessage<RenderState> for RenderMessage {
                 } else {
                     state.start = Instant::now().checked_sub(state.rotation_duration).unwrap();
                 }
-                Command::none()
+                Task::none()
             }
             FovChanged(fov) => {
                 state.camera.fov_y = *fov;
-                Command::none()
+                Task::none()
             }
             LineThickness(thickness) => {
                 state.line_thickness = *thickness;
-                Command::none()
+                Task::none()
             }
             ColorMethod(method) => {
                 state.method = method.clone();
-                Command::none()
+                Task::none()
             }
             ColorPicker(picker) => picker.process(&mut state.picker),
         }
@@ -233,7 +233,7 @@ impl ProcessMessage<RenderState> for RenderMessage {
 }
 
 impl ProcessMessage<ColorPickerState> for ColorPickerMessage {
-    fn process(&self, state: &mut ColorPickerState) -> Command<PolybladeMessage> {
+    fn process(&self, state: &mut ColorPickerState) -> Task<PolybladeMessage> {
         use ColorPickerMessage::*;
         match self {
             ChangeNumber(colors) => {
@@ -254,21 +254,21 @@ impl ProcessMessage<ColorPickerState> for ColorPickerMessage {
                 state.color_index = None;
             }
         }
-        Command::none()
+        Task::none()
     }
 }
 
 impl ProcessMessage<ModelState> for ModelMessage {
-    fn process(&self, state: &mut ModelState) -> Command<PolybladeMessage> {
+    fn process(&self, state: &mut ModelState) -> Task<PolybladeMessage> {
         match self {
             ModelMessage::ScaleChanged(scale) => state.scale = *scale,
         }
-        Command::none()
+        Task::none()
     }
 }
 
 impl ProcessMessage<AppState> for PolybladeMessage {
-    fn process(&self, state: &mut AppState) -> Command<PolybladeMessage> {
+    fn process(&self, state: &mut AppState) -> Task<PolybladeMessage> {
         use PolybladeMessage::*;
         match self {
             Tick(time) => {
@@ -283,7 +283,7 @@ impl ProcessMessage<AppState> for PolybladeMessage {
                     state.info = state.model.polyhedron.polydex_entry(&state.polydex);
                 }
                 state.update_state(*time);
-                Command::none()
+                Task::none()
             }
             Preset(preset) => preset.process(&mut state.model),
             Conway(conway) => conway.process(&mut state.model),
@@ -296,13 +296,13 @@ impl ProcessMessage<AppState> for PolybladeMessage {
                 } else {
                     //tracing_subscriber::warn
                 }
-                Command::none()
+                Task::none()
             }
             OpenWiki(wiki) => {
                 let _ = webbrowser::open(wiki).ok();
-                Command::none()
+                Task::none()
             }
-            _ => Command::none(),
+            _ => Task::none(),
         }
     }
 }

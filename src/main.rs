@@ -1,15 +1,18 @@
 mod bones;
 mod render;
-use iced::{Application as _, Settings};
-use render::Polyblade;
+use render::Runner;
+
+use iced_winit::winit;
+use winit::event_loop::EventLoop;
 
 #[cfg(target_arch = "wasm32")]
 pub use iced::time::Instant;
+use std::sync::Arc;
 #[cfg(not(target_arch = "wasm32"))]
 pub use std::time::Instant;
 
 #[rustfmt::skip::macros(menu_bar)]
-fn main() -> iced::Result {
+pub fn main() -> Result<(), winit::error::EventLoopError> {
     #[cfg(target_arch = "wasm32")]
     {
         console_log::init().expect("Initialize logger");
@@ -19,5 +22,7 @@ fn main() -> iced::Result {
     #[cfg(not(target_arch = "wasm32"))]
     tracing_subscriber::fmt::init();
 
-    Polyblade::run(Settings::default())
+    let event_loop = EventLoop::new()?;
+    let mut runner = Runner::Loading;
+    event_loop.run_app(&mut runner)
 }

@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use crate::render::message::ColorMethodMessage;
 use crate::render::state::{ModelState, RenderState};
-use iced::widget::shader::{self, wgpu};
+use iced::widget::shader::{self, wgpu, Viewport};
 use iced::{Rectangle, Size};
 use ultraviolet::{Vec3, Vec4};
 
@@ -150,14 +150,14 @@ impl PolyhedronPrimitive {
 impl shader::Primitive for PolyhedronPrimitive {
     fn prepare(
         &self,
-        format: wgpu::TextureFormat,
         device: &wgpu::Device,
         queue: &wgpu::Queue,
-        bounds: Rectangle,
-        target_size: Size<u32>,
-        _scale_factor: f32,
+        format: wgpu::TextureFormat,
         storage: &mut shader::Storage,
+        bounds: &Rectangle,
+        viewport: &Viewport,
     ) {
+        let target_size = viewport.physical_size();
         if !storage.has::<Pipeline>() {
             storage.store(Pipeline::new(device, format, target_size));
         }
@@ -181,16 +181,15 @@ impl shader::Primitive for PolyhedronPrimitive {
 
     fn render(
         &self,
+        encoder: &mut wgpu::CommandEncoder,
         storage: &shader::Storage,
         target: &wgpu::TextureView,
-        _target_size: Size<u32>,
-        viewport: Rectangle<u32>,
-        encoder: &mut wgpu::CommandEncoder,
+        clip_bounds: &Rectangle<u32>,
     ) {
         // At this point our pipeline should always be initialized
         let pipeline = storage.get::<Pipeline>().unwrap();
 
         // Render primitive
-        pipeline.render(target, encoder, viewport);
+        pipeline.render(target, encoder, clip_bounds);
     }
 }

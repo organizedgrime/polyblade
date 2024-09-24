@@ -1,5 +1,6 @@
+use iced::alignment::{Horizontal, Vertical};
 use iced::mouse;
-use iced::widget::{button, Row};
+use iced::widget::{button, Button, Row};
 use iced::Rectangle;
 use std::io::Read;
 
@@ -18,7 +19,7 @@ use iced::widget::text;
 use iced::{
     executor, font,
     widget::{column, container, row, shader},
-    window, Application, Command, Element, Length, Subscription, Theme,
+    window, Application, Element, Length, Subscription, Theme,
 };
 
 pub struct Polyblade {
@@ -49,118 +50,13 @@ impl Application for Polyblade {
                 state: AppState::default(),
             },
             Command::batch(vec![
-                font::load(iced_aw::BOOTSTRAP_FONT_BYTES).map(PolybladeMessage::FontLoaded),
-                font::load(iced_aw::NERD_FONT_BYTES).map(PolybladeMessage::FontLoaded),
+                // font::load(iced_aw::BOOTSTRAP_FONT_BYTES).map(PolybladeMessage::FontLoaded),
+                // font::load(iced_aw::NERD_FONT_BYTES).map(PolybladeMessage::FontLoaded),
                 Command::perform(async { load_polydex() }, |polydex| {
                     PolybladeMessage::PolydexLoaded(polydex.map_err(|err| err.to_string()))
                 }),
             ]),
         )
-    }
-
-    fn update(&mut self, message: Self::Message) -> Command<Self::Message> {
-        message.process(&mut self.state)
-    }
-
-    fn view(&self) -> Element<'_, Self::Message> {
-        let mut button_row = Row::new().spacing(10);
-
-        for (i, color) in self.state.render.picker.palette.colors.iter().enumerate() {
-            button_row = button_row.push(
-                button("")
-                    .style(iced::theme::Button::Custom(Box::new(ColorPickerBox {
-                        color: (*color).into(),
-                    })))
-                    .width(20)
-                    .height(20)
-                    .on_press(PolybladeMessage::Render(RenderMessage::ColorPicker(
-                        ColorPickerMessage::ChooseColor(i),
-                    ))),
-            );
-        }
-
-        let cp = color_picker(
-            self.state.render.picker.color_index.is_some(),
-            self.state.render.picker.picked_color,
-            text("").width(0).height(0),
-            PolybladeMessage::Render(RenderMessage::ColorPicker(ColorPickerMessage::CancelColor)),
-            |v| {
-                PolybladeMessage::Render(RenderMessage::ColorPicker(
-                    ColorPickerMessage::SubmitColor(v),
-                ))
-            },
-        );
-
-        container(
-            column![
-                row![menu_bar!((
-                    PresetMessage::title(),
-                    PresetMessage::menu(&())
-                )(
-                    ConwayMessage::title(),
-                    ConwayMessage::menu(&())
-                )(
-                    RenderMessage::title(),
-                    RenderMessage::menu(&self.state.render)
-                ))]
-                .spacing(10.0),
-                button_row,
-                // Actual shader of the program
-                container(shader(self).width(Length::Fill).height(Length::Fill)),
-                // Info
-                column![
-                    container(column![
-                        button(text(self.state.info.name()))
-                            .on_press(self.state.info.wiki_message()),
-                        row![
-                            column![
-                                text("Bowers:"),
-                                text("Conway:"),
-                                text("Faces:"),
-                                text("Edges:"),
-                                text("Vertices:"),
-                            ],
-                            column![
-                                text(self.state.info.bowers()),
-                                text(&self.state.info.conway),
-                                text(self.state.info.faces),
-                                text(self.state.info.edges),
-                                text(self.state.info.vertices),
-                            ]
-                        ]
-                        .spacing(20)
-                    ]),
-                    row![
-                        text("Colors: "),
-                        text(self.state.render.picker.colors.to_string()),
-                        slider(
-                            1..=self.state.render.picker.palette.colors.len() as i16,
-                            self.state.render.picker.colors,
-                            |x| PolybladeMessage::Render(RenderMessage::ColorPicker(
-                                ColorPickerMessage::ChangeNumber(x)
-                            ))
-                        )
-                        .step(1i16)
-                    ],
-                    row![
-                        text("Size: "),
-                        text(self.state.model.scale.to_string()),
-                        slider(0.0..=10.0, self.state.model.scale, |v| {
-                            PolybladeMessage::Model(ModelMessage::ScaleChanged(v))
-                        })
-                        .step(0.1)
-                    ],
-                ]
-            ]
-            .spacing(10)
-            .push(cp),
-        )
-        .width(Length::Fill)
-        .height(Length::Fill)
-        .center_x()
-        .center_y()
-        .padding(10)
-        .into()
     }
 
     fn subscription(&self) -> Subscription<PolybladeMessage> {

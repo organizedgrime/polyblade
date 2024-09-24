@@ -7,7 +7,7 @@ use iced::{
 };
 use iced_aw::{
     menu::{Item, Menu},
-    Bootstrap, BOOTSTRAP_FONT,
+    // Bootstrap, BOOTSTRAP_FONT,
 };
 use std::{fmt::Display, ops::RangeInclusive};
 use strum::IntoEnumIterator;
@@ -32,13 +32,13 @@ pub trait MenuAble: Display + Clone + Sized {
     fn title<'a>() -> Button<'a, PolybladeMessage, Theme, Renderer> {
         button(row![
             text(Self::TITLE).vertical_alignment(alignment::Vertical::Center),
-            text(Bootstrap::CaretDownFill)
-                .size(18)
-                .font(BOOTSTRAP_FONT)
-                .height(Length::Shrink)
+            // text(Bootstrap::CaretDownFill)
+            //     .size(18)
+            //     .font(BOOTSTRAP_FONT)
+            //     .height(Length::Shrink)
         ])
         .width(Length::Shrink)
-        .style(theme::Button::custom(LotusButton))
+        // .style(theme::Button::custom(LotusButton))
     }
 
     fn button<'a>(self) -> Item<'a, PolybladeMessage, Theme, Renderer> {
@@ -46,7 +46,7 @@ pub trait MenuAble: Display + Clone + Sized {
             button(text(self.to_string()).vertical_alignment(alignment::Vertical::Center))
                 .padding([4, 8])
                 .on_press(Self::transform(self))
-                .style(theme::Button::custom(LotusButton))
+                // .style(theme::Button::custom(LotusButton))
                 .width(Length::Fill),
         )
     }
@@ -88,15 +88,15 @@ pub trait MenuAble: Display + Clone + Sized {
                     text(label)
                         .width(Length::Fill)
                         .vertical_alignment(alignment::Vertical::Center),
-                    text(Bootstrap::CaretRightFill)
-                        .font(BOOTSTRAP_FONT)
-                        .width(Length::Shrink)
-                        .vertical_alignment(alignment::Vertical::Center),
+                    // text(Bootstrap::CaretRightFill)
+                    //     .font(BOOTSTRAP_FONT)
+                    //     .width(Length::Shrink)
+                    //     .vertical_alignment(alignment::Vertical::Center),
                 ]
                 .align_items(iced::Alignment::Center),
             )
             .padding([4, 8])
-            .style(theme::Button::custom(LotusButton))
+            // .style(theme::Button::custom(LotusButton))
             .width(Length::Fill),
             Self::new_menu(items.into_iter().map(Self::button).collect()),
         )
@@ -165,6 +165,7 @@ impl MenuAble for RenderMessage {
     }
 }
 
+/*
 struct LotusButton;
 impl button::StyleSheet for LotusButton {
     type Style = Theme;
@@ -188,11 +189,13 @@ impl button::StyleSheet for LotusButton {
         }
     }
 }
+*/
 
 pub struct ColorPickerBox {
     pub color: iced::Color,
 }
 
+/*
 impl button::StyleSheet for ColorPickerBox {
     type Style = iced::Theme;
 
@@ -203,3 +206,4 @@ impl button::StyleSheet for ColorPickerBox {
         }
     }
 }
+*/
