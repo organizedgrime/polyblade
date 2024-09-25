@@ -123,8 +123,13 @@ impl winit::application::ApplicationHandler for Runner {
                 },
             );
 
+            println!(
+                "vp: {:?}; {:?}",
+                viewport.physical_size(),
+                viewport.logical_size()
+            );
             // Initialize scene and GUI controls
-            let scene = Scene::new(&device, format);
+            let scene = Scene::new(&device, format, &viewport.physical_size());
             let controls = Controls::new();
 
             // Initialize iced

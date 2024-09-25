@@ -26,7 +26,11 @@ pub struct Scene {
 }
 
 impl Scene {
-    pub fn new(device: &wgpu::Device, texture_format: wgpu::TextureFormat) -> Scene {
+    pub fn new(
+        device: &wgpu::Device,
+        texture_format: wgpu::TextureFormat,
+        size: &Size<u32>,
+    ) -> Scene {
         let pipeline = Self::build_pipeline(device, texture_format);
         // Moment and shape
         let moment_buf = Buffer::new::<MomentVertex>(device, "moment", BufferKind::Vertex);
@@ -49,13 +53,7 @@ impl Scene {
                 },
             ],
         });
-        let depth_texture = Texture::create_depth_texture(
-            device,
-            &Size {
-                width: 1,
-                height: 1,
-            },
-        );
+        let depth_texture = Texture::create_depth_texture(device, size);
 
         Scene {
             pipeline,
@@ -92,14 +90,15 @@ impl Scene {
                     store: wgpu::StoreOp::Store,
                 },
             })],
-            depth_stencil_attachment: Some(RenderPassDepthStencilAttachment {
-                view: &self.depth_texture.view,
-                depth_ops: Some(wgpu::Operations {
-                    load: wgpu::LoadOp::Clear(1.0),
-                    store: wgpu::StoreOp::Store,
-                }),
-                stencil_ops: None,
-            }),
+            // depth_stencil_attachment: Some(RenderPassDepthStencilAttachment {
+            //     view: &self.depth_texture.view,
+            //     depth_ops: Some(wgpu::Operations {
+            //         load: wgpu::LoadOp::Clear(1.0),
+            //         store: wgpu::StoreOp::Store,
+            //     }),
+            //     stencil_ops: None,
+            // }),
+            depth_stencil_attachment: None,
             timestamp_writes: None,
             occlusion_query_set: None,
         })
@@ -214,13 +213,14 @@ impl Scene {
                 })],
             }),
             primitive: wgpu::PrimitiveState::default(),
-            depth_stencil: Some(wgpu::DepthStencilState {
+            depth_stencil: None,
+            /* depth_stencil: Some(wgpu::DepthStencilState {
                 format: Texture::DEPTH_FORMAT,
                 depth_write_enabled: true,
                 depth_compare: wgpu::CompareFunction::Less,
                 stencil: StencilState::default(),
                 bias: DepthBiasState::default(),
-            }),
+            }), */
             multisample: wgpu::MultisampleState::default(),
             multiview: None,
         })
