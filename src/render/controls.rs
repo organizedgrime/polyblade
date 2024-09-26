@@ -34,13 +34,15 @@ impl Program for Controls {
     type Message = PolybladeMessage;
 
     fn update(&mut self, message: Self::Message) -> Task<Self::Message> {
+        println!("processing!");
+        self.state.model.polyhedron.update();
         message.process(&mut self.state)
     }
 
     fn view(&self) -> Element<Self::Message, Self::Theme, Self::Renderer> {
-        let mut button_row = Row::new().spacing(10);
+        //let mut button_row = Row::new().spacing(10);
 
-        for (i, color) in self.state.render.picker.palette.colors.iter().enumerate() {
+        /* for (i, color) in self.state.render.picker.palette.colors.iter().enumerate() {
             button_row = button_row.push(
                 button("")
                     // .style(Button::Custom(Box::new(ColorPickerBox {
@@ -52,9 +54,9 @@ impl Program for Controls {
                         ColorPickerMessage::ChooseColor(i),
                     ))),
             );
-        }
+        } */
 
-        let cp = color_picker(
+        /* let cp = color_picker(
             self.state.render.picker.color_index.is_some(),
             self.state.render.picker.picked_color,
             text("").width(0).height(0),
@@ -64,27 +66,27 @@ impl Program for Controls {
                     ColorPickerMessage::SubmitColor(v),
                 ))
             },
-        );
+        ); */
 
-        container(
+        let menu_bar = row![menu_bar!((
+            PresetMessage::title(),
+            PresetMessage::menu(&())
+        )(
+            ConwayMessage::title(),
+            ConwayMessage::menu(&())
+        )(
+            RenderMessage::title(),
+            RenderMessage::menu(&self.state.render)
+        ))]
+        .spacing(10.0);
+        /* container(
             column![
-                row![menu_bar!((
-                    PresetMessage::title(),
-                    PresetMessage::menu(&())
-                )(
-                    ConwayMessage::title(),
-                    ConwayMessage::menu(&())
-                )(
-                    RenderMessage::title(),
-                    RenderMessage::menu(&self.state.render)
-                ))]
-                .spacing(10.0),
-                button_row,
+                //       button_row,
                 // Actual shader of the program
                 // container(shader(self.state).width(Length::Fill).height(Length::Fill)),
                 // Info
                 column![
-                    container(column![
+                    column![
                         button(text(self.state.info.name()))
                             .on_press(self.state.info.wiki_message()),
                         row![
@@ -104,7 +106,7 @@ impl Program for Controls {
                             ]
                         ]
                         .spacing(20)
-                    ]),
+                    ],
                     row![
                         text("Colors: "),
                         text(self.state.render.picker.colors.to_string()),
@@ -127,18 +129,39 @@ impl Program for Controls {
                     ],
                 ]
             ]
-            .spacing(10)
-            .push(cp),
-        )
+            .spacing(10), // .push(cp),
+        ) */
         // .width(Length::Fill)
         // .height(Length::Fill)
         // .align_x(Horizontal::Center)
         // .align_y(Vertical::Center)
-        .padding(10);
+        // .padding(10);
 
-        container(column![text("Background color").color(Color::WHITE),].spacing(10))
-            .padding(10)
-            .align_bottom(Fill)
-            .into()
+        container(
+            column![
+                button(text(self.state.info.name())).on_press(self.state.info.wiki_message()),
+                row![
+                    column![
+                        text("Bowers:"),
+                        text("Conway:"),
+                        text("Faces:"),
+                        text("Edges:"),
+                        text("Vertices:"),
+                    ],
+                    column![
+                        text(self.state.info.bowers()),
+                        text(&self.state.info.conway),
+                        text(self.state.info.faces),
+                        text(self.state.info.edges),
+                        text(self.state.info.vertices),
+                    ]
+                ]
+                .spacing(20)
+            ]
+            .spacing(10),
+        )
+        .padding(10)
+        .align_bottom(Fill)
+        .into()
     }
 }

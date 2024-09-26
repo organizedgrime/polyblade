@@ -108,34 +108,4 @@ impl Application for Polyblade {
     }
 }
 
-impl<Message> shader::Program<Message> for Polyblade {
-    type State = ();
-    type Primitive = PolyhedronPrimitive;
-
-    /* fn update(
-        &self,
-        _state: &mut Self::State,
-        event: shader::Event,
-        _bounds: Rectangle,
-        _cursor: mouse::Cursor,
-        _shell: &mut Shell<'_, Message>,
-    ) -> (event::Status, Option<Message>) {
-        match event {
-            /* shader::Event::Mouse(_) => {}
-            shader::Event::Touch(_) => {}
-            shader::Event::Keyboard(_) => {} */
-            shader::Event::RedrawRequested(time) => (event::Status::Captured, None),
-            _ => (event::Status::Ignored, None),
-        }
-    } */
-
-    fn draw(
-        &self,
-        _state: &Self::State,
-        _cursor: mouse::Cursor,
-        _bounds: Rectangle,
-    ) -> Self::Primitive {
-        Self::Primitive::new(self.state.model.clone(), self.state.render.clone())
-    }
-}
 */

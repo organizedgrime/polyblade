@@ -7,9 +7,11 @@ use iced_winit::core::mouse;
 use iced_winit::core::renderer;
 use iced_winit::core::{Color, Font, Pixels, Size, Theme};
 use iced_winit::futures;
-use iced_winit::runtime::program;
 use iced_winit::runtime::Debug;
+use iced_winit::runtime::{program, Program};
 use iced_winit::winit;
+use iced_winit::winit::event::{DeviceEvent, DeviceId};
+use iced_winit::winit::event_loop::ActiveEventLoop;
 use iced_winit::Clipboard;
 
 use winit::{
@@ -18,6 +20,8 @@ use winit::{
     keyboard::ModifiersState,
 };
 
+use crate::render::message::PolybladeMessage;
+use crate::render::pipeline::{FragUniforms, ModelUniforms, PolyhedronPrimitive};
 use crate::render::{controls::Controls, pipeline::Scene};
 
 #[cfg(target_arch = "wasm32")]
@@ -141,7 +145,7 @@ impl winit::application::ApplicationHandler for Runner {
                 program::State::new(controls, viewport.logical_size(), &mut renderer, &mut debug);
 
             // You should change this if you want to render continuously
-            event_loop.set_control_flow(ControlFlow::Wait);
+            event_loop.set_control_flow(ControlFlow::Poll);
 
             *self = Self::Ready {
                 window,
@@ -169,6 +173,7 @@ impl winit::application::ApplicationHandler for Runner {
         _window_id: winit::window::WindowId,
         event: WindowEvent,
     ) {
+        println!("window event");
         let Self::Ready {
             window,
             device,
@@ -192,6 +197,7 @@ impl winit::application::ApplicationHandler for Runner {
 
         match event {
             WindowEvent::RedrawRequested => {
+                window.request_redraw();
                 if *resized {
                     let size = window.inner_size();
 
@@ -215,6 +221,41 @@ impl winit::application::ApplicationHandler for Runner {
                     );
 
                     *resized = false;
+                }
+
+                {
+                    state.queue_message(PolybladeMessage::Tick(Instant::now()));
+                    let state = &state.program().state;
+                    let model = state.model.clone();
+                    let render = state.render.clone();
+                    let primitive = PolyhedronPrimitive::new(model, render);
+
+                    let moments = primitive.moment_vertices();
+                    if scene.moment_buf.count != moments.len() as u32 {
+                        scene.moment_buf.resize(device, moments.len() as u32);
+
+                        let shapes = primitive.shape_vertices();
+                        scene.shape_buf.resize(device, shapes.len() as u32);
+                        queue.write_buffer(&scene.shape_buf.raw, 0, bytemuck::cast_slice(&shapes));
+                    }
+
+                    queue.write_buffer(&scene.moment_buf.raw, 0, bytemuck::cast_slice(&moments));
+
+                    let model = ModelUniforms {
+                        model_mat: primitive.model.transform,
+                        view_projection_mat: primitive
+                            .render
+                            .camera
+                            .build_view_proj_mat(viewport.logical_size()),
+                    };
+                    let frag = FragUniforms {
+                        line_thickness: primitive.render.line_thickness,
+                        line_mode: 1.0,
+                        _padding: [0.0; 2],
+                    };
+                    scene.model_buf.write_data(queue, &model);
+                    scene.frag_buf.write_data(queue, &frag);
+                    window.request_redraw();
                 }
 
                 match surface.get_current_texture() {
@@ -318,6 +359,14 @@ impl winit::application::ApplicationHandler for Runner {
             // and request a redraw
             window.request_redraw();
         }
+    }
+    fn device_event(
+        &mut self,
+        event_loop: &ActiveEventLoop,
+        device_id: DeviceId,
+        event: DeviceEvent,
+    ) {
+        println!("device event");
     }
 }
 

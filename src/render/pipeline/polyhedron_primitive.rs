@@ -8,7 +8,6 @@ use ultraviolet::{Vec3, Vec4};
 
 use super::{AllUniforms, FragUniforms, ModelUniforms, MomentVertex, ShapeVertex};
 
-/*
 #[derive(Debug)]
 pub struct PolyhedronPrimitive {
     pub model: ModelState,
@@ -148,6 +147,7 @@ impl PolyhedronPrimitive {
     }
 }
 
+/*
 impl shader::Primitive for PolyhedronPrimitive {
     fn prepare(
         &self,
