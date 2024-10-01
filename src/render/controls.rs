@@ -68,7 +68,7 @@ impl Program for Controls {
             },
         ); */
 
-        /* let menu_bar = row![menu_bar!((
+        let menu_bar = row![menu_bar!((
             PresetMessage::title(),
             PresetMessage::menu(&())
         )(
@@ -78,7 +78,7 @@ impl Program for Controls {
             RenderMessage::title(),
             RenderMessage::menu(&self.state.render)
         ))]
-        .spacing(10.0); */
+        .spacing(10.0);
         /* container(
             column![
                 //       button_row,
@@ -136,12 +136,10 @@ impl Program for Controls {
         // .align_x(Horizontal::Center)
         // .align_y(Vertical::Center)
         // .padding(10);
-        let title: Button<'static, Self::Message, Self::Theme, Self::Renderer> =
-            PresetMessage::title();
 
         container(
             column![
-                title,
+                menu_bar.align_y(Vertical::Top),
                 button(text(self.state.info.name())).on_press(self.state.info.wiki_message()),
                 row![
                     column![
@@ -160,11 +158,12 @@ impl Program for Controls {
                     ]
                 ]
                 .spacing(20)
+                .align_y(Vertical::Bottom)
             ]
             .spacing(10),
         )
         .padding(10)
-        .align_bottom(Fill)
+        // .align_bottom(Fill)
         .into()
     }
 }
