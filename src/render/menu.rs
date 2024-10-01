@@ -1,36 +1,47 @@
-use super::{message::RenderMessage, state::RenderState};
+use super::{controls::Controls, message::RenderMessage, state::RenderState};
 use crate::render::message::{ColorMethodMessage, ConwayMessage, PolybladeMessage, PresetMessage};
 use iced::{
     alignment::{self, Vertical},
+    overlay::menu::Catalog,
     theme,
     widget::{button, checkbox, row, slider, text, Button},
-    Border, Length, Renderer, Theme,
+    Border, Length, Renderer,
 };
 use iced_aw::{
     menu::{Item, Menu},
+    menu_bar,
     // Bootstrap, BOOTSTRAP_FONT,
 };
+use iced_winit::runtime::Program;
 use std::{fmt::Display, ops::RangeInclusive};
 use strum::IntoEnumIterator;
 
-pub trait MenuAble: Display + Clone + Sized {
+pub trait MenuAble<'a, C: Program>: Display + Clone + Sized
+where
+    C::Message: 'a + Clone,
+    C::Theme:
+        'a + iced_aw::menu::Catalog + iced_widget::button::Catalog + iced_widget::text::Catalog,
+    C::Renderer: 'a,
+{
     type State;
     const TITLE: &'static str;
 
-    fn transform(message: Self) -> PolybladeMessage;
-    fn menu_items<'a>(state: &Self::State) -> Vec<Item<'a, PolybladeMessage, Theme, Renderer>>;
+    fn transform(message: Self) -> C::Message;
+    fn menu_items(state: &Self::State) -> Vec<Item<'a, C::Message, C::Theme, C::Renderer>>;
 
-    fn menu<'a>(state: &Self::State) -> Menu<'a, PolybladeMessage, Theme, Renderer> {
+    /*
+    fn menu<'a>(state: &Self::State) -> Menu<'a, C::Message, Theme, Renderer> {
         Self::new_menu(Self::menu_items(state))
     }
 
     fn new_menu(
-        items: Vec<Item<'_, PolybladeMessage, Theme, Renderer>>,
+        items: Vec<Item<'_, C::Message, Theme, Renderer>>,
     ) -> Menu<'_, PolybladeMessage, Theme, Renderer> {
         Menu::new(items).max_width(180.0).offset(10.0).spacing(5.0)
     }
+    */
 
-    fn title<'a>() -> Button<'a, PolybladeMessage, Theme, Renderer> {
+    fn title() -> Button<'a, C::Message, C::Theme, C::Renderer> {
         button(row![
             text(Self::TITLE).align_y(Vertical::Center) // text(Bootstrap::CaretDownFill)
                                                         //     .size(18)
@@ -41,7 +52,7 @@ pub trait MenuAble: Display + Clone + Sized {
         // .style(theme::Button::custom(LotusButton))
     }
 
-    fn button<'a>(self) -> Item<'a, PolybladeMessage, Theme, Renderer> {
+    fn button(self) -> Item<'a, C::Message, C::Theme, C::Renderer> {
         Item::new(
             button(text(self.to_string()).align_y(Vertical::Center))
                 .padding([4, 8])
@@ -50,12 +61,13 @@ pub trait MenuAble: Display + Clone + Sized {
                 .width(Length::Fill),
         )
     }
+    /*
 
     fn checkbox<'a, F>(
         label: &str,
         checked: bool,
         on_toggle: F,
-    ) -> Item<'a, PolybladeMessage, Theme, Renderer>
+    ) -> Item<'a, C::Message, Theme, Renderer>
     where
         F: 'a + Fn(bool) -> Self,
     {
@@ -71,7 +83,7 @@ pub trait MenuAble: Display + Clone + Sized {
         value: f32,
         on_slide: F,
         step: f32,
-    ) -> Item<'a, PolybladeMessage, Theme, Renderer>
+    ) -> Item<'a, C::Message, Theme, Renderer>
     where
         F: 'a + Fn(f32) -> Self,
     {
@@ -81,7 +93,7 @@ pub trait MenuAble: Display + Clone + Sized {
     fn submenu<'a>(
         label: &'a str,
         items: Vec<Self>,
-    ) -> Item<'a, PolybladeMessage, iced::Theme, iced::Renderer> {
+    ) -> Item<'a, C::Message, iced::Theme, iced::Renderer> {
         Item::with_menu(
             button(
                 row![
@@ -97,22 +109,32 @@ pub trait MenuAble: Display + Clone + Sized {
             Self::new_menu(items.into_iter().map(Self::button).collect()),
         )
     }
+    */
 }
 
-impl MenuAble for PresetMessage {
+impl MenuAble<'static, Controls> for PresetMessage {
     type State = ();
     const TITLE: &'static str = "Preset";
 
-    fn transform(message: Self) -> PolybladeMessage {
-        PolybladeMessage::Preset(message)
+    fn transform(message: Self) -> <Controls as Program>::Message {
+        <Controls as Program>::Message::Preset(message)
     }
 
-    fn menu_items<'a>(_: &()) -> Vec<Item<'a, PolybladeMessage, Theme, Renderer>> {
+    fn menu_items(
+        _: &(),
+    ) -> Vec<
+        Item<
+            'static,
+            <Controls as Program>::Message,
+            <Controls as Program>::Theme,
+            <Controls as Program>::Renderer,
+        >,
+    > {
         use PresetMessage::*;
         vec![
-            Self::submenu("Prism", (3..=8).map(Prism).collect()),
-            Self::submenu("AntiPrism", (3..=8).map(AntiPrism).collect()),
-            Self::submenu("Pyramid", (3..=8).map(Pyramid).collect()),
+            // Self::submenu("Prism", (3..=8).map(Prism).collect()),
+            // Self::submenu("AntiPrism", (3..=8).map(AntiPrism).collect()),
+            // Self::submenu("Pyramid", (3..=8).map(Pyramid).collect()),
             Self::button(Octahedron),
             Self::button(Dodecahedron),
             Self::button(Icosahedron),
@@ -120,6 +142,7 @@ impl MenuAble for PresetMessage {
     }
 }
 
+/*
 impl MenuAble for ConwayMessage {
     type State = ();
     const TITLE: &'static str = "Conway";
@@ -161,6 +184,18 @@ impl MenuAble for RenderMessage {
     }
 }
 
+*/
+/* impl PolybladeMessage {
+    pub fn menu_bar(&self, render: &RenderState) -> Item<'_, Self, Theme, Renderer> {
+        let menu_bar = menu_bar!((PresetMessage::title(), PresetMessage::menu(&()))(
+            ConwayMessage::title(),
+            ConwayMessage::menu(&())
+        )(
+            RenderMessage::title(), RenderMessage::menu(render)
+        ));
+        menu_bar.into()
+    }
+} */
 /*
 struct LotusButton;
 impl button::StyleSheet for LotusButton {

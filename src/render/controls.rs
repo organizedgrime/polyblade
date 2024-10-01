@@ -1,16 +1,16 @@
 use iced::alignment::{Horizontal, Vertical};
 use iced::Length;
 use iced_aw::{color_picker, menu::Item, menu_bar};
+use iced_aw::{menu, menu_items, Menu};
 use iced_wgpu::Renderer;
-use iced_widget::{button, column, container, row, shader, slider, text, Row};
+use iced_widget::{button, column, container, row, shader, slider, text, Button, Row};
 use iced_winit::core::{Color, Element, Length::*, Theme};
 use iced_winit::runtime::{Program, Task};
+use strum::IntoEnumIterator;
 
-use crate::render::{
-    menu::{ColorPickerBox, MenuAble as _},
-    message::*,
-    state::AppState,
-};
+use crate::render::{menu::ColorPickerBox, message::*, state::AppState};
+
+use super::menu::MenuAble;
 
 pub struct Controls {
     pub state: AppState,
@@ -68,7 +68,7 @@ impl Program for Controls {
             },
         ); */
 
-        let menu_bar = row![menu_bar!((
+        /* let menu_bar = row![menu_bar!((
             PresetMessage::title(),
             PresetMessage::menu(&())
         )(
@@ -78,7 +78,7 @@ impl Program for Controls {
             RenderMessage::title(),
             RenderMessage::menu(&self.state.render)
         ))]
-        .spacing(10.0);
+        .spacing(10.0); */
         /* container(
             column![
                 //       button_row,
@@ -136,9 +136,12 @@ impl Program for Controls {
         // .align_x(Horizontal::Center)
         // .align_y(Vertical::Center)
         // .padding(10);
+        let title: Button<'static, Self::Message, Self::Theme, Self::Renderer> =
+            PresetMessage::title();
 
         container(
             column![
+                title,
                 button(text(self.state.info.name())).on_press(self.state.info.wiki_message()),
                 row![
                     column![
