@@ -198,17 +198,6 @@ impl MenuAble<'static, Controls> for RenderMessage {
     }
 }
 
-/* impl PolybladeMessage {
-    pub fn menu_bar(&self, render: &RenderState) -> Item<'_, Self, Theme, Renderer> {
-        let menu_bar = menu_bar!((PresetMessage::title(), PresetMessage::menu(&()))(
-            ConwayMessage::title(),
-            ConwayMessage::menu(&())
-        )(
-            RenderMessage::title(), RenderMessage::menu(render)
-        ));
-        menu_bar.into()
-    }
-} */
 /*
 struct LotusButton;
 impl button::StyleSheet for LotusButton {

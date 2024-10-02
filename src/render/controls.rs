@@ -1,5 +1,6 @@
 use iced::alignment::{Horizontal, Vertical};
 use iced::Length;
+use iced_aw::style::color_picker::Catalog;
 use iced_aw::{color_picker, menu::Item, menu_bar};
 use iced_aw::{menu, menu_items, Menu};
 use iced_wgpu::Renderer;
@@ -40,33 +41,19 @@ impl Program for Controls {
     }
 
     fn view(&self) -> Element<Self::Message, Self::Theme, Self::Renderer> {
-        //let mut button_row = Row::new().spacing(10);
-
-        /* for (i, color) in self.state.render.picker.palette.colors.iter().enumerate() {
+        let mut button_row = Row::new().spacing(10);
+        for (i, color) in self.state.render.picker.palette.colors.iter().enumerate() {
+            let color: iced::Color = color.clone().into();
             button_row = button_row.push(
                 button("")
-                    // .style(Button::Custom(Box::new(ColorPickerBox {
-                    //     color: (*color).into(),
-                    // })))
+                    .style(move |theme, status| button::text(theme, status).with_background(color))
                     .width(20)
                     .height(20)
-                    .on_press(PolybladeMessage::Render(RenderMessage::ColorPicker(
+                    .on_press(Self::Message::Render(RenderMessage::ColorPicker(
                         ColorPickerMessage::ChooseColor(i),
                     ))),
             );
-        } */
-
-        /* let cp = color_picker(
-            self.state.render.picker.color_index.is_some(),
-            self.state.render.picker.picked_color,
-            text("").width(0).height(0),
-            PolybladeMessage::Render(RenderMessage::ColorPicker(ColorPickerMessage::CancelColor)),
-            |v| {
-                PolybladeMessage::Render(RenderMessage::ColorPicker(
-                    ColorPickerMessage::SubmitColor(v),
-                ))
-            },
-        ); */
+        }
 
         let menu_bar = row![menu_bar!((
             PresetMessage::title(),
@@ -142,6 +129,7 @@ impl Program for Controls {
                 menu_bar.align_y(Vertical::Top),
                 button(text(self.state.info.name())).on_press(self.state.info.wiki_message()),
                 row![
+                    button_row,
                     column![
                         text("Bowers:"),
                         text("Conway:"),
@@ -163,7 +151,6 @@ impl Program for Controls {
             .spacing(10),
         )
         .padding(10)
-        // .align_bottom(Fill)
         .into()
     }
 }
