@@ -1,5 +1,6 @@
 use iced::{Application as _, Settings};
 
+use iced_wgpu::core::SmolStr;
 use iced_wgpu::graphics::Viewport;
 use iced_wgpu::{wgpu, Engine, Renderer};
 use iced_winit::conversion;
@@ -12,6 +13,7 @@ use iced_winit::runtime::{program, Program};
 use iced_winit::winit;
 use iced_winit::winit::event::{DeviceEvent, DeviceId};
 use iced_winit::winit::event_loop::ActiveEventLoop;
+use iced_winit::winit::platform::modifier_supplement::KeyEventExtModifierSupplement;
 use iced_winit::Clipboard;
 
 use winit::{
@@ -29,6 +31,8 @@ pub use iced::time::Instant;
 use std::sync::Arc;
 #[cfg(not(target_arch = "wasm32"))]
 pub use std::time::Instant;
+
+use super::message::{ConwayMessage, PresetMessage};
 
 pub enum Runner {
     Loading,
@@ -173,7 +177,6 @@ impl winit::application::ApplicationHandler for Runner {
         _window_id: winit::window::WindowId,
         event: WindowEvent,
     ) {
-        println!("window event");
         let Self::Ready {
             window,
             device,
@@ -195,7 +198,7 @@ impl winit::application::ApplicationHandler for Runner {
             return;
         };
 
-        match event {
+        match &event {
             WindowEvent::RedrawRequested => {
                 window.request_redraw();
                 if *resized {
@@ -317,7 +320,7 @@ impl winit::application::ApplicationHandler for Runner {
                 }
             }
             WindowEvent::CursorMoved { position, .. } => {
-                *cursor_position = Some(position);
+                *cursor_position = Some(*position);
             }
             WindowEvent::ModifiersChanged(new_modifiers) => {
                 *modifiers = new_modifiers.state();
@@ -327,6 +330,42 @@ impl winit::application::ApplicationHandler for Runner {
             }
             WindowEvent::CloseRequested => {
                 event_loop.exit();
+            }
+            WindowEvent::KeyboardInput { event, .. } => {
+                if let Some(key) = &event.text {
+                    let message = if key.as_str() == key.to_uppercase().as_str() {
+                        use PresetMessage::*;
+                        match key.to_lowercase().as_str() {
+                            // Presets
+                            "t" => Some(Pyramid(3)),
+                            "c" => Some(Prism(4)),
+                            "o" => Some(Octahedron),
+                            "d" => Some(Dodecahedron),
+                            "i" => Some(Icosahedron),
+                            _ => None,
+                        }
+                        .map(PolybladeMessage::Preset)
+                    } else {
+                        use ConwayMessage::*;
+                        match key.as_str() {
+                            // Operations
+                            "e" => Some(Expand),
+                            "d" => Some(Dual),
+                            "s" => Some(Snub),
+                            "k" => Some(Kis),
+                            "j" => Some(Join),
+                            "a" => Some(Ambo),
+                            "t" => Some(Expand),
+                            "b" => Some(Bevel),
+                            _ => None,
+                        }
+                        .map(PolybladeMessage::Conway)
+                    };
+
+                    if let Some(message) = message {
+                        state.queue_message(message);
+                    }
+                }
             }
             _ => {}
         }
@@ -359,14 +398,6 @@ impl winit::application::ApplicationHandler for Runner {
             // and request a redraw
             window.request_redraw();
         }
-    }
-    fn device_event(
-        &mut self,
-        event_loop: &ActiveEventLoop,
-        device_id: DeviceId,
-        event: DeviceEvent,
-    ) {
-        println!("device event");
     }
 }
 

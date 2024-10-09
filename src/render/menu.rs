@@ -59,7 +59,6 @@ where
             button(text(self.to_string()).align_y(Vertical::Center))
                 .padding([4, 8])
                 .on_press(Self::transform(self))
-                // .style(theme::Button::custom(LotusButton))
                 .width(Length::Fill),
         )
     }
