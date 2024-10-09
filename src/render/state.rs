@@ -5,10 +5,13 @@ use crate::{
 };
 
 use iced::{time::Duration, Color};
-use std::f32::consts::PI;
+use std::{f32::consts::PI, io::Read as _};
 use ultraviolet::Mat4;
 
-use super::{message::ColorMethodMessage, polydex::Polydex};
+use super::{
+    message::ColorMethodMessage,
+    polydex::{Entry, Polydex},
+};
 
 pub struct AppState {
     pub model: ModelState,
@@ -82,13 +85,21 @@ impl Default for ModelState {
     }
 }
 
+pub fn load_polydex() -> Result<Polydex, Box<dyn std::error::Error>> {
+    let mut polydex = std::fs::File::open("polydex.ron")?;
+    let mut polydex_str = String::new();
+    polydex.read_to_string(&mut polydex_str)?;
+    let polydex: Vec<Entry> = ron::from_str(&polydex_str).map_err(|_| "Ron parsing error")?;
+    Ok(polydex)
+}
+
 impl Default for AppState {
     fn default() -> Self {
         let info = PolyGraph::default().polydex_entry(&vec![]);
         Self {
             model: ModelState::default(),
             render: RenderState::default(),
-            polydex: vec![],
+            polydex: load_polydex().unwrap_or(vec![]),
             info,
         }
     }

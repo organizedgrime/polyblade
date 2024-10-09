@@ -355,7 +355,7 @@ impl winit::application::ApplicationHandler for Runner {
                             "k" => Some(Kis),
                             "j" => Some(Join),
                             "a" => Some(Ambo),
-                            "t" => Some(Expand),
+                            "t" => Some(Truncate),
                             "b" => Some(Bevel),
                             _ => None,
                         }
