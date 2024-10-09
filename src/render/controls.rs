@@ -42,11 +42,21 @@ impl Program for Controls {
 
     fn view(&self) -> Element<Self::Message, Self::Theme, Self::Renderer> {
         let mut button_row = Row::new().spacing(10);
-        for (i, color) in self.state.render.picker.palette.colors.iter().enumerate() {
-            let color: iced::Color = color.clone().into();
+        for (i, color) in self
+            .state
+            .render
+            .picker
+            .palette
+            .colors
+            .iter()
+            .cloned()
+            .enumerate()
+        {
             button_row = button_row.push(
                 button("")
-                    .style(move |theme, status| button::text(theme, status).with_background(color))
+                    .style(move |theme, status| {
+                        button::text(theme, status).with_background(iced::Background::from(color))
+                    })
                     .width(20)
                     .height(20)
                     .on_press(Self::Message::Render(RenderMessage::ColorPicker(
