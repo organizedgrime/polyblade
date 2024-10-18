@@ -4,8 +4,7 @@ mod texture;
 
 use buffer::Buffer;
 use iced::{
-    widget::shader::wgpu::{self, RenderPassDepthStencilAttachment},
-    Rectangle, Size,
+    widget::shader::wgpu::{self, RenderPassDepthStencilAttachment}, Size,
 };
 use iced_wgpu::wgpu::{DepthBiasState, Queue, StencilState};
 use iced_winit::core::Color;

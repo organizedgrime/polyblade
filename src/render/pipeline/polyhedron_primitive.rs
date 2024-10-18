@@ -2,11 +2,9 @@ use std::collections::HashMap;
 
 use crate::render::message::ColorMethodMessage;
 use crate::render::state::{ModelState, RenderState};
-use iced::widget::shader::{self, wgpu, Viewport};
-use iced::{Rectangle, Size};
 use ultraviolet::{Vec3, Vec4};
 
-use super::{AllUniforms, FragUniforms, ModelUniforms, MomentVertex, ShapeVertex};
+use super::{MomentVertex, ShapeVertex};
 
 #[derive(Debug)]
 pub struct PolyhedronPrimitive {

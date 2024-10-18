@@ -99,7 +99,7 @@ impl Default for AppState {
         Self {
             model: ModelState::default(),
             render: RenderState::default(),
-            polydex: load_polydex().unwrap_or(vec![]),
+            polydex: load_polydex().unwrap_or_default(),
             info,
         }
     }

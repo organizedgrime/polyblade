@@ -3,7 +3,6 @@ use crate::{
     Instant,
 };
 use iced::{font, Color, Task};
-use iced_aw::menu_bar;
 use std::fmt::Display;
 use strum_macros::{Display, EnumIter};
 use ultraviolet::Vec3;

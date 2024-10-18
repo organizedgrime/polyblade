@@ -1,17 +1,10 @@
 use super::{controls::Controls, message::RenderMessage, state::RenderState};
 use crate::render::message::{ColorMethodMessage, ConwayMessage, PolybladeMessage, PresetMessage};
 use iced::{
-    alignment::{self, Vertical},
-    overlay::menu::Catalog,
-    theme,
-    widget::{button, checkbox, row, slider, text, Button},
-    Border, Length, Renderer,
+    alignment::{Vertical},
+    widget::{button, checkbox, row, slider, text, Button}, Length,
 };
-use iced_aw::{
-    menu::{Item, Menu},
-    menu_bar,
-    // Bootstrap, BOOTSTRAP_FONT,
-};
+use iced_aw::menu::{Item, Menu};
 use iced_winit::runtime::Program;
 use std::{fmt::Display, ops::RangeInclusive};
 use strum::IntoEnumIterator;

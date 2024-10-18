@@ -7,7 +7,6 @@ use winit::event_loop::EventLoop;
 
 #[cfg(target_arch = "wasm32")]
 pub use iced::time::Instant;
-use std::sync::Arc;
 #[cfg(not(target_arch = "wasm32"))]
 pub use std::time::Instant;
 

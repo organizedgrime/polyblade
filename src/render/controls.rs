@@ -1,16 +1,15 @@
-use iced::alignment::{Horizontal, Vertical};
-use iced::{color, Length};
+use iced::alignment::Vertical;
+use iced::Length;
 use iced_aw::style::color_picker::Catalog;
-use iced_aw::{color_picker, menu::Item, menu_bar};
-use iced_aw::{menu, menu_items, Menu};
+use iced_aw::{menu::Item, menu_bar};
 use iced_wgpu::Renderer;
-use iced_widget::{button, column, container, row, shader, slider, text, Button, Row};
-use iced_winit::core::{Color, Element, Length::*, Theme};
+use iced_widget::{button, column, container, row, text, Row};
+use iced_winit::core::{Color, Element, Theme};
 use iced_winit::runtime::{Program, Task};
 use strum::IntoEnumIterator;
 
 use crate::render::color::RGBA;
-use crate::render::{menu::ColorPickerBox, message::*, state::AppState};
+use crate::render::{message::*, state::AppState};
 
 use super::menu::MenuAble;
 
@@ -118,7 +117,7 @@ impl Program for Controls {
                     .spacing(20)
                     .align_y(Vertical::Bottom)
                 )
-                .style(|x| iced::widget::container::dark(x))
+                .style(iced::widget::container::dark)
             ]
             .spacing(10),
         )

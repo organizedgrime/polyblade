@@ -1,6 +1,4 @@
-use iced::{Application as _, Settings};
 
-use iced_wgpu::core::SmolStr;
 use iced_wgpu::graphics::Viewport;
 use iced_wgpu::{wgpu, Engine, Renderer};
 use iced_winit::conversion;
@@ -11,14 +9,11 @@ use iced_winit::futures;
 use iced_winit::runtime::Debug;
 use iced_winit::runtime::{program, Program};
 use iced_winit::winit;
-use iced_winit::winit::event::{DeviceEvent, DeviceId};
-use iced_winit::winit::event_loop::ActiveEventLoop;
-use iced_winit::winit::platform::modifier_supplement::KeyEventExtModifierSupplement;
 use iced_winit::Clipboard;
 
 use winit::{
     event::WindowEvent,
-    event_loop::{ControlFlow, EventLoop},
+    event_loop::ControlFlow,
     keyboard::ModifiersState,
 };
 

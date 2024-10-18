@@ -1,4 +1,4 @@
-use iced::{Rectangle, Size};
+use iced::Size;
 use ultraviolet::{Mat4, Vec3, Vec4};
 
 #[derive(Copy, Debug, Clone)]
