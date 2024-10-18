@@ -1,5 +1,5 @@
 use iced::alignment::{Horizontal, Vertical};
-use iced::Length;
+use iced::{color, Length};
 use iced_aw::style::color_picker::Catalog;
 use iced_aw::{color_picker, menu::Item, menu_bar};
 use iced_aw::{menu, menu_items, Menu};
@@ -138,26 +138,30 @@ impl Program for Controls {
         container(
             column![
                 menu_bar.align_y(Vertical::Top),
+                button_row,
+                iced_widget::Space::new(Length::Fill, Length::Fill),
                 button(text(self.state.info.name())).on_press(self.state.info.wiki_message()),
-                row![
-                    button_row,
-                    column![
-                        text("Bowers:"),
-                        text("Conway:"),
-                        text("Faces:"),
-                        text("Edges:"),
-                        text("Vertices:"),
-                    ],
-                    column![
-                        text(self.state.info.bowers()),
-                        text(&self.state.info.conway),
-                        text(self.state.info.faces),
-                        text(self.state.info.edges),
-                        text(self.state.info.vertices),
+                container(
+                    row![
+                        column![
+                            text("Bowers:"),
+                            text("Conway:"),
+                            text("Faces:"),
+                            text("Edges:"),
+                            text("Vertices:"),
+                        ],
+                        column![
+                            text(self.state.info.bowers()),
+                            text(&self.state.info.conway),
+                            text(self.state.info.faces),
+                            text(self.state.info.edges),
+                            text(self.state.info.vertices),
+                        ]
                     ]
-                ]
-                .spacing(20)
-                .align_y(Vertical::Bottom)
+                    .spacing(20)
+                    .align_y(Vertical::Bottom)
+                )
+                .style(|x| iced::widget::container::dark(x))
             ]
             .spacing(10),
         )
