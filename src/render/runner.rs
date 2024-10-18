@@ -332,38 +332,40 @@ impl winit::application::ApplicationHandler for Runner {
                 event_loop.exit();
             }
             WindowEvent::KeyboardInput { event, .. } => {
-                if let Some(key) = &event.text {
-                    let message = if key.as_str() == key.to_uppercase().as_str() {
-                        use PresetMessage::*;
-                        match key.to_lowercase().as_str() {
-                            // Presets
-                            "t" => Some(Pyramid(3)),
-                            "c" => Some(Prism(4)),
-                            "o" => Some(Octahedron),
-                            "d" => Some(Dodecahedron),
-                            "i" => Some(Icosahedron),
-                            _ => None,
-                        }
-                        .map(PolybladeMessage::Preset)
-                    } else {
-                        use ConwayMessage::*;
-                        match key.as_str() {
-                            // Operations
-                            "e" => Some(Expand),
-                            "d" => Some(Dual),
-                            "s" => Some(Snub),
-                            "k" => Some(Kis),
-                            "j" => Some(Join),
-                            "a" => Some(Ambo),
-                            "t" => Some(Truncate),
-                            "b" => Some(Bevel),
-                            _ => None,
-                        }
-                        .map(PolybladeMessage::Conway)
-                    };
+                if event.state.is_pressed() {
+                    if let Some(key) = &event.text {
+                        let message = if key.as_str() == key.to_uppercase().as_str() {
+                            use PresetMessage::*;
+                            match key.to_lowercase().as_str() {
+                                // Presets
+                                "t" => Some(Pyramid(3)),
+                                "c" => Some(Prism(4)),
+                                "o" => Some(Octahedron),
+                                "d" => Some(Dodecahedron),
+                                "i" => Some(Icosahedron),
+                                _ => None,
+                            }
+                            .map(PolybladeMessage::Preset)
+                        } else {
+                            use ConwayMessage::*;
+                            match key.as_str() {
+                                // Operations
+                                "e" => Some(Expand),
+                                "d" => Some(Dual),
+                                "s" => Some(Snub),
+                                "k" => Some(Kis),
+                                "j" => Some(Join),
+                                "a" => Some(Ambo),
+                                "t" => Some(Truncate),
+                                "b" => Some(Bevel),
+                                _ => None,
+                            }
+                            .map(PolybladeMessage::Conway)
+                        };
 
-                    if let Some(message) = message {
-                        state.queue_message(message);
+                        if let Some(message) = message {
+                            state.queue_message(message);
+                        }
                     }
                 }
             }
