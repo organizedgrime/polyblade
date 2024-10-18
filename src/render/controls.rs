@@ -76,6 +76,7 @@ impl Program for Controls {
             RenderMessage::menu(&self.state.render)
         ))]
         .spacing(10.0);
+
         /* container(
             column![
                 //       button_row,

@@ -203,11 +203,18 @@ impl winit::application::ApplicationHandler for Runner {
                 window.request_redraw();
                 if *resized {
                     let size = window.inner_size();
+                    let physical_size = Size::new(size.width, size.height);
 
-                    *viewport = Viewport::with_physical_size(
-                        Size::new(size.width, size.height),
-                        window.scale_factor(),
-                    );
+                    *viewport = Viewport::with_physical_size(physical_size, window.scale_factor());
+
+                    // Update depth
+                    if physical_size != scene.depth_texture.size {
+                        scene.depth_texture =
+                            crate::render::pipeline::Texture::create_depth_texture(
+                                device,
+                                &physical_size,
+                            );
+                    }
 
                     surface.configure(
                         device,

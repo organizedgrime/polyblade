@@ -9,10 +9,10 @@ use iced::{
 };
 use iced_wgpu::wgpu::{DepthBiasState, Queue, StencilState};
 use iced_winit::core::Color;
-use texture::Texture;
 
 pub use buffer::*;
 pub use polyhedron_primitive::*;
+pub use texture::Texture;
 
 unsafe impl Send for Scene {}
 pub struct Scene {
@@ -22,7 +22,7 @@ pub struct Scene {
     pub model_buf: Buffer,
     pub frag_buf: Buffer,
     uniform_group: wgpu::BindGroup,
-    depth_texture: Texture,
+    pub depth_texture: Texture,
 }
 
 impl Scene {
@@ -90,15 +90,15 @@ impl Scene {
                     store: wgpu::StoreOp::Store,
                 },
             })],
-            // depth_stencil_attachment: Some(RenderPassDepthStencilAttachment {
-            //     view: &self.depth_texture.view,
-            //     depth_ops: Some(wgpu::Operations {
-            //         load: wgpu::LoadOp::Clear(1.0),
-            //         store: wgpu::StoreOp::Store,
-            //     }),
-            //     stencil_ops: None,
-            // }),
-            depth_stencil_attachment: None,
+            depth_stencil_attachment: Some(RenderPassDepthStencilAttachment {
+                view: &self.depth_texture.view,
+                depth_ops: Some(wgpu::Operations {
+                    load: wgpu::LoadOp::Clear(1.0),
+                    store: wgpu::StoreOp::Store,
+                }),
+                stencil_ops: None,
+            }),
+            //depth_stencil_attachment: None,
             timestamp_writes: None,
             occlusion_query_set: None,
         })
@@ -224,14 +224,14 @@ impl Scene {
                 })],
             }),
             primitive: wgpu::PrimitiveState::default(),
-            depth_stencil: None,
-            /* depth_stencil: Some(wgpu::DepthStencilState {
+            //depth_stencil: None,
+            depth_stencil: Some(wgpu::DepthStencilState {
                 format: Texture::DEPTH_FORMAT,
                 depth_write_enabled: true,
                 depth_compare: wgpu::CompareFunction::Less,
                 stencil: StencilState::default(),
                 bias: DepthBiasState::default(),
-            }), */
+            }),
             multisample: wgpu::MultisampleState::default(),
             multiview: None,
         })
