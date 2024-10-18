@@ -9,6 +9,7 @@ use iced_winit::core::{Color, Element, Length::*, Theme};
 use iced_winit::runtime::{Program, Task};
 use strum::IntoEnumIterator;
 
+use crate::render::color::RGBA;
 use crate::render::{menu::ColorPickerBox, message::*, state::AppState};
 
 use super::menu::MenuAble;
@@ -26,6 +27,22 @@ impl Controls {
 
     pub fn background_color(&self) -> Color {
         self.state.render.background_color
+    }
+}
+
+impl Controls
+where
+    Controls: Program,
+{
+    pub fn button_background<'a>(
+        color: RGBA,
+    ) -> (impl Fn(&Theme, button::Status) -> button::Style + 'a)
+    where
+        Theme: button::Catalog,
+    {
+        move |theme, status| {
+            button::text(theme, status).with_background(iced::Background::from(color))
+        }
     }
 }
 
@@ -54,9 +71,7 @@ impl Program for Controls {
         {
             button_row = button_row.push(
                 button("")
-                    .style(move |theme, status| {
-                        button::text(theme, status).with_background(iced::Background::from(color))
-                    })
+                    .style(Self::button_background(color))
                     .width(20)
                     .height(20)
                     .on_press(Self::Message::Render(RenderMessage::ColorPicker(
@@ -76,64 +91,6 @@ impl Program for Controls {
             RenderMessage::menu(&self.state.render)
         ))]
         .spacing(10.0);
-
-        /* container(
-            column![
-                //       button_row,
-                // Actual shader of the program
-                // container(shader(self.state).width(Length::Fill).height(Length::Fill)),
-                // Info
-                column![
-                    column![
-                        button(text(self.state.info.name()))
-                            .on_press(self.state.info.wiki_message()),
-                        row![
-                            column![
-                                text("Bowers:"),
-                                text("Conway:"),
-                                text("Faces:"),
-                                text("Edges:"),
-                                text("Vertices:"),
-                            ],
-                            column![
-                                text(self.state.info.bowers()),
-                                text(&self.state.info.conway),
-                                text(self.state.info.faces),
-                                text(self.state.info.edges),
-                                text(self.state.info.vertices),
-                            ]
-                        ]
-                        .spacing(20)
-                    ],
-                    row![
-                        text("Colors: "),
-                        text(self.state.render.picker.colors.to_string()),
-                        slider(
-                            1..=self.state.render.picker.palette.colors.len() as i16,
-                            self.state.render.picker.colors,
-                            |x| PolybladeMessage::Render(RenderMessage::ColorPicker(
-                                ColorPickerMessage::ChangeNumber(x)
-                            ))
-                        )
-                        .step(1i16)
-                    ],
-                    row![
-                        text("Size: "),
-                        text(self.state.model.scale.to_string()),
-                        slider(0.0..=10.0, self.state.model.scale, |v| {
-                            PolybladeMessage::Model(ModelMessage::ScaleChanged(v))
-                        })
-                        .step(0.1)
-                    ],
-                ]
-            ]
-            .spacing(10), // .push(cp),
-        ) */
-        // .width(Length::Fill)
-        // .height(Length::Fill)
-        // .align_x(Horizontal::Center)
-        // .align_y(Vertical::Center)
-        // .padding(10);
 
         container(
             column![
