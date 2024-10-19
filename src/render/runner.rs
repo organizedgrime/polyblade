@@ -81,6 +81,20 @@ impl winit::application::ApplicationHandler for Runner {
 
                 let capabilities = surface.get_capabilities(&adapter);
 
+                #[cfg(target_arch = "wasm32")]
+                let (device, queue) = adapter
+                    .request_device(
+                        &wgpu::DeviceDescriptor {
+                            label: None,
+                            required_features: adapter_features & wgpu::Features::all_webgpu_mask(),
+                            required_limits: wgpu::Limits::downlevel_webgl2_defaults(),
+                        },
+                        None,
+                    )
+                    .await
+                    .expect("Request Device");
+
+                #[cfg(not(target_arch = "wasm32"))]
                 let (device, queue) = adapter
                     .request_device(
                         &wgpu::DeviceDescriptor {
@@ -91,7 +105,7 @@ impl winit::application::ApplicationHandler for Runner {
                         None,
                     )
                     .await
-                    .expect("Request device");
+                    .expect("Request Device");
 
                 (
                     capabilities
@@ -112,8 +126,8 @@ impl winit::application::ApplicationHandler for Runner {
                 &wgpu::SurfaceConfiguration {
                     usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
                     format,
-                    width: physical_size.width,
-                    height: physical_size.height,
+                    width: physical_size.width.max(1),
+                    height: physical_size.height.max(1),
                     present_mode: wgpu::PresentMode::AutoVsync,
                     alpha_mode: wgpu::CompositeAlphaMode::Auto,
                     view_formats: vec![],
@@ -211,15 +225,14 @@ impl winit::application::ApplicationHandler for Runner {
                         &wgpu::SurfaceConfiguration {
                             format: *format,
                             usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
-                            width: size.width,
-                            height: size.height,
+                            width: size.width.max(1),
+                            height: size.height.max(1),
                             present_mode: wgpu::PresentMode::AutoVsync,
                             alpha_mode: wgpu::CompositeAlphaMode::Auto,
                             view_formats: vec![],
                             desired_maximum_frame_latency: 2,
                         },
                     );
-
                     *resized = false;
                 }
 

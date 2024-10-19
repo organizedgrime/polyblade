@@ -29,7 +29,7 @@ ron = { version = "0.8" }
 webbrowser = { version = "1.0.2" }
 iced_winit = { version = "0.13.0" }
 iced_widget = { version = "0.13.0", features = ["wgpu"] }
-iced_wgpu = { version = "0.13.0", features = [] }
+iced_wgpu = { version = "0.13.0", features = ["webgl"] }
 
 [dev-dependencies]
 test-case = { version = "^3.3.0" }
