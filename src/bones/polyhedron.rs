@@ -160,7 +160,11 @@ impl PolyGraph {
                     self.springs();
                 }
                 Name(c) => {
-                    self.name = format!("{c}{}", self.name);
+                    if c == 'd' && self.name.chars().nth(0) == Some('d') {
+                        self.name = self.name[1..].to_string();
+                    } else {
+                        self.name = format!("{c}{}", self.name);
+                    }
                     self.transactions.remove(0);
                 }
                 ShortenName(n) => {
