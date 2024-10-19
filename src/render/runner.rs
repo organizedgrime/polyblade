@@ -251,7 +251,7 @@ impl winit::application::ApplicationHandler for Runner {
                     let frag = FragUniforms {
                         line_thickness: primitive.render.line_thickness,
                         line_mode: 1.0,
-                        _padding: [0.0; 2],
+                        ..Default::default()
                     };
                     scene.model_buf.write_data(queue, &model);
                     scene.frag_buf.write_data(queue, &frag);

@@ -7,7 +7,7 @@ use iced::{
     widget::shader::wgpu::{self, RenderPassDepthStencilAttachment},
     Size,
 };
-use iced_wgpu::wgpu::{DepthBiasState, Queue, StencilState};
+use iced_wgpu::wgpu::{DepthBiasState, StencilState};
 use iced_winit::core::Color;
 
 pub use buffer::*;
@@ -23,7 +23,6 @@ pub struct Scene {
     pub frag_buf: Buffer,
     uniform_group: wgpu::BindGroup,
     pub depth_texture: Texture,
-    pub starting_vertex: u32,
 }
 
 impl Scene {
@@ -64,7 +63,6 @@ impl Scene {
             frag_buf,
             uniform_group,
             depth_texture,
-            starting_vertex: 0,
         }
     }
 

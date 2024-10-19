@@ -1,8 +1,6 @@
 use iced::alignment::Vertical;
-use iced::daemon::DefaultStyle;
-use iced::{Background, Border, Length, Shadow};
+use iced::Length;
 use iced_aw::style::color_picker::Catalog;
-use iced_aw::{color_picker, menu};
 use iced_aw::{menu::Item, menu_bar};
 use iced_wgpu::Renderer;
 use iced_widget::{button, column, container, row, text, Row};
@@ -10,10 +8,9 @@ use iced_winit::core::{Color, Element, Theme};
 use iced_winit::runtime::{Program, Task};
 use strum::IntoEnumIterator;
 
-use crate::render::color::RGBA;
 use crate::render::{message::*, state::AppState};
 
-use super::menu::{ColorPickerBox, MenuAble};
+use super::menu::MenuAble;
 
 pub struct Controls {
     pub state: AppState,

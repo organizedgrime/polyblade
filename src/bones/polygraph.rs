@@ -280,7 +280,7 @@ impl PolyGraph {
     }
 
     pub fn springs(&mut self) {
-        let diameter = *self.dist.values().max().unwrap_or(&1) as usize;
+        let diameter = { *self.dist.values().max().unwrap_or(&1) };
         self.springs = self
             .vertices
             .iter()
