@@ -23,6 +23,7 @@ impl PolyGraph {
             p.connect(((i + 1) % n, ((i + 1) % n) + n));
         }
         p.pst();
+        p.springs();
         p.find_cycles();
         p.lattice();
         p
@@ -43,6 +44,7 @@ impl PolyGraph {
             p.connect(((i % n), ((i + 1) % n) + n));
         }
         p.pst();
+        p.springs();
         p.find_cycles();
         p.lattice();
         p
@@ -56,6 +58,7 @@ impl PolyGraph {
             p.connect((i, n));
         }
         p.pst();
+        p.springs();
         p.find_cycles();
         p.lattice();
         p
@@ -66,6 +69,7 @@ impl PolyGraph {
         let edges = p.ambo();
         p.contract_edges(edges);
         p.pst();
+        p.springs();
         p.lattice();
         p.name = "O".into();
         p
@@ -76,6 +80,7 @@ impl PolyGraph {
         p.contract_edges(edges);
         p.truncate(Some(5));
         p.pst();
+        p.springs();
         p.name = "D".into();
         p
     }
@@ -83,6 +88,7 @@ impl PolyGraph {
         let mut p = PolyGraph::anti_prism(5);
         p.kis(Some(5));
         p.pst();
+        p.springs();
         p.name = "I".into();
         p
     }

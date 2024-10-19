@@ -1,8 +1,9 @@
 use super::{controls::Controls, message::RenderMessage, state::RenderState};
 use crate::render::message::{ColorMethodMessage, ConwayMessage, PolybladeMessage, PresetMessage};
 use iced::{
-    alignment::{Vertical},
-    widget::{button, checkbox, row, slider, text, Button}, Length,
+    alignment::Vertical,
+    widget::{button, checkbox, row, slider, text, Button},
+    Length,
 };
 use iced_aw::menu::{Item, Menu};
 use iced_winit::runtime::Program;

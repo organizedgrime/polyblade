@@ -4,49 +4,39 @@ use std::time::{Duration, Instant};
 use ultraviolet::{Lerp, Vec3};
 
 const TICK_SPEED: f32 = 800.0;
+const SPEED_DAMPENING: f32 = 0.92;
 
 // Operations
 impl PolyGraph {
     fn apply_spring_forces(&mut self) {
-        let diam = *self.dist.values().max().unwrap_or(&1) as f32;
-        let l_diam = self.edge_length * 2.0;
-        for v in self.vertices.iter() {
-            for u in self.vertices.iter() {
-                if u != v {
-                    let e: Edge = (v, u).into();
-                    if let Some(Transaction::Contraction(contracting_edges)) =
-                        self.transactions.first()
-                    {
-                        if contracting_edges.contains(&e) {
-                            let v_position = self.positions[v];
-                            let u_position = self.positions[u];
-                            let l = (v_position - u_position).mag();
-                            let f = (self.edge_length / TICK_SPEED * 4.5) / l;
-                            *self.positions.get_mut(v).unwrap() = v_position.lerp(u_position, f);
-                            *self.positions.get_mut(u).unwrap() = u_position.lerp(v_position, f);
-                            continue;
-                        }
-                    } else if self.dist.contains_key(&e) {
-                        let d = self.dist[&e] as f32;
-                        let l = l_diam * (d / diam);
-                        let k = 1.0 / d;
-                        let diff = self.positions[v] - self.positions[u];
-                        let dist = diff.mag();
-                        let distention = l - dist;
-                        let restorative_force = k / 2.0 * distention;
-                        let f = diff * restorative_force / TICK_SPEED;
+        let diameter = *self.dist.values().max().unwrap_or(&1) as f32;
+        let diameter_spring_length = self.edge_length * 2.0;
+        let (edges, contracting): (std::collections::hash_set::Iter<Edge>, bool) =
+            if let Some(Transaction::Contraction(edges)) = self.transactions.first() {
+                (edges.iter(), true)
+            } else {
+                (self.springs.iter(), false)
+            };
 
-                        let v_speed = self.speeds.get_mut(v).unwrap();
-                        *v_speed += f;
-                        *v_speed *= 0.92;
-                        *self.positions.get_mut(v).unwrap() += *v_speed;
-
-                        let u_speed = self.speeds.get_mut(u).unwrap();
-                        *u_speed -= f;
-                        *u_speed *= 0.92;
-                        *self.positions.get_mut(u).unwrap() += *u_speed;
-                    }
-                }
+        for e in edges {
+            let v = e.v();
+            let u = e.u();
+            let v_position = self.positions[&v];
+            let u_position = self.positions[&u];
+            let diff = v_position - u_position;
+            let spring_length = diff.mag();
+            if contracting {
+                let f = ((self.edge_length / TICK_SPEED) * 1.0) / spring_length;
+                *self.positions.entry(v).or_default() = v_position.lerp(u_position, f);
+                *self.positions.entry(u).or_default() = u_position.lerp(v_position, f);
+            } else {
+                let target_length = diameter_spring_length * (self.dist[e] as f32 / diameter);
+                let restorative_force = 2.0 * (target_length - spring_length);
+                let f = diff * restorative_force / TICK_SPEED;
+                *self.speeds.entry(v).or_default() = (self.speeds[&v] + f) * SPEED_DAMPENING;
+                *self.speeds.entry(u).or_default() = (self.speeds[&u] - f) * SPEED_DAMPENING;
+                *self.positions.entry(v).or_default() += self.speeds[&v];
+                *self.positions.entry(u).or_default() += self.speeds[&u];
             }
         }
     }
@@ -103,6 +93,7 @@ impl PolyGraph {
                         // Contract them in the graph
                         self.contract_edges(edges);
                         self.pst();
+                        self.springs();
                         //self.find_cycles();
                         self.transactions.remove(0);
                     }
@@ -112,6 +103,7 @@ impl PolyGraph {
                         self.disconnect(e);
                     }
                     self.pst();
+                    self.springs();
                     self.find_cycles();
                     self.transactions.remove(0);
                 }
@@ -164,6 +156,7 @@ impl PolyGraph {
                     self.cycles.sort_by_key(|c| usize::MAX - c.len());
                     self.transactions = [new_transactions, self.transactions.clone()].concat();
                     self.pst();
+                    self.springs();
                 }
                 Name(c) => {
                     self.name = format!("{c}{}", self.name);
