@@ -95,7 +95,6 @@ where
                 ], // .align_x(Horizontal::Center),
             )
             .padding([4, 8])
-            // .style(theme::Button::custom(LotusButton))
             .width(Length::Fill),
             Self::new_menu(items.into_iter().map(Self::button).collect()),
         )

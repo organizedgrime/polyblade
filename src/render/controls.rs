@@ -1,6 +1,8 @@
 use iced::alignment::Vertical;
-use iced::Length;
+use iced::daemon::DefaultStyle;
+use iced::{Background, Border, Length, Shadow};
 use iced_aw::style::color_picker::Catalog;
+use iced_aw::{color_picker, menu};
 use iced_aw::{menu::Item, menu_bar};
 use iced_wgpu::Renderer;
 use iced_widget::{button, column, container, row, text, Row};
@@ -11,7 +13,7 @@ use strum::IntoEnumIterator;
 use crate::render::color::RGBA;
 use crate::render::{message::*, state::AppState};
 
-use super::menu::MenuAble;
+use super::menu::{ColorPickerBox, MenuAble};
 
 pub struct Controls {
     pub state: AppState,
@@ -26,22 +28,6 @@ impl Controls {
 
     pub fn background_color(&self) -> Color {
         self.state.render.background_color
-    }
-}
-
-impl Controls
-where
-    Controls: Program,
-{
-    pub fn button_background<'a>(
-        color: RGBA,
-    ) -> (impl Fn(&Theme, button::Status) -> button::Style + 'a)
-    where
-        Theme: button::Catalog,
-    {
-        move |theme, status| {
-            button::text(theme, status).with_background(iced::Background::from(color))
-        }
     }
 }
 
@@ -68,7 +54,9 @@ impl Program for Controls {
         {
             button_row = button_row.push(
                 button("")
-                    .style(Self::button_background(color))
+                    .style(move |theme, status| {
+                        button::primary(theme, status).with_background(iced::Color::from(color))
+                    })
                     .width(20)
                     .height(20)
                     .on_press(Self::Message::Render(RenderMessage::ColorPicker(
@@ -77,16 +65,16 @@ impl Program for Controls {
             );
         }
 
-        let menu_bar = row![menu_bar!((
-            PresetMessage::title(),
-            PresetMessage::menu(&())
-        )(
-            ConwayMessage::title(),
-            ConwayMessage::menu(&())
-        )(
-            RenderMessage::title(),
-            RenderMessage::menu(&self.state.render)
-        ))]
+        let menu_bar = row![
+            menu_bar!((PresetMessage::title(), PresetMessage::menu(&()))(
+                ConwayMessage::title(),
+                ConwayMessage::menu(&())
+            )(
+                RenderMessage::title(),
+                RenderMessage::menu(&self.state.render)
+            ))
+            .style(iced_aw::menu::primary)
+        ]
         .spacing(10.0);
 
         container(
@@ -115,7 +103,12 @@ impl Program for Controls {
                     .spacing(20)
                     .align_y(Vertical::Bottom)
                 )
-                .style(iced::widget::container::dark)
+                .style(|_| {
+                    container::Style {
+                        text_color: Some(iced::Color::BLACK),
+                        ..Default::default()
+                    }
+                })
             ]
             .spacing(10),
         )
