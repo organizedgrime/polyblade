@@ -25,6 +25,7 @@ pub struct RenderState {
     pub camera: Camera,
     pub zoom: f32,
     pub start: Instant,
+    pub frame: Instant,
     pub rotation_duration: Duration,
     pub rotating: bool,
     pub schlegel: bool,
@@ -48,6 +49,7 @@ impl Default for RenderState {
             camera: Camera::default(),
             zoom: 1.0,
             start: Instant::now(),
+            frame: Instant::now(),
             rotation_duration: Duration::from_secs(0),
             rotating: true,
             schlegel: false,
@@ -107,13 +109,19 @@ impl Default for AppState {
 
 impl AppState {
     pub fn update_state(&mut self, time: Instant) {
+        // Update the polyhedron using the difference in time between this and the previous frame
+        let frame_difference = time.duration_since(self.render.frame);
+        // Fraction of a second since the previous frame rendered
+        let second = (frame_difference.as_secs_f64() as f32 / 1.0).min(1.0 / 60.0);
+        self.model.polyhedron.update(second);
+        self.render.frame = time;
+
         let time = if self.render.rotating {
             time.duration_since(self.render.start)
         } else {
             self.render.rotation_duration
         };
 
-        self.model.polyhedron.update();
         let time = time.as_secs_f32();
         self.model.transform = Mat4::default();
         if self.render.schlegel {

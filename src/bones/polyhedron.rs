@@ -3,12 +3,12 @@ use crate::render::message::ConwayMessage;
 use std::time::{Duration, Instant};
 use ultraviolet::{Lerp, Vec3};
 
-const TICK_SPEED: f32 = 800.0;
+const TICK_SPEED: f32 = 10.0;
 const SPEED_DAMPENING: f32 = 0.92;
 
 // Operations
 impl PolyGraph {
-    fn apply_spring_forces(&mut self) {
+    fn apply_spring_forces(&mut self, second: f32) {
         let diameter = *self.dist.values().max().unwrap_or(&1) as f32;
         let diameter_spring_length = self.edge_length * 2.0;
         let (edges, contracting): (std::collections::hash_set::Iter<Edge>, bool) =
@@ -26,13 +26,12 @@ impl PolyGraph {
             let diff = v_position - u_position;
             let spring_length = diff.mag();
             if contracting {
-                let f = ((self.edge_length / TICK_SPEED) * 1.0) / spring_length;
+                let f = ((self.edge_length / TICK_SPEED * second) * 10.0) / spring_length;
                 *self.positions.entry(v).or_default() = v_position.lerp(u_position, f);
                 *self.positions.entry(u).or_default() = u_position.lerp(v_position, f);
             } else {
                 let target_length = diameter_spring_length * (self.dist[e] as f32 / diameter);
-                let restorative_force = 2.0 * (target_length - spring_length);
-                let f = diff * restorative_force / TICK_SPEED;
+                let f = diff * (target_length - spring_length) / TICK_SPEED * second;
                 *self.speeds.entry(v).or_default() = (self.speeds[&v] + f) * SPEED_DAMPENING;
                 *self.speeds.entry(u).or_default() = (self.speeds[&u] - f) * SPEED_DAMPENING;
                 *self.positions.entry(v).or_default() += self.speeds[&v];
@@ -50,17 +49,17 @@ impl PolyGraph {
         }
     }
 
-    fn resize(&mut self) {
+    fn resize(&mut self, second: f32) {
         let mean_length = self.positions.values().map(|p| p.mag()).fold(0.0, f32::max);
         let distance = mean_length - 1.0;
-        self.edge_length -= distance / TICK_SPEED;
+        self.edge_length -= distance / TICK_SPEED * second;
     }
 
-    pub fn update(&mut self) {
+    pub fn update(&mut self, second: f32) {
         self.center();
-        self.resize();
+        self.resize(second);
+        self.apply_spring_forces(second);
         self.process_transactions();
-        self.apply_spring_forces();
     }
 
     pub fn face_positions(&self, face_index: usize) -> Vec<Vec3> {
