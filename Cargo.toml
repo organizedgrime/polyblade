@@ -35,12 +35,12 @@ iced_wgpu = { version = "0.13.0", features = ["webgl"] }
 test-case = { version = "^3.3.0" }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-iced = { version = "0.13.0", features = ["debug", "advanced", "svg"] }
+iced = { version = "^0.13.1", features = ["debug", "advanced", "svg"] }
 tracing-subscriber = { version = "0.3" }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 getrandom = { version = "0.2", features = ["js"] }
-iced = { version = "0.13.0", features = [
+iced = { version = "^0.13.1", features = [
 	"debug",
 	"advanced",
 	"svg",

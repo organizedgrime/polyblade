@@ -56,7 +56,7 @@ impl winit::application::ApplicationHandler for Runner {
 
             let physical_size = window.inner_size();
             let viewport = Box::new(Viewport::with_physical_size(
-                Size::new(physical_size.width, physical_size.height),
+                Size::new(physical_size.width.max(1), physical_size.height.max(1)),
                 window.scale_factor(),
             ));
             let clipboard = Clipboard::connect(window.clone());
@@ -207,7 +207,7 @@ impl winit::application::ApplicationHandler for Runner {
                 window.request_redraw();
                 if *resized {
                     let size = window.inner_size();
-                    let physical_size = Size::new(size.width, size.height);
+                    let physical_size = Size::new(size.width.max(1), size.height.max(1));
 
                     **viewport = Viewport::with_physical_size(physical_size, window.scale_factor());
 
