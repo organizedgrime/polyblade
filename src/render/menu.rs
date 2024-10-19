@@ -1,5 +1,8 @@
-use super::{controls::Controls, message::RenderMessage, state::RenderState};
-use crate::render::message::{ColorMethodMessage, ConwayMessage, PolybladeMessage, PresetMessage};
+use crate::render::{
+    controls::Controls,
+    message::{ColorMethodMessage, ConwayMessage, PolybladeMessage, PresetMessage, RenderMessage},
+    state::RenderState,
+};
 use iced::{
     alignment::Vertical,
     widget::{button, checkbox, row, slider, text, Button},

@@ -1,4 +1,4 @@
-use super::{Edge, VertexId};
+use crate::bones::{Edge, VertexId};
 use std::{
     collections::HashSet,
     hash::Hash,

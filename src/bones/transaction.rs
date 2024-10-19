@@ -1,5 +1,4 @@
-use super::Edge;
-use crate::render::message::ConwayMessage;
+use crate::{bones::Edge, render::message::ConwayMessage};
 use std::{collections::HashSet, time::Instant};
 
 #[derive(Debug, Clone)]

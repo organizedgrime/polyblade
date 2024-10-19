@@ -1,5 +1,7 @@
-use super::*;
-use crate::render::message::ConwayMessage;
+use crate::{
+    bones::{Edge, PolyGraph, Transaction},
+    render::message::ConwayMessage,
+};
 use std::time::{Duration, Instant};
 use ultraviolet::{Lerp, Vec3};
 

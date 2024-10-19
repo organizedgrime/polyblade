@@ -12,17 +12,17 @@ use iced_winit::Clipboard;
 
 use winit::{event::WindowEvent, event_loop::ControlFlow, keyboard::ModifiersState};
 
-use crate::render::message::PolybladeMessage;
-use crate::render::pipeline::{FragUniforms, ModelUniforms, PolyhedronPrimitive};
-use crate::render::{controls::Controls, pipeline::Scene};
+use crate::render::{
+    controls::Controls,
+    message::{ConwayMessage, PolybladeMessage, PresetMessage},
+    pipeline::{FragUniforms, ModelUniforms, PolyhedronPrimitive, Scene},
+};
 
 #[cfg(target_arch = "wasm32")]
 pub use iced::time::Instant;
 use std::sync::Arc;
 #[cfg(not(target_arch = "wasm32"))]
 pub use std::time::Instant;
-
-use super::message::{ConwayMessage, PresetMessage};
 
 pub enum Runner {
     Loading,

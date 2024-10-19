@@ -1,4 +1,4 @@
-use super::PolyGraph;
+use crate::bones::PolyGraph;
 
 /*
     T = Y3

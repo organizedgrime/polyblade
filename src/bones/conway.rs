@@ -2,7 +2,7 @@ use std::collections::{HashMap, VecDeque};
 
 use ultraviolet::Vec3;
 
-pub use super::*;
+use crate::bones::*;
 use std::collections::HashSet;
 
 impl PolyGraph {

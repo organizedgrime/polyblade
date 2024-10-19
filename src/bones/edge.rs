@@ -1,4 +1,4 @@
-use super::VertexId;
+use crate::bones::VertexId;
 use std::fmt::Display;
 
 pub type EdgeId = (VertexId, VertexId);

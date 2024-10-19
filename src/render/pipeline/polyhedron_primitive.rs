@@ -1,10 +1,11 @@
 use std::collections::HashMap;
 
-use crate::render::message::ColorMethodMessage;
-use crate::render::state::{ModelState, RenderState};
+use crate::render::{
+    message::ColorMethodMessage,
+    pipeline::{MomentVertex, ShapeVertex},
+    state::{ModelState, RenderState},
+};
 use ultraviolet::{Vec3, Vec4};
-
-use super::{MomentVertex, ShapeVertex};
 
 #[derive(Debug)]
 pub struct PolyhedronPrimitive {

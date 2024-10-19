@@ -7,7 +7,7 @@ use std::fmt::Display;
 use strum_macros::{Display, EnumIter};
 use ultraviolet::Vec3;
 
-use super::state::{AppState, ColorPickerState, ModelState, RenderState};
+use crate::render::state::{AppState, ColorPickerState, ModelState, RenderState};
 
 #[derive(Debug, Clone, Display)]
 pub enum PolybladeMessage {

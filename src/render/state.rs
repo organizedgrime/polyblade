@@ -1,17 +1,17 @@
 use crate::{
     bones::PolyGraph,
-    render::{camera::Camera, palette::Palette, polydex::InfoBox},
+    render::{
+        camera::Camera,
+        message::ColorMethodMessage,
+        palette::Palette,
+        polydex::{Entry, InfoBox, Polydex},
+    },
     Instant,
 };
 
 use iced::{time::Duration, Color};
 use std::{f32::consts::PI, io::Read as _};
 use ultraviolet::Mat4;
-
-use super::{
-    message::ColorMethodMessage,
-    polydex::{Entry, Polydex},
-};
 
 pub struct AppState {
     pub model: ModelState,
