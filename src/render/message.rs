@@ -283,7 +283,6 @@ impl ProcessMessage<AppState> for PolybladeMessage {
                 let _ = webbrowser::open(wiki).ok();
                 Task::none()
             }
-            _ => Task::none(),
         }
     }
 }

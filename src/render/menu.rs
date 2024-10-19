@@ -38,14 +38,7 @@ where
     }
 
     fn title() -> Button<'a, C::Message, C::Theme, C::Renderer> {
-        button(row![
-            text(Self::TITLE).align_y(Vertical::Center) // text(Bootstrap::CaretDownFill)
-                                                        //     .size(18)
-                                                        //     .font(BOOTSTRAP_FONT)
-                                                        //     .height(Length::Shrink)
-        ])
-        .width(Length::Shrink)
-        // .style(theme::Button::custom(LotusButton))
+        button(row![text(Self::TITLE).align_y(Vertical::Center)]).width(Length::Shrink)
     }
 
     fn button(self) -> Item<'a, C::Message, C::Theme, C::Renderer> {
@@ -86,14 +79,9 @@ where
 
     fn submenu(label: &'a str, items: Vec<Self>) -> Item<'a, C::Message, C::Theme, C::Renderer> {
         Item::with_menu(
-            button(
-                row![
-                    text(label).width(Length::Fill).align_y(Vertical::Center) // text(Bootstrap::CaretRightFill)
-                                                                              //     .font(BOOTSTRAP_FONT)
-                                                                              //     .width(Length::Shrink)
-                                                                              //     .vertical_alignment(alignment::Vertical::Center),
-                ], // .align_x(Horizontal::Center),
-            )
+            button(row![text(label)
+                .width(Length::Fill)
+                .align_y(Vertical::Center)])
             .padding([4, 8])
             .width(Length::Fill),
             Self::new_menu(items.into_iter().map(Self::button).collect()),
@@ -190,46 +178,3 @@ impl MenuAble<'static, Controls> for RenderMessage {
         ]
     }
 }
-
-/*
-struct LotusButton;
-impl button::StyleSheet for LotusButton {
-    type Style = Theme;
-
-    fn active(&self, _: &Self::Style) -> button::Appearance {
-        let palette = Theme::Light.extended_palette();
-
-        button::Appearance {
-            background: Some(palette.secondary.base.color.into()),
-            text_color: palette.secondary.base.text,
-            border: Border::with_radius(5),
-            ..button::Appearance::default()
-        }
-    }
-
-    fn hovered(&self, _: &Self::Style) -> button::Appearance {
-        let palette = Theme::Light.extended_palette();
-        button::Appearance {
-            background: Some(palette.primary.base.color.into()),
-            ..self.active(&Theme::Light)
-        }
-    }
-}
-*/
-
-pub struct ColorPickerBox {
-    pub color: iced::Color,
-}
-
-/*
-impl button::StyleSheet for ColorPickerBox {
-    type Style = iced::Theme;
-
-    fn active(&self, _style: &Self::Style) -> button::Appearance {
-        button::Appearance {
-            background: Some(iced::Background::Color(self.color)),
-            ..Default::default()
-        }
-    }
-}
-*/

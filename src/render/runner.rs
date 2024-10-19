@@ -5,8 +5,8 @@ use iced_winit::core::mouse;
 use iced_winit::core::renderer;
 use iced_winit::core::{Color, Font, Pixels, Size, Theme};
 use iced_winit::futures;
+use iced_winit::runtime::program;
 use iced_winit::runtime::Debug;
-use iced_winit::runtime::{program, Program};
 use iced_winit::winit;
 use iced_winit::Clipboard;
 
@@ -38,10 +38,10 @@ pub enum Runner {
         state: program::State<Controls>,
         cursor_position: Option<winit::dpi::PhysicalPosition<f64>>,
         clipboard: Clipboard,
-        viewport: Viewport,
+        viewport: Box<Viewport>,
         modifiers: ModifiersState,
         resized: bool,
-        debug: Debug,
+        debug: Box<Debug>,
     },
 }
 
@@ -55,10 +55,10 @@ impl winit::application::ApplicationHandler for Runner {
             );
 
             let physical_size = window.inner_size();
-            let viewport = Viewport::with_physical_size(
+            let viewport = Box::new(Viewport::with_physical_size(
                 Size::new(physical_size.width, physical_size.height),
                 window.scale_factor(),
-            );
+            ));
             let clipboard = Clipboard::connect(window.clone());
 
             let backend = wgpu::util::backend_bits_from_env().unwrap_or_default();
@@ -131,7 +131,7 @@ impl winit::application::ApplicationHandler for Runner {
             let controls = Controls::new();
 
             // Initialize iced
-            let mut debug = Debug::new();
+            let mut debug = Box::new(Debug::new());
             let engine = Engine::new(&adapter, &device, &queue, format, None);
             let mut renderer = Renderer::new(&device, &engine, Font::default(), Pixels::from(16));
 
@@ -195,7 +195,7 @@ impl winit::application::ApplicationHandler for Runner {
                     let size = window.inner_size();
                     let physical_size = Size::new(size.width, size.height);
 
-                    *viewport = Viewport::with_physical_size(physical_size, window.scale_factor());
+                    **viewport = Viewport::with_physical_size(physical_size, window.scale_factor());
 
                     // Update depth
                     if physical_size != scene.depth_texture.size {
