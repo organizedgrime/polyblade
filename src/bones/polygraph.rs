@@ -222,7 +222,7 @@ impl PolyGraph {
                         dqueue.entry(w).or_default().push_back((v, 1));
                         // v.c = v.c + 1
                         *counters.entry(v).or_default() -= 1;
-                        //*counters.get_mut(&w).unwrap() -= 1;
+                        //*counters.entry(w).or_default() -= 1;
                         removed = true;
                     }
                 } else {
@@ -286,7 +286,7 @@ impl PolyGraph {
             .iter()
             .flat_map(|&v| self.vertices.iter().map(move |&u| Edge::from((v, u))))
             .filter(|e| e.u() != e.v())
-            .filter(|e| self.dist[e] <= 2 || self.dist[e] == diameter)
+            .filter(|e| self.dist[e] <= 2 || self.dist[e] >= diameter - 1)
             .collect::<HashSet<_>>();
 
         println!(

@@ -23,6 +23,7 @@ pub struct AppState {
 #[derive(Debug, Clone)]
 pub struct RenderState {
     pub camera: Camera,
+    pub zoom: f32,
     pub start: Instant,
     pub rotation_duration: Duration,
     pub rotating: bool,
@@ -45,6 +46,7 @@ impl Default for RenderState {
     fn default() -> Self {
         Self {
             camera: Camera::default(),
+            zoom: 1.0,
             start: Instant::now(),
             rotation_duration: Duration::from_secs(0),
             rotating: true,
@@ -71,7 +73,6 @@ impl Default for ColorPickerState {
 #[derive(Debug, Clone)]
 pub struct ModelState {
     pub polyhedron: PolyGraph,
-    pub scale: f32,
     pub transform: Mat4,
 }
 
@@ -79,7 +80,6 @@ impl Default for ModelState {
     fn default() -> Self {
         Self {
             polyhedron: PolyGraph::dodecahedron(),
-            scale: 1.0,
             transform: Mat4::identity(),
         }
     }
@@ -119,7 +119,7 @@ impl AppState {
         if self.render.schlegel {
             self.model.transform = Mat4::identity();
         } else {
-            self.model.transform = Mat4::from_scale(self.model.scale)
+            self.model.transform = Mat4::from_scale(self.render.zoom)
                 * Mat4::from_rotation_x(time / PI)
                 * Mat4::from_rotation_y(time / PI * 1.1);
         }

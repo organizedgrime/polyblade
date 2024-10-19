@@ -1,4 +1,3 @@
-
 use iced_wgpu::graphics::Viewport;
 use iced_wgpu::{wgpu, Engine, Renderer};
 use iced_winit::conversion;
@@ -11,11 +10,7 @@ use iced_winit::runtime::{program, Program};
 use iced_winit::winit;
 use iced_winit::Clipboard;
 
-use winit::{
-    event::WindowEvent,
-    event_loop::ControlFlow,
-    keyboard::ModifiersState,
-};
+use winit::{event::WindowEvent, event_loop::ControlFlow, keyboard::ModifiersState};
 
 use crate::render::message::PolybladeMessage;
 use crate::render::pipeline::{FragUniforms, ModelUniforms, PolyhedronPrimitive};
@@ -281,8 +276,19 @@ impl winit::application::ApplicationHandler for Runner {
                             let mut render_pass =
                                 scene.clear(&view, &mut encoder, program.background_color());
 
+                            // Ignore the whole first polygon if we're in schlegel mode
+                            let starting_vertex = if program.state.render.schlegel {
+                                match program.state.model.polyhedron.cycles[0].len() {
+                                    3 => 3,
+                                    4 => 6,
+                                    n => n * 3,
+                                }
+                            } else {
+                                0
+                            } as u32;
+
                             // Draw the scene
-                            scene.draw(&mut render_pass);
+                            scene.draw(starting_vertex, &mut render_pass);
                         }
 
                         // And then iced on top
@@ -404,20 +410,3 @@ impl winit::application::ApplicationHandler for Runner {
         }
     }
 }
-
-/*
-impl winit::application::ApplicationHandler for Runner {
-    fn resumed(&mut self, event_loop: &winit::event_loop::ActiveEventLoop) {
-        todo!()
-    }
-
-    fn window_event(
-        &mut self,
-        event_loop: &winit::event_loop::ActiveEventLoop,
-        window_id: winit::window::WindowId,
-        event: WindowEvent,
-    ) {
-        todo!()
-    }
-}
-*/

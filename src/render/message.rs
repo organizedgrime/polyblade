@@ -2,15 +2,12 @@ use crate::{
     bones::{PolyGraph, Transaction},
     Instant,
 };
-use iced::{font, Color, Task};
+use iced::{Color, Task};
 use std::fmt::Display;
 use strum_macros::{Display, EnumIter};
 use ultraviolet::Vec3;
 
-use super::{
-    polydex::Polydex,
-    state::{AppState, ColorPickerState, ModelState, RenderState},
-};
+use super::state::{AppState, ColorPickerState, ModelState, RenderState};
 
 #[derive(Debug, Clone, Display)]
 pub enum PolybladeMessage {
@@ -18,11 +15,6 @@ pub enum PolybladeMessage {
     Preset(PresetMessage),
     Conway(ConwayMessage),
     Render(RenderMessage),
-    Model(ModelMessage),
-    // Font
-    FontLoaded(Result<(), font::Error>),
-    // Polydex
-    PolydexLoaded(Result<Polydex, String>),
     OpenWiki(String),
 }
 
@@ -102,6 +94,7 @@ pub enum RenderMessage {
     Schlegel(bool),
     Rotating(bool),
     FovChanged(f32),
+    ZoomChanged(f32),
     LineThickness(f32),
     ColorMethod(ColorMethodMessage),
     ColorPicker(ColorPickerMessage),
@@ -200,6 +193,8 @@ impl ProcessMessage<RenderState> for RenderMessage {
                 state.schlegel = *schlegel;
                 if *schlegel {
                     state.camera.fov_y = 2.9;
+                    state.zoom = 1.1;
+                    //state.starting_vertex = primitive.face_sides_buffer(0).len();
                 } else {
                     state.camera.fov_y = 1.0;
                     state.camera.eye = Vec3::new(0.0, 2.0, 3.0);
@@ -217,6 +212,10 @@ impl ProcessMessage<RenderState> for RenderMessage {
             }
             FovChanged(fov) => {
                 state.camera.fov_y = *fov;
+                Task::none()
+            }
+            ZoomChanged(zoom) => {
+                state.zoom = *zoom;
                 Task::none()
             }
             LineThickness(thickness) => {
@@ -258,15 +257,6 @@ impl ProcessMessage<ColorPickerState> for ColorPickerMessage {
     }
 }
 
-impl ProcessMessage<ModelState> for ModelMessage {
-    fn process(&self, state: &mut ModelState) -> Task<PolybladeMessage> {
-        match self {
-            ModelMessage::ScaleChanged(scale) => state.scale = *scale,
-        }
-        Task::none()
-    }
-}
-
 impl ProcessMessage<AppState> for PolybladeMessage {
     fn process(&self, state: &mut AppState) -> Task<PolybladeMessage> {
         use PolybladeMessage::*;
@@ -274,7 +264,7 @@ impl ProcessMessage<AppState> for PolybladeMessage {
             Tick(time) => {
                 if state.render.schlegel {
                     state.render.camera.eye =
-                        state.model.polyhedron.face_centroid(0) * state.model.scale;
+                        state.model.polyhedron.face_centroid(0) * state.render.zoom;
                 }
 
                 // If the polyhedron has changed
@@ -282,22 +272,13 @@ impl ProcessMessage<AppState> for PolybladeMessage {
                     // Recompute its Polydex entry
                     state.info = state.model.polyhedron.polydex_entry(&state.polydex);
                 }
+
                 state.update_state(*time);
                 Task::none()
             }
             Preset(preset) => preset.process(&mut state.model),
             Conway(conway) => conway.process(&mut state.model),
             Render(render) => render.process(&mut state.render),
-            Model(model) => model.process(&mut state.model),
-            PolydexLoaded(polydex) => {
-                if let Ok(polydex) = polydex {
-                    state.polydex = polydex.to_vec();
-                    state.info = state.model.polyhedron.polydex_entry(&state.polydex);
-                } else {
-                    //tracing_subscriber::warn
-                }
-                Task::none()
-            }
             OpenWiki(wiki) => {
                 let _ = webbrowser::open(wiki).ok();
                 Task::none()

@@ -4,7 +4,8 @@ mod texture;
 
 use buffer::Buffer;
 use iced::{
-    widget::shader::wgpu::{self, RenderPassDepthStencilAttachment}, Size,
+    widget::shader::wgpu::{self, RenderPassDepthStencilAttachment},
+    Size,
 };
 use iced_wgpu::wgpu::{DepthBiasState, Queue, StencilState};
 use iced_winit::core::Color;
@@ -22,6 +23,7 @@ pub struct Scene {
     pub frag_buf: Buffer,
     uniform_group: wgpu::BindGroup,
     pub depth_texture: Texture,
+    pub starting_vertex: u32,
 }
 
 impl Scene {
@@ -62,6 +64,7 @@ impl Scene {
             frag_buf,
             uniform_group,
             depth_texture,
+            starting_vertex: 0,
         }
     }
 
@@ -103,50 +106,12 @@ impl Scene {
         })
     }
 
-    pub fn draw<'a>(&'a self, pass: &mut wgpu::RenderPass<'a>) {
+    pub fn draw<'a>(&'a self, starting_vertex: u32, pass: &mut wgpu::RenderPass<'a>) {
         pass.set_pipeline(&self.pipeline);
         pass.set_bind_group(0, &self.uniform_group, &[]);
         pass.set_vertex_buffer(0, self.moment_buf.raw.slice(..));
         pass.set_vertex_buffer(1, self.shape_buf.raw.slice(..));
-        pass.draw(0..self.shape_buf.count, 0..1);
-    }
-
-    pub fn update(&mut self, device: &wgpu::Device, queue: &Queue, primitive: PolyhedronPrimitive) {
-        // // Update depth
-        // if target_size != self.depth_texture.size {
-        //     self.depth_texture = Texture::create_depth_texture(device, &target_size);
-        // }
-        //
-        // if primitive.render.schlegel {
-        //     self.starting_vertex = primitive.face_sides_buffer(0).len();
-        // } else {
-        //     self.starting_vertex = 0;
-        // }
-        //
-
-        /* let moments = primitive.moment_vertices();
-        if self.moment_buf.count != moments.len() as u32 {
-            self.moment_buf.resize(device, moments.len() as u32);
-
-            let shapes = primitive.shape_vertices();
-            self.shape_buf.resize(device, shapes.len() as u32);
-            queue.write_buffer(&self.shape_buf.raw, 0, bytemuck::cast_slice(&shapes));
-        }
-
-        queue.write_buffer(&self.moment_buf.raw, 0, bytemuck::cast_slice(&moments));
-
-        // Write uniforms
-        let model = ModelUniforms {
-            model_mat: primitive.model.transform,
-            view_projection_mat: primitive.render.camera.build_view_proj_mat(bounds),
-        };
-        let frag = FragUniforms {
-            line_thickness: 1.0,
-            line_mode: 1.0,
-            _padding: [0.0; 2],
-        };
-        self.model_buf.write_data(queue, &model);
-        self.frag_buf.write_data(queue, &frag); */
+        pass.draw(starting_vertex..self.shape_buf.count, 0..1);
     }
 
     fn build_pipeline(

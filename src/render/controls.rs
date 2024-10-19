@@ -51,8 +51,6 @@ impl Program for Controls {
     type Message = PolybladeMessage;
 
     fn update(&mut self, message: Self::Message) -> Task<Self::Message> {
-        // println!("processing!");
-        self.state.model.polyhedron.update();
         message.process(&mut self.state)
     }
 
