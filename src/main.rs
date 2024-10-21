@@ -1,6 +1,7 @@
 mod bones;
 mod render;
-use render::Runner;
+use iced::futures::executor::block_on;
+use render::*;
 
 use iced_winit::winit;
 use winit::event_loop::EventLoop;
@@ -11,7 +12,7 @@ use std::sync::Arc;
 #[cfg(not(target_arch = "wasm32"))]
 pub use std::time::Instant;
 
-pub fn main() -> Result<(), winit::error::EventLoopError> {
+pub async fn run() -> Result<(), winit::error::EventLoopError> {
     #[cfg(target_arch = "wasm32")]
     {
         console_log::init().expect("Initialize logger");
@@ -23,7 +24,6 @@ pub fn main() -> Result<(), winit::error::EventLoopError> {
     }
 
     let event_loop = EventLoop::new()?;
-
     let window = Arc::new(
         event_loop
             .create_window(winit::window::WindowAttributes::default())
@@ -50,6 +50,17 @@ pub fn main() -> Result<(), winit::error::EventLoopError> {
         let _ = window.request_inner_size(PhysicalSize::new(450, 400));
     }
 
-    let mut runner = Runner::Loading(window);
+    let graphics = Graphics::new(&window).await;
+
+    let mut runner = App {
+        graphics,
+        data: None,
+        surface_configured: false,
+    };
     event_loop.run_app(&mut runner)
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+pub fn main() -> Result<(), winit::error::EventLoopError> {
+    block_on(run())
 }

@@ -8,4 +8,4 @@ pub(crate) mod pipeline;
 mod polydex;
 mod runner;
 mod state;
-pub use runner::Runner;
+pub use runner::*;
