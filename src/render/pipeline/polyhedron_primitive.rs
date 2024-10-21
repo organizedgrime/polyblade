@@ -33,7 +33,6 @@ impl PolyhedronPrimitive {
             let s = (a + b + c) / 2.0;
             area += (s * (s - a) * (s - b) * (s - c)).sqrt();
         }
-        println!("area for face {face_index} is {area}");
         area
     }
 

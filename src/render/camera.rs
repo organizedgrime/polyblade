@@ -14,12 +14,12 @@ pub struct Camera {
 impl Default for Camera {
     fn default() -> Self {
         Self {
-            eye: Vec3::new(0.0, 2.0, 3.0),
+            eye: Vec3::new(0.0, 5.0, 5.0),
             target: Vec3::zero(),
             up: Vec3::unit_y(),
-            fov_y: 1.0,
+            fov_y: 0.4,
             near: 0.1,
-            far: 100.0,
+            far: 10.0,
         }
     }
 }

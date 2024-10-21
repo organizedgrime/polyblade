@@ -1,11 +1,11 @@
 use crate::{
     bones::{PolyGraph, Transaction},
+    render::camera::Camera,
     Instant,
 };
 use iced::{Color, Task};
 use std::fmt::Display;
 use strum_macros::{Display, EnumIter};
-use ultraviolet::Vec3;
 
 use crate::render::state::{AppState, ColorPickerState, ModelState, RenderState};
 
@@ -194,10 +194,8 @@ impl ProcessMessage<RenderState> for RenderMessage {
                 if *schlegel {
                     state.camera.fov_y = 2.9;
                     state.zoom = 1.1;
-                    //state.starting_vertex = primitive.face_sides_buffer(0).len();
                 } else {
-                    state.camera.fov_y = 1.0;
-                    state.camera.eye = Vec3::new(0.0, 2.0, 3.0);
+                    state.camera = Camera::default();
                 }
                 Task::none()
             }

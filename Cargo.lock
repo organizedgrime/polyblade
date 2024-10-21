@@ -2596,6 +2596,7 @@ dependencies = [
  "iced_wgpu",
  "iced_widget",
  "iced_winit",
+ "log",
  "rand",
  "ron",
  "serde",

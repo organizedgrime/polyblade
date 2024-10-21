@@ -82,20 +82,14 @@ impl PolyGraph {
             use Transaction::*;
             match transaction {
                 Contraction(edges) => {
-                    if edges.iter().fold(true, |acc, e| {
-                        if self.positions.contains_key(&e.v())
-                            && self.positions.contains_key(&e.u())
-                        {
-                            acc && (self.positions[&e.v()] - self.positions[&e.u()]).mag() < 0.08
-                        } else {
-                            acc
-                        }
-                    }) {
+                    if !edges
+                        .iter()
+                        .any(|e| (self.positions[&e.v()] - self.positions[&e.u()]).mag() > 0.08)
+                    {
                         // Contract them in the graph
                         self.contract_edges(edges);
                         self.pst();
                         self.springs();
-                        //self.find_cycles();
                         self.transactions.remove(0);
                     }
                 }
@@ -150,8 +144,12 @@ impl PolyGraph {
                             vec![Name('s')]
                         }
                         Bevel => {
-                            let edges = self.bevel();
-                            vec![Contraction(edges), Name('b')]
+                            vec![
+                                Conway(Truncate),
+                                Wait(Instant::now() + Duration::from_millis(500)),
+                                Conway(Ambo),
+                                Name('b'),
+                            ]
                         }
                     };
                     self.cycles.sort_by_key(|c| usize::MAX - c.len());
@@ -160,7 +158,10 @@ impl PolyGraph {
                     self.springs();
                 }
                 Name(c) => {
-                    if c == 'd' && self.name.chars().nth(0) == Some('d') {
+                    if c == 'b' {
+                        self.name = self.name[2..].to_string();
+                    }
+                    if c == 'd' && &self.name[0..1] == "d" {
                         self.name = self.name[1..].to_string();
                     } else {
                         self.name = format!("{c}{}", self.name);

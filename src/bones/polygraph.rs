@@ -271,7 +271,7 @@ impl PolyGraph {
 
             if !removed {
                 self.dist = dist;
-                println!("failed distance computation");
+                log::error!("failed distance computation");
                 return;
             }
         }
@@ -289,7 +289,7 @@ impl PolyGraph {
             .filter(|e| self.dist[e] <= 2 || self.dist[e] >= diameter - 1)
             .collect::<HashSet<_>>();
 
-        println!(
+        log::debug!(
             "v_len: {} | v2: {} | springs: {}",
             self.vertices.len(),
             (self.vertices.len() as f32).powi(2),

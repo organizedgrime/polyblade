@@ -30,6 +30,7 @@ webbrowser = { version = "1.0.2" }
 iced_winit = { version = "0.13.0" }
 iced_widget = { version = "0.13.0", features = ["wgpu"] }
 iced_wgpu = { version = "0.13.0", features = ["webgl"] }
+log = "0.4.22"
 
 [dev-dependencies]
 test-case = { version = "^3.3.0" }

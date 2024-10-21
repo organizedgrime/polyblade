@@ -166,12 +166,6 @@ impl PolyGraph {
             let _v = self.insert();
         }
     }
-    /// `b` = `ta`
-    pub fn bevel(&mut self) -> HashSet<Edge> {
-        self.truncate(None);
-        self.pst();
-        self.ambo()
-    }
 
     pub fn ordered_face_indices(&self, v: VertexId) -> Vec<usize> {
         let relevant = (0..self.cycles.len())

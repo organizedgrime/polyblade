@@ -35,7 +35,7 @@ pub enum Runner {
         engine: Engine,
         renderer: Renderer,
         scene: Scene,
-        state: program::State<Controls>,
+        state: Box<program::State<Controls>>,
         cursor_position: Option<winit::dpi::PhysicalPosition<f64>>,
         clipboard: Clipboard,
         viewport: Box<Viewport>,
@@ -135,11 +135,6 @@ impl winit::application::ApplicationHandler for Runner {
                 },
             );
 
-            println!(
-                "vp: {:?}; {:?}",
-                viewport.physical_size(),
-                viewport.logical_size()
-            );
             // Initialize scene and GUI controls
             let scene = Scene::new(&device, format, &viewport.physical_size());
             let controls = Controls::new();
@@ -149,8 +144,12 @@ impl winit::application::ApplicationHandler for Runner {
             let engine = Engine::new(&adapter, &device, &queue, format, None);
             let mut renderer = Renderer::new(&device, &engine, Font::default(), Pixels::from(16));
 
-            let state =
-                program::State::new(controls, viewport.logical_size(), &mut renderer, &mut debug);
+            let state = Box::new(program::State::new(
+                controls,
+                viewport.logical_size(),
+                &mut renderer,
+                &mut debug,
+            ));
 
             // You should change this if you want to render continuously
             event_loop.set_control_flow(ControlFlow::Poll);
