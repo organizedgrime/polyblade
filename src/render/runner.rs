@@ -25,7 +25,7 @@ use std::sync::Arc;
 pub use std::time::Instant;
 
 pub enum Runner {
-    Loading,
+    Loading(Arc<winit::window::Window>),
     Ready {
         window: Arc<winit::window::Window>,
         device: wgpu::Device,
@@ -47,13 +47,7 @@ pub enum Runner {
 
 impl winit::application::ApplicationHandler for Runner {
     fn resumed(&mut self, event_loop: &winit::event_loop::ActiveEventLoop) {
-        if let Self::Loading = self {
-            let window = Arc::new(
-                event_loop
-                    .create_window(winit::window::WindowAttributes::default())
-                    .expect("Create window"),
-            );
-
+        if let Self::Loading(window) = self {
             let physical_size = window.inner_size();
             let viewport = Box::new(Viewport::with_physical_size(
                 Size::new(physical_size.width.max(1), physical_size.height.max(1)),
@@ -155,7 +149,7 @@ impl winit::application::ApplicationHandler for Runner {
             event_loop.set_control_flow(ControlFlow::Poll);
 
             *self = Self::Ready {
-                window,
+                window: window.clone(),
                 device,
                 queue,
                 surface,

@@ -2605,6 +2605,8 @@ dependencies = [
  "test-case",
  "tracing-subscriber",
  "ultraviolet",
+ "wasm-bindgen",
+ "web-sys",
  "webbrowser",
 ]
 
