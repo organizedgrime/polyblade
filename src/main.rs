@@ -47,20 +47,17 @@ pub async fn run() -> Result<(), winit::error::EventLoopError> {
             })
             .expect("Couldn't append canvas to document body.");
 
-        let _ = window.request_inner_size(PhysicalSize::new(450, 400));
+        let _ = window.request_inner_size(PhysicalSize::new(1280, 720));
     }
 
-    let graphics = Graphics::new(&window).await;
-
     let mut runner = App {
-        graphics,
+        graphics: Graphics::new(&window).await,
         data: None,
         surface_configured: false,
     };
     event_loop.run_app(&mut runner)
 }
 
-#[cfg(not(target_arch = "wasm32"))]
 pub fn main() -> Result<(), winit::error::EventLoopError> {
     block_on(run())
 }

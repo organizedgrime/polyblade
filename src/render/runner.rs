@@ -32,7 +32,6 @@ pub struct Graphics<'a> {
     device: wgpu::Device,
     queue: wgpu::Queue,
     config: wgpu::SurfaceConfiguration,
-    //size: winit::dpi::PhysicalSize<u32>,
     viewport: Viewport,
     engine: Engine,
     renderer: Renderer,
@@ -64,11 +63,13 @@ impl<'a> Graphics<'a> {
             .await
             .unwrap();
 
+        let adapter_features = adapter.features();
+
         let (device, queue) = adapter
             .request_device(
                 &wgpu::DeviceDescriptor {
                     label: None,
-                    required_features: wgpu::Features::empty(),
+                    required_features: adapter_features,
                     // WebGL doesn't support all of wgpu's features, so if
                     // we're building for the web we'll have to disable some.
                     required_limits: if cfg!(target_arch = "wasm32") {
