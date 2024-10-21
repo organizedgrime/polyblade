@@ -14,9 +14,6 @@
         <img src="https://img.shields.io/badge/license-APGL3-blue.svg?style=for-the-badge"/>
     </a>
     <br/>
-    <a href="https://github.com/iced-rs/iced">
-        <img alt="Made with Iced" src="assets/made-with-iced.svg" height="36px" />
-    </a>
 </div>
 
 ![demo](./assets/demo.gif)
