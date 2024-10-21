@@ -34,22 +34,19 @@ pub async fn run() -> Result<(), winit::error::EventLoopError> {
 
     #[cfg(target_arch = "wasm32")]
     {
-        // Winit prevents sizing with CSS, so we have to set
-        // the size manually when on web.
-        use winit::dpi::PhysicalSize;
-
         use winit::platform::web::WindowExtWebSys;
         web_sys::window()
             .and_then(|win| win.document())
             .and_then(|doc| {
                 let dst = doc.get_element_by_id("polyblade")?;
                 let canvas = web_sys::Element::from(window.canvas()?);
+                canvas.set_class_name("main-canvas");
                 dst.append_child(&canvas).ok()?;
                 Some(())
             })
             .expect("Couldn't append canvas to document body.");
 
-        let _ = window.request_inner_size(PhysicalSize::new(1280, 720));
+        let _ = window.request_inner_size(winit::dpi::PhysicalSize::new(1280, 720));
     }
 
     let mut runner = App {
