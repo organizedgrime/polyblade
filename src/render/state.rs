@@ -88,7 +88,7 @@ impl Default for ModelState {
 }
 
 pub fn load_polydex() -> Result<Polydex, Box<dyn std::error::Error>> {
-    let mut polydex = std::fs::File::open("polydex.ron")?;
+    let mut polydex = std::fs::File::open("assets/polydex.ron")?;
     let mut polydex_str = String::new();
     polydex.read_to_string(&mut polydex_str)?;
     let polydex: Vec<Entry> = ron::from_str(&polydex_str).map_err(|_| "Ron parsing error")?;
