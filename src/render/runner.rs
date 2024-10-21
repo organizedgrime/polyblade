@@ -425,10 +425,18 @@ impl<'a> winit::application::ApplicationHandler for App<'a> {
                     }
                 }
                 WindowEvent::Resized(physical_size) => {
-                    self.graphics.resize(Size {
+                    let size = Size {
                         width: physical_size.width,
                         height: physical_size.height,
-                    });
+                    };
+                    self.graphics.resize(size.clone());
+                    if let Some(data) = &mut self.data {
+                        data.scene.depth_texture =
+                            crate::render::pipeline::Texture::create_depth_texture(
+                                &self.graphics.device,
+                                &size,
+                            );
+                    }
                     self.surface_configured = true;
                 }
                 WindowEvent::CloseRequested => {
