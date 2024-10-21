@@ -2,7 +2,6 @@ use iced::{widget::shader::wgpu, Size};
 
 pub struct Texture {
     pub view: wgpu::TextureView,
-    pub size: Size<u32>,
 }
 
 impl Texture {
@@ -28,9 +27,6 @@ impl Texture {
         let texture = device.create_texture(&desc);
         let view = texture.create_view(&wgpu::TextureViewDescriptor::default());
 
-        Self {
-            view,
-            size: *target_size,
-        }
+        Self { view }
     }
 }

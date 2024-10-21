@@ -1,14 +1,11 @@
 use iced_wgpu::graphics::Viewport;
 use iced_wgpu::{wgpu, Engine, Renderer};
-use iced_winit::conversion;
 use iced_winit::core::mouse;
 use iced_winit::core::renderer;
 use iced_winit::core::{Color, Font, Pixels, Size, Theme};
-use iced_winit::futures;
 use iced_winit::runtime::program;
 use iced_winit::runtime::Debug;
 use iced_winit::winit;
-use iced_winit::winit::dpi::PhysicalSize;
 use iced_winit::winit::window::Window;
 use iced_winit::Clipboard;
 
@@ -22,8 +19,6 @@ use crate::render::{
 
 #[cfg(target_arch = "wasm32")]
 pub use iced::time::Instant;
-use std::iter;
-use std::sync::Arc;
 #[cfg(not(target_arch = "wasm32"))]
 pub use std::time::Instant;
 
@@ -130,7 +125,7 @@ impl<'a> Graphics<'a> {
     }
 
     fn window(&self) -> &Window {
-        &self.window
+        self.window
     }
 }
 
@@ -163,9 +158,8 @@ impl<'a> App<'a> {
         let program_state = &program.state;
 
         {
-            let state = &state.program().state;
-            let model = state.model.clone();
-            let render = state.render.clone();
+            let model = program_state.model.clone();
+            let render = program_state.render.clone();
             let primitive = PolyhedronPrimitive::new(model, render);
 
             let moments = primitive.moment_vertices();
@@ -364,32 +358,26 @@ impl<'a> App<'a> {
 
 impl<'a> winit::application::ApplicationHandler for App<'a> {
     fn resumed(&mut self, event_loop: &winit::event_loop::ActiveEventLoop) {
-        if let Graphics {
-            surface,
+        let Graphics {
             device,
-            queue,
             config,
             viewport,
-            engine,
             renderer,
-            window,
-        } = &mut self.graphics
-        {
-            // Initialize scene and GUI controls
-            let scene = Scene::new(&device, config.format, &viewport.physical_size());
-            let controls = Controls::new();
-            // Initialize iced
-            let mut debug = Debug::new();
-            let state =
-                program::State::new(controls, viewport.logical_size(), renderer, &mut debug);
-            // You should change this if you want to render continuously
-            event_loop.set_control_flow(ControlFlow::Poll);
-            self.data = Some(AppData {
-                scene,
-                state,
-                debug,
-            });
-        }
+            ..
+        } = &mut self.graphics;
+        // Initialize scene and GUI controls
+        let scene = Scene::new(device, config.format, &viewport.physical_size());
+        let controls = Controls::new();
+        // Initialize iced
+        let mut debug = Debug::new();
+        let state = program::State::new(controls, viewport.logical_size(), renderer, &mut debug);
+        // You should change this if you want to render continuously
+        event_loop.set_control_flow(ControlFlow::Poll);
+        self.data = Some(AppData {
+            scene,
+            state,
+            debug,
+        });
     }
 
     fn window_event(
@@ -430,7 +418,7 @@ impl<'a> winit::application::ApplicationHandler for App<'a> {
                         width: physical_size.width,
                         height: physical_size.height,
                     };
-                    self.graphics.resize(size.clone());
+                    self.graphics.resize(size);
                     if let Some(data) = &mut self.data {
                         data.scene.depth_texture =
                             crate::render::pipeline::Texture::create_depth_texture(
