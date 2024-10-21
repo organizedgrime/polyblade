@@ -11,10 +11,10 @@ bytemuck = { version = "1.0", features = [
 	"zeroable_atomics",
 ] }
 
-iced_aw = { version = "0.11.0", default-features = false, features = [
-	"color_picker",
-	"menu",
-] }
+# iced_aw = { version = "0.11.0", default-features = false, features = [
+# 	"color_picker",
+# 	"menu",
+# ] }
 
 # Enum iteration
 strum = { version = "0.26.2" }
@@ -27,23 +27,35 @@ serde = { version = "^1.0.0", features = ["derive"] }
 ron = { version = "0.8" }
 #ckmeans = { version = "1.0.6" }
 webbrowser = { version = "1.0.2" }
-iced_winit = { version = "0.13.0" }
-iced_widget = { version = "0.13.0", features = ["wgpu"] }
-iced_wgpu = { version = "0.13.0", features = ["webgl"] }
+#iced_winit = { version = "0.13.0" }
+# iced_widget = { version = "0.13.0", features = ["wgpu"] }
+# iced_wgpu = { version = "0.13.0", features = ["webgl"] }
+iced_wgpu = { git = "https://github.com/iced-rs/iced.git", branch = "0.13", version = "=0.13.5", features = [
+	"webgl",
+] }
+iced_widget = { git = "https://github.com/iced-rs/iced.git", branch = "0.13", version = "=0.13.5", features = [
+	"wgpu",
+] }
+iced_winit = { git = "https://github.com/iced-rs/iced.git", branch = "0.13", version = "=0.13.5" }
 log = "0.4.22"
 
 [dev-dependencies]
 test-case = { version = "^3.3.0" }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-iced = { version = "^0.13.1", features = ["debug", "advanced", "svg"] }
+#iced = { version = "^0.13.1", features = ["debug", "advanced", "svg"] }
+iced = { git = "https://github.com/iced-rs/iced.git", branch = "0.13", version = "=0.13.5", features = [
+	"debug",
+	"advanced",
+	"svg",
+] }
 tracing-subscriber = { version = "0.3" }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 getrandom = { version = "0.2", features = ["js"] }
 web-sys = { version = "0.3", features = ["Document", "Window", "Element"] }
 wasm-bindgen = { version = "0.2" }
-iced = { version = "^0.13.1", features = [
+iced = { git = "https://github.com/iced-rs/iced.git", branch = "0.13", version = "=0.13.5", features = [
 	"debug",
 	"advanced",
 	"svg",
