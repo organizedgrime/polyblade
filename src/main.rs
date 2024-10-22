@@ -32,6 +32,8 @@ pub async fn run() -> Result<(), winit::error::EventLoopError> {
             .expect("Create window"),
     );
 
+    log::info!("winit: {:?}", winit::window::WindowAttributes::default());
+
     #[cfg(target_arch = "wasm32")]
     {
         use winit::platform::web::WindowExtWebSys;

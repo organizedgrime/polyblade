@@ -14,7 +14,7 @@ use winit::{event::WindowEvent, event_loop::ControlFlow, keyboard::ModifiersStat
 use crate::render::{
     controls::Controls,
     message::{ConwayMessage, PolybladeMessage, PresetMessage},
-    pipeline::{FragUniforms, ModelUniforms, PolyhedronPrimitive, Scene},
+    pipeline::{FragUniforms, ModelUniforms, PolyhedronPrimitive, Scene, Texture},
 };
 
 #[cfg(target_arch = "wasm32")]
@@ -114,16 +114,6 @@ impl<'a> Graphics<'a> {
         }
     }
 
-    pub fn resize(&mut self, physical_size: Size<u32>) {
-        if physical_size.width > 0 && physical_size.height > 0 {
-            self.viewport =
-                Viewport::with_physical_size(physical_size, self.window().scale_factor());
-            self.config.width = physical_size.width;
-            self.config.height = physical_size.height;
-            self.surface.configure(&self.device, &self.config);
-        }
-    }
-
     fn window(&self) -> &Window {
         self.window
     }
@@ -133,6 +123,37 @@ pub struct App<'a> {
     pub graphics: Graphics<'a>,
     pub data: Option<AppData>,
     pub surface_configured: bool,
+}
+
+impl<'a> App<'a> {
+    fn resize(&mut self, physical_size: Size<u32>) {
+        // Ensure that the requested size will never be larger than the maximum texture dimension
+        let max_dimension = self.graphics.device.limits().max_texture_dimension_2d;
+        let physical_size = Size {
+            width: physical_size.width.min(max_dimension),
+            height: physical_size.height.min(max_dimension),
+        };
+
+        // Don't configure unless the size is valid
+        if physical_size.width > 0 && physical_size.height > 0 {
+            self.graphics.viewport =
+                Viewport::with_physical_size(physical_size, self.graphics.window().scale_factor());
+            self.graphics.config.width = physical_size.width;
+            self.graphics.config.height = physical_size.height;
+            self.graphics
+                .surface
+                .configure(&self.graphics.device, &self.graphics.config);
+
+            // Resize the depth texture as well
+            if let Some(data) = &mut self.data {
+                data.scene.depth_texture =
+                    Texture::depth_texture(&self.graphics.device, &physical_size);
+            }
+
+            // Mark the surface as being configured
+            self.surface_configured = true;
+        }
+    }
 }
 
 pub struct AppData {
@@ -156,7 +177,6 @@ impl<'a> App<'a> {
 
         let program = state.program();
         let program_state = &program.state;
-
         {
             let model = program_state.model.clone();
             let render = program_state.render.clone();
@@ -220,19 +240,19 @@ impl<'a> App<'a> {
                 // We clear the frame
                 let mut render_pass = scene.clear(&view, &mut encoder, program.background_color());
 
-                // // Ignore the whole first polygon if we're in schlegel mode
-                // let starting_vertex = if program.state.render.schlegel {
-                //     match program.state.model.polyhedron.cycles[0].len() {
-                //         3 => 3,
-                //         4 => 6,
-                //         n => n * 3,
-                //     }
-                // } else {
-                //     0
-                // } as u32;
+                // Ignore the whole first polygon if we're in schlegel mode
+                let starting_vertex = if program.state.render.schlegel {
+                    match program.state.model.polyhedron.cycles[0].len() {
+                        3 => 3,
+                        4 => 6,
+                        n => n * 3,
+                    }
+                } else {
+                    0
+                } as u32;
 
                 // Draw the scene
-                scene.draw(0, &mut render_pass);
+                scene.draw(starting_vertex, &mut render_pass);
             }
 
             // And then iced on top
@@ -399,7 +419,7 @@ impl<'a> winit::application::ApplicationHandler for App<'a> {
                         Ok(_) => {}
                         // Reconfigure the surface if it's lost or outdated
                         Err(wgpu::SurfaceError::Lost | wgpu::SurfaceError::Outdated) => {
-                            self.graphics.resize(self.graphics.viewport.physical_size())
+                            self.resize(self.graphics.viewport.physical_size());
                         }
                         // The system is out of memory, we should probably quit
                         Err(wgpu::SurfaceError::OutOfMemory) => {
@@ -418,15 +438,7 @@ impl<'a> winit::application::ApplicationHandler for App<'a> {
                         width: physical_size.width,
                         height: physical_size.height,
                     };
-                    self.graphics.resize(size);
-                    if let Some(data) = &mut self.data {
-                        data.scene.depth_texture =
-                            crate::render::pipeline::Texture::create_depth_texture(
-                                &self.graphics.device,
-                                &size,
-                            );
-                    }
-                    self.surface_configured = true;
+                    self.resize(size);
                 }
                 WindowEvent::CloseRequested => {
                     event_loop.exit();

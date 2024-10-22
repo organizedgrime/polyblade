@@ -7,7 +7,7 @@ pub struct Texture {
 impl Texture {
     pub const DEPTH_FORMAT: wgpu::TextureFormat = wgpu::TextureFormat::Depth24Plus;
 
-    pub fn create_depth_texture(device: &wgpu::Device, target_size: &Size<u32>) -> Self {
+    pub fn depth_texture(device: &wgpu::Device, target_size: &Size<u32>) -> Self {
         let size = wgpu::Extent3d {
             width: target_size.width.max(1),
             height: target_size.height.max(1),
