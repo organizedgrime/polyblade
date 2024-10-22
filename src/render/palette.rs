@@ -6,22 +6,6 @@ pub struct Palette {
     pub colors: Vec<RGBA>,
 }
 
-// impl Default for Palette {
-//     fn default() -> Self {
-//         Self {
-//             colors: vec![
-//                 RGBA::new(72, 132, 90),
-//                 RGBA::new(163, 186, 112),
-//                 RGBA::new(51, 81, 69),
-//                 RGBA::new(254, 240, 134),
-//                 RGBA::new(95, 155, 252),
-//                 RGBA::new(244, 164, 231),
-//                 RGBA::new(170, 137, 190),
-//             ],
-//         }
-//     }
-// }
-
 impl From<Palette> for Vec<wgpu::Color> {
     fn from(val: Palette) -> Self {
         val.colors

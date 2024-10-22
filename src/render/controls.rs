@@ -1,10 +1,11 @@
-use iced::alignment::Vertical;
-use iced::Length;
+use iced::{alignment::Vertical, Length};
 use iced_aw::{menu::Item, menu_bar};
 use iced_wgpu::Renderer;
 use iced_widget::{button, column, container, row, text, Row};
-use iced_winit::core::{Color, Element, Theme};
-use iced_winit::runtime::{Program, Task};
+use iced_winit::{
+    core::{Color, Element, Theme},
+    runtime::{Program, Task},
+};
 
 use crate::render::{menu::MenuAble, message::*, state::AppState};
 
