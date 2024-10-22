@@ -2,7 +2,7 @@ use std::collections::{HashMap, VecDeque};
 
 use ultraviolet::Vec3;
 
-pub use super::*;
+use crate::bones::*;
 use std::collections::HashSet;
 
 impl PolyGraph {
@@ -165,12 +165,6 @@ impl PolyGraph {
         for _c in self.cycles.clone() {
             let _v = self.insert();
         }
-    }
-    /// `b` = `ta`
-    pub fn bevel(&mut self) -> HashSet<Edge> {
-        self.truncate(None);
-        self.pst();
-        self.ambo()
     }
 
     pub fn ordered_face_indices(&self, v: VertexId) -> Vec<usize> {

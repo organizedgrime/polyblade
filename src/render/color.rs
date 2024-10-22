@@ -160,6 +160,11 @@ impl From<RGBA> for iced::Color {
         }
     }
 }
+impl From<RGBA> for iced::Background {
+    fn from(value: RGBA) -> Self {
+        iced::Color::from(value).into()
+    }
+}
 
 fn srgb(x: f32) -> f32 {
     ((x / 255.0 + 0.055) / 1.055).powf(2.4)

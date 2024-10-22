@@ -1,16 +1,13 @@
 use crate::{
     bones::{PolyGraph, Transaction},
+    render::camera::Camera,
     Instant,
 };
-use iced::{font, Color, Command};
+use iced::{Color, Task};
 use std::fmt::Display;
 use strum_macros::{Display, EnumIter};
-use ultraviolet::Vec3;
 
-use super::{
-    polydex::Polydex,
-    state::{AppState, ColorPickerState, ModelState, RenderState},
-};
+use crate::render::state::{AppState, ColorPickerState, ModelState, RenderState};
 
 #[derive(Debug, Clone, Display)]
 pub enum PolybladeMessage {
@@ -18,11 +15,6 @@ pub enum PolybladeMessage {
     Preset(PresetMessage),
     Conway(ConwayMessage),
     Render(RenderMessage),
-    Model(ModelMessage),
-    // Font
-    FontLoaded(Result<(), font::Error>),
-    // Polydex
-    PolydexLoaded(Result<Polydex, String>),
     OpenWiki(String),
 }
 
@@ -102,6 +94,7 @@ pub enum RenderMessage {
     Schlegel(bool),
     Rotating(bool),
     FovChanged(f32),
+    ZoomChanged(f32),
     LineThickness(f32),
     ColorMethod(ColorMethodMessage),
     ColorPicker(ColorPickerMessage),
@@ -153,11 +146,11 @@ pub enum ModelMessage {
 }
 
 pub trait ProcessMessage<T> {
-    fn process(&self, state: &mut T) -> Command<PolybladeMessage>;
+    fn process(&self, state: &mut T) -> Task<PolybladeMessage>;
 }
 
 impl ProcessMessage<ModelState> for PresetMessage {
-    fn process(&self, state: &mut ModelState) -> Command<PolybladeMessage> {
+    fn process(&self, state: &mut ModelState) -> Task<PolybladeMessage> {
         use PresetMessage::*;
         match &self {
             Prism(n) => {
@@ -178,33 +171,33 @@ impl ProcessMessage<ModelState> for PresetMessage {
             Icosahedron => state.polyhedron = PolyGraph::icosahedron(),
         }
 
-        Command::none()
+        Task::none()
     }
 }
 
 impl ProcessMessage<ModelState> for ConwayMessage {
-    fn process(&self, state: &mut ModelState) -> Command<PolybladeMessage> {
+    fn process(&self, state: &mut ModelState) -> Task<PolybladeMessage> {
         state
             .polyhedron
             .transactions
             .push(Transaction::Conway(self.clone()));
-        Command::none()
+        Task::none()
     }
 }
 
 impl ProcessMessage<RenderState> for RenderMessage {
-    fn process(&self, state: &mut RenderState) -> Command<PolybladeMessage> {
+    fn process(&self, state: &mut RenderState) -> Task<PolybladeMessage> {
         use RenderMessage::*;
         match &self {
             Schlegel(schlegel) => {
                 state.schlegel = *schlegel;
                 if *schlegel {
                     state.camera.fov_y = 2.9;
+                    state.zoom = 1.1;
                 } else {
-                    state.camera.fov_y = 1.0;
-                    state.camera.eye = Vec3::new(0.0, 2.0, 3.0);
+                    state.camera = Camera::default();
                 }
-                Command::none()
+                Task::none()
             }
             Rotating(rotating) => {
                 state.rotating = *rotating;
@@ -213,19 +206,23 @@ impl ProcessMessage<RenderState> for RenderMessage {
                 } else {
                     state.start = Instant::now().checked_sub(state.rotation_duration).unwrap();
                 }
-                Command::none()
+                Task::none()
             }
             FovChanged(fov) => {
                 state.camera.fov_y = *fov;
-                Command::none()
+                Task::none()
+            }
+            ZoomChanged(zoom) => {
+                state.zoom = *zoom;
+                Task::none()
             }
             LineThickness(thickness) => {
                 state.line_thickness = *thickness;
-                Command::none()
+                Task::none()
             }
             ColorMethod(method) => {
                 state.method = method.clone();
-                Command::none()
+                Task::none()
             }
             ColorPicker(picker) => picker.process(&mut state.picker),
         }
@@ -233,7 +230,7 @@ impl ProcessMessage<RenderState> for RenderMessage {
 }
 
 impl ProcessMessage<ColorPickerState> for ColorPickerMessage {
-    fn process(&self, state: &mut ColorPickerState) -> Command<PolybladeMessage> {
+    fn process(&self, state: &mut ColorPickerState) -> Task<PolybladeMessage> {
         use ColorPickerMessage::*;
         match self {
             ChangeNumber(colors) => {
@@ -254,27 +251,18 @@ impl ProcessMessage<ColorPickerState> for ColorPickerMessage {
                 state.color_index = None;
             }
         }
-        Command::none()
-    }
-}
-
-impl ProcessMessage<ModelState> for ModelMessage {
-    fn process(&self, state: &mut ModelState) -> Command<PolybladeMessage> {
-        match self {
-            ModelMessage::ScaleChanged(scale) => state.scale = *scale,
-        }
-        Command::none()
+        Task::none()
     }
 }
 
 impl ProcessMessage<AppState> for PolybladeMessage {
-    fn process(&self, state: &mut AppState) -> Command<PolybladeMessage> {
+    fn process(&self, state: &mut AppState) -> Task<PolybladeMessage> {
         use PolybladeMessage::*;
         match self {
             Tick(time) => {
                 if state.render.schlegel {
                     state.render.camera.eye =
-                        state.model.polyhedron.face_centroid(0) * state.model.scale;
+                        state.model.polyhedron.face_centroid(0) * state.render.zoom;
                 }
 
                 // If the polyhedron has changed
@@ -282,27 +270,17 @@ impl ProcessMessage<AppState> for PolybladeMessage {
                     // Recompute its Polydex entry
                     state.info = state.model.polyhedron.polydex_entry(&state.polydex);
                 }
+
                 state.update_state(*time);
-                Command::none()
+                Task::none()
             }
             Preset(preset) => preset.process(&mut state.model),
             Conway(conway) => conway.process(&mut state.model),
             Render(render) => render.process(&mut state.render),
-            Model(model) => model.process(&mut state.model),
-            PolydexLoaded(polydex) => {
-                if let Ok(polydex) = polydex {
-                    state.polydex = polydex.to_vec();
-                    state.info = state.model.polyhedron.polydex_entry(&state.polydex);
-                } else {
-                    //tracing_subscriber::warn
-                }
-                Command::none()
-            }
             OpenWiki(wiki) => {
                 let _ = webbrowser::open(wiki).ok();
-                Command::none()
+                Task::none()
             }
-            _ => Command::none(),
         }
     }
 }

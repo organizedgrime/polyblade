@@ -1,10 +1,11 @@
+mod app;
 mod camera;
 mod color;
+mod controls;
 mod menu;
 pub(crate) mod message;
 mod palette;
 pub(crate) mod pipeline;
-mod polyblade;
 mod polydex;
 mod state;
-pub use polyblade::Polyblade;
+pub use app::{App, Graphics};

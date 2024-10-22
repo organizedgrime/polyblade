@@ -25,11 +25,6 @@ pub struct ShapeVertex {
     pub sides: Vec4,
 }
 
-pub struct AllUniforms {
-    pub model: ModelUniforms,
-    pub frag: FragUniforms,
-}
-
 #[derive(Copy, Default, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]
 #[repr(C, align(16))]
 pub struct ModelUniforms {
@@ -43,14 +38,4 @@ pub struct FragUniforms {
     pub(crate) line_thickness: f32,
     pub(crate) line_mode: f32,
     pub _padding: [f32; 2],
-}
-
-impl FragUniforms {
-    pub fn new(line_thickness: f32, line_mode: f32) -> Self {
-        Self {
-            line_thickness,
-            line_mode,
-            _padding: [0.0; 2],
-        }
-    }
 }

@@ -1,12 +1,11 @@
 use std::collections::HashMap;
 
-use crate::render::message::ColorMethodMessage;
-use crate::render::state::{ModelState, RenderState};
-use iced::widget::shader::{self, wgpu};
-use iced::{Rectangle, Size};
+use crate::render::{
+    message::ColorMethodMessage,
+    pipeline::{MomentVertex, ShapeVertex},
+    state::{ModelState, RenderState},
+};
 use ultraviolet::{Vec3, Vec4};
-
-use super::{AllUniforms, FragUniforms, ModelUniforms, MomentVertex, Pipeline, ShapeVertex};
 
 #[derive(Debug)]
 pub struct PolyhedronPrimitive {
@@ -34,7 +33,6 @@ impl PolyhedronPrimitive {
             let s = (a + b + c) / 2.0;
             area += (s * (s - a) * (s - b) * (s - c)).sqrt();
         }
-        println!("area for face {face_index} is {area}");
         area
     }
 
@@ -135,62 +133,5 @@ impl PolyhedronPrimitive {
             })
             .collect::<Vec<Vec<ShapeVertex>>>()
             .concat()
-    }
-
-    pub fn face_sides_buffer(&self, face_index: usize) -> Vec<Vec3> {
-        let n = self.model.polyhedron.cycles[face_index].len();
-        match n {
-            3 => vec![Vec3::new(1.0, 1.0, 1.0); 3],
-            4 => vec![Vec3::new(1.0, 0.0, 1.0); 6],
-            _ => vec![Vec3::new(0.0, 1.0, 0.0); n * 3],
-        }
-    }
-}
-
-impl shader::Primitive for PolyhedronPrimitive {
-    fn prepare(
-        &self,
-        format: wgpu::TextureFormat,
-        device: &wgpu::Device,
-        queue: &wgpu::Queue,
-        bounds: Rectangle,
-        target_size: Size<u32>,
-        _scale_factor: f32,
-        storage: &mut shader::Storage,
-    ) {
-        if !storage.has::<Pipeline>() {
-            storage.store(Pipeline::new(device, format, target_size));
-        }
-        let pipeline = storage.get_mut::<Pipeline>().unwrap();
-
-        // Construct new Unifrom Buffer
-        let uniforms = AllUniforms {
-            model: ModelUniforms {
-                model_mat: self.model.transform,
-                view_projection_mat: self.render.camera.build_view_proj_mat(bounds),
-            },
-            frag: FragUniforms::new(
-                self.render.line_thickness,
-                self.render.method.clone().into(),
-            ),
-        };
-
-        // Update GPU data
-        pipeline.update(device, queue, target_size, &uniforms, self);
-    }
-
-    fn render(
-        &self,
-        storage: &shader::Storage,
-        target: &wgpu::TextureView,
-        _target_size: Size<u32>,
-        viewport: Rectangle<u32>,
-        encoder: &mut wgpu::CommandEncoder,
-    ) {
-        // At this point our pipeline should always be initialized
-        let pipeline = storage.get::<Pipeline>().unwrap();
-
-        // Render primitive
-        pipeline.render(target, encoder, viewport);
     }
 }

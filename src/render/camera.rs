@@ -1,4 +1,4 @@
-use iced::Rectangle;
+use iced::Size;
 use ultraviolet::{Mat4, Vec3, Vec4};
 
 #[derive(Copy, Debug, Clone)]
@@ -14,12 +14,12 @@ pub struct Camera {
 impl Default for Camera {
     fn default() -> Self {
         Self {
-            eye: Vec3::new(0.0, 2.0, 3.0),
+            eye: Vec3::new(0.0, 5.0, 5.0),
             target: Vec3::zero(),
             up: Vec3::unit_y(),
-            fov_y: 1.0,
+            fov_y: 0.4,
             near: 0.1,
-            far: 100.0,
+            far: 10.0,
         }
     }
 }
@@ -32,7 +32,7 @@ pub const OPENGL_TO_WGPU_MATRIX: Mat4 = Mat4::new(
 );
 
 impl Camera {
-    pub fn build_view_proj_mat(&self, bounds: Rectangle) -> Mat4 {
+    pub fn build_view_proj_mat(&self, bounds: Size<f32>) -> Mat4 {
         let aspect_ratio = bounds.width / bounds.height;
         let view = Mat4::look_at(self.eye, self.target, self.up);
         let h = f32::cos(0.5 * self.fov_y) / f32::sin(0.5 * self.fov_y);

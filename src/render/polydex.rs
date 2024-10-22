@@ -1,5 +1,4 @@
-use super::message::PolybladeMessage;
-use crate::{bones::PolyGraph, Instant};
+use crate::{bones::PolyGraph, render::message::PolybladeMessage, Instant};
 use serde::{Deserialize, Serialize};
 
 pub type Polydex = Vec<Entry>;

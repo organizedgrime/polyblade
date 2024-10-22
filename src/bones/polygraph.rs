@@ -1,4 +1,4 @@
-pub use super::*;
+use crate::bones::*;
 use rand::random;
 use std::{
     collections::{HashMap, HashSet, VecDeque},
@@ -17,6 +17,9 @@ pub struct PolyGraph {
     pub vertices: HashSet<VertexId>,
     /// Vertices that are adjacent
     pub edges: HashSet<Edge>,
+
+    /// All Springs
+    pub springs: HashSet<Edge>,
 
     /// [Derived Properties]
     /// Faces are simple cycles
@@ -218,22 +221,22 @@ impl PolyGraph {
                         dqueue.entry(v).or_default().push_back((w, 1));
                         dqueue.entry(w).or_default().push_back((v, 1));
                         // v.c = v.c + 1
-                        *counters.get_mut(&v).unwrap() -= 1;
-                        //*counters.get_mut(&w).unwrap() -= 1;
+                        *counters.entry(v).or_default() -= 1;
+                        //*counters.entry(w).or_default() -= 1;
                         removed = true;
                     }
                 } else {
                     // w = v.que.deque(d - 1)
                     // while w is not None:
                     'dq: loop {
-                        let vqueue = dqueue.get_mut(&v).unwrap();
+                        let vqueue = dqueue.entry(v).or_default();
                         if let Some((w, d)) = vqueue.pop_front() {
                             if d != depth - 1 {
-                                dqueue.get_mut(&v).unwrap().push_back((w, d));
+                                dqueue.entry(v).or_default().push_back((w, d));
                                 break;
                             }
                             // for x in w.children
-                            for x in children.get(&w).unwrap().clone() {
+                            for x in children.entry(w).or_default().clone() {
                                 let e: Edge = (x, v).into();
                                 if x != v && !dist.contains_key(&e) {
                                     // D[x.id, v.id] = d;
@@ -241,16 +244,16 @@ impl PolyGraph {
                                     // add x' to w' children
                                     children.entry(w).or_default().push(x);
                                     // v.que.enque(x', d)
-                                    dqueue.get_mut(&v).unwrap().push_back((x, depth));
-                                    dqueue.get_mut(&x).unwrap().push_back((v, depth));
+                                    dqueue.entry(v).or_default().push_back((x, depth));
+                                    dqueue.entry(x).or_default().push_back((v, depth));
                                     // v.c = v.c + 1
                                     removed = true;
-                                    *counters.get_mut(&v).unwrap() -= 1;
-                                    *counters.get_mut(&x).unwrap() -= 1;
+                                    *counters.entry(v).or_default() -= 1;
+                                    *counters.entry(x).or_default() -= 1;
                                     // if v.c == n: return
-                                    if *counters.get(&x).unwrap() == 0
-                                        && *counters.get(&w).unwrap() == 0
-                                        && *counters.get(&v).unwrap() == 0
+                                    if *counters.entry(x).or_default() == 0
+                                        && *counters.entry(w).or_default() == 0
+                                        && *counters.entry(v).or_default() == 0
                                     {
                                         break 'dq;
                                     }
@@ -268,12 +271,30 @@ impl PolyGraph {
 
             if !removed {
                 self.dist = dist;
-                println!("failed distance computation");
+                log::error!("failed distance computation");
                 return;
             }
         }
 
         self.dist = dist;
+    }
+
+    pub fn springs(&mut self) {
+        let diameter = { *self.dist.values().max().unwrap_or(&1) };
+        self.springs = self
+            .vertices
+            .iter()
+            .flat_map(|&v| self.vertices.iter().map(move |&u| Edge::from((v, u))))
+            .filter(|e| e.u() != e.v())
+            .filter(|e| self.dist[e] <= 2 || self.dist[e] >= diameter - 1)
+            .collect::<HashSet<_>>();
+
+        log::debug!(
+            "v_len: {} | v2: {} | springs: {}",
+            self.vertices.len(),
+            (self.vertices.len() as f32).powi(2),
+            self.springs.len()
+        );
     }
 }
 
@@ -334,8 +355,8 @@ impl PolyGraph {
                     if dist[i][k] != u32::MAX && dist[k][j] != u32::MAX {
                         let nv = dist[i][k] + dist[k][j];
                         if dist[i][j] > nv || dist[j][i] > nv {
-                            dist.get_mut(i).unwrap().insert(*j, nv);
-                            dist.get_mut(j).unwrap().insert(*i, nv);
+                            dist.entry(*i).or_default().insert(*j, nv);
+                            dist.entry(*j).or_default().insert(*i, nv);
                         }
                     }
                 }
