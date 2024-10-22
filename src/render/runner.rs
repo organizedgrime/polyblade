@@ -6,6 +6,7 @@ use iced_winit::core::{Color, Font, Pixels, Size, Theme};
 use iced_winit::runtime::program;
 use iced_winit::runtime::Debug;
 use iced_winit::winit;
+use iced_winit::winit::dpi::PhysicalPosition;
 use iced_winit::winit::window::Window;
 use iced_winit::Clipboard;
 
@@ -159,6 +160,7 @@ impl<'a> App<'a> {
 pub struct AppData {
     scene: Scene,
     state: program::State<Controls>,
+    cursor_position: Option<PhysicalPosition<f64>>,
     debug: Debug,
 }
 
@@ -168,6 +170,7 @@ impl<'a> App<'a> {
             scene,
             state,
             debug,
+            ..
         }) = &mut self.data
         else {
             return Ok(());
@@ -274,6 +277,13 @@ impl<'a> App<'a> {
             self.graphics.engine.submit(&self.graphics.queue, encoder);
             // self.graphics.queue.submit(iter::once(encoder.finish()));
             output.present();
+
+            // Update the mouse cursor
+            self.graphics
+                .window
+                .set_cursor(iced_winit::conversion::mouse_interaction(
+                    state.mouse_interaction(),
+                ));
         }
 
         Ok(())
@@ -396,6 +406,7 @@ impl<'a> winit::application::ApplicationHandler for App<'a> {
         self.data = Some(AppData {
             scene,
             state,
+            cursor_position: None,
             debug,
         });
     }
@@ -483,6 +494,11 @@ impl<'a> winit::application::ApplicationHandler for App<'a> {
                         }
                     }
                 }
+                WindowEvent::CursorMoved { position, .. } => {
+                    if let Some(data) = &mut self.data {
+                        data.cursor_position = Some(*position);
+                    }
+                }
                 _ => {}
             }
         }
@@ -502,11 +518,15 @@ impl<'a> winit::application::ApplicationHandler for App<'a> {
                 // We update iced
                 let _ = data.state.update(
                     self.graphics.viewport.logical_size(),
-                    mouse::Cursor::Unavailable,
-                    // cursor_position
-                    //     .map(|p| conversion::cursor_position(p, graphics.viewport.scale_factor()))
-                    //     .map(mouse::Cursor::Available)
-                    //     .unwrap_or(mouse::Cursor::Unavailable),
+                    data.cursor_position
+                        .map(|p| {
+                            iced_winit::conversion::cursor_position(
+                                p,
+                                self.graphics.viewport.scale_factor(),
+                            )
+                        })
+                        .map(mouse::Cursor::Available)
+                        .unwrap_or(mouse::Cursor::Unavailable),
                     &mut self.graphics.renderer,
                     &Theme::Dark,
                     &renderer::Style {
