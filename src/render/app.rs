@@ -129,7 +129,7 @@ pub struct App<'a> {
     pub surface_configured: bool,
 }
 
-impl<'a> App<'a> {
+impl App<'_> {
     fn resize(&mut self, physical_size: Size<u32>) {
         // Ensure that the requested size will never be larger than the maximum texture dimension
         let max_dimension = self.graphics.device.limits().max_texture_dimension_2d;
@@ -167,7 +167,7 @@ pub struct AppData {
     debug: Debug,
 }
 
-impl<'a> App<'a> {
+impl App<'_> {
     pub fn render(&mut self) -> Result<(), wgpu::SurfaceError> {
         let Some(AppData {
             scene,
@@ -283,7 +283,7 @@ impl<'a> App<'a> {
     }
 }
 
-impl<'a> ApplicationHandler for App<'a> {
+impl ApplicationHandler for App<'_> {
     fn resumed(&mut self, event_loop: &ActiveEventLoop) {
         let Graphics {
             device,
