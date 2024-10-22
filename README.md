@@ -4,8 +4,8 @@
         <span>Cross-platform application for animating Conway Polyhedron Operations</span>
     </div>
     <br/>
-    <a href="https://github.com/organizedgrime/polyblade/releases/latest"> 
-        <img src="https://img.shields.io/github/v/release/organizedgrime/polyblade?style=for-the-badge&color=yellow"/>
+    <a href="https://vera.lgbt/software/polyblade_live/index.html">
+        <img src="https://img.shields.io/website?url=https%3A//vera.lgbt/software/polyblade_live/index.html&label=demo&logo=webgl&logoSize=auto&style=for-the-badge"/>
     </a>
     <a href="https://github.com/organizedgrime/polyblade/actions/workflows/ci.yml"> 
         <img src="https://img.shields.io/github/actions/workflow/status/organizedgrime/polyblade/ci.yml?style=for-the-badge&label=CI%20Status"/>
@@ -15,15 +15,13 @@
     </a>
     <br/>
 </div>
-
-![demo](./assets/demo.gif)
-
-Polyblade is software for visualizing Polyhedra. 
-
-In particular, emphasis has been placed on making smooth animations for the transitions represented by [Conway Polyhedron Notation](https://en.wikipedia.org/wiki/Conway_polyhedron_notation). 
-Polyblade runs on [WGPU](https://github.com/gfx-rs/wgpu) and [Iced](https://github.com/iced-rs/iced).
-Using the PST distance algorithm for efficient all pairs shortest paths in the unweighted undirected graphs represented by polyhedra, none of the vertex position data is deterministic. Instead, this distance matrix is used to create spring forces between every node pair $v_i, v_j$ where $v_n \in G$. Proportional to their distance in the graph structure $G$, the springs inflate the polyhedron to proportional size, allowing us to visualize these structures even when they break convexity. 
-
+<br/>
+<div>
+    <p>
+        <img src="./assets/demo.gif" align="right" alt="animated" width="20%" />
+        Pis software for visualizing Polyhis software for visualizing Polyhis software for visualizing Polyhis software for visualizing Polyhis software for visualizing Polyhis software for visualizing Polyhis software for visualizing Polyhis software for visualizing Polyhis software for visualizing Polyhis software for visualizing Polyhis software for visualizing Polyhis software for visualizing Polyhis software for visualizing Polyh
+    </p>
+</div>
 
 #### Conway Roadmap
 - [x] Ambo
