@@ -45,11 +45,11 @@ impl Scene {
             entries: &[
                 wgpu::BindGroupEntry {
                     binding: 0,
-                    resource: model_buf.raw.as_entire_binding(),
+                    resource: model_buf.binding_resource(),
                 },
                 wgpu::BindGroupEntry {
                     binding: 1,
-                    resource: frag_buf.raw.as_entire_binding(),
+                    resource: frag_buf.binding_resource(),
                 },
             ],
         });
@@ -107,9 +107,9 @@ impl Scene {
     pub fn draw<'a>(&'a self, starting_vertex: u32, pass: &mut wgpu::RenderPass<'a>) {
         pass.set_pipeline(&self.pipeline);
         pass.set_bind_group(0, &self.uniform_group, &[]);
-        pass.set_vertex_buffer(0, self.moment_buf.raw.slice(..));
-        pass.set_vertex_buffer(1, self.shape_buf.raw.slice(..));
-        pass.draw(starting_vertex..self.shape_buf.count, 0..1);
+        pass.set_vertex_buffer(0, self.moment_buf.raw_slice());
+        pass.set_vertex_buffer(1, self.shape_buf.raw_slice());
+        pass.draw(starting_vertex..self.shape_buf.len() as u32, 0..1);
     }
 
     fn build_pipeline(

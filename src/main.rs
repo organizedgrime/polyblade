@@ -1,9 +1,9 @@
 mod bones;
 mod render;
 use iced::futures::executor::block_on;
-use render::*;
+use render::{App, Graphics};
 
-use iced_winit::winit;
+use iced_winit::winit::{self, window::WindowAttributes};
 use winit::event_loop::EventLoop;
 
 #[cfg(target_arch = "wasm32")]
@@ -28,11 +28,9 @@ pub async fn run() -> Result<(), winit::error::EventLoopError> {
         // winit has diverged from WebGPU standards on window creation
         #[allow(deprecated)]
         event_loop
-            .create_window(winit::window::WindowAttributes::default())
+            .create_window(WindowAttributes::default())
             .expect("Create window"),
     );
-
-    log::info!("winit: {:?}", winit::window::WindowAttributes::default());
 
     #[cfg(target_arch = "wasm32")]
     {
@@ -51,12 +49,12 @@ pub async fn run() -> Result<(), winit::error::EventLoopError> {
         let _ = window.request_inner_size(winit::dpi::PhysicalSize::new(1280, 720));
     }
 
-    let mut runner = App {
+    let mut app = App {
         graphics: Graphics::new(&window).await,
         data: None,
         surface_configured: false,
     };
-    event_loop.run_app(&mut runner)
+    event_loop.run_app(&mut app)
 }
 
 pub fn main() -> Result<(), winit::error::EventLoopError> {

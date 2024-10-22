@@ -1,3 +1,4 @@
+mod app;
 mod camera;
 mod color;
 mod controls;
@@ -6,6 +7,5 @@ pub(crate) mod message;
 mod palette;
 pub(crate) mod pipeline;
 mod polydex;
-mod runner;
 mod state;
-pub use runner::*;
+pub use app::{App, Graphics};
