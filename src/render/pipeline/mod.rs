@@ -53,7 +53,7 @@ impl Scene {
                 },
             ],
         });
-        let depth_texture = Texture::create_depth_texture(device, size);
+        let depth_texture = Texture::depth_texture(device, size);
 
         Scene {
             pipeline,

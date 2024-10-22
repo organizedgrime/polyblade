@@ -17,7 +17,7 @@ pub trait MenuAble<'a, C: Program>: Display + Clone + Sized
 where
     C::Message: 'a + Clone,
     C::Theme: 'a
-        // + iced_aw::menu::Catalog
+        + iced_aw::menu::Catalog
         + iced_widget::button::Catalog
         + iced_widget::text::Catalog
         + iced_widget::checkbox::Catalog

@@ -1,12 +1,14 @@
 use iced::alignment::Vertical;
 use iced::Length;
-//use iced_aw::{menu::Item, menu_bar};
+use iced_aw::{menu::Item, menu_bar};
 use iced_wgpu::Renderer;
 use iced_widget::{button, column, container, row, text, Row};
 use iced_winit::core::{Color, Element, Theme};
 use iced_winit::runtime::{Program, Task};
 
 use crate::render::{message::*, state::AppState};
+
+use super::menu::MenuAble as _;
 
 pub struct Controls {
     pub state: AppState,
@@ -58,21 +60,21 @@ impl Program for Controls {
             );
         }
 
-        // let menu_bar = row![
-        //     menu_bar!((PresetMessage::title(), PresetMessage::menu(&()))(
-        //         ConwayMessage::title(),
-        //         ConwayMessage::menu(&())
-        //     )(
-        //         RenderMessage::title(),
-        //         RenderMessage::menu(&self.state.render)
-        //     ))
-        //     .style(iced_aw::menu::primary)
-        // ]
-        // .spacing(10.0);
+        let menu_bar = row![
+            menu_bar!((PresetMessage::title(), PresetMessage::menu(&()))(
+                ConwayMessage::title(),
+                ConwayMessage::menu(&())
+            )(
+                RenderMessage::title(),
+                RenderMessage::menu(&self.state.render)
+            ))
+            .style(iced_aw::menu::primary)
+        ]
+        .spacing(10.0);
 
         container(
             column![
-                // menu_bar.align_y(Vertical::Top),
+                menu_bar.align_y(Vertical::Top),
                 button_row,
                 iced_widget::Space::new(Length::Fill, Length::Fill),
                 button(text(self.state.info.name())).on_press(self.state.info.wiki_message()),
