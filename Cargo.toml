@@ -28,6 +28,7 @@ iced_winit = { version = "0.13" }
 iced_widget = { version = "0.13", features = ["wgpu"] }
 iced_wgpu = { version = "0.13", features = ["webgl"] }
 log = "0.4.22"
+rustc-hash = "2.0.0"
 
 [dev-dependencies]
 test-case = { version = "^3.3.0" }

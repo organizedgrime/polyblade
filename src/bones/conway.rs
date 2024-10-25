@@ -1,9 +1,8 @@
-use std::collections::{HashMap, VecDeque};
-
+use rustc_hash::{FxHashMap as HashMap, FxHashSet as HashSet};
+use std::collections::VecDeque;
 use ultraviolet::Vec3;
 
 use crate::bones::*;
-use std::collections::HashSet;
 
 impl PolyGraph {
     pub fn contract_edge(&mut self, e: impl Into<Edge>) {
@@ -35,7 +34,7 @@ impl PolyGraph {
     }
 
     pub fn contract_edges(&mut self, edges: HashSet<Edge>) {
-        let mut map = HashMap::<VertexId, VertexId>::new();
+        let mut map = HashMap::<VertexId, VertexId>::default();
         for e in edges.into_iter() {
             let u = e.u();
             let v = e.v();
@@ -82,7 +81,7 @@ impl PolyGraph {
         }
 
         // track the edges that will compose the new face
-        let mut new_edges = HashSet::new();
+        let mut new_edges = HashSet::default();
 
         // upate every face
         for i in 0..self.cycles.len() {
@@ -148,7 +147,7 @@ impl PolyGraph {
 
     /// `t` truncate
     pub fn truncate(&mut self, degree: Option<usize>) -> HashSet<Edge> {
-        let mut new_edges = HashSet::new();
+        let mut new_edges = HashSet::default();
         let mut vertices = self.vertices.clone();
         if let Some(degree) = degree {
             vertices.retain(|&v| self.connections(v).len() == degree);
@@ -172,7 +171,7 @@ impl PolyGraph {
             .filter(|&i| self.cycles[i].containz(&v))
             .collect::<Vec<usize>>();
 
-        let mut edges = HashMap::new();
+        let mut edges = HashMap::default();
 
         for &i in relevant.iter() {
             let ui = self.cycles[i].iter().position(|&x| x == v).unwrap();
@@ -197,8 +196,8 @@ impl PolyGraph {
 
     /// `e` = `aa`
     pub fn expand(&mut self, snub: bool) -> HashSet<Edge> {
-        let mut new_edges = HashSet::<Edge>::new();
-        let mut face_edges = HashSet::<Edge>::new();
+        let mut new_edges = HashSet::<Edge>::default();
+        let mut face_edges = HashSet::<Edge>::default();
 
         let ordered_face_indices: HashMap<usize, Vec<usize>> = self
             .vertices
@@ -240,7 +239,7 @@ impl PolyGraph {
             self.delete(v);
         }
 
-        let mut solved_edges = HashSet::new();
+        let mut solved_edges = HashSet::default();
 
         // For every triangle / nf edge
         for a in face_edges.iter() {
@@ -284,7 +283,7 @@ impl PolyGraph {
                 }
             }
         }
-        self.edges = HashSet::new();
+        self.edges = HashSet::default();
         self.edges.extend(new_edges.clone());
         self.edges.extend(face_edges);
         new_edges
