@@ -1,9 +1,7 @@
 use crate::bones::*;
 use rand::random;
-use std::{
-    collections::{HashMap, HashSet, VecDeque},
-    fmt::Display,
-};
+use rustc_hash::{FxHashMap as HashMap, FxHashSet as HashSet};
+use std::{collections::VecDeque, fmt::Display};
 use ultraviolet::Vec3;
 type VertMap<T> = HashMap<VertexId, T>;
 pub type VertexId = usize;
@@ -127,7 +125,7 @@ impl PolyGraph {
     /// All faces
     pub fn find_cycles(&mut self) {
         let mut triplets = Vec::<Face>::new();
-        let mut cycles = HashSet::<Face>::new();
+        let mut cycles = HashSet::<Face>::default();
 
         // find all the triplets
         for &u in self.vertices.iter() {
@@ -363,7 +361,7 @@ impl PolyGraph {
             }
         }
 
-        let mut dd = HashMap::new();
+        let mut dd = HashMap::default();
         for v in self.vertices.iter() {
             for u in self.vertices.iter() {
                 let dvu = dist[v][u];

@@ -1,5 +1,6 @@
 use crate::{bones::Edge, render::message::ConwayMessage};
-use std::{collections::HashSet, time::Instant};
+use rustc_hash::FxHashSet as HashSet;
+use std::time::Instant;
 
 #[derive(Debug, Clone)]
 pub enum Transaction {

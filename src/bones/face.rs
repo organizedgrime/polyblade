@@ -1,6 +1,6 @@
 use crate::bones::{Edge, VertexId};
+use rustc_hash::FxHashSet as HashSet;
 use std::{
-    collections::HashSet,
     hash::Hash,
     ops::{Index, IndexMut},
     slice::SliceIndex,
@@ -23,7 +23,7 @@ impl Face {
     }
 
     pub fn edges(&self) -> HashSet<Edge> {
-        let mut edges = HashSet::new();
+        let mut edges = HashSet::default();
         for i in 0..self.0.len() {
             edges.insert((self.0[i], self.0[(i + 1) % self.0.len()]).into());
         }

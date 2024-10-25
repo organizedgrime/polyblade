@@ -110,13 +110,15 @@ impl Default for AppState {
 impl AppState {
     pub fn update_state(&mut self, time: Instant) {
         // Update the polyhedron using the difference in time between this and the previous frame
-        let frame_difference = time.duration_since(self.render.frame);
+        let frame_difference = time.duration_since(self.render.frame).as_secs_f32();
         let framerate = 1.0 / 60.0;
         // Fraction of a second since the previous frame rendered
-        let second = (frame_difference.as_secs_f64() as f32 / 1.0).min(framerate);
-        if second == framerate {
+        let second = if frame_difference > 1.0 / 60.0 {
             log::warn!("took more than 1/60th of a second to render that frame");
-        }
+            framerate
+        } else {
+            frame_difference
+        };
 
         self.model.polyhedron.update(second);
         self.render.frame = time;

@@ -2538,6 +2538,7 @@ dependencies = [
  "log",
  "rand",
  "ron",
+ "rustc-hash 2.0.0",
  "serde",
  "strum",
  "strum_macros",
