@@ -1,6 +1,7 @@
 #[cfg(test)]
 mod test;
-use super::{Edge, VertexId};
+use super::{Edge, Face, VertexId};
+use std::collections::{HashMap, HashSet};
 use std::{
     collections::VecDeque,
     fmt::{Display, Write},
@@ -169,8 +170,6 @@ impl Matrix {
     */
 
     pub fn pst(&mut self) {
-        use std::collections::{HashMap, HashSet};
-
         // if self.edges.is_empty() {
         //     return;
         // }
@@ -274,6 +273,61 @@ impl Matrix {
         }
 
         *self = dist;
+    }
+
+    /// Number of faces
+    pub fn face_count(&self) -> i64 {
+        2 + self
+            .vertices()
+            .zip(self.vertices())
+            .filter(|&(v, u)| self[[v, u]] == 1)
+            .count() as i64
+            - self.len() as i64
+    }
+    /// All faces
+    pub fn find_cycles(&mut self) -> Vec<Face> {
+        let mut triplets = Vec::<Face>::new();
+        let mut cycles = HashSet::<Face>::default();
+
+        // find all the triplets
+        for u in self.vertices() {
+            let adj: Vec<VertexId> = self.connections(u);
+            for &x in adj.iter() {
+                for &y in adj.iter() {
+                    if x != y && u < x && x < y {
+                        let new_face = Face::new(vec![x, u, y]);
+                        if self[[x, y]] == 1 {
+                            cycles.insert(new_face);
+                        } else {
+                            triplets.push(new_face);
+                        }
+                    }
+                }
+            }
+        }
+        // while there are unparsed triplets
+        while !triplets.is_empty() && (cycles.len() as i64) < self.face_count() {
+            let p = triplets.remove(0);
+            // for each v adjacent to u_t
+            for v in self.connections(p[p.len() - 1]) {
+                if v > p[1] {
+                    let c = self.connections(v);
+                    // if v is not a neighbor of u_2..u_t-1
+                    if !p[1..p.len() - 1].iter().any(|vi| c.contains(vi)) {
+                        let mut new_face = p.clone();
+                        new_face.push(v);
+                        if self.connections(p[0]).contains(&v) {
+                            //cycles.remo
+                            cycles.insert(new_face);
+                        } else {
+                            triplets.push(new_face);
+                        }
+                    }
+                }
+            }
+        }
+
+        return cycles.into_iter().collect();
     }
 }
 

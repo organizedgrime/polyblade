@@ -80,10 +80,8 @@ fn chordless_cycles() {
     println!("{graph}");
     graph.pst();
     println!("{graph}");
-    //assert_eq!(graph.cycles.len(), 0);
 
     graph.connect([2, 0]);
     graph.pst();
-    // graph.find_cycles();
-    // assert_eq!(graph.cycles, vec![Face::new(vec![0, 1, 2])]);
+    assert_eq!(graph.find_cycles(), vec![Face::new(vec![0, 1, 2])]);
 }
