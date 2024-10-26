@@ -11,7 +11,7 @@ const SPEED_DAMPENING: f32 = 0.92;
 // Operations
 impl PolyGraph {
     fn apply_spring_forces(&mut self, second: f32) {
-        let diameter = *self.dist.values().max().unwrap_or(&1) as f32;
+        let diameter = self.dist.iter().flatten().max().cloned().unwrap_or(1);
         let diameter_spring_length = self.edge_length * 2.0;
         let (edges, contracting): (std::collections::hash_set::Iter<Edge>, bool) =
             if let Some(Transaction::Contraction(edges)) = self.transactions.first() {
@@ -23,36 +23,37 @@ impl PolyGraph {
         for e in edges {
             let v = e.v();
             let u = e.u();
-            let v_position = self.positions[&v];
-            let u_position = self.positions[&u];
+            let v_position = self.positions[v];
+            let u_position = self.positions[u];
             let diff = v_position - u_position;
             let spring_length = diff.mag();
             if contracting {
                 let f = ((self.edge_length / TICK_SPEED * second) * 10.0) / spring_length;
-                *self.positions.entry(v).or_default() = v_position.lerp(u_position, f);
-                *self.positions.entry(u).or_default() = u_position.lerp(v_position, f);
+                self.positions[v] = v_position.lerp(u_position, f);
+                self.positions[u] = u_position.lerp(v_position, f);
             } else {
-                let target_length = diameter_spring_length * (self.dist[e] as f32 / diameter);
+                let target_length =
+                    diameter_spring_length * (self.dist[*e] as f32 / diameter as f32);
                 let f = diff * (target_length - spring_length) / TICK_SPEED * second;
-                *self.speeds.entry(v).or_default() = (self.speeds[&v] + f) * SPEED_DAMPENING;
-                *self.speeds.entry(u).or_default() = (self.speeds[&u] - f) * SPEED_DAMPENING;
-                *self.positions.entry(v).or_default() += self.speeds[&v];
-                *self.positions.entry(u).or_default() += self.speeds[&u];
+                self.speeds[v] = (self.speeds[v] + f) * SPEED_DAMPENING;
+                self.speeds[u] = (self.speeds[u] - f) * SPEED_DAMPENING;
+                self.positions[v] += self.speeds[v];
+                self.positions[u] += self.speeds[u];
             }
         }
     }
 
     fn center(&mut self) {
         let shift =
-            self.positions.values().fold(Vec3::zero(), |a, &b| a + b) / self.vertices.len() as f32;
+            self.positions.iter().fold(Vec3::zero(), |a, &b| a + b) / self.dist.len() as f32;
 
-        for (_, v) in self.positions.iter_mut() {
-            *v -= shift;
+        for p in self.positions.iter_mut() {
+            *p -= shift;
         }
     }
 
     fn resize(&mut self, second: f32) {
-        let mean_length = self.positions.values().map(|p| p.mag()).fold(0.0, f32::max);
+        let mean_length = self.positions.iter().map(|p| p.mag()).fold(0.0, f32::max);
         let distance = mean_length - 1.0;
         self.edge_length -= distance / TICK_SPEED * second;
     }
@@ -67,7 +68,7 @@ impl PolyGraph {
     pub fn face_positions(&self, face_index: usize) -> Vec<Vec3> {
         self.cycles[face_index]
             .iter()
-            .map(|v| self.positions[v])
+            .map(|&v| self.positions[v])
             .collect()
     }
 
@@ -84,11 +85,11 @@ impl PolyGraph {
                 Contraction(edges) => {
                     if !edges
                         .iter()
-                        .any(|e| (self.positions[&e.v()] - self.positions[&e.u()]).mag() > 0.08)
+                        .any(|e| (self.positions[e.v()] - self.positions[e.u()]).mag() > 0.08)
                     {
                         // Contract them in the graph
-                        self.contract_edges(edges);
-                        self.pst();
+                        // self.contract_edges(edges);
+                        // self.pst();
                         self.springs();
                         self.transactions.remove(0);
                     }
@@ -97,65 +98,65 @@ impl PolyGraph {
                     for e in edges.into_iter() {
                         self.disconnect(e);
                     }
-                    self.pst();
+                    // self.pst();
                     self.springs();
-                    self.find_cycles();
+                    // self.find_cycles();
                     self.transactions.remove(0);
                 }
                 Conway(conway) => {
-                    self.transactions.remove(0);
-                    use ConwayMessage::*;
-                    use Transaction::*;
-                    let new_transactions = match conway {
-                        Dual => {
-                            let edges = self.expand(false);
-                            vec![
-                                Wait(Instant::now() + Duration::from_millis(500)),
-                                Contraction(edges),
-                                Name('d'),
-                            ]
-                        }
-                        Join => {
-                            let edges = self.kis(Option::None);
-                            vec![
-                                //Wait(Instant::now() + Duration::from_secs(1)),
-                                Release(edges),
-                                Name('j'),
-                            ]
-                        }
-                        Ambo => {
-                            let edges = self.ambo();
-                            vec![Contraction(edges), Name('a')]
-                        }
-                        Kis => {
-                            self.kis(Option::None);
-                            vec![Name('k')]
-                        }
-                        Truncate => {
-                            self.truncate(Option::None);
-                            vec![Name('t')]
-                        }
-                        Expand => {
-                            self.expand(false);
-                            vec![Name('e')]
-                        }
-                        Snub => {
-                            self.expand(true);
-                            vec![Name('s')]
-                        }
-                        Bevel => {
-                            vec![
-                                Conway(Truncate),
-                                Wait(Instant::now() + Duration::from_millis(500)),
-                                Conway(Ambo),
-                                Name('b'),
-                            ]
-                        }
-                    };
-                    self.cycles.sort_by_key(|c| usize::MAX - c.len());
-                    self.transactions = [new_transactions, self.transactions.clone()].concat();
-                    self.pst();
-                    self.springs();
+                    // self.transactions.remove(0);
+                    // use ConwayMessage::*;
+                    // use Transaction::*;
+                    // let new_transactions = match conway {
+                    //     Dual => {
+                    //         let edges = self.expand(false);
+                    //         vec![
+                    //             Wait(Instant::now() + Duration::from_millis(650)),
+                    //             Contraction(edges),
+                    //             Name('d'),
+                    //         ]
+                    //     }
+                    //     Join => {
+                    //         let edges = self.kis(Option::None);
+                    //         vec![
+                    //             //Wait(Instant::now() + Duration::from_secs(1)),
+                    //             Release(edges),
+                    //             Name('j'),
+                    //         ]
+                    //     }
+                    //     Ambo => {
+                    //         let edges = self.ambo();
+                    //         vec![Contraction(edges), Name('a')]
+                    //     }
+                    //     Kis => {
+                    //         self.kis(Option::None);
+                    //         vec![Name('k')]
+                    //     }
+                    //     Truncate => {
+                    //         self.truncate(Option::None);
+                    //         vec![Name('t')]
+                    //     }
+                    //     Expand => {
+                    //         self.expand(false);
+                    //         vec![Name('e')]
+                    //     }
+                    //     Snub => {
+                    //         self.expand(true);
+                    //         vec![Name('s')]
+                    //     }
+                    //     Bevel => {
+                    //         vec![
+                    //             Conway(Truncate),
+                    //             Wait(Instant::now() + Duration::from_millis(500)),
+                    //             Conway(Ambo),
+                    //             Name('b'),
+                    //         ]
+                    //     }
+                    // };
+                    // self.cycles.sort_by_key(|c| usize::MAX - c.len());
+                    // self.transactions = [new_transactions, self.transactions.clone()].concat();
+                    // self.pst();
+                    // self.springs();
                 }
                 Name(c) => {
                     if c == 'b' {

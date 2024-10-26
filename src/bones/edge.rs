@@ -1,5 +1,8 @@
 use crate::bones::VertexId;
-use std::fmt::Display;
+use std::{
+    fmt::Display,
+    ops::{Index, IndexMut},
+};
 
 pub type EdgeId = (VertexId, VertexId);
 
@@ -38,6 +41,19 @@ impl Edge {
         } else {
             None
         }
+    }
+}
+
+impl Index<Edge> for Vec<Vec<VertexId>> {
+    type Output = VertexId;
+    fn index(&self, idx: Edge) -> &Self::Output {
+        &self[idx.v()][idx.u()]
+    }
+}
+
+impl IndexMut<Edge> for Vec<Vec<VertexId>> {
+    fn index_mut(&mut self, idx: Edge) -> &mut Self::Output {
+        &mut self[idx.v()][idx.u()]
     }
 }
 

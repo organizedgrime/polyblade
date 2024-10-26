@@ -22,7 +22,7 @@ impl PolyhedronPrimitive {
     pub fn surface_area(&self, face_index: usize) -> f32 {
         let positions: Vec<Vec3> = self.model.polyhedron.cycles[face_index]
             .iter()
-            .map(|i| self.model.polyhedron.positions[i])
+            .map(|&i| self.model.polyhedron.positions[i])
             .collect();
         let mut area = 0.0;
         for i in 0..positions.len() / 3 {
@@ -59,7 +59,7 @@ impl PolyhedronPrimitive {
                     .map(|cycle| {
                         let color = *color_map.get(&cycle.len()).unwrap();
                         let positions: Vec<Vec3> =
-                            cycle.iter().map(|&c| polyhedron.positions[&c]).collect();
+                            cycle.iter().map(|&c| polyhedron.positions[c]).collect();
 
                         match cycle.len() {
                             3 => positions

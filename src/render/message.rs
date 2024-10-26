@@ -152,24 +152,24 @@ pub trait ProcessMessage<T> {
 impl ProcessMessage<ModelState> for PresetMessage {
     fn process(&self, state: &mut ModelState) -> Task<PolybladeMessage> {
         use PresetMessage::*;
-        match &self {
-            Prism(n) => {
-                state.polyhedron = PolyGraph::prism(*n);
-                if n == &4 {
-                    state.polyhedron.name = "C".into();
-                }
-            }
-            AntiPrism(n) => state.polyhedron = PolyGraph::anti_prism(*n),
-            Pyramid(n) => {
-                state.polyhedron = PolyGraph::pyramid(*n);
-                if n == &3 {
-                    state.polyhedron.name = "T".into();
-                }
-            }
-            Octahedron => state.polyhedron = PolyGraph::octahedron(),
-            Dodecahedron => state.polyhedron = PolyGraph::dodecahedron(),
-            Icosahedron => state.polyhedron = PolyGraph::icosahedron(),
-        }
+        // match &self {
+        //     Prism(n) => {
+        //         state.polyhedron = PolyGraph::prism(*n);
+        //         if n == &4 {
+        //             state.polyhedron.name = "C".into();
+        //         }
+        //     }
+        //     AntiPrism(n) => state.polyhedron = PolyGraph::anti_prism(*n),
+        //     Pyramid(n) => {
+        //         state.polyhedron = PolyGraph::pyramid(*n);
+        //         if n == &3 {
+        //             state.polyhedron.name = "T".into();
+        //         }
+        //     }
+        //     Octahedron => state.polyhedron = PolyGraph::octahedron(),
+        //     Dodecahedron => state.polyhedron = PolyGraph::dodecahedron(),
+        //     Icosahedron => state.polyhedron = PolyGraph::icosahedron(),
+        // }
 
         Task::none()
     }

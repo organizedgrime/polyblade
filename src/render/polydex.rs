@@ -46,8 +46,8 @@ impl PolyGraph {
         InfoBox {
             conway: self.name.clone(),
             faces: self.cycles.len(),
-            edges: self.edges.len(),
-            vertices: self.vertices.len(),
+            edges: 0,
+            vertices: self.vertices().len(),
             name: entry.map(|e| e.name.clone()),
             bowers: entry.map(|e| e.bowers.clone()),
             wiki: entry.map(|e| e.wiki.clone()),
