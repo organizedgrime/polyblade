@@ -9,5 +9,6 @@ mod transaction;
 
 pub use edge::*;
 pub use face::*;
+pub use matrix::*;
 pub use polygraph::*;
 pub use transaction::*;

@@ -1,7 +1,7 @@
-use std::{
-    ops::{Index, IndexMut, Range},
-    process::Output,
-};
+#[cfg(test)]
+mod test;
+
+use std::ops::{Index, IndexMut, Range};
 
 use rustc_hash::FxHashSet as HashSet;
 
@@ -30,16 +30,26 @@ impl Matrix {
     }
 }
 
-trait Matrindex<T>: Index<T, Output = usize> + IndexMut<T, Output = usize> {}
-
 impl Matrix {
     /// Connect one vertex to another with length one, iff they are note the same point
-    pub fn connect<'a, T>(&mut self, i: &'a T)
+    pub fn connect<T>(&mut self, i: T)
     where
-        Matrix: Matrindex<&'a T>,
+        Matrix: Index<T, Output = usize> + IndexMut<T, Output = usize>,
+        T: Copy,
     {
         if self[i] != 0 {
             self[i] = 1;
+        }
+    }
+
+    /// Disconnect one vertex from another iff they are neighbors
+    pub fn disconnect<T>(&mut self, i: T)
+    where
+        Matrix: Index<T, Output = usize> + IndexMut<T, Output = usize>,
+        T: Copy,
+    {
+        if self[i] == 1 {
+            self[i] = usize::MAX;
         }
     }
 
@@ -59,7 +69,7 @@ impl Matrix {
     }
 
     /// Enumerates the vertices connected to v
-    pub fn connections(&self, v: VertexId) -> HashSet<VertexId> {
+    pub fn connections(&self, v: VertexId) -> Vec<VertexId> {
         self.vertices().filter(|&u| self[[v, u]] == 1).collect()
     }
 
@@ -73,6 +83,7 @@ impl Matrix {
         self.0.len()
     }
 
+    /// Maximum distance value
     pub fn diameter(&self) -> usize {
         self.vertices()
             .zip(self.vertices())
@@ -82,30 +93,6 @@ impl Matrix {
     }
 }
 
-// impl Index<VertexId> for Matrix {
-//     type Output = [usize];
-//
-//     fn index(&self, index: VertexId) -> &Self::Output {
-//         &self.0[index]
-//     }
-// }
-//
-// impl IndexMut<VertexId> for Matrix {
-//     fn index_mut(&mut self, index: VertexId) -> &mut Self::Output {
-//         &mut self.0[index]
-//     }
-// }
-
-/*
-impl Index<(VertexId, VertexId)> for Matrix {
-    type Output = usize;
-
-    fn index(&self, (v, u): (VertexId, VertexId)) -> &Self::Output {
-        &self.0[v.max(u)][v.min(u)]
-    }
-}
-*/
-
 impl Index<[VertexId; 2]> for Matrix {
     type Output = usize;
 
@@ -113,6 +100,7 @@ impl Index<[VertexId; 2]> for Matrix {
         &self.0[index[0].max(index[1])][index[0].min(index[1])]
     }
 }
+
 impl IndexMut<[VertexId; 2]> for Matrix {
     fn index_mut(&mut self, index: [VertexId; 2]) -> &mut Self::Output {
         &mut self.0[index[0].max(index[1])][index[0].min(index[1])]
@@ -126,6 +114,7 @@ impl Index<Edge> for Matrix {
         &self.0[index.v.max(index.u)][index.v.min(index.u)]
     }
 }
+
 impl IndexMut<Edge> for Matrix {
     fn index_mut(&mut self, index: Edge) -> &mut Self::Output {
         &mut self.0[index.v.max(index.u)][index.v.min(index.u)]

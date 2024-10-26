@@ -11,7 +11,7 @@ const SPEED_DAMPENING: f32 = 0.92;
 // Operations
 impl PolyGraph {
     fn apply_spring_forces(&mut self, second: f32) {
-        let diameter = self.dist.iter().flatten().max().cloned().unwrap_or(1);
+        let diameter = self.matrix.diameter();
         let diameter_spring_length = self.edge_length * 2.0;
         let (edges, contracting): (std::collections::hash_set::Iter<Edge>, bool) =
             if let Some(Transaction::Contraction(edges)) = self.transactions.first() {
@@ -33,7 +33,7 @@ impl PolyGraph {
                 self.positions[u] = u_position.lerp(v_position, f);
             } else {
                 let target_length =
-                    diameter_spring_length * (self.dist[*e] as f32 / diameter as f32);
+                    diameter_spring_length * (self.matrix[*e] as f32 / diameter as f32);
                 let f = diff * (target_length - spring_length) / TICK_SPEED * second;
                 self.speeds[v] = (self.speeds[v] + f) * SPEED_DAMPENING;
                 self.speeds[u] = (self.speeds[u] - f) * SPEED_DAMPENING;
@@ -45,7 +45,7 @@ impl PolyGraph {
 
     fn center(&mut self) {
         let shift =
-            self.positions.iter().fold(Vec3::zero(), |a, &b| a + b) / self.dist.len() as f32;
+            self.positions.iter().fold(Vec3::zero(), |a, &b| a + b) / self.matrix.len() as f32;
 
         for p in self.positions.iter_mut() {
             *p -= shift;
@@ -54,8 +54,8 @@ impl PolyGraph {
 
     fn resize(&mut self, second: f32) {
         let mean_length = self.positions.iter().map(|p| p.mag()).fold(0.0, f32::max);
-        let distance = mean_length - 1.0;
-        self.edge_length -= distance / TICK_SPEED * second;
+        let matrixance = mean_length - 1.0;
+        self.edge_length -= matrixance / TICK_SPEED * second;
     }
 
     pub fn update(&mut self, second: f32) {
