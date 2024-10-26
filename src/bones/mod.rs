@@ -2,7 +2,6 @@
 mod edge;
 mod face;
 mod jaggraph;
-mod platonic;
 mod polygraph;
 mod polyhedron;
 mod transaction;

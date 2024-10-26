@@ -86,3 +86,39 @@ fn chordless_cycles() {
     graph.find_cycles();
     assert_eq!(graph.cycles, vec![Face::new(vec![0, 1, 2])]);
 }
+
+// #[test]
+// fn truncate() {
+//     let mut shape = JagGraph::icosahedron();
+//     shape.truncate(None);
+// }
+
+#[test]
+fn contract_edge() {
+    println!("contract edge");
+    let mut graph = JagGraph::prism(4);
+    println!("{graph}");
+    assert_eq!(graph.len(), 8);
+    assert_eq!(graph.edges().count(), 12);
+    println!("{graph}");
+
+    graph.contract_edge([0, 1]);
+    graph.pst();
+
+    println!("{graph}");
+    assert_eq!(graph.len(), 7);
+    assert_eq!(graph.edges().count(), 11);
+}
+
+// #[test]
+// fn split_vertex() {
+//     let mut graph = JagGraph::prism(4);
+//     assert_eq!(graph.vertices.len(), 8);
+//     assert_eq!(graph.edges.len(), 12);
+//
+//     graph.split_vertex(0);
+//     graph.pst();
+//
+//     assert_eq!(graph.vertices.len(), 10);
+//     assert_eq!(graph.edges.len(), 15);
+// }

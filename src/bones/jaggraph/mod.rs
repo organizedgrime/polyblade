@@ -7,6 +7,8 @@ use std::{
     fmt::{Display, Write},
     ops::{Index, IndexMut, Range},
 };
+mod conway;
+mod platonic;
 
 /// Jagged array which represents the symmetrix distance matrix of a given Graph
 /// usize::MAX    ->   disconnected
@@ -88,6 +90,17 @@ impl JagGraph {
         0..self.matrix.len()
     }
 
+    /// All possible compbinations of vertices
+    pub fn vertex_pairs(&self) -> impl Iterator<Item = [VertexId; 2]> {
+        self.vertices()
+            .flat_map(|v| (0..v).into_iter().map(move |u| [v, u]))
+    }
+
+    /// All actual edges of the graph (D_{ij} = 1)
+    pub fn edges(&self) -> impl Iterator<Item = [VertexId; 2]> + use<'_> {
+        self.vertex_pairs().filter(move |&e| self[e] == 1)
+    }
+
     /// Vertex Count
     pub fn len(&self) -> usize {
         self.matrix.len()
@@ -95,83 +108,8 @@ impl JagGraph {
 
     /// Maximum distance value
     pub fn diameter(&self) -> usize {
-        self.vertices()
-            .zip(self.vertices())
-            .map(|(v, u)| self[[v, u]])
-            .max()
-            .unwrap_or(0)
+        self.vertex_pairs().map(|e| self[e]).max().unwrap_or(0)
     }
-
-    /* 1  procedure BFS(G, root) is
-     2      let Q be a queue
-     3      label root as explored
-     4      Q.enqueue(root)
-     5      while Q is not empty do
-     6          v := Q.dequeue()
-     7          if v is the goal then
-     8              return v
-     9          for all edges from v to w in G.adjacentEdges(v) do
-    10              if w is not labeled as explored then
-    11                  label w as explored
-    12                  w.parent := v
-    13                  Q.enqueue(w)
-        */
-    /*
-         * private Map<Node, Boolean>> vis = new HashMap<Node, Boolean>();
-
-    private Map<Node, Node> prev = new HashMap<Node, Node>();
-
-    public List getDirections(Node start, Node finish){
-        List directions = new LinkedList();
-        Queue q = new LinkedList();
-        Node current = start;
-        q.add(current);
-        vis.put(current, true);
-        while(!q.isEmpty()){
-            current = q.remove();
-            if (current.equals(finish)){
-                break;
-            }else{
-                for(Node node : current.getOutNodes()){
-                    if(!vis.contains(node)){
-                        q.add(node);
-                        vis.put(node, true);
-                        prev.put(node, current);
-                    }
-                }
-            }
-        }
-        if (!current.equals(finish)){
-            System.out.println("can't reach destination");
-        }
-        for(Node node = finish; node != null; node = prev.get(node)) {
-            directions.add(node);
-        }
-        directions.reverse();
-        return directions;
-    }
-         */
-
-    /*
-    fn bfs(&mut self, start: VertexId, end: VertexId) {
-        let goal = 12;
-        let mut explored = vec![start];
-        let mut q = VecDeque::from([start]);
-        while let Some(v) = q.pop_front() {
-            if v == end {
-                break;
-                //return v;
-            }
-            for w in self.connections(v) {
-                if !explored.contains(&w) {
-                    q.push_back(w);
-                    explored.push(w);
-                    //prev.put()
-                }
-            }
-        }
-    }
-    */
 
     pub fn pst(&mut self) {
         // if self.edges.is_empty() {
@@ -281,12 +219,7 @@ impl JagGraph {
 
     /// Number of faces
     pub fn face_count(&self) -> i64 {
-        2 + self
-            .vertices()
-            .zip(self.vertices())
-            .filter(|&(v, u)| self[[v, u]] == 1)
-            .count() as i64
-            - self.len() as i64
+        2 + self.edges().count() as i64 - self.len() as i64
     }
     /// All faces
     pub fn find_cycles(&mut self) {
@@ -370,7 +303,7 @@ impl Display for JagGraph {
             f.write_str("|")?;
             for u in self.vertices() {
                 let value = if self[[v, u]] == usize::MAX {
-                    String::from("M")
+                    String::from("_")
                 } else {
                     self[[v, u]].to_string()
                 };

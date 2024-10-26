@@ -179,7 +179,7 @@ impl PolyGraph {
         }
 
         let mut dd = HashMap::default();
-        for (v, u) in graph.vertices().zip(graph.vertices()) {
+        for [v, u] in graph.vertex_pairs() {
             let dvu = graph[[v, u]];
             if dvu != usize::MAX && dvu != 0 {
                 let e: Edge = (v, u).into();
