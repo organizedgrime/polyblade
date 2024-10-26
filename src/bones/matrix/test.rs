@@ -46,6 +46,7 @@ use super::*;
 #[test]
 fn basics() {
     let mut graph = Matrix::new(4);
+    println!("basics:");
     // Connect
     graph.connect([0, 1]);
     graph.connect([0, 2]);
@@ -75,11 +76,14 @@ fn chordless_cycles() {
     graph.connect([1, 2]);
     graph.connect([2, 3]);
 
-    // graph.pst();
-    // assert_eq!(graph.cycles.len(), 0);
-    //
-    // graph.connect((2, 0));
-    // graph.pst();
+    println!("chordless_cycles:");
+    println!("{graph}");
+    graph.pst();
+    println!("{graph}");
+    //assert_eq!(graph.cycles.len(), 0);
+
+    graph.connect([2, 0]);
+    graph.pst();
     // graph.find_cycles();
     // assert_eq!(graph.cycles, vec![Face::new(vec![0, 1, 2])]);
 }
