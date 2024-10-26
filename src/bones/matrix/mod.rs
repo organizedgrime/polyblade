@@ -1,11 +1,10 @@
 #[cfg(test)]
 mod test;
-
-use std::ops::{Index, IndexMut, Range};
-
-use rustc_hash::FxHashSet as HashSet;
-
 use super::{Edge, VertexId};
+use std::{
+    fmt::{Display, Write},
+    ops::{Index, IndexMut, Range},
+};
 
 /// Jagged array which represents the symmetrix distance matrix of a given Graph
 /// usize::MAX    ->   disconnected
@@ -64,6 +63,11 @@ impl Matrix {
     pub fn delete(&mut self, v: VertexId) {
         for row in &mut self.0[v..] {
             row.remove(v);
+            for distance in &mut row[v..] {
+                if *distance > 0 && *distance != usize::MAX {
+                    *distance -= 1;
+                }
+            }
         }
         self.0.remove(v);
     }
@@ -118,5 +122,23 @@ impl Index<Edge> for Matrix {
 impl IndexMut<Edge> for Matrix {
     fn index_mut(&mut self, index: Edge) -> &mut Self::Output {
         &mut self.0[index.v.max(index.u)][index.v.min(index.u)]
+    }
+}
+
+impl Display for Matrix {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        for v in self.vertices() {
+            f.write_str("|")?;
+            for u in self.vertices() {
+                let value = if self[[v, u]] == usize::MAX {
+                    String::from("M")
+                } else {
+                    self[[v, u]].to_string()
+                };
+                f.write_fmt(format_args!(" {value} |"))?;
+            }
+            f.write_fmt(format_args!("\n"))?;
+        }
+        Ok(())
     }
 }

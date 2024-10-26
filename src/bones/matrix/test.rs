@@ -62,9 +62,9 @@ fn basics() {
 
     // Delete
     graph.delete(1);
-    assert_eq!(graph.connections(0), vec![2]);
-    assert_eq!(graph.connections(1), vec![]);
-    assert_eq!(graph.connections(2), vec![0]);
+    assert_eq!(graph.connections(0), vec![1]);
+    assert_eq!(graph.connections(2), vec![]);
+    assert_eq!(graph.connections(1), vec![0]);
 }
 
 #[test]
