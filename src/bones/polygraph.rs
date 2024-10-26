@@ -1,4 +1,5 @@
 use crate::bones::*;
+use matrix::Matrix;
 use rand::random;
 use rustc_hash::{FxHashMap as HashMap, FxHashSet as HashSet};
 use std::{collections::VecDeque, fmt::Display};
@@ -11,7 +12,7 @@ pub struct PolyGraph {
     /// Conway Polyhedron Notation
     pub name: String,
     /// Distance matrix
-    pub dist: Vec<Vec<VertexId>>,
+    pub matrix: Matrix,
     /// Faces / chordless cycles
     pub cycles: Vec<Face>,
     ///
@@ -28,10 +29,10 @@ pub struct PolyGraph {
 
 impl PolyGraph {
     /// New with n vertices
-    pub fn new_disconnected(vertex_count: usize) -> Self {
+    pub fn new_disconnected(n: usize) -> Self {
         Self {
-            dist: vec![vec![0; vertex_count]; vertex_count],
-            speeds: vec![Vec3::zero(); vertex_count],
+            matrix: Matrix::new(n),
+            speeds: vec![Vec3::zero(); n],
             edge_length: 1.0,
             ..Default::default()
         }
@@ -41,8 +42,8 @@ impl PolyGraph {
     pub fn lattice(&mut self) {
         // Use a Fibonacci Lattice to evently distribute starting points on a sphere
         let phi = std::f32::consts::PI * (3.0 - 5.0f32.sqrt());
-        for v in 0..self.dist.len() {
-            let y = 1.0 - (v as f32 / (self.dist.len() - 1) as f32);
+        for v in 0..self.matrix.len() {
+            let y = 1.0 - (v as f32 / (self.matrix.len() - 1) as f32);
             let radius = (1.0 - y * y).sqrt();
             let theta = (phi * (v as f32)) % (std::f32::consts::PI * 2.0);
             let x = theta.cos() * radius;
@@ -54,24 +55,19 @@ impl PolyGraph {
     pub fn connect(&mut self, e: impl Into<Edge>) {
         let e = e.into();
         if e.v() != e.u() {
-            self.dist[e] = 1;
+            self.matrix[e] = 1;
         }
     }
 
     pub fn disconnect(&mut self, e: impl Into<Edge>) {
-        self.dist[e.into()] = 0;
+        self.matrix[e.into()] = 0;
     }
 
     pub fn insert(&mut self) -> VertexId {
-        self.dist.push(vec![0; self.dist.len()]);
-        for row in self.dist.iter_mut() {
-            row.push(0);
-        }
-
         self.positions
             .push(Vec3::new(random(), random(), random()).normalized());
         self.speeds.push(Vec3::zero());
-        self.dist.len()
+        self.matrix.insert()
     }
 
     /*
@@ -98,28 +94,20 @@ impl PolyGraph {
     */
 
     /// Edges of a vertex
-    pub fn edges(&self, v: VertexId) -> Vec<Edge> {
-        let mut edges = vec![];
-        for u in 0..self.dist.len() {
-            if self.dist[v][u] == 1 {
-                edges.push((v, u).into());
-            }
-        }
-        edges
-    }
+    // pub fn edges(&self, v: VertexId) -> Vec<Edge> {
+    //     let mut edges = vec![];
+    //     for u in 0..self.dist.len() {
+    //         if self.dist[v][u] == 1 {
+    //             edges.push((v, u).into());
+    //         }
+    //     }
+    //     edges
+    // }
 
     /// Number of faces
     // pub fn face_count(&self) -> i64 {
     //     2 + self.edges.len() as i64 - self.vertices.len() as i64
     // }
-
-    // Vertices that are connected to a given vertex
-    pub fn connections(&self, v: VertexId) -> HashSet<VertexId> {
-        (0..self.dist.len())
-            .into_iter()
-            .filter_map(|u| if self.dist[v][u] == 1 { Some(u) } else { None })
-            .collect()
-    }
 
     // /// All faces
     // pub fn find_cycles(&mut self) {
@@ -279,16 +267,16 @@ impl PolyGraph {
     //
 
     pub fn vertices(&self) -> std::ops::Range<VertexId> {
-        (0..self.dist.len()).into_iter()
+        (0..self.matrix.len()).into_iter()
     }
 
     pub fn springs(&mut self) {
-        let diameter = self.dist.iter().flatten().max().cloned().unwrap_or(1);
+        let diameter = self.matrix.diameter();
         self.springs = self
             .vertices()
             .zip(self.vertices())
-            .filter(|(v, u)| {
-                v != u && (self.dist[*v][*u] <= 2 || self.dist[*v][*u] >= diameter - 1)
+            .filter(|&(v, u)| {
+                v != u && (self.matrix[[v, u]] <= 2 || self.matrix[[v, u]] >= diameter - 1)
             })
             .map(|(v, u)| Edge::from((v, u)))
             .collect::<HashSet<_>>();
@@ -326,44 +314,19 @@ impl Display for PolyGraph {
 }
 */
 
-/*
 #[cfg(test)]
 impl PolyGraph {
     pub fn floyd(&mut self) {
         // let dist be a |V| × |V| array of minimum distances initialized to ∞ (infinity)
-        let mut dist: HashMap<VertexId, HashMap<VertexId, u32>> = self
-            .vertices
-            .iter()
-            .map(|v| {
-                (
-                    *v,
-                    self.vertices
-                        .iter()
-                        .map(|u| {
-                            (
-                                *u,
-                                if u == v {
-                                    0
-                                } else if self.edges.contains(&(v, u).into()) {
-                                    1
-                                } else {
-                                    u32::MAX
-                                },
-                            )
-                        })
-                        .collect(),
-                )
-            })
-            .collect();
+        let mut matrix: Matrix = Matrix::new(self.matrix.len());
 
-        for k in self.vertices.iter() {
-            for i in self.vertices.iter() {
-                for j in self.vertices.iter() {
-                    if dist[i][k] != u32::MAX && dist[k][j] != u32::MAX {
-                        let nv = dist[i][k] + dist[k][j];
-                        if dist[i][j] > nv || dist[j][i] > nv {
-                            dist.entry(*i).or_default().insert(*j, nv);
-                            dist.entry(*j).or_default().insert(*i, nv);
+        for k in matrix.vertices() {
+            for i in matrix.vertices() {
+                for j in matrix.vertices() {
+                    if matrix[[i, k]] != usize::MAX && matrix[[k, j]] != usize::MAX {
+                        let nv = matrix[[i, k]] + matrix[[k, j]];
+                        if matrix[[i, j]] > nv || matrix[[j, i]] > nv {
+                            matrix[[i, j]] = nv;
                         }
                     }
                 }
@@ -371,17 +334,15 @@ impl PolyGraph {
         }
 
         let mut dd = HashMap::default();
-        for v in self.vertices.iter() {
-            for u in self.vertices.iter() {
-                let dvu = dist[v][u];
-                if dvu != u32::MAX && dvu != 0 {
-                    let e = (v, u).into();
-                    dd.insert(e, dvu as usize);
-                }
+        for (v, u) in matrix.vertices().zip(matrix.vertices()) {
+            let dvu = matrix[[v, u]];
+            if dvu != usize::MAX && dvu != 0 {
+                let e: Edge = (v, u).into();
+                dd.insert(e, dvu as usize);
             }
         }
 
-        self.dist = dd;
+        self.matrix = matrix;
     }
 }
 
@@ -393,17 +354,17 @@ mod test {
 
     #[test_case(PolyGraph::pyramid(3); "T")]
     #[test_case(PolyGraph::prism(4); "C")]
-    #[test_case(PolyGraph::octahedron(); "O")]
-    #[test_case(PolyGraph::dodecahedron(); "D")]
-    #[test_case(PolyGraph::icosahedron(); "I")]
-    #[test_case({ let mut g = PolyGraph::prism(4); g.truncate(None); g.pst(); g} ; "tC")]
-    #[test_case({ let mut g = PolyGraph::octahedron(); g.truncate(None); g.pst(); g} ; "tO")]
-    #[test_case({ let mut g = PolyGraph::dodecahedron(); g.truncate(None); g.pst(); g} ; "tD")]
+    // #[test_case(PolyGraph::octahedron(); "O")]
+    // #[test_case(PolyGraph::dodecahedron(); "D")]
+    // #[test_case(PolyGraph::icosahedron(); "I")]
+    // #[test_case({ let mut g = PolyGraph::prism(4); g.truncate(None); g.pst(); g} ; "tC")]
+    // #[test_case({ let mut g = PolyGraph::octahedron(); g.truncate(None); g.pst(); g} ; "tO")]
+    // #[test_case({ let mut g = PolyGraph::dodecahedron(); g.truncate(None); g.pst(); g} ; "tD")]
     fn pst(mut graph: PolyGraph) {
-        let new_dist = graph.dist.clone();
-        graph.dist = Default::default();
+        let new_dist = graph.matrix.clone();
+        graph.matrix = Default::default();
         graph.floyd();
-        let old_dist = graph.dist.clone();
+        let old_dist = graph.matrix.clone();
 
         //assert_eq!(old_dist, graph.dist);
         assert_eq!(
@@ -475,4 +436,3 @@ mod test {
         assert_eq!(graph.cycles, vec![Face::new(vec![0, 1, 2])]);
     }
 }
-*/

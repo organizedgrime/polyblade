@@ -1,7 +1,8 @@
 //mod conway;
 mod edge;
 mod face;
-//mod platonic;
+mod matrix;
+mod platonic;
 mod polygraph;
 mod polyhedron;
 mod transaction;

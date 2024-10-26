@@ -64,32 +64,32 @@ impl PolyGraph {
         p
     }
 
-    pub fn octahedron() -> PolyGraph {
-        let mut p = PolyGraph::pyramid(3);
-        let edges = p.ambo();
-        p.contract_edges(edges);
-        //p.pst();
-        //p.springs();
-        p.lattice();
-        p.name = "O".into();
-        p
-    }
-    pub fn dodecahedron() -> PolyGraph {
-        let mut p = PolyGraph::anti_prism(5);
-        let edges = p.expand(false);
-        p.contract_edges(edges);
-        p.truncate(Some(5));
-        //p.pst();
-        //p.springs();
-        p.name = "D".into();
-        p
-    }
-    pub fn icosahedron() -> PolyGraph {
-        let mut p = PolyGraph::anti_prism(5);
-        p.kis(Some(5));
-        //p.pst();
-        //p.springs();
-        p.name = "I".into();
-        p
-    }
+    // pub fn octahedron() -> PolyGraph {
+    //     let mut p = PolyGraph::pyramid(3);
+    //     let edges = p.ambo();
+    //     p.contract_edges(edges);
+    //     //p.pst();
+    //     //p.springs();
+    //     p.lattice();
+    //     p.name = "O".into();
+    //     p
+    // }
+    // pub fn dodecahedron() -> PolyGraph {
+    //     let mut p = PolyGraph::anti_prism(5);
+    //     let edges = p.expand(false);
+    //     p.contract_edges(edges);
+    //     p.truncate(Some(5));
+    //     //p.pst();
+    //     //p.springs();
+    //     p.name = "D".into();
+    //     p
+    // }
+    // pub fn icosahedron() -> PolyGraph {
+    //     let mut p = PolyGraph::anti_prism(5);
+    //     p.kis(Some(5));
+    //     //p.pst();
+    //     //p.springs();
+    //     p.name = "I".into();
+    //     p
+    // }
 }

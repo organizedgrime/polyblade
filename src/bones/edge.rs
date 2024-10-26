@@ -8,8 +8,8 @@ pub type EdgeId = (VertexId, VertexId);
 
 #[derive(Debug, Clone, Copy)]
 pub struct Edge {
-    v: VertexId,
-    u: VertexId,
+    pub(crate) v: VertexId,
+    pub(crate) u: VertexId,
 }
 
 impl Edge {
