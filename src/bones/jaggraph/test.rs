@@ -45,7 +45,7 @@ use super::*;
 
 #[test]
 fn basics() {
-    let mut graph = Matrix::new(4);
+    let mut graph = JagGraph::new(4);
     println!("basics:");
     // Connect
     graph.connect([0, 1]);
@@ -70,7 +70,7 @@ fn basics() {
 
 #[test]
 fn chordless_cycles() {
-    let mut graph = Matrix::new(4);
+    let mut graph = JagGraph::new(4);
     // Connect
     graph.connect([0, 1]);
     graph.connect([1, 2]);
@@ -83,5 +83,6 @@ fn chordless_cycles() {
 
     graph.connect([2, 0]);
     graph.pst();
-    assert_eq!(graph.find_cycles(), vec![Face::new(vec![0, 1, 2])]);
+    graph.find_cycles();
+    assert_eq!(graph.cycles, vec![Face::new(vec![0, 1, 2])]);
 }

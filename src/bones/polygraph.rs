@@ -10,7 +10,7 @@ pub struct PolyGraph {
     /// Conway Polyhedron Notation
     pub name: String,
     /// Distance matrix
-    pub matrix: Matrix,
+    pub matrix: JagGraph,
     /// Faces / chordless cycles
     pub cycles: Vec<Face>,
     ///
@@ -29,7 +29,7 @@ impl PolyGraph {
     /// New with n vertices
     pub fn new_disconnected(n: usize) -> Self {
         Self {
-            matrix: Matrix::new(n),
+            matrix: JagGraph::new(n),
             speeds: vec![Vec3::zero(); n],
             edge_length: 1.0,
             ..Default::default()
@@ -163,15 +163,15 @@ impl Display for PolyGraph {
 impl PolyGraph {
     pub fn floyd(&mut self) {
         // let dist be a |V| × |V| array of minimum distances initialized to ∞ (infinity)
-        let mut matrix: Matrix = Matrix::new(self.matrix.len());
+        let mut graph: JagGraph = JagGraph::new(self.matrix.len());
 
-        for k in matrix.vertices() {
-            for i in matrix.vertices() {
-                for j in matrix.vertices() {
-                    if matrix[[i, k]] != usize::MAX && matrix[[k, j]] != usize::MAX {
-                        let nv = matrix[[i, k]] + matrix[[k, j]];
-                        if matrix[[i, j]] > nv || matrix[[j, i]] > nv {
-                            matrix[[i, j]] = nv;
+        for k in graph.vertices() {
+            for i in graph.vertices() {
+                for j in graph.vertices() {
+                    if graph[[i, k]] != usize::MAX && graph[[k, j]] != usize::MAX {
+                        let nv = graph[[i, k]] + graph[[k, j]];
+                        if graph[[i, j]] > nv || graph[[j, i]] > nv {
+                            graph[[i, j]] = nv;
                         }
                     }
                 }
@@ -179,14 +179,14 @@ impl PolyGraph {
         }
 
         let mut dd = HashMap::default();
-        for (v, u) in matrix.vertices().zip(matrix.vertices()) {
-            let dvu = matrix[[v, u]];
+        for (v, u) in graph.vertices().zip(graph.vertices()) {
+            let dvu = graph[[v, u]];
             if dvu != usize::MAX && dvu != 0 {
                 let e: Edge = (v, u).into();
                 dd.insert(e, dvu as usize);
             }
         }
 
-        self.matrix = matrix;
+        self.matrix = graph;
     }
 }
