@@ -1,47 +1,51 @@
 use super::*;
+use test_case::test_case;
 
-// #[test_case(PolyGraph::pyramid(3); "T")]
-// #[test_case(PolyGraph::prism(4); "C")]
-// // #[test_case(PolyGraph::octahedron(); "O")]
-// // #[test_case(PolyGraph::dodecahedron(); "D")]
-// // #[test_case(PolyGraph::icosahedron(); "I")]
-// // #[test_case({ let mut g = PolyGraph::prism(4); g.truncate(None); g.pst(); g} ; "tC")]
-// // #[test_case({ let mut g = PolyGraph::octahedron(); g.truncate(None); g.pst(); g} ; "tO")]
-// // #[test_case({ let mut g = PolyGraph::dodecahedron(); g.truncate(None); g.pst(); g} ; "tD")]
-// fn pst(mut graph: PolyGraph) {
-//     let new_dist = graph.matrix.clone();
-//     graph.matrix = Default::default();
-//     graph.floyd();
-//     let old_dist = graph.matrix.clone();
-//
-//     //assert_eq!(old_dist, graph.dist);
-//     assert_eq!(
-//         old_dist
-//             .clone()
-//             .into_keys()
-//             .collect::<HashSet<_>>()
-//             .difference(&new_dist.clone().into_keys().collect::<HashSet<_>>())
-//             .collect::<HashSet<_>>(),
-//         HashSet::new()
-//     );
-//
-//     let o1 = old_dist
-//         .clone()
-//         .into_iter()
-//         .map(|(k, v)| (k.id().0, k.id().1, v))
-//         .collect::<HashSet<_>>();
-//     let o2 = &new_dist
-//         .clone()
-//         .into_iter()
-//         .map(|(k, v)| (k.id().0, k.id().1, v))
-//         .collect::<HashSet<_>>();
-//
-//     assert_eq!(
-//         o1.difference(o2).collect::<HashSet<_>>(),
-//         o2.difference(&o1).collect::<HashSet<_>>()
-//     );
-//     assert_eq!(old_dist, new_dist);
-// }
+impl JagGraph {
+    pub fn floyd(&mut self) {
+        // let dist be a |V| × |V| array of minimum distances initialized to ∞ (infinity)
+        let mut graph: JagGraph = JagGraph::new(self.matrix.len());
+
+        for k in graph.vertices() {
+            for i in graph.vertices() {
+                for j in graph.vertices() {
+                    if graph[[i, k]] != usize::MAX && graph[[k, j]] != usize::MAX {
+                        let nv = graph[[i, k]] + graph[[k, j]];
+                        if graph[[i, j]] > nv || graph[[j, i]] > nv {
+                            graph[[i, j]] = nv;
+                        }
+                    }
+                }
+            }
+        }
+
+        let mut dd: HashMap<Edge, usize> = HashMap::default();
+        for [v, u] in graph.vertex_pairs() {
+            let dvu = graph[[v, u]];
+            if dvu != usize::MAX && dvu != 0 {
+                let e: Edge = (v, u).into();
+                dd.insert(e, dvu as usize);
+            }
+        }
+
+        *self = graph;
+    }
+}
+
+#[test_case(JagGraph::pyramid(3); "T")]
+#[test_case(JagGraph::prism(4); "C")]
+#[test_case(JagGraph::octahedron(); "O")]
+#[test_case(JagGraph::dodecahedron(); "D")]
+#[test_case(JagGraph::icosahedron(); "I")]
+#[test_case({ let mut g = JagGraph::prism(4); g.truncate(None); g.pst(); g} ; "tC")]
+#[test_case({ let mut g = JagGraph::octahedron(); g.truncate(None); g.pst(); g} ; "tO")]
+#[test_case({ let mut g = JagGraph::dodecahedron(); g.truncate(None); g.pst(); g} ; "tD")]
+fn pst(mut graph: JagGraph) {
+    let pst = graph.clone();
+    graph.floyd();
+    let floyd = graph.clone();
+    assert_eq!(floyd.matrix, pst.matrix);
+}
 
 #[test]
 fn basics() {

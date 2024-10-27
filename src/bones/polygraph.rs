@@ -158,35 +158,3 @@ impl Display for PolyGraph {
     }
 }
 */
-
-#[cfg(test)]
-impl PolyGraph {
-    pub fn floyd(&mut self) {
-        // let dist be a |V| × |V| array of minimum distances initialized to ∞ (infinity)
-        let mut graph: JagGraph = JagGraph::new(self.matrix.len());
-
-        for k in graph.vertices() {
-            for i in graph.vertices() {
-                for j in graph.vertices() {
-                    if graph[[i, k]] != usize::MAX && graph[[k, j]] != usize::MAX {
-                        let nv = graph[[i, k]] + graph[[k, j]];
-                        if graph[[i, j]] > nv || graph[[j, i]] > nv {
-                            graph[[i, j]] = nv;
-                        }
-                    }
-                }
-            }
-        }
-
-        let mut dd = HashMap::default();
-        for [v, u] in graph.vertex_pairs() {
-            let dvu = graph[[v, u]];
-            if dvu != usize::MAX && dvu != 0 {
-                let e: Edge = (v, u).into();
-                dd.insert(e, dvu as usize);
-            }
-        }
-
-        self.matrix = graph;
-    }
-}
