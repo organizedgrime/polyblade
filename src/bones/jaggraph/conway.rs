@@ -164,7 +164,7 @@ impl JagGraph {
     }
     //
     /// `e` = `aa`
-    pub fn expand(&mut self, snub: bool) -> HashSet<Edge> {
+    pub fn expand(&mut self, snub: bool) -> Vec<[VertexId; 2]> {
         let mut new_edges = HashSet::<Edge>::default();
         let mut face_edges = HashSet::<Edge>::default();
 
@@ -255,7 +255,8 @@ impl JagGraph {
         // self.edges = HashSet::default();
         // self.edges.extend(new_edges.clone());
         // self.edges.extend(face_edges);
-        new_edges
+        // new_edges
+        vec![]
     }
 
     //

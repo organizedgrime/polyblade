@@ -70,22 +70,22 @@ impl JagGraph {
         p
     }
 
-    // pub fn dodecahedron() -> PolyGraph {
-    //     let mut p = PolyGraph::anti_prism(5);
-    //     let edges = p.expand(false);
-    //     p.contract_edges(edges);
-    //     p.truncate(Some(5));
-    //     //p.pst();
-    //     //p.springs();
-    //     p.name = "D".into();
-    //     p
-    // }
-    // pub fn icosahedron() -> PolyGraph {
-    //     let mut p = PolyGraph::anti_prism(5);
-    //     p.kis(Some(5));
-    //     //p.pst();
-    //     //p.springs();
-    //     p.name = "I".into();
-    //     p
-    // }
+    pub fn dodecahedron() -> JagGraph {
+        let mut graph = JagGraph::anti_prism(5);
+        let edges = graph.expand(false);
+        graph.contract_edges(edges);
+        graph.truncate(Some(5));
+        //p.pst();
+        //p.springs();
+        // graph.name = "D".into();
+        graph
+    }
+    pub fn icosahedron() -> JagGraph {
+        let mut graph = JagGraph::anti_prism(5);
+        graph.kis(Some(5));
+        //p.pst();
+        //p.springs();
+        //p.name = "I".into();
+        graph
+    }
 }

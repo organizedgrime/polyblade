@@ -87,11 +87,11 @@ fn chordless_cycles() {
     assert_eq!(graph.cycles, vec![Face::new(vec![0, 1, 2])]);
 }
 
-// #[test]
-// fn truncate() {
-//     let mut shape = JagGraph::icosahedron();
-//     shape.truncate(None);
-// }
+#[test]
+fn truncate() {
+    let mut shape = JagGraph::icosahedron();
+    shape.truncate(None);
+}
 
 #[test]
 fn contract_edge() {
