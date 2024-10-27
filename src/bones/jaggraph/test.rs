@@ -5,7 +5,9 @@ impl JagGraph {
     pub fn floyd(&mut self) {
         // let dist be a |V| × |V| array of minimum distances initialized to ∞ (infinity)
         let mut graph: JagGraph = JagGraph::new(self.matrix.len());
-
+        for e in self.edges() {
+            graph[e] = 1;
+        }
         for k in graph.vertices() {
             for i in graph.vertices() {
                 for j in graph.vertices() {
@@ -18,16 +20,6 @@ impl JagGraph {
                 }
             }
         }
-
-        let mut dd: HashMap<Edge, usize> = HashMap::default();
-        for [v, u] in graph.vertex_pairs() {
-            let dvu = graph[[v, u]];
-            if dvu != usize::MAX && dvu != 0 {
-                let e: Edge = (v, u).into();
-                dd.insert(e, dvu as usize);
-            }
-        }
-
         *self = graph;
     }
 }
@@ -43,8 +35,7 @@ impl JagGraph {
 fn pst(mut graph: JagGraph) {
     let pst = graph.clone();
     graph.floyd();
-    let floyd = graph.clone();
-    assert_eq!(floyd.matrix, pst.matrix);
+    assert_eq!(graph.matrix, pst.matrix);
 }
 
 #[test]

@@ -80,6 +80,7 @@ impl JagGraph {
         // graph.name = "D".into();
         graph
     }
+
     pub fn icosahedron() -> JagGraph {
         let mut graph = JagGraph::anti_prism(5);
         graph.kis(Some(5));
