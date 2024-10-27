@@ -82,7 +82,7 @@ fn chordless_cycles() {
     println!("{graph}");
 
     graph.connect([2, 0]);
-    graph.pst();
+    //graph.pst();
     graph.find_cycles();
     assert_eq!(graph.cycles, vec![Face::new(vec![0, 1, 2])]);
 }
@@ -97,15 +97,14 @@ fn chordless_cycles() {
 fn contract_edge() {
     println!("contract edge");
     let mut graph = JagGraph::prism(4);
-    println!("{graph}");
     assert_eq!(graph.len(), 8);
     assert_eq!(graph.edges().count(), 12);
-    println!("{graph}");
 
     graph.contract_edge([0, 1]);
-    graph.pst();
-
     println!("{graph}");
+    graph.pst();
+    println!("{graph}");
+
     assert_eq!(graph.len(), 7);
     assert_eq!(graph.edges().count(), 11);
 }

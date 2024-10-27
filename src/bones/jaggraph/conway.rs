@@ -9,16 +9,17 @@ impl JagGraph {
         // Give u all the same connections as v
         for w in self.connections(v).into_iter() {
             self.connect([w, u]);
+            //self.disconnect([w, v]);
         }
         // Delete a
-        for f in self.cycles.iter_mut() {
-            f.replace(v, u);
-        }
+        // for f in self.cycles.iter_mut() {
+        //     f.replace(v, u);
+        // }
 
-        for x in self.vertices() {
-            self.disconnect([x, v]);
-            self.connect([x, u]);
-        }
+        // for x in self.vertices() {
+        //     //self.disconnect([x, v]);
+        //     self.connect([x, u]);
+        // }
 
         self.delete(v);
     }

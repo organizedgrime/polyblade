@@ -121,9 +121,9 @@ impl JagGraph {
         //
         // d-queues associated w each vertex
         // maps from v -> ( maps from d -> u )
-        let mut dqueue: HashMap<VertexId, VecDeque<(VertexId, usize)>> = Default::default();
+        let mut dqueue: Vec<VecDeque<(VertexId, usize)>> = vec![Default::default(); self.len()];
         //
-        let mut children: HashMap<VertexId, Vec<VertexId>> = Default::default();
+        let mut children: Vec<Vec<VertexId>> = vec![Default::default(); self.len()];
 
         // Counters for vertices whos shortest paths have already been obtained
         let mut counters: Vec<usize> = vec![n - 1; self.len()];
@@ -157,48 +157,46 @@ impl JagGraph {
                         // D[w.id, v.id] = d
                         dist[[v, w]] = 1;
                         // add w' to v'.children
-                        children.entry(v).or_default().push(w);
+                        children[v].push(w);
                         // v.que.enque(w', 1)
-                        dqueue.entry(v).or_default().push_back((w, 1));
-                        dqueue.entry(w).or_default().push_back((v, 1));
+                        dqueue[v].push_back((w, 1));
+                        dqueue[w].push_back((v, 1));
                         // v.c = v.c + 1
                         counters[v] -= 1;
-                        //*counters.entry(w).or_default() -= 1;
                         removed = true;
                     }
                 } else {
                     // w = v.que.deque(d - 1)
                     // while w is not None:
                     'dq: loop {
-                        let vqueue = dqueue.entry(v).or_default();
-                        if let Some((w, d)) = vqueue.pop_front() {
-                            if d != depth - 1 {
-                                dqueue.entry(v).or_default().push_back((w, d));
-                                break;
-                            }
-                            // for x in w.children
-                            for x in children.entry(w).or_default().clone() {
-                                let e: Edge = (x, v).into();
-                                if x != v && dist[e] == usize::MAX {
-                                    // D[x.id, v.id] = d;
-                                    dist[e] = depth;
-                                    // add x' to w' children
-                                    children.entry(w).or_default().push(x);
-                                    // v.que.enque(x', d)
-                                    dqueue.entry(v).or_default().push_back((x, depth));
-                                    dqueue.entry(x).or_default().push_back((v, depth));
-                                    // v.c = v.c + 1
-                                    removed = true;
-                                    counters[v] -= 1;
-                                    counters[x] -= 1;
-                                    // if v.c == n: return
-                                    if counters[x] == 0 && counters[w] == 0 && counters[v] == 0 {
-                                        break 'dq;
-                                    }
+                        // let vqueue = dqueue[v];
+                        let Some((w, d)) = dqueue[v].pop_front() else {
+                            break;
+                        };
+                        if d != depth - 1 {
+                            dqueue[v].push_back((w, d));
+                            break;
+                        }
+                        // for x in w.children
+                        for x in children[w].clone() {
+                            let e: Edge = (x, v).into();
+                            if x != v && dist[e] == usize::MAX {
+                                // D[x.id, v.id] = d;
+                                dist[e] = depth;
+                                // add x' to w' children
+                                children[w].push(x);
+                                // v.que.enque(x', d)
+                                dqueue[v].push_back((x, depth));
+                                dqueue[x].push_back((v, depth));
+                                // v.c = v.c + 1
+                                removed = true;
+                                counters[v] -= 1;
+                                counters[x] -= 1;
+                                // if v.c == n: return
+                                if counters[x] == 0 && counters[w] == 0 && counters[v] == 0 {
+                                    break 'dq;
                                 }
                             }
-                        } else {
-                            break;
                         }
                     }
                 }
@@ -221,6 +219,7 @@ impl JagGraph {
     pub fn face_count(&self) -> i64 {
         2 + self.edges().count() as i64 - self.len() as i64
     }
+
     /// All faces
     pub fn find_cycles(&mut self) {
         let mut triplets = Vec::<Face>::new();
