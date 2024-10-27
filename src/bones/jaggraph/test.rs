@@ -99,25 +99,21 @@ fn contract_edge() {
     let mut graph = JagGraph::prism(4);
     assert_eq!(graph.len(), 8);
     assert_eq!(graph.edges().count(), 12);
-
+    println!("{graph}");
     graph.contract_edge([0, 1]);
     println!("{graph}");
-    graph.pst();
-    println!("{graph}");
-
     assert_eq!(graph.len(), 7);
     assert_eq!(graph.edges().count(), 11);
 }
 
-// #[test]
-// fn split_vertex() {
-//     let mut graph = JagGraph::prism(4);
-//     assert_eq!(graph.vertices.len(), 8);
-//     assert_eq!(graph.edges.len(), 12);
-//
-//     graph.split_vertex(0);
-//     graph.pst();
-//
-//     assert_eq!(graph.vertices.len(), 10);
-//     assert_eq!(graph.edges.len(), 15);
-// }
+#[test]
+fn split_vertex() {
+    let mut graph = JagGraph::prism(4);
+    assert_eq!(graph.len(), 8);
+    assert_eq!(graph.edges().count(), 12);
+
+    graph.split_vertex(0);
+
+    assert_eq!(graph.len(), 10);
+    assert_eq!(graph.edges().count(), 15);
+}

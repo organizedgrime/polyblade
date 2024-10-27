@@ -63,19 +63,14 @@ impl JagGraph {
     /// Inserts a new vertex in the matrix
     pub fn insert(&mut self) -> VertexId {
         self.matrix
-            .push([vec![usize::MAX; self.len() - 1], vec![0]].concat());
-        self.len()
+            .push([vec![usize::MAX; self.len()], vec![0]].concat());
+        self.len() - 1
     }
 
     /// Deletes a vertex from the matrix
     pub fn delete(&mut self, v: VertexId) {
         for row in &mut self.matrix[v..] {
             row.remove(v);
-            for distance in &mut row[v..] {
-                if *distance > 0 && *distance != usize::MAX {
-                    *distance -= 1;
-                }
-            }
         }
         self.matrix.remove(v);
     }
