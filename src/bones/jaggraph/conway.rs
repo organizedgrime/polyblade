@@ -78,7 +78,7 @@ impl JagGraph {
             }
         }
 
-        //self.cycles.push(new_edges.clone().into());
+        self.cycles.push(new_edges.clone().into());
 
         self.delete(v);
         new_edges
@@ -151,12 +151,15 @@ impl JagGraph {
             edges.insert((a, b).into(), i);
         }
 
-        let f: Face = edges.keys().cloned().collect::<HashSet<_>>().into();
+        let f: Face = edges.keys().cloned().collect::<Vec<_>>().into();
 
         let mut ordered_face_indices = vec![];
         for i in 0..f.len() {
-            let e: Edge = (f[i], f[(i + 1) % f.len()]).into();
-            let fi = edges.get(&e).unwrap();
+            let ev = f[i];
+            let eu = f[(i + 1) % f.len()];
+            let fi = edges
+                .get(&[ev, eu])
+                .unwrap_or(edges.get(&[eu, ev]).unwrap());
             ordered_face_indices.push(*fi);
         }
 

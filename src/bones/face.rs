@@ -22,7 +22,7 @@ impl Face {
         self.0.contains(value)
     }
 
-    pub fn edges(&self) -> HashSet<Edge> {
+    pub fn edges(&self) -> HashSet<[VertexId; 2]> {
         let mut edges = HashSet::default();
         for i in 0..self.0.len() {
             edges.insert((self.0[i], self.0[(i + 1) % self.0.len()]).into());
@@ -69,19 +69,22 @@ impl Face {
     }
 }
 
-impl From<HashSet<Edge>> for Face {
-    fn from(value: HashSet<Edge>) -> Self {
-        let mut edges: Vec<Edge> = value.into_iter().collect();
+impl From<Vec<[VertexId; 2]>> for Face {
+    fn from(mut edges: Vec<[VertexId; 2]>) -> Self {
         let mut first = false;
-        let mut face = vec![edges[0].v()];
+        let mut face = vec![edges[0][0]];
         while !edges.is_empty() {
-            let v = if first {
+            let vvvvv = if first {
                 *face.first().unwrap()
             } else {
                 *face.last().unwrap()
             };
-            if let Some(i) = edges.iter().position(|e| e.contains(v)) {
-                let next = edges[i].other(v).unwrap();
+            if let Some(i) = edges.iter().position(|&[v, u]| v == vvvvv || u == vvvvv) {
+                let next = if edges[i][0] == vvvvv {
+                    edges[i][1]
+                } else {
+                    edges[i][0]
+                };
                 if !face.contains(&next) {
                     face.push(next);
                 }
