@@ -168,6 +168,7 @@ impl MenuAble<'static, Controls> for RenderMessage {
             Self::checkbox("Rotating", state.rotating, Rotating),
             Self::slider(0.0..=10.0, state.line_thickness, LineThickness, 1.0),
             Self::slider(1.0..=5.0, state.zoom, ZoomChanged, 0.05),
+            Self::slider(5.0..=50.0, state.speed, SpeedChanged, 10.0),
             Self::slider(
                 0.0..=(std::f32::consts::PI * 2.0),
                 state.camera.fov_y,
