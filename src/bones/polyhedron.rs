@@ -5,7 +5,6 @@ use crate::{
 use std::time::{Duration, Instant};
 use ultraviolet::{Lerp, Vec3};
 
-//const TICK_SPEED: f32 = 10.0;
 const SPEED_DAMPENING: f32 = 0.92;
 
 // Operations
@@ -61,7 +60,7 @@ impl PolyGraph {
         self.center();
         self.resize(speed, second);
         self.apply_spring_forces(speed, second);
-        self.process_transactions();
+        self.process_transactions(speed);
     }
 
     pub fn face_positions(&self, face_index: usize) -> Vec<Vec3> {
@@ -77,14 +76,14 @@ impl PolyGraph {
         vertices.iter().fold(Vec3::zero(), |a, &b| a + b) / vertices.len() as f32
     }
 
-    pub fn process_transactions(&mut self) {
+    pub fn process_transactions(&mut self, speed: f32) {
         if let Some(transaction) = self.transactions.first().cloned() {
             use Transaction::*;
             match transaction {
                 Contraction(edges) => {
                     if !edges
                         .iter()
-                        .any(|e| (self.positions[&e.v()] - self.positions[&e.u()]).mag() > 0.08)
+                        .any(|e| (self.positions[&e.v()] - self.positions[&e.u()]).mag() > 0.02)
                     {
                         // Contract them in the graph
                         self.contract_edges(edges);
@@ -110,7 +109,7 @@ impl PolyGraph {
                         Dual => {
                             let edges = self.expand(false);
                             vec![
-                                Wait(Instant::now() + Duration::from_millis(500)),
+                                Wait(Instant::now() + Duration::from_millis((65.0 * speed) as u64)),
                                 Contraction(edges),
                                 Name('d'),
                             ]
