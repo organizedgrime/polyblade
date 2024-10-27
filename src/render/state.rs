@@ -130,6 +130,7 @@ impl AppState {
         };
 
         self.model.polyhedron.update(second);
+        log::info!("shape:\n {:?}", self.model.polyhedron);
         self.render.frame = time;
 
         let time = if self.render.rotating {

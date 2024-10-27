@@ -37,6 +37,7 @@ impl PolyGraph {
 
     // Use a Fibonacci Lattice to spread the points evenly around a sphere
     pub fn lattice(&mut self) {
+        self.positions = vec![];
         // Use a Fibonacci Lattice to evently distribute starting points on a sphere
         let phi = std::f32::consts::PI * (3.0 - 5.0f32.sqrt());
         for v in 0..self.graph.len() {

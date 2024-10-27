@@ -98,7 +98,7 @@ impl JagGraph {
     }
 
     /// `k` kis
-    pub fn kis(&mut self, degree: Option<usize>) -> HashSet<[VertexId; 2]> {
+    pub fn kis(&mut self, degree: Option<usize>) -> Vec<[VertexId; 2]> {
         let edges = self.edges().collect();
         let mut cycles = self.cycles.clone();
         if let Some(degree) = degree {

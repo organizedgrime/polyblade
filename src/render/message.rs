@@ -1,11 +1,13 @@
 use crate::{
-    bones::{PolyGraph, Transaction},
+    bones::{JagGraph, PolyGraph, Transaction},
     render::camera::Camera,
     Instant,
 };
 use iced::{Color, Task};
+use rand::random;
 use std::fmt::Display;
 use strum_macros::{Display, EnumIter};
+use ultraviolet::Vec3;
 
 use crate::render::state::{AppState, ColorPickerState, ModelState, RenderState};
 
@@ -152,24 +154,34 @@ pub trait ProcessMessage<T> {
 impl ProcessMessage<ModelState> for PresetMessage {
     fn process(&self, state: &mut ModelState) -> Task<PolybladeMessage> {
         use PresetMessage::*;
-        // match &self {
-        //     Prism(n) => {
-        //         state.polyhedron = PolyGraph::prism(*n);
-        //         if n == &4 {
-        //             state.polyhedron.name = "C".into();
-        //         }
-        //     }
-        //     AntiPrism(n) => state.polyhedron = PolyGraph::anti_prism(*n),
-        //     Pyramid(n) => {
-        //         state.polyhedron = PolyGraph::pyramid(*n);
-        //         if n == &3 {
-        //             state.polyhedron.name = "T".into();
-        //         }
-        //     }
-        //     Octahedron => state.polyhedron = PolyGraph::octahedron(),
-        //     Dodecahedron => state.polyhedron = PolyGraph::dodecahedron(),
-        //     Icosahedron => state.polyhedron = PolyGraph::icosahedron(),
-        // }
+        match &self {
+            Prism(n) => {
+                state.polyhedron.graph = JagGraph::prism(*n);
+                if n == &4 {
+                    state.polyhedron.name = "C".into();
+                }
+            }
+            AntiPrism(n) => state.polyhedron.graph = JagGraph::anti_prism(*n),
+            Pyramid(n) => {
+                state.polyhedron.graph = JagGraph::pyramid(*n);
+                if n == &3 {
+                    state.polyhedron.name = "T".into();
+                }
+            }
+            Octahedron => state.polyhedron.graph = JagGraph::octahedron(),
+            Dodecahedron => state.polyhedron.graph = JagGraph::dodecahedron(),
+            Icosahedron => state.polyhedron.graph = JagGraph::icosahedron(),
+        }
+
+        state.polyhedron.positions = state
+            .polyhedron
+            .graph
+            .vertices()
+            .map(|_| Vec3::new(random(), random(), random()).normalized())
+            .collect();
+
+        state.polyhedron.speeds = vec![Vec3::zero(); state.polyhedron.graph.len()];
+        state.polyhedron.springs();
 
         Task::none()
     }
