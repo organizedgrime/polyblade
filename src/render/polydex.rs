@@ -45,9 +45,9 @@ impl PolyGraph {
         let entry = polydex.iter().find(|entry| entry.conway == self.name);
         InfoBox {
             conway: self.name.clone(),
-            faces: self.cycles.len(),
-            edges: 0,
-            vertices: self.vertices().len(),
+            faces: self.graph.cycles.len(),
+            edges: self.graph.edges().count(),
+            vertices: self.graph.len(),
             name: entry.map(|e| e.name.clone()),
             bowers: entry.map(|e| e.bowers.clone()),
             wiki: entry.map(|e| e.wiki.clone()),

@@ -53,9 +53,7 @@ impl JagGraph {
             graph.connect([i, n]);
         }
         graph.pst();
-        // p.springs();
         graph.find_cycles();
-        // graph.lattice();
         graph
     }
 

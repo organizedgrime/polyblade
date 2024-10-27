@@ -244,7 +244,7 @@ impl App<'_> {
             // Ignore the whole first polygon if we're in schlegel mode
             let starting_vertex = if program.state.render.schlegel {
                 // Determines how many vertices are actually used to render the polygon
-                match program.state.model.polyhedron.cycles[0].len() {
+                match program.state.model.polyhedron.graph.cycles[0].len() {
                     3 => 3,
                     4 => 6,
                     n => n * 3,

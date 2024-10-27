@@ -5,24 +5,24 @@ use crate::{
 use std::time::{Duration, Instant};
 use ultraviolet::{Lerp, Vec3};
 
+use super::VertexId;
+
 const TICK_SPEED: f32 = 10.0;
 const SPEED_DAMPENING: f32 = 0.92;
 
 // Operations
 impl PolyGraph {
     fn apply_spring_forces(&mut self, second: f32) {
-        let diameter = self.matrix.diameter();
+        let diameter = self.graph.diameter();
         let diameter_spring_length = self.edge_length * 2.0;
-        let (edges, contracting): (std::collections::hash_set::Iter<Edge>, bool) =
+        let (edges, contracting): (std::slice::Iter<[VertexId; 2]>, bool) =
             if let Some(Transaction::Contraction(edges)) = self.transactions.first() {
                 (edges.iter(), true)
             } else {
                 (self.springs.iter(), false)
             };
 
-        for e in edges {
-            let v = e.v();
-            let u = e.u();
+        for &[v, u] in edges {
             let v_position = self.positions[v];
             let u_position = self.positions[u];
             let diff = v_position - u_position;
@@ -33,7 +33,7 @@ impl PolyGraph {
                 self.positions[u] = u_position.lerp(v_position, f);
             } else {
                 let target_length =
-                    diameter_spring_length * (self.matrix[*e] as f32 / diameter as f32);
+                    diameter_spring_length * (self.graph[[v, u]] as f32 / diameter as f32);
                 let f = diff * (target_length - spring_length) / TICK_SPEED * second;
                 self.speeds[v] = (self.speeds[v] + f) * SPEED_DAMPENING;
                 self.speeds[u] = (self.speeds[u] - f) * SPEED_DAMPENING;
@@ -45,7 +45,7 @@ impl PolyGraph {
 
     fn center(&mut self) {
         let shift =
-            self.positions.iter().fold(Vec3::zero(), |a, &b| a + b) / self.matrix.len() as f32;
+            self.positions.iter().fold(Vec3::zero(), |a, &b| a + b) / self.graph.len() as f32;
 
         for p in self.positions.iter_mut() {
             *p -= shift;
@@ -66,7 +66,7 @@ impl PolyGraph {
     }
 
     pub fn face_positions(&self, face_index: usize) -> Vec<Vec3> {
-        self.cycles[face_index]
+        self.graph.cycles[face_index]
             .iter()
             .map(|&v| self.positions[v])
             .collect()
@@ -85,7 +85,7 @@ impl PolyGraph {
                 Contraction(edges) => {
                     if !edges
                         .iter()
-                        .any(|e| (self.positions[e.v()] - self.positions[e.u()]).mag() > 0.08)
+                        .any(|&[v, u]| (self.positions[v] - self.positions[u]).mag() > 0.08)
                     {
                         // Contract them in the graph
                         // self.contract_edges(edges);

@@ -9,12 +9,10 @@ pub type VertexId = usize;
 pub struct PolyGraph {
     /// Conway Polyhedron Notation
     pub name: String,
-    /// Distance matrix
-    pub matrix: JagGraph,
+    /// Graph
+    pub graph: JagGraph,
     /// Faces / chordless cycles
-    pub cycles: Vec<Face>,
-    ///
-    pub springs: HashSet<Edge>,
+    pub springs: Vec<[VertexId; 2]>,
     /// Positions in 3D space
     pub positions: Vec<Vec3>,
     /// Speeds
@@ -29,9 +27,10 @@ impl PolyGraph {
     /// New with n vertices
     pub fn new_disconnected(n: usize) -> Self {
         Self {
-            matrix: JagGraph::new(n),
+            graph: JagGraph::new(n),
             speeds: vec![Vec3::zero(); n],
             edge_length: 1.0,
+            positions: vec![Vec3::new(random(), random(), random()).normalized(); n],
             ..Default::default()
         }
     }
@@ -40,8 +39,8 @@ impl PolyGraph {
     pub fn lattice(&mut self) {
         // Use a Fibonacci Lattice to evently distribute starting points on a sphere
         let phi = std::f32::consts::PI * (3.0 - 5.0f32.sqrt());
-        for v in 0..self.matrix.len() {
-            let y = 1.0 - (v as f32 / (self.matrix.len() - 1) as f32);
+        for v in 0..self.graph.len() {
+            let y = 1.0 - (v as f32 / (self.graph.len() - 1) as f32);
             let radius = (1.0 - y * y).sqrt();
             let theta = (phi * (v as f32)) % (std::f32::consts::PI * 2.0);
             let x = theta.cos() * radius;
@@ -50,22 +49,19 @@ impl PolyGraph {
         }
     }
 
-    pub fn connect(&mut self, e: impl Into<Edge>) {
-        let e = e.into();
-        if e.v() != e.u() {
-            self.matrix[e] = 1;
-        }
+    pub fn connect(&mut self, [v, u]: [VertexId; 2]) {
+        self.graph.connect([v, u]);
     }
 
-    pub fn disconnect(&mut self, e: impl Into<Edge>) {
-        self.matrix[e.into()] = 0;
+    pub fn disconnect(&mut self, [v, u]: [VertexId; 2]) {
+        self.graph.disconnect([v, u]);
     }
 
     pub fn insert(&mut self) -> VertexId {
         self.positions
             .push(Vec3::new(random(), random(), random()).normalized());
         self.speeds.push(Vec3::zero());
-        self.matrix.insert()
+        self.graph.insert()
     }
 
     /*
@@ -111,20 +107,15 @@ impl PolyGraph {
     //
     //
 
-    pub fn vertices(&self) -> std::ops::Range<VertexId> {
-        (0..self.matrix.len()).into_iter()
-    }
-
     pub fn springs(&mut self) {
-        let diameter = self.matrix.diameter();
+        let diameter = self.graph.diameter();
         self.springs = self
-            .vertices()
-            .zip(self.vertices())
-            .filter(|&(v, u)| {
-                v != u && (self.matrix[[v, u]] <= 2 || self.matrix[[v, u]] >= diameter - 1)
+            .graph
+            .vertex_pairs()
+            .filter(|&[v, u]| {
+                v != u && (self.graph[[v, u]] <= 2 || self.graph[[v, u]] >= diameter - 1)
             })
-            .map(|(v, u)| Edge::from((v, u)))
-            .collect::<HashSet<_>>();
+            .collect::<Vec<_>>();
 
         // log::debug!(
         //     "v_len: {} | v2: {} | springs: {}",

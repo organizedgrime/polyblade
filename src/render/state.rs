@@ -1,5 +1,5 @@
 use crate::{
-    bones::PolyGraph,
+    bones::{JagGraph, PolyGraph},
     render::{
         camera::Camera,
         message::ColorMethodMessage,
@@ -80,11 +80,19 @@ pub struct ModelState {
 
 impl Default for ModelState {
     fn default() -> Self {
-        Self {
+        let mut x = Self {
             //polyhedron: PolyGraph::dodecahedron(),
-            polyhedron: PolyGraph::new_disconnected(5),
+            polyhedron: {
+                let mut p = PolyGraph::new_disconnected(4);
+                p.graph = JagGraph::pyramid(3);
+                p
+            },
             transform: Mat4::identity(),
-        }
+        };
+        x.polyhedron.springs();
+        x.polyhedron.lattice();
+        log::error!("poly: {:?}", x.polyhedron);
+        x
     }
 }
 

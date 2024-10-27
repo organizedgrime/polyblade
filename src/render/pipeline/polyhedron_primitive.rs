@@ -20,7 +20,7 @@ impl PolyhedronPrimitive {
 
     #[allow(dead_code)]
     pub fn surface_area(&self, face_index: usize) -> f32 {
-        let positions: Vec<Vec3> = self.model.polyhedron.cycles[face_index]
+        let positions: Vec<Vec3> = self.model.polyhedron.graph.cycles[face_index]
             .iter()
             .map(|&i| self.model.polyhedron.positions[i])
             .collect();
@@ -47,13 +47,18 @@ impl PolyhedronPrimitive {
             ColorMethodMessage::Polygon => {
                 // Polygon side count -> color
                 let color_map: HashMap<usize, Vec4> =
-                    polyhedron.cycles.iter().fold(HashMap::new(), |mut acc, c| {
-                        if !acc.contains_key(&c.len()) {
-                            acc.insert(c.len(), colors[acc.len() % colors.len()].into());
-                        }
-                        acc
-                    });
+                    polyhedron
+                        .graph
+                        .cycles
+                        .iter()
+                        .fold(HashMap::new(), |mut acc, c| {
+                            if !acc.contains_key(&c.len()) {
+                                acc.insert(c.len(), colors[acc.len() % colors.len()].into());
+                            }
+                            acc
+                        });
                 polyhedron
+                    .graph
                     .cycles
                     .iter()
                     .map(|cycle| {
@@ -102,6 +107,7 @@ impl PolyhedronPrimitive {
         let barycentric = [Vec3::unit_x(), Vec3::unit_y(), Vec3::unit_z()];
         self.model
             .polyhedron
+            .graph
             .cycles
             .iter()
             .map(|cycle| {

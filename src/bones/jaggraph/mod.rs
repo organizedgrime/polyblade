@@ -17,7 +17,7 @@ mod platonic;
 #[derive(Debug, Default, Clone, PartialEq)]
 pub struct JagGraph {
     matrix: Vec<Vec<usize>>,
-    cycles: Vec<Face>,
+    pub cycles: Vec<Face>,
 }
 
 impl JagGraph {
