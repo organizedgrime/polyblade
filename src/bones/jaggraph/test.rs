@@ -105,12 +105,30 @@ fn contract_edge() {
 
 #[test]
 fn split_vertex() {
-    let mut graph = JagGraph::prism(4);
-    assert_eq!(graph.len(), 8);
-    assert_eq!(graph.edges().count(), 12);
+    let mut control = JagGraph::new(6);
+    // Original outline
+    control[[1, 2]] = 1;
+    control[[2, 3]] = 1;
+    control[[3, 1]] = 1;
+    // Connections
+    control[[0, 1]] = 1;
+    control[[4, 2]] = 1;
+    control[[5, 3]] = 1;
+    // New face
+    control[[0, 4]] = 1;
+    control[[4, 5]] = 1;
+    control[[5, 0]] = 1;
+    control.pst();
+    control.find_cycles();
+    println!("{control}");
 
-    graph.split_vertex(0);
+    control.render("tests/split_vertex_control.svg");
 
-    assert_eq!(graph.len(), 10);
-    assert_eq!(graph.edges().count(), 15);
+    let mut test = JagGraph::pyramid(3);
+    test.render("tests/split_vertex_pyramid.svg");
+    println!("{test}");
+    test.split_vertex(0);
+    println!("{test}");
+    control.render("tests/split_vertex_test.svg");
+    assert_eq!(test.matrix, control.matrix);
 }

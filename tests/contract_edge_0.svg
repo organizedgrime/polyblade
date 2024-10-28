@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?><svg width="210.15407932087822" height="462" viewBox="0 0 210.15407932087822 462" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<marker id="startarrow" markerWidth="10" markerHeight="7"
+refX="0" refY="3.5" orient="auto">
+<polygon points="10 0, 10 7, 0 3.5" />
+</marker>
+<marker id="endarrow" markerWidth="10" markerHeight="7"
+refX="10" refY="3.5" orient="auto">
+<polygon points="0 0, 10 3.5, 0 7" />
+</marker>
+
+</defs><style>
+.a14 { font-size: 14px; font-family: Times, serif; }
+</style>
+<ellipse cx="47.001000000000005" cy="423" rx="17" ry="17" fill="#ffffffff" 
+            stroke-width="1" stroke="#ff0000ff"/>
+<text dominant-baseline="middle" text-anchor="middle" 
+            x="47.001000000000005" y="409" class="a14"><tspan x = "47.001000000000005" dy="1.0em">0</tspan></text><ellipse cx="141.00300000000001" cy="329" rx="17" ry="17" fill="#ffffffff" 
+            stroke-width="1" stroke="#ff0000ff"/>
+<text dominant-baseline="middle" text-anchor="middle" 
+            x="141.00300000000001" y="315" class="a14"><tspan x = "141.00300000000001" dy="1.0em">1</tspan></text><ellipse cx="152.005" cy="235" rx="17" ry="17" fill="#ffffffff" 
+            stroke-width="1" stroke="#ff0000ff"/>
+<text dominant-baseline="middle" text-anchor="middle" 
+            x="152.005" y="221" class="a14"><tspan x = "152.005" dy="1.0em">2</tspan></text><ellipse cx="152.005" cy="141" rx="17" ry="17" fill="#ffffffff" 
+            stroke-width="1" stroke="#ff0000ff"/>
+<text dominant-baseline="middle" text-anchor="middle" 
+            x="152.005" y="127" class="a14"><tspan x = "152.005" dy="1.0em">3</tspan></text><ellipse cx="47.001000000000005" cy="329" rx="17" ry="17" fill="#ffffffff" 
+            stroke-width="1" stroke="#ff0000ff"/>
+<text dominant-baseline="middle" text-anchor="middle" 
+            x="47.001000000000005" y="315" class="a14"><tspan x = "47.001000000000005" dy="1.0em">4</tspan></text><ellipse cx="58.003" cy="235" rx="17" ry="17" fill="#ffffffff" 
+            stroke-width="1" stroke="#ff0000ff"/>
+<text dominant-baseline="middle" text-anchor="middle" 
+            x="58.003" y="221" class="a14"><tspan x = "58.003" dy="1.0em">5</tspan></text><ellipse cx="58.003" cy="141" rx="17" ry="17" fill="#ffffffff" 
+            stroke-width="1" stroke="#ff0000ff"/>
+<text dominant-baseline="middle" text-anchor="middle" 
+            x="58.003" y="127" class="a14"><tspan x = "58.003" dy="1.0em">6</tspan></text><ellipse cx="47.001000000000005" cy="47" rx="17" ry="17" fill="#ffffffff" 
+            stroke-width="1" stroke="#ff0000ff"/>
+<text dominant-baseline="middle" text-anchor="middle" 
+            x="47.001000000000005" y="33" class="a14"><tspan x = "47.001000000000005" dy="1.0em">7</tspan></text><path id="arrow0" d="M 128.9820568408557 341.0206873998379 C 107.76862773648342 362.2336651642578, 80.23537226351658 389.7663348357422, 59.0219431591443 410.9793126001621 " stroke="#000000ff" stroke-width="1"    
+            fill="transparent" />
+<text><textPath href="#arrow0" startOffset="50%" text-anchor="middle" class="a14"></textPath></text><path id="arrow1" d="M 150.02876672229755 251.88474169278587 C 146.5412962322344 281.6813446800551, 146.4667037677656 282.3186553199449, 142.97923327770246 312.1152583072141 " stroke="#000000ff" stroke-width="1"    
+            fill="transparent" />
+<text><textPath href="#arrow1" startOffset="50%" text-anchor="middle" class="a14"></textPath></text><path id="arrow2" d="M 160.35463477911597 155.80822741098262 C 175.08928438932062 181.9403934303637, 199.20032580086723 207.07243350226037, 205.007 235 S 205.15407932087822 303.99827348680674, 194.00500000000002 329 S 86.59784952221202 397.6802545843111, 61.3232647208001 413.84179421134655 " stroke="#000000ff" stroke-width="1"    
+            fill="transparent" />
+<text><textPath href="#arrow2" startOffset="50%" text-anchor="middle" class="a14"></textPath></text><path id="arrow3" d="M 152.005 158 C 152.005 188, 152.005 188, 152.005 218 " stroke="#000000ff" stroke-width="1"    
+            fill="transparent" />
+<text><textPath href="#arrow3" startOffset="50%" text-anchor="middle" class="a14"></textPath></text><path id="arrow4" d="M 47.001000000000005 346 C 47.001000000000005 376, 47.001000000000005 376, 47.001000000000005 406 " stroke="#000000ff" stroke-width="1"    
+            fill="transparent" />
+<text><textPath href="#arrow4" startOffset="50%" text-anchor="middle" class="a14"></textPath></text><path id="arrow5" d="M 69.25505086411579 247.7432865208058 C 89.1116112125554 270.2314392045808, 109.89438878744463 293.7685607954192, 129.75094913588424 316.25671347919416 " stroke="#000000ff" stroke-width="1"    
+            fill="transparent" />
+<text><textPath href="#arrow5" startOffset="50%" text-anchor="middle" class="a14"></textPath></text><path id="arrow6" d="M 56.02676672229755 251.88474169278587 C 52.53929623223441 281.681344680055, 52.4647037677656 282.3186553199449, 48.97723327770245 312.1152583072141 " stroke="#000000ff" stroke-width="1"    
+            fill="transparent" />
+<text><textPath href="#arrow6" startOffset="50%" text-anchor="middle" class="a14"></textPath></text><path id="arrow7" d="M 70.0239431591443 153.02068739983793 C 91.23737226351658 174.2336651642578, 118.77062773648342 201.76633483574224, 139.98405684085571 222.97931260016207 " stroke="#000000ff" stroke-width="1"    
+            fill="transparent" />
+<text><textPath href="#arrow7" startOffset="50%" text-anchor="middle" class="a14"></textPath></text><path id="arrow8" d="M 58.003 158 C 58.003 188, 58.003 188, 58.003 218 " stroke="#000000ff" stroke-width="1"    
+            fill="transparent" />
+<text><textPath href="#arrow8" startOffset="50%" text-anchor="middle" class="a14"></textPath></text><path id="arrow9" d="M 59.66716161039503 58.338798439841646 C 82.01921151109212 78.34844274544456, 116.98678848890788 109.65155725455546, 139.33883838960497 129.66120156015836 " stroke="#000000ff" stroke-width="1"    
+            fill="transparent" />
+<text><textPath href="#arrow9" startOffset="50%" text-anchor="middle" class="a14"></textPath></text><path id="arrow10" d="M 40.20447621419742 62.582274045498615 C 28.210610709839912 90.08040471402558, 6.001 111, 6.001 141 S 6.001 205, 6.001 235 S 28.210610709839916 285.9195952859744, 40.20447621419742 313.4177259545014 " stroke="#000000ff" stroke-width="1"    
+            fill="transparent" />
+<text><textPath href="#arrow10" startOffset="50%" text-anchor="middle" class="a14"></textPath></text><path id="arrow11" d="M 48.97723327770245 63.884741692785866 C 52.46470376776559 93.68134468005505, 52.53929623223441 94.31865531994495, 56.02676672229755 124.11525830721413 " stroke="#000000ff" stroke-width="1"    
+            fill="transparent" />
+<text><textPath href="#arrow11" startOffset="50%" text-anchor="middle" class="a14"></textPath></text></svg>
