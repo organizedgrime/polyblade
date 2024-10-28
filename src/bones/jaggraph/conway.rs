@@ -10,20 +10,46 @@ impl JagGraph {
         for w in self.connections(v).into_iter() {
             self.connect([w, u]);
         }
+        // Delete a
+        for cycle in self.cycles.iter_mut() {
+            cycle.replace(v, u);
+        }
 
         // Delete v
         self.delete(v);
+
+        println!("replaced {v} with {u} in contraction");
     }
 
-    pub fn contract_edges(&mut self, edges: Vec<[VertexId; 2]>) {
-        let mut map = HashMap::<VertexId, VertexId>::default();
-        for [u, v] in edges.into_iter() {
-            let u = map.get(&u).unwrap_or(&u);
-            let v = map.get(&v).unwrap_or(&v);
-            if u != v {
-                self.contract_edge([*u, *v]);
-                map.insert(*v, *u);
+    pub fn contract_edges(&mut self, mut edges: Vec<[VertexId; 2]>) {
+        let mut removed = 0;
+        loop {
+            removed += 1;
+            println!("edges: {edges:?}");
+            self.render(&format!("tests/octahedron_contract_{removed}.svg"));
+            if edges.is_empty() {
+                break;
             }
+
+            let removal = edges.remove(0);
+            let v = removal[0].max(removal[1]);
+            let u = removal[0].min(removal[1]);
+            self.contract_edge([v, u]);
+            for [x, w] in &mut edges {
+                if *x > v {
+                    *x -= 1;
+                }
+                if *x == v {
+                    *x = u;
+                }
+                if *w > v {
+                    *w -= 1;
+                }
+                if *w == v {
+                    *w = u;
+                }
+            }
+            edges = edges.into_iter().filter(|[v, u]| v != u).collect();
         }
 
         self.cycles = self
@@ -91,9 +117,7 @@ impl JagGraph {
         let new_edges = self.truncate(None);
         // Edges that were already there get contracted
         self.edges()
-            .collect::<HashSet<[VertexId; 2]>>()
-            .difference(&new_edges)
-            .cloned()
+            .filter(|&[v, u]| !new_edges.contains(&[v, u]) && !new_edges.contains(&[u, v]))
             .collect()
     }
 

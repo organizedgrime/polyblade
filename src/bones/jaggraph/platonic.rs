@@ -59,9 +59,14 @@ impl JagGraph {
 
     pub fn octahedron() -> JagGraph {
         let mut p = JagGraph::pyramid(3);
+        println!("P3:\n{p}");
         let edges = p.ambo();
+        println!("aP3:\n{p}");
+        //p.contract_edge(edges[0]);
         p.contract_edges(edges);
+        println!("caP3:\n{p}");
         p.pst();
+        println!("PSTcaP3:\n{p}");
         //p.springs();
         //p.lattice();
         //p.name = "O".into();

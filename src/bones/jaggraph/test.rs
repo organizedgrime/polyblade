@@ -92,10 +92,12 @@ fn truncate() {
 fn contract_edge() {
     println!("contract edge");
     let mut graph = JagGraph::prism(4);
+    graph.render("tests/contract_edge_0.svg");
     assert_eq!(graph.len(), 8);
     assert_eq!(graph.edges().count(), 12);
     println!("{graph}");
     graph.contract_edge([0, 1]);
+    graph.render("tests/contract_edge_1.svg");
     println!("{graph}");
     assert_eq!(graph.len(), 7);
     assert_eq!(graph.edges().count(), 11);
