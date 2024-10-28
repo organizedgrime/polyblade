@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?><svg width="180.00300000000001" height="180" viewBox="0 0 180.00300000000001 180" xmlns="http://www.w3.org/2000/svg">
+<?xml version="1.0" encoding="UTF-8" standalone="no"?><svg width="338.42571966730986" height="462" viewBox="0 0 338.42571966730986 462" xmlns="http://www.w3.org/2000/svg">
 <defs>
 <marker id="startarrow" markerWidth="10" markerHeight="7"
 refX="0" refY="3.5" orient="auto">
@@ -12,17 +12,61 @@ refX="10" refY="3.5" orient="auto">
 </defs><style>
 .a14 { font-size: 14px; font-family: Times, serif; }
 </style>
-<ellipse cx="47.001000000000005" cy="141" rx="17" ry="17" fill="#ffffffff" 
+<ellipse cx="54.001000000000005" cy="423" rx="24" ry="17" fill="#ffffffff" 
             stroke-width="1" stroke="#0000ffff"/>
 <text dominant-baseline="middle" text-anchor="middle" 
-            x="47.001000000000005" y="127" class="a14"><tspan x = "47.001000000000005" dy="1.0em">0</tspan></text><ellipse cx="47.001000000000005" cy="47" rx="17" ry="17" fill="#ffffffff" 
-            stroke-width="1" stroke="#008000ff"/>
+            x="54.001000000000005" y="409" class="a14"><tspan x = "54.001000000000005" dy="1.0em">V0</tspan></text><ellipse cx="54.001000000000005" cy="329" rx="24" ry="17" fill="#ffffffff" 
+            stroke-width="1" stroke="#0000ffff"/>
 <text dominant-baseline="middle" text-anchor="middle" 
-            x="47.001000000000005" y="33" class="a14"><tspan x = "47.001000000000005" dy="1.0em">1</tspan></text><ellipse cx="141.00300000000001" cy="47" rx="17" ry="17" fill="#ffffffff" 
-            stroke-width="1" stroke="#008000ff"/>
+            x="54.001000000000005" y="315" class="a14"><tspan x = "54.001000000000005" dy="1.0em">V1</tspan></text><ellipse cx="217.01300000000006" cy="329" rx="24" ry="17" fill="#ffffffff" 
+            stroke-width="1" stroke="#0000ffff"/>
 <text dominant-baseline="middle" text-anchor="middle" 
-            x="141.00300000000001" y="33" class="a14"><tspan x = "141.00300000000001" dy="1.0em">2</tspan></text><path id="arrow0" d="M 47.001000000000005 64 C 47.001000000000005 94, 47.001000000000005 94, 47.001000000000005 124 " stroke="#000000ff" stroke-width="1"    
+            x="217.01300000000006" y="315" class="a14"><tspan x = "217.01300000000006" dy="1.0em">V2</tspan></text><ellipse cx="206.01100000000002" cy="235" rx="24" ry="17" fill="#ffffffff" 
+            stroke-width="1" stroke="#ff0000ff"/>
+<text dominant-baseline="middle" text-anchor="middle" 
+            x="206.01100000000002" y="221" class="a14"><tspan x = "206.01100000000002" dy="1.0em">V3</tspan></text><ellipse cx="76.005" cy="235" rx="24" ry="17" fill="#ffffffff" 
+            stroke-width="1" stroke="#ff0000ff"/>
+<text dominant-baseline="middle" text-anchor="middle" 
+            x="76.005" y="221" class="a14"><tspan x = "76.005" dy="1.0em">V4</tspan></text><ellipse cx="162.00300000000001" cy="141" rx="24" ry="17" fill="#ffffffff" 
+            stroke-width="1" stroke="#ff0000ff"/>
+<text dominant-baseline="middle" text-anchor="middle" 
+            x="162.00300000000001" y="127" class="a14"><tspan x = "162.00300000000001" dy="1.0em">V5</tspan></text><ellipse cx="54.001000000000005" cy="141" rx="24" ry="17" fill="#ffffffff" 
+            stroke-width="1" stroke="#ff0000ff"/>
+<text dominant-baseline="middle" text-anchor="middle" 
+            x="54.001000000000005" y="127" class="a14"><tspan x = "54.001000000000005" dy="1.0em">V6</tspan></text><ellipse cx="270.005" cy="141" rx="24" ry="17" fill="#ffffffff" 
+            stroke-width="1" stroke="#ff0000ff"/>
+<text dominant-baseline="middle" text-anchor="middle" 
+            x="270.005" y="127" class="a14"><tspan x = "270.005" dy="1.0em">V7</tspan></text><ellipse cx="54.001000000000005" cy="47" rx="24" ry="17" fill="#ffffffff" 
+            stroke-width="1" stroke="#ff0000ff"/>
+<text dominant-baseline="middle" text-anchor="middle" 
+            x="54.001000000000005" y="33" class="a14"><tspan x = "54.001000000000005" dy="1.0em">V8</tspan></text><path id="arrow0" d="M 54.001000000000005 346 C 54.001000000000005 376, 54.001000000000005 376, 54.001000000000005 406 " stroke="#000000ff" stroke-width="1"    
             fill="transparent" />
-<text><textPath href="#arrow0" startOffset="50%" text-anchor="middle" class="a14"></textPath></text><path id="arrow1" d="M 128.9820568408557 59.02068739983791 C 107.76862773648342 80.23366516425776, 80.23537226351658 107.76633483574223, 59.0219431591443 128.97931260016207 " stroke="#000000ff" stroke-width="1"    
+<text><textPath href="#arrow0" startOffset="50%" text-anchor="middle" class="a14"></textPath></text><path id="arrow1" d="M 198.40072479610765 339.7326691848814 C 172.41202584167718 354.7189137663629, 98.60197415832289 397.2810862336371, 72.61327520389241 412.2673308151186 " stroke="#000000ff" stroke-width="1"    
             fill="transparent" />
-<text><textPath href="#arrow1" startOffset="50%" text-anchor="middle" class="a14"></textPath></text></svg>
+<text><textPath href="#arrow1" startOffset="50%" text-anchor="middle" class="a14"></textPath></text><path id="arrow2" d="M 197.84773404029352 250.9863958377586 C 184.20441934383348 277.70455378499287, 174.9667675068322 304.82103342673605, 158.01100000000005 329 S 91.06309262978729 389.50479081626764, 68.80592020544165 409.61991636081615 " stroke="#000000ff" stroke-width="1"    
+            fill="transparent" />
+<text><textPath href="#arrow2" startOffset="50%" text-anchor="middle" class="a14"></textPath></text><path id="arrow3" d="M 207.9939205071374 251.94187671977022 C 211.48139099720055 281.7384797070394, 211.54260900279954 282.2615202929606, 215.03007949286268 312.0581232802298 " stroke="#000000ff" stroke-width="1"    
+            fill="transparent" />
+<text><textPath href="#arrow3" startOffset="50%" text-anchor="middle" class="a14"></textPath></text><path id="arrow4" d="M 84.3181131000661 250.94760472257576 C 98.18542054938452 277.550194523309, 124.80083212490982 303.5368146106617, 125.00500000000002 329 S 83.40539327253903 384.0724329950613, 65.32335484882854 408.01068452777474 " stroke="#000000ff" stroke-width="1"    
+            fill="transparent" />
+<text><textPath href="#arrow4" startOffset="50%" text-anchor="middle" class="a14"></textPath></text><path id="arrow5" d="M 157.38928488904716 157.68292123517347 C 149.39284622679475 186.59757096019754, 140.32147792204037 205.58560066510222, 136.007 235 S 144.482019530849 302.17724595671643, 136.00700000000003 329 S 86.33923235279428 385.9320556890635, 66.6173503982614 408.5384125864379 " stroke="#000000ff" stroke-width="1"    
+            fill="transparent" />
+<text><textPath href="#arrow5" startOffset="50%" text-anchor="middle" class="a14"></textPath></text><path id="arrow6" d="M 148.95111991477768 155.26634024059746 C 128.7009724159162 177.4007371439322, 109.30702758408383 198.5992628560678, 89.05688008522233 220.73365975940254 " stroke="#000000ff" stroke-width="1"    
+            fill="transparent" />
+<text><textPath href="#arrow6" startOffset="50%" text-anchor="middle" class="a14"></textPath></text><path id="arrow7" d="M 47.55567559291376 157.37549311492802 C 36.56824493082933 185.29101509546578, 15.570110116254725 209.77160178322134, 17.003 235 S 113.10182831676195 305.7069344218877, 114.00300000000001 329 S 80.03014999611254 382.22235759417055, 63.8887041301958 407.5097798700309 " stroke="#000000ff" stroke-width="1"    
+            fill="transparent" />
+<text><textPath href="#arrow7" startOffset="50%" text-anchor="middle" class="a14"></textPath></text><path id="arrow8" d="M 45.83773404029349 156.98639583775858 C 32.19441934383344 183.70455378499284, 7.268966160810185 208.28184205276574, 6.001 235 S 32.19441934383344 286.29544621500713, 45.83773404029349 313.0136041622414 " stroke="#000000ff" stroke-width="1"    
+            fill="transparent" />
+<text><textPath href="#arrow8" startOffset="50%" text-anchor="middle" class="a14"></textPath></text><path id="arrow9" d="M 57.92684598278893 157.77101992283946 C 64.7645584426549 186.98138945689695, 65.2414415573451 189.01861054310305, 72.07915401721107 218.22898007716054 " stroke="#000000ff" stroke-width="1"    
+            fill="transparent" />
+<text><textPath href="#arrow9" startOffset="50%" text-anchor="middle" class="a14"></textPath></text><path id="arrow10" d="M 253.6906263341523 153.46830079506393 C 229.8546776404644 171.68498407912736, 156.82448535197486 209.8522915579854, 147.00900000000001 235 S 155.77609011748584 302.60423525984356, 147.00900000000004 329 S 88.87579268241822 387.75324152602667, 67.77541337247291 409.0786721893552 " stroke="#000000ff" stroke-width="1"    
+            fill="transparent" />
+<text><textPath href="#arrow10" startOffset="50%" text-anchor="middle" class="a14"></textPath></text><path id="arrow11" d="M 259.5803911957521 156.31257973558928 C 242.69774343929433 181.11129350730275, 233.31825656070566 194.88870649269725, 216.4356088042479 219.68742026441072 " stroke="#000000ff" stroke-width="1"    
+            fill="transparent" />
+<text><textPath href="#arrow11" startOffset="50%" text-anchor="middle" class="a14"></textPath></text><path id="arrow12" d="M 75.63073103183936 54.366487384306495 C 104.02895639065216 64.03813649239981, 333.42571966730986 120.69920547804114, 330.00699999999995 141 S 271.7782046820855 207.47357752411887, 266.013 235 S 282.2794616576164 304.30419988692086, 277.015 329 S 102.2703310286117 402.6545637642054, 74.62567712090942 414.3067356786324 " stroke="#000000ff" stroke-width="1"    
+            fill="transparent" />
+<text><textPath href="#arrow12" startOffset="50%" text-anchor="middle" class="a14"></textPath></text><path id="arrow13" d="M 69.15029724575494 60.18525528324442 C 91.77961945012999 79.88078209951868, 124.22438054987002 108.11921790048132, 146.85370275424506 127.81474471675558 " stroke="#000000ff" stroke-width="1"    
+            fill="transparent" />
+<text><textPath href="#arrow13" startOffset="50%" text-anchor="middle" class="a14"></textPath></text><path id="arrow14" d="M 74.45007584423384 55.8989700623969 C 101.95820771575256 67.86987984148784, 222.04779228424744 120.13012015851216, 249.55592415576618 132.1010299376031 " stroke="#000000ff" stroke-width="1"    
+            fill="transparent" />
+<text><textPath href="#arrow14" startOffset="50%" text-anchor="middle" class="a14"></textPath></text></svg>

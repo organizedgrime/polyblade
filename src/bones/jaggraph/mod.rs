@@ -308,8 +308,17 @@ impl IndexMut<Edge> for JagGraph {
 
 impl Display for JagGraph {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_fmt(format_args!("\t|"))?;
+        for i in 0..self.len() {
+            f.write_fmt(format_args!(" {i} |"))?;
+        }
+        f.write_fmt(format_args!("\n\t"))?;
+        for i in 0..self.len() {
+            f.write_fmt(format_args!("____"))?;
+        }
+        f.write_fmt(format_args!("\n"))?;
         for v in self.vertices() {
-            f.write_str("|")?;
+            f.write_fmt(format_args!("{v}:\t|"))?;
             for u in self.vertices() {
                 let value = if self[[v, u]] == usize::MAX {
                     String::from("_")
@@ -332,13 +341,13 @@ impl JagGraph {
 
         for v in self.vertices() {
             dot.push_str(&format!(
-                "\t{v} [color=\"{}\"];\n",
+                "\tV{v} [color=\"{}\"];\n",
                 colors[self.connections(v).len() % colors.len()]
             ));
         }
 
-        for [u, v] in self.edges() {
-            dot.push_str(&format!("\t{u} -- {v};\n"));
+        for [v, u] in self.edges() {
+            dot.push_str(&format!("\tV{v} -- V{u};\n"));
         }
         dot.push_str("}");
         dot

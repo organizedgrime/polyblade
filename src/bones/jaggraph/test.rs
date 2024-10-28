@@ -118,17 +118,10 @@ fn split_vertex() {
     control[[0, 4]] = 1;
     control[[4, 5]] = 1;
     control[[5, 0]] = 1;
-    control.pst();
-    control.find_cycles();
     println!("{control}");
-
     control.render("tests/split_vertex_control.svg");
-
     let mut test = JagGraph::pyramid(3);
-    test.render("tests/split_vertex_pyramid.svg");
-    println!("{test}");
     test.split_vertex(0);
-    println!("{test}");
-    control.render("tests/split_vertex_test.svg");
+    test.render("tests/split_vertex_test.svg");
     assert_eq!(test.matrix, control.matrix);
 }

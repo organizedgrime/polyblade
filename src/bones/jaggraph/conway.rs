@@ -61,30 +61,21 @@ impl JagGraph {
     }
 
     pub fn split_vertex(&mut self, v: VertexId) -> Vec<[VertexId; 2]> {
-        //let original_position = self.positions[&v];
-        let mut connections: VecDeque<VertexId> = self.connections(v).into_iter().collect();
-        let mut transformations: HashMap<VertexId, VertexId> = Default::default();
-        //let mut new_face = Vec::new();
+        // neighbors
+        let connections = self.connections(v);
 
         // Remove the vertex
-        let new_face: Vec<(usize, usize)> = [
-            vec![v],
-            (1..connections.len())
-                .into_iter()
-                .map(|_| self.insert())
-                .collect(),
-        ]
-        .concat()
-        .into_iter()
-        .zip(connections.clone())
-        .collect();
+        let new_face: Vec<(usize, usize)> = vec![v]
+            .into_iter()
+            .chain((1..connections.len()).into_iter().map(|_| self.insert()))
+            .zip(connections.clone())
+            .collect();
 
         for c in connections {
             self.disconnect([v, c]);
         }
 
         for &(vertex, connection) in new_face.iter() {
-            println!("connecting {vertex} - {connection}");
             self.connect([vertex, connection]);
         }
 
@@ -92,49 +83,10 @@ impl JagGraph {
         let mut new_edges = vec![];
         for i in 0..new_face.len() {
             let edge = [new_face[i].0, new_face[(i + 1) % new_face.len()].0];
-            println!("connecting {edge:?}");
             self.connect(edge);
             new_edges.push(edge);
         }
 
-        //for
-
-        // // connect a new node to every existing connection
-        // while let Some(u) = connections.pop_front() {
-        //     // Insert a new node in the same location
-        //     let new_vertex = self.insert();
-        //     // Track it in the new face
-        //     new_face.push(new_vertex);
-        //     // Update pos
-        //     //self.positions.insert(new_vertex, original_position);
-        //     // Reform old connection
-        //     self.connect([u, new_vertex]);
-        //     // track transformation
-        //     transformations.insert(u, new_vertex);
-        // }
-
-        // upate every face
-        // for i in 0..self.cycles.len() {
-        //     // if this face had v in it
-        //     if let Some(vi) = self.cycles[i].iter().position(|&x| x == v) {
-        //         // indices before and after v in face
-        //         let vh = (vi + self.cycles[i].len() - 1) % self.cycles[i].len();
-        //         let vj = (vi + 1) % self.cycles[i].len();
-        //
-        //         let b = transformations[&self.cycles[i][vh]];
-        //         let a = transformations[&self.cycles[i][vj]];
-        //
-        //         self.cycles[i].insert(vi, a);
-        //         self.cycles[i].insert(vi, b);
-        //
-        //         new_edges.push([a, b]);
-        //         self.connect([a, b]);
-        //     }
-        // }
-
-        self.pst();
-        self.find_cycles();
-        //self.cycles.push(new_edges.clone().into());
         new_edges
     }
 
@@ -143,7 +95,7 @@ impl JagGraph {
     pub fn ambo(&mut self) -> Vec<[VertexId; 2]> {
         // Truncate
         self.render("tests/before_truncation.svg");
-        let new_edges = self.split_vertex(0);
+        let new_edges = self.truncate(None);
         self.render("tests/after_truncation.svg");
         // Edges that were already there get contracted
         self.edges()
@@ -179,11 +131,14 @@ impl JagGraph {
     pub fn truncate(&mut self, degree: Option<usize>) -> HashSet<[VertexId; 2]> {
         let mut new_edges = HashSet::default();
         let mut vertices = self.vertices().clone().collect::<Vec<_>>();
+
         if let Some(degree) = degree {
             vertices.retain(|&v| self.connections(v).len() == degree);
         }
+
         for v in vertices {
             new_edges.extend(self.split_vertex(v));
+            self.render(&format!("tests/truncate_split_{v}.svg"));
         }
         new_edges
     }
