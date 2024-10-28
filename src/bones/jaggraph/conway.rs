@@ -32,6 +32,7 @@ impl JagGraph {
             }
 
             let removal = edges.remove(0);
+            println!("contracting REALLY: {removal:?}");
             let v = removal[0].max(removal[1]);
             let u = removal[0].min(removal[1]);
             self.contract_edge([v, u]);
@@ -39,14 +40,8 @@ impl JagGraph {
                 if *x > v {
                     *x -= 1;
                 }
-                if *x == v {
-                    *x = u;
-                }
                 if *w > v {
                     *w -= 1;
-                }
-                if *w == v {
-                    *w = u;
                 }
             }
             edges = edges.into_iter().filter(|[v, u]| v != u).collect();

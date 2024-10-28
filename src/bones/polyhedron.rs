@@ -33,7 +33,6 @@ impl PolyGraph {
                 let target_length =
                     diameter_spring_length * (self.graph[[v, u]] as f32 / diameter as f32);
                 let f = diff * (target_length - spring_length) / TICK_SPEED * second;
-                log::warn!("f: {:?}", self.positions);
                 self.speeds[v] = (self.speeds[v] + f) * SPEED_DAMPENING;
                 self.speeds[u] = (self.speeds[u] - f) * SPEED_DAMPENING;
                 self.positions[v] += self.speeds[v];
@@ -58,7 +57,6 @@ impl PolyGraph {
     }
 
     pub fn update(&mut self, second: f32) {
-        log::info!("springs:{:?}", self.springs);
         self.center();
         self.resize(second);
         self.apply_spring_forces(second);
@@ -153,9 +151,12 @@ impl PolyGraph {
                             ]
                         }
                     };
-                    self.graph.cycles.sort_by_key(|c| usize::MAX - c.len());
+                    //self.graph.cycles.sort_by_key(|c| usize::MAX - c.len());
                     self.transactions = [new_transactions, self.transactions.clone()].concat();
                     self.graph.pst();
+                    self.graph.find_cycles();
+                    println!("cycles {:?}", self.graph.cycles);
+                    println!("verts {:?}", self.graph.vertices());
                     self.springs();
                 }
                 Name(c) => {

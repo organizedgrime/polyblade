@@ -60,6 +60,7 @@ impl JagGraph {
     pub fn octahedron() -> JagGraph {
         let mut p = JagGraph::pyramid(3);
         let edges = p.ambo();
+        println!("contracting!: {edges:?}");
         p.contract_edges(edges);
         p.render("tests/octahedron_test.svg");
 
