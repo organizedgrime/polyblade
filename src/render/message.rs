@@ -1,5 +1,5 @@
 use crate::{
-    bones::{JagGraph, PolyGraph, Transaction},
+    bones::{Distance, Polyhedron, Transaction},
     render::camera::Camera,
     Instant,
 };
@@ -156,21 +156,21 @@ impl ProcessMessage<ModelState> for PresetMessage {
         use PresetMessage::*;
         match &self {
             Prism(n) => {
-                state.polyhedron.graph = JagGraph::prism(*n);
+                state.polyhedron.graph = Distance::prism(*n);
                 if n == &4 {
                     state.polyhedron.name = "C".into();
                 }
             }
-            AntiPrism(n) => state.polyhedron.graph = JagGraph::anti_prism(*n),
+            AntiPrism(n) => state.polyhedron.graph = Distance::anti_prism(*n),
             Pyramid(n) => {
-                state.polyhedron.graph = JagGraph::pyramid(*n);
+                state.polyhedron.graph = Distance::pyramid(*n);
                 if n == &3 {
                     state.polyhedron.name = "T".into();
                 }
             }
-            Octahedron => state.polyhedron.graph = JagGraph::octahedron(),
-            Dodecahedron => state.polyhedron.graph = JagGraph::dodecahedron(),
-            Icosahedron => state.polyhedron.graph = JagGraph::icosahedron(),
+            Octahedron => state.polyhedron.graph = Distance::octahedron(),
+            Dodecahedron => state.polyhedron.graph = Distance::dodecahedron(),
+            Icosahedron => state.polyhedron.graph = Distance::icosahedron(),
         }
 
         state.polyhedron.positions = state

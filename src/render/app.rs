@@ -242,19 +242,20 @@ impl App<'_> {
             let mut render_pass = scene.clear(&view, &mut encoder, program.background_color());
 
             // Ignore the whole first polygon if we're in schlegel mode
-            let starting_vertex = if program.state.render.schlegel {
-                // Determines how many vertices are actually used to render the polygon
-                match program.state.model.polyhedron.graph.cycles[0].len() {
-                    3 => 3,
-                    4 => 6,
-                    n => n * 3,
-                }
-            } else {
-                0
-            } as u32;
+            // let starting_vertex = if program.state.render.schlegel {
+            //     // Determines how many vertices are actually used to render the polygon
+            //     match program.state.model.polyhedron.shape.distance.cycles[0].len() {
+            //         3 => 3,
+            //         4 => 6,
+            //         n => n * 3,
+            //     }
+            // } else {
+            //     0
+            // } as u32;
 
             // Draw the scene
-            scene.draw(starting_vertex, &mut render_pass);
+            // scene.draw(starting_vertex, &mut render_pass);
+            scene.draw(0, &mut render_pass);
         }
 
         // And then iced on top

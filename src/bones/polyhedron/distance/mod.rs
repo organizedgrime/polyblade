@@ -1,93 +1,74 @@
-#[cfg(test)]
-mod test;
+mod conway;
+mod platonic;
+// #[cfg(test)]
+// mod test;
 use layout::backends::svg::SVGWriter;
 use layout::core::utils::save_to_file;
 use layout::gv::{self, GraphBuilder};
 
-use super::{Edge, Face, VertexId};
-use std::collections::{HashMap, HashSet};
+use crate::bones::VertexId;
+use std::collections::HashSet;
 use std::{
     collections::VecDeque,
-    fmt::{Display, Write},
+    fmt::Display,
     ops::{Index, IndexMut, Range},
 };
-mod conway;
-mod platonic;
+
+use super::Cycles;
 
 /// Jagged array which represents the symmetrix distance matrix of a given Graph
 /// usize::MAX    ->   disconnected
 /// 0             ->   identity
 /// n             ->   actual distance
 #[derive(Debug, Default, Clone, PartialEq)]
-pub struct JagGraph {
-    matrix: Vec<Vec<usize>>,
-    pub cycles: Vec<Face>,
+pub struct Distance {
+    distance: Vec<Vec<usize>>,
 }
 
-impl JagGraph {
+impl Distance {
     /// [ 0 ]
     /// [ M | 0 ]
     /// [ M | M | 0 ]
     /// ..
     /// [ M | M | M | ... | M | M | M | 0 ]
     pub fn new(n: usize) -> Self {
-        JagGraph {
-            matrix: (0..n)
+        Distance {
+            distance: (0..n)
                 .into_iter()
                 .map(|m| [vec![usize::MAX; m], vec![0]].concat())
                 .collect(),
-            cycles: vec![],
         }
     }
 }
 
-impl JagGraph {
+impl Distance {
     /// Connect one vertex to another with length one, iff they are note the same point
-    pub fn connect<T>(&mut self, i: T)
-    where
-        JagGraph: Index<T, Output = usize> + IndexMut<T, Output = usize>,
-        T: Copy,
-    {
-        if self[i] != 0 {
-            self[i] = 1;
+    pub fn connect(&mut self, [v, u]: [VertexId; 2]) {
+        if self[[v, u]] != 0 {
+            self[[v, u]] = 1;
         }
     }
 
     /// Disconnect one vertex from another iff they are neighbors
-    pub fn disconnect<T>(&mut self, i: T)
-    where
-        JagGraph: Index<T, Output = usize> + IndexMut<T, Output = usize>,
-        T: Copy,
-    {
-        if self[i] == 1 {
-            self[i] = usize::MAX;
+    pub fn disconnect(&mut self, [v, u]: [VertexId; 2]) {
+        if self[[v, u]] == 1 {
+            self[[v, u]] = usize::MAX;
         }
     }
 
     /// Inserts a new vertex in the matrix
     pub fn insert(&mut self) -> VertexId {
-        self.matrix
+        self.distance
             .push([vec![usize::MAX; self.len()], vec![0]].concat());
         self.len() - 1
     }
 
     /// Deletes a vertex from the matrix
     pub fn delete(&mut self, v: VertexId) {
-        for row in &mut self.matrix[v..] {
+        for row in &mut self.distance[v..] {
             row.remove(v);
         }
-        self.matrix.remove(v);
-
-        for cycle in &mut self.cycles {
-            *cycle = cycle.iter().filter(|&c| c != &v).cloned().collect();
-        }
-        for i in 0..self.cycles.len() {
-            for j in 0..self.cycles[i].len() {
-                if self.cycles[i][j] >= v {
-                    self.cycles[i][j] -= 1;
-                }
-            }
-        }
+        self.distance.remove(v);
     }
 
     /// Enumerates the vertices connected to v
@@ -97,7 +78,7 @@ impl JagGraph {
 
     /// Iterable Range representing vertex IDs
     pub fn vertices(&self) -> Range<VertexId> {
-        0..self.matrix.len()
+        0..self.distance.len()
     }
 
     /// All possible compbinations of vertices
@@ -113,7 +94,7 @@ impl JagGraph {
 
     /// Vertex Count
     pub fn len(&self) -> usize {
-        self.matrix.len()
+        self.distance.len()
     }
 
     /// Maximum distance value
@@ -139,7 +120,7 @@ impl JagGraph {
         let mut counters: Vec<usize> = vec![n - 1; self.len()];
 
         // The element D[i, j] represents the distance from v_i to vj.
-        let mut dist: JagGraph = JagGraph::new(self.len());
+        let mut dist: Distance = Distance::new(self.len());
 
         // d = 0
         let mut depth = 1;
@@ -189,10 +170,10 @@ impl JagGraph {
                         }
                         // for x in w.children
                         for x in children[w].clone() {
-                            let e: Edge = (x, v).into();
-                            if x != v && dist[e] == usize::MAX {
+                            //let e: Edge = (x, v).into();
+                            if x != v && dist[[x, v]] == usize::MAX {
                                 // D[x.id, v.id] = d;
-                                dist[e] = depth;
+                                dist[[x, v]] = depth;
                                 // add x' to w' children
                                 children[w].push(x);
                                 // v.que.enque(x', d)
@@ -225,15 +206,9 @@ impl JagGraph {
         *self = dist;
     }
 
-    /// Number of faces
-    pub fn face_count(&self) -> i64 {
-        2 + self.edges().count() as i64 - self.len() as i64
-    }
-
-    /// All faces
-    pub fn find_cycles(&mut self) {
-        let mut triplets = Vec::<Face>::new();
-        let mut cycles = HashSet::<Face>::default();
+    pub fn simple_cycles(&self) -> Cycles {
+        let mut triplets: Vec<Vec<_>> = Default::default();
+        let mut cycles: HashSet<Vec<_>> = Default::default();
 
         // find all the triplets
         for u in self.vertices() {
@@ -241,7 +216,7 @@ impl JagGraph {
             for &x in adj.iter() {
                 for &y in adj.iter() {
                     if x != y && u < x && x < y {
-                        let new_face = Face::new(vec![x, u, y]);
+                        let new_face = vec![x, u, y];
                         if self[[x, y]] == 1 {
                             cycles.insert(new_face);
                         } else {
@@ -274,46 +249,44 @@ impl JagGraph {
             }
         }
 
-        self.cycles = cycles.into_iter().collect();
+        Cycles::new(cycles.into_iter().collect::<Vec<_>>())
+    }
+
+    pub fn springs(&self) -> Vec<[VertexId; 2]> {
+        let diameter = self.diameter();
+        self.vertex_pairs()
+            .filter(|&[v, u]| v != u && (self[[v, u]] <= 2 || self[[v, u]] >= diameter - 1))
+            .collect::<Vec<_>>()
+    }
+
+    /// Number of faces
+    pub fn face_count(&self) -> i64 {
+        2 + self.edges().count() as i64 - self.len() as i64
     }
 }
 
-impl Index<[VertexId; 2]> for JagGraph {
+impl Index<[VertexId; 2]> for Distance {
     type Output = usize;
 
     fn index(&self, index: [VertexId; 2]) -> &Self::Output {
-        &self.matrix[index[0].max(index[1])][index[0].min(index[1])]
+        &self.distance[index[0].max(index[1])][index[0].min(index[1])]
     }
 }
 
-impl IndexMut<[VertexId; 2]> for JagGraph {
+impl IndexMut<[VertexId; 2]> for Distance {
     fn index_mut(&mut self, index: [VertexId; 2]) -> &mut Self::Output {
-        &mut self.matrix[index[0].max(index[1])][index[0].min(index[1])]
+        &mut self.distance[index[0].max(index[1])][index[0].min(index[1])]
     }
 }
 
-impl Index<Edge> for JagGraph {
-    type Output = usize;
-
-    fn index(&self, index: Edge) -> &Self::Output {
-        &self.matrix[index.v.max(index.u)][index.v.min(index.u)]
-    }
-}
-
-impl IndexMut<Edge> for JagGraph {
-    fn index_mut(&mut self, index: Edge) -> &mut Self::Output {
-        &mut self.matrix[index.v.max(index.u)][index.v.min(index.u)]
-    }
-}
-
-impl Display for JagGraph {
+impl Display for Distance {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_fmt(format_args!("\t|"))?;
         for i in 0..self.len() {
             f.write_fmt(format_args!(" {i} |"))?;
         }
         f.write_fmt(format_args!("\n\t"))?;
-        for i in 0..self.len() {
+        for _ in 0..self.len() {
             f.write_fmt(format_args!("____"))?;
         }
         f.write_fmt(format_args!("\n"))?;
@@ -333,7 +306,7 @@ impl Display for JagGraph {
     }
 }
 
-impl JagGraph {
+impl Distance {
     pub fn graphviz(&self) -> String {
         let mut dot = format!("graph G{{\nlayout=fdp\n");
 
@@ -383,12 +356,3 @@ impl JagGraph {
         }
     }
 }
-// impl Display for JagGraph {
-//     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-//         f.write_str("graph G {\nlayout=fdp\n")?;
-//         for [u, v] in self.edges() {
-//             f.write_fmt(format_args!("\t{u} -- {v};\n"))?;
-//         }
-//         f.write_str("}")
-//     }
-// }

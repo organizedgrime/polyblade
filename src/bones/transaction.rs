@@ -1,5 +1,4 @@
-use crate::{bones::Edge, render::message::ConwayMessage};
-use rustc_hash::FxHashSet as HashSet;
+use crate::render::message::ConwayMessage;
 use std::time::Instant;
 
 use super::VertexId;

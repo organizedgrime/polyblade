@@ -1,5 +1,5 @@
 use crate::{
-    bones::{JagGraph, PolyGraph},
+    bones::{Distance, Polyhedron},
     render::{
         camera::Camera,
         message::ColorMethodMessage,
@@ -74,7 +74,7 @@ impl Default for ColorPickerState {
 
 #[derive(Debug, Clone)]
 pub struct ModelState {
-    pub polyhedron: PolyGraph,
+    pub polyhedron: Polyhedron,
     pub transform: Mat4,
 }
 
@@ -83,14 +83,14 @@ impl Default for ModelState {
         let mut x = Self {
             //polyhedron: PolyGraph::dodecahedron(),
             polyhedron: {
-                let mut p = PolyGraph::new_disconnected(4);
-                p.graph = JagGraph::pyramid(3);
+                let mut p = Polyhedron::default();
+                p.shape.distance = Distance::pyramid(3);
                 p
             },
             transform: Mat4::identity(),
         };
-        x.polyhedron.springs();
-        x.polyhedron.lattice();
+        // x.polyhedron.springs();
+        // x.polyhedron.lattice();
         log::error!("poly: {:?}", x.polyhedron);
         x
     }
@@ -106,7 +106,7 @@ pub fn load_polydex() -> Result<Polydex, Box<dyn std::error::Error>> {
 
 impl Default for AppState {
     fn default() -> Self {
-        let info = PolyGraph::default().polydex_entry(&vec![]);
+        let info = Polyhedron::default().polydex_entry(&vec![]);
         Self {
             model: ModelState::default(),
             render: RenderState::default(),
@@ -129,7 +129,7 @@ impl AppState {
             frame_difference
         };
 
-        self.model.polyhedron.update(second);
+        //self.model.polyhedron.update(second);
         self.render.frame = time;
 
         let time = if self.render.rotating {

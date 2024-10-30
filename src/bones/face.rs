@@ -8,13 +8,13 @@ use std::{
 };
 
 #[derive(Debug, Default, Clone, PartialOrd, Ord)]
-pub struct Face(Vec<VertexId>);
+pub struct Cycle(Vec<VertexId>);
 
-impl Face {
+impl Cycle {
     pub fn new(vertices: Vec<VertexId>) -> Self {
         Self(vertices)
     }
-    pub fn contains(&self, other: &Face) -> bool {
+    pub fn contains(&self, other: &Cycle) -> bool {
         other.0.iter().all(|v| self.0.contains(v))
     }
 
@@ -69,7 +69,7 @@ impl Face {
     }
 }
 
-impl From<Vec<[VertexId; 2]>> for Face {
+impl From<Vec<[VertexId; 2]>> for Cycle {
     fn from(mut edges: Vec<[VertexId; 2]>) -> Self {
         let mut first = false;
         let mut face = vec![edges[0][0]];
@@ -97,7 +97,7 @@ impl From<Vec<[VertexId; 2]>> for Face {
     }
 }
 
-impl<Idx> Index<Idx> for Face
+impl<Idx> Index<Idx> for Cycle
 where
     Idx: SliceIndex<[usize]>,
 {
@@ -108,7 +108,7 @@ where
         self.0.index(index)
     }
 }
-impl<Idx> IndexMut<Idx> for Face
+impl<Idx> IndexMut<Idx> for Cycle
 where
     Idx: SliceIndex<[usize], Output = usize>,
 {
@@ -118,7 +118,7 @@ where
     }
 }
 
-impl IntoIterator for Face {
+impl IntoIterator for Cycle {
     type Item = VertexId;
     type IntoIter = IntoIter<VertexId>;
 
@@ -127,9 +127,9 @@ impl IntoIterator for Face {
     }
 }
 
-impl FromIterator<VertexId> for Face {
+impl FromIterator<VertexId> for Cycle {
     fn from_iter<I: IntoIterator<Item = VertexId>>(iter: I) -> Self {
-        let mut c = Face::new(vec![]);
+        let mut c = Cycle::new(vec![]);
         for i in iter {
             c.0.push(i);
         }
@@ -137,14 +137,14 @@ impl FromIterator<VertexId> for Face {
     }
 }
 
-impl PartialEq for Face {
+impl PartialEq for Cycle {
     fn eq(&self, other: &Self) -> bool {
         self.contains(other) && self.0.len() == other.0.len()
     }
 }
 
-impl Eq for Face {}
-impl Hash for Face {
+impl Eq for Cycle {}
+impl Hash for Cycle {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
         let mut edges = self.edges().into_iter().collect::<Vec<_>>();
         edges.sort();
