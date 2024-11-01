@@ -161,16 +161,8 @@ impl Polyhedron {
                 let target_length =
                     diameter_spring_length * (self.shape.distance[[v, u]] as f32 / diameter as f32);
                 let f = diff * (target_length - spring_length) / TICK_SPEED * second;
-                {
-                    self.render.vertices[v].speed =
-                        (self.render.vertices[v].speed + f) * SPEED_DAMPENING;
-                    self.render.vertices[u].speed =
-                        (self.render.vertices[u].speed - f) * SPEED_DAMPENING;
-                }
-                let sv = self.render.vertices[v].speed;
-                let su = self.render.vertices[u].speed;
-                self.render.vertices[v].position += sv;
-                self.render.vertices[u].position += su;
+                println!("f: {f:?}; target_length: {target_length:?}");
+                self.render.apply_force([v, u], f);
             }
         }
     }

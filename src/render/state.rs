@@ -81,12 +81,9 @@ pub struct ModelState {
 impl Default for ModelState {
     fn default() -> Self {
         let x = Self {
-            //polyhedron: PolyGraph::dodecahedron(),
             polyhedron: { Polyhedron::preset(&PresetMessage::Octahedron) },
             transform: Mat4::identity(),
         };
-        // x.polyhedron.springs();
-        // x.polyhedron.lattice();
         log::error!("poly: {:?}", x.polyhedron);
         x
     }

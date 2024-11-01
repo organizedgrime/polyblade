@@ -1,7 +1,7 @@
 use rand::random;
 use ultraviolet::Vec3;
 
-use super::TICK_SPEED;
+use super::{VertexId, SPEED_DAMPENING, TICK_SPEED};
 
 #[derive(Debug, Clone)]
 pub struct Vertex {
@@ -74,4 +74,13 @@ impl Render {
     //         self.positions.push(Vec3::new(x, y, z));
     //     }
     // }
+    //
+    pub fn apply_force(&mut self, [v, u]: [VertexId; 2], f: Vec3) {
+        self.vertices[v].speed += f * SPEED_DAMPENING;
+        self.vertices[u].speed -= f * SPEED_DAMPENING;
+        let sv = self.vertices[v].speed;
+        let su = self.vertices[u].speed;
+        self.vertices[v].position += sv;
+        self.vertices[u].position += su;
+    }
 }
