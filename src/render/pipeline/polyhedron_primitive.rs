@@ -18,23 +18,23 @@ impl PolyhedronPrimitive {
         Self { model, render }
     }
 
-    #[allow(dead_code)]
-    pub fn surface_area(&self, face_index: usize) -> f32 {
-        let positions: Vec<Vec3> = self.model.polyhedron.graph.cycles[face_index]
-            .iter()
-            .map(|&i| self.model.polyhedron.positions[i])
-            .collect();
-        let mut area = 0.0;
-        for i in 0..positions.len() / 3 {
-            let j = i * 3;
-            let a = (positions[j] - positions[j + 1]).mag();
-            let b = (positions[j + 1] - positions[j + 2]).mag();
-            let c = (positions[j + 2] - positions[j]).mag();
-            let s = (a + b + c) / 2.0;
-            area += (s * (s - a) * (s - b) * (s - c)).sqrt();
-        }
-        area
-    }
+    // #[allow(dead_code)]
+    // pub fn surface_area(&self, face_index: usize) -> f32 {
+    //     let positions: Vec<Vec3> = self.model.polyhedron.graph.cycles[face_index]
+    //         .iter()
+    //         .map(|&i| self.model.polyhedron.positions[i])
+    //         .collect();
+    //     let mut area = 0.0;
+    //     for i in 0..positions.len() / 3 {
+    //         let j = i * 3;
+    //         let a = (positions[j] - positions[j + 1]).mag();
+    //         let b = (positions[j + 1] - positions[j + 2]).mag();
+    //         let c = (positions[j + 2] - positions[j]).mag();
+    //         let s = (a + b + c) / 2.0;
+    //         area += (s * (s - a) * (s - b) * (s - c)).sqrt();
+    //     }
+    //     area
+    // }
 
     /// All the vertices that will change moment to moment
     pub fn moment_vertices(&self) -> Vec<MomentVertex> {
@@ -48,7 +48,7 @@ impl PolyhedronPrimitive {
                 // Polygon side count -> color
                 let color_map: HashMap<usize, Vec4> =
                     polyhedron
-                        .graph
+                        .shape
                         .cycles
                         .iter()
                         .fold(HashMap::new(), |mut acc, c| {
@@ -58,13 +58,15 @@ impl PolyhedronPrimitive {
                             acc
                         });
                 polyhedron
-                    .graph
+                    .shape
                     .cycles
                     .iter()
                     .map(|cycle| {
                         let color = *color_map.get(&cycle.len()).unwrap();
-                        let positions: Vec<Vec3> =
-                            cycle.iter().map(|&c| polyhedron.positions[c]).collect();
+                        let positions: Vec<Vec3> = cycle
+                            .iter()
+                            .map(|&c| polyhedron.render.vertices[c].position)
+                            .collect();
 
                         match cycle.len() {
                             3 => positions
@@ -107,7 +109,7 @@ impl PolyhedronPrimitive {
         let barycentric = [Vec3::unit_x(), Vec3::unit_y(), Vec3::unit_z()];
         self.model
             .polyhedron
-            .graph
+            .shape
             .cycles
             .iter()
             .map(|cycle| {

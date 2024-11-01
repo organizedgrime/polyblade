@@ -1,4 +1,7 @@
-use crate::{bones::*, render::message::PresetMessage};
+use crate::{
+    bones::*,
+    render::{message::PresetMessage, pipeline::ShapeVertex},
+};
 use rand::random;
 use rustc_hash::{FxHashMap as HashMap, FxHashSet as HashSet};
 use ultraviolet::Vec3;
@@ -21,6 +24,18 @@ impl Polyhedron {
     pub fn preset(&mut self, preset: &PresetMessage) {
         self.shape.preset(preset);
         self.render = Render::new(self.shape.distance.len());
+    }
+
+    fn face_positions(&self, face_index: usize) -> Vec<Vec3> {
+        self.shape.cycles[face_index]
+            .iter()
+            .map(|&v| self.render.vertices[v].position)
+            .collect()
+    }
+    pub fn face_centroid(&self, face_index: usize) -> Vec3 {
+        // All vertices associated with this face
+        let vertices: Vec<_> = self.face_positions(face_index);
+        vertices.iter().fold(Vec3::zero(), |a, &b| a + b) / vertices.len() as f32
     }
     // Use a Fibonacci Lattice to spread the points evenly around a sphere
     // pub fn connect(&mut self, [v, u]: [VertexId; 2]) {

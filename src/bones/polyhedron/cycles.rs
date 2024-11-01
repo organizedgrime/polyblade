@@ -3,7 +3,7 @@ use std::ops::{Index, IndexMut};
 use crate::bones::{polyhedron::Distance, VertexId};
 
 #[derive(Default, Debug, Clone)]
-struct Cycle(Vec<VertexId>);
+pub struct Cycle(Vec<VertexId>);
 
 #[derive(Default, Debug, Clone)]
 pub struct Cycles {
@@ -21,6 +21,10 @@ impl Cycles {
     pub fn len(&self) -> usize {
         self.cycles.len()
     }
+
+    pub fn iter(&self) -> std::slice::Iter<'_, Cycle> {
+        self.cycles.iter()
+    }
 }
 
 impl Index<usize> for Cycle {
@@ -31,6 +35,13 @@ impl Index<usize> for Cycle {
     }
 }
 
+impl Index<usize> for Cycles {
+    type Output = Cycle;
+
+    fn index(&self, index: usize) -> &Self::Output {
+        &self.cycles[index % self.cycles.len()]
+    }
+}
 impl IndexMut<usize> for Cycle {
     fn index_mut(&mut self, index: usize) -> &mut Self::Output {
         let i = index % self.0.len();
@@ -39,6 +50,10 @@ impl IndexMut<usize> for Cycle {
 }
 
 impl Cycle {
+    pub fn len(&self) -> usize {
+        self.0.len()
+    }
+
     pub fn delete(&mut self, v: VertexId) {
         (*self).0 = self
             .0
@@ -71,6 +86,10 @@ impl Cycle {
                 }
             })
             .collect();
+    }
+
+    pub fn iter(&self) -> std::slice::Iter<'_, usize> {
+        self.0.iter()
     }
 }
 impl Cycles {

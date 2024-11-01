@@ -2,7 +2,7 @@ use crate::{
     bones::{Distance, Polyhedron},
     render::{
         camera::Camera,
-        message::ColorMethodMessage,
+        message::{ColorMethodMessage, PresetMessage, ProcessMessage},
         palette::Palette,
         polydex::{Entry, InfoBox, Polydex},
     },
@@ -80,11 +80,11 @@ pub struct ModelState {
 
 impl Default for ModelState {
     fn default() -> Self {
-        let mut x = Self {
+        let x = Self {
             //polyhedron: PolyGraph::dodecahedron(),
             polyhedron: {
                 let mut p = Polyhedron::default();
-                p.shape.distance = Distance::pyramid(3);
+                p.preset(&PresetMessage::Octahedron);
                 p
             },
             transform: Mat4::identity(),
