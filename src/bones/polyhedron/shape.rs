@@ -1,4 +1,4 @@
-use crate::bones::polyhedron::*;
+use crate::{bones::polyhedron::*, render::message::PresetMessage};
 
 /// Contains all properties that need to be computed iff the structure of the graph changes
 #[derive(Default, Debug, Clone)]
@@ -34,5 +34,10 @@ impl Shape {
             graph.connect([(i + 1) % n, ((i + 1) % n) + n]);
         }
         graph
+    }
+
+    pub fn preset(&mut self, preset: &PresetMessage) {
+        self.distance = Distance::preset(preset);
+        self.recompute();
     }
 }

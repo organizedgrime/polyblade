@@ -1,4 +1,4 @@
-use crate::bones::*;
+use crate::{bones::*, render::message::PresetMessage};
 use rand::random;
 use rustc_hash::{FxHashMap as HashMap, FxHashSet as HashSet};
 use ultraviolet::Vec3;
@@ -18,6 +18,10 @@ pub struct Polyhedron {
 }
 
 impl Polyhedron {
+    pub fn preset(&mut self, preset: &PresetMessage) {
+        self.shape.preset(preset);
+        self.render = Render::new(self.shape.distance.len());
+    }
     // Use a Fibonacci Lattice to spread the points evenly around a sphere
     // pub fn connect(&mut self, [v, u]: [VertexId; 2]) {
     //     self.graph.connect([v, u]);

@@ -153,36 +153,7 @@ pub trait ProcessMessage<T> {
 
 impl ProcessMessage<ModelState> for PresetMessage {
     fn process(&self, state: &mut ModelState) -> Task<PolybladeMessage> {
-        use PresetMessage::*;
-        match &self {
-            Prism(n) => {
-                state.polyhedron.graph = Distance::prism(*n);
-                if n == &4 {
-                    state.polyhedron.name = "C".into();
-                }
-            }
-            AntiPrism(n) => state.polyhedron.graph = Distance::anti_prism(*n),
-            Pyramid(n) => {
-                state.polyhedron.graph = Distance::pyramid(*n);
-                if n == &3 {
-                    state.polyhedron.name = "T".into();
-                }
-            }
-            Octahedron => state.polyhedron.graph = Distance::octahedron(),
-            Dodecahedron => state.polyhedron.graph = Distance::dodecahedron(),
-            Icosahedron => state.polyhedron.graph = Distance::icosahedron(),
-        }
-
-        state.polyhedron.positions = state
-            .polyhedron
-            .graph
-            .vertices()
-            .map(|_| Vec3::new(random(), random(), random()).normalized())
-            .collect();
-
-        state.polyhedron.speeds = vec![Vec3::zero(); state.polyhedron.graph.len()];
-        state.polyhedron.springs();
-
+        state.polyhedron.preset(self);
         Task::none()
     }
 }

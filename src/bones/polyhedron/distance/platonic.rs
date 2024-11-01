@@ -1,3 +1,5 @@
+use crate::render::message::PresetMessage;
+
 use super::*;
 /*
     T = Y3
@@ -9,7 +11,7 @@ use super::*;
 
 // Platonic Solids
 impl Distance {
-    pub fn prism(n: usize) -> Distance {
+    fn prism(n: usize) -> Distance {
         let mut graph = Distance::new(n * 2);
         //p.name = format!("P{n}");
         for i in 0..n {
@@ -24,7 +26,7 @@ impl Distance {
         graph
     }
 
-    pub fn anti_prism(n: usize) -> Distance {
+    fn anti_prism(n: usize) -> Distance {
         let mut graph = Distance::new(n * 2);
         //p.name = format!("A{n}");
         for i in 0..n {
@@ -41,7 +43,7 @@ impl Distance {
         graph
     }
 
-    pub fn pyramid(n: usize) -> Distance {
+    fn pyramid(n: usize) -> Distance {
         let mut graph = Distance::new(n + 1);
         //graph.name = format!("Y{n}");
         for i in 0..n {
@@ -51,11 +53,23 @@ impl Distance {
         graph
     }
 
-    pub fn octahedron() -> Distance {
+    fn octahedron() -> Distance {
         let mut p = Distance::pyramid(3);
         let edges = p.ambo();
         p.contract_edges(edges);
         p
+    }
+
+    pub fn preset(preset: &PresetMessage) -> Distance {
+        use PresetMessage::*;
+        match preset {
+            Prism(n) => Self::prism(*n),
+            AntiPrism(n) => Self::anti_prism(*n),
+            Pyramid(n) => Self::pyramid(*n),
+            Octahedron => Self::octahedron(),
+            Dodecahedron => todo!(),
+            Icosahedron => todo!(),
+        }
     }
 
     // pub fn dodecahedron() -> Distance {
