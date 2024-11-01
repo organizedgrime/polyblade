@@ -1,7 +1,7 @@
 mod conway;
 mod platonic;
-// #[cfg(test)]
-// mod test;
+#[cfg(test)]
+mod test;
 use layout::backends::svg::SVGWriter;
 use layout::core::utils::save_to_file;
 use layout::gv::{self, GraphBuilder};

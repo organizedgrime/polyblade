@@ -135,7 +135,6 @@ impl Polyhedron {
     }
 
     fn apply_spring_forces(&mut self, second: f32) {
-        println!("pos: {:?}", self.render.positions);
         let diameter = self.shape.distance.diameter();
         let diameter_spring_length = self.render.edge_length * 2.0;
         let (edges, contracting): (std::slice::Iter<[VertexId; 2]>, bool) =
@@ -158,7 +157,6 @@ impl Polyhedron {
                 let target_length =
                     diameter_spring_length * (self.shape.distance[[v, u]] as f32 / diameter as f32);
                 let f = diff * (target_length - spring_length) / TICK_SPEED * second;
-                println!("f: {f:?}; target_length: {target_length:?}");
                 self.render.apply_force([v, u], f);
             }
         }

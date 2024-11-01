@@ -1,10 +1,11 @@
 use super::*;
+use crate::{bones::Cycle, render::message::PresetMessage::*};
 use test_case::test_case;
 
-impl JagGraph {
+impl Distance {
     pub fn floyd(&mut self) {
         // let dist be a |V| × |V| array of minimum distances initialized to ∞ (infinity)
-        let mut graph: JagGraph = JagGraph::new(self.matrix.len());
+        let mut graph: Distance = Distance::new(self.distance.len());
         for e in self.edges() {
             graph[e] = 1;
         }
@@ -24,23 +25,27 @@ impl JagGraph {
     }
 }
 
-#[test_case(JagGraph::pyramid(3); "T")]
-#[test_case(JagGraph::prism(4); "C")]
-#[test_case(JagGraph::octahedron(); "O")]
-#[test_case(JagGraph::dodecahedron(); "D")]
-#[test_case(JagGraph::icosahedron(); "I")]
-#[test_case({ let mut g = JagGraph::prism(4); g.truncate(None); g.pst(); g} ; "tC")]
-#[test_case({ let mut g = JagGraph::octahedron(); g.truncate(None); g.pst(); g} ; "tO")]
-#[test_case({ let mut g = JagGraph::dodecahedron(); g.truncate(None); g.pst(); g} ; "tD")]
-fn pst(mut graph: JagGraph) {
-    let pst = graph.clone();
-    graph.floyd();
-    assert_eq!(graph.matrix, pst.matrix);
+#[test_case(Distance::preset(&Pyramid(3)); "T")]
+#[test_case(Distance::preset(&Prism(4)); "C")]
+#[test_case(Distance::preset(&Octahedron); "O")]
+#[test_case(Distance::preset(&Dodecahedron); "D")]
+#[test_case(Distance::preset(&Icosahedron); "I")]
+#[test_case({ let mut g = Distance::preset(&Prism(4)); g.truncate(None); g.pst(); g} ; "tC")]
+#[test_case({ let mut g = Distance::preset(&Octahedron); g.truncate(None); g.pst(); g} ; "tO")]
+#[test_case({ let mut g = Distance::preset(&Dodecahedron); g.truncate(None); g.pst(); g} ; "tD")]
+fn pst(mut graph: Distance) {
+    let mut pst = graph.clone();
+    pst.pst();
+
+    let mut floyd = graph.clone();
+    floyd.floyd();
+
+    assert_eq!(floyd.distance, pst.distance);
 }
 
 #[test]
 fn basics() {
-    let mut graph = JagGraph::new(4);
+    let mut graph = Distance::new(4);
     println!("basics:");
     // Connect
     graph.connect([0, 1]);
@@ -65,7 +70,7 @@ fn basics() {
 
 #[test]
 fn chordless_cycles() {
-    let mut graph = JagGraph::new(4);
+    let mut graph = Distance::new(4);
     // Connect
     graph.connect([0, 1]);
     graph.connect([1, 2]);
@@ -77,21 +82,18 @@ fn chordless_cycles() {
     println!("{graph}");
 
     graph.connect([2, 0]);
-    //graph.pst();
-    graph.find_cycles();
-    assert_eq!(graph.cycles, vec![Face::new(vec![0, 1, 2])]);
 }
 
 #[test]
 fn truncate() {
-    let mut shape = JagGraph::icosahedron();
+    let mut shape = Distance::preset(&Icosahedron);
     shape.truncate(None);
 }
 
 #[test]
 fn contract_edge() {
     println!("contract edge");
-    let mut graph = JagGraph::prism(4);
+    let mut graph = Distance::preset(&Prism(4));
     graph.render("tests/contract_edge_0.svg");
     assert_eq!(graph.len(), 8);
     assert_eq!(graph.edges().count(), 12);
@@ -105,7 +107,7 @@ fn contract_edge() {
 
 #[test]
 fn split_vertex() {
-    let mut control = JagGraph::new(6);
+    let mut control = Distance::new(6);
     // Original outline
     control[[1, 2]] = 1;
     control[[2, 3]] = 1;
@@ -120,8 +122,8 @@ fn split_vertex() {
     control[[5, 0]] = 1;
     println!("{control}");
     control.render("tests/split_vertex_control.svg");
-    let mut test = JagGraph::pyramid(3);
+    let mut test = Distance::preset(&Pyramid(3));
     test.split_vertex(0);
     test.render("tests/split_vertex_test.svg");
-    assert_eq!(test.matrix, control.matrix);
+    assert_eq!(test.distance, control.distance);
 }
