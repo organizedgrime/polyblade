@@ -105,28 +105,3 @@ impl Cycles {
         }
     }
 }
-
-/*
-impl Cycles {
-    /// All faces
-    // pub fn find_cycles(&mut self) {
-    //     self.cycles = cycles.into_iter().collect();
-    // }
-
-    pub fn delete(&mut self, v: VertexId) {
-        self.distance.delete(v);
-
-        for cycle in &mut self.cycles {
-            *cycle = cycle.iter().filter(|&c| c != &v).cloned().collect();
-        }
-
-        for i in 0..self.cycles.len() {
-            for j in 0..self.cycles[i].len() {
-                if self.cycles[i][j] >= v {
-                    self.cycles[i][j] -= 1;
-                }
-            }
-        }
-    }
-}
-*/

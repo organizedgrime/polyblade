@@ -240,6 +240,7 @@ impl ProcessMessage<ColorPickerState> for ColorPickerMessage {
 
 impl ProcessMessage<AppState> for PolybladeMessage {
     fn process(&self, state: &mut AppState) -> Task<PolybladeMessage> {
+        println!("processing message: {self:?} for state {state:?}");
         use PolybladeMessage::*;
         match self {
             Tick(time) => {

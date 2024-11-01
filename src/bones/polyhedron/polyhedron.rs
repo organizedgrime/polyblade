@@ -135,6 +135,7 @@ impl Polyhedron {
     }
 
     fn apply_spring_forces(&mut self, second: f32) {
+        println!("self: {:?}", self);
         let diameter = self.shape.distance.diameter();
         let diameter_spring_length = self.render.edge_length * 2.0;
         let (edges, contracting): (std::slice::Iter<[VertexId; 2]>, bool) =
@@ -148,6 +149,7 @@ impl Polyhedron {
             let diff = self.render.positions[v] - self.render.positions[u];
             let spring_length = diff.mag();
             if contracting {
+                println!("CONTRACTING");
                 let f = ((self.render.edge_length / TICK_SPEED * second) * 10.0) / spring_length;
                 self.render.positions[v] =
                     self.render.positions[v].lerp(self.render.positions[u], f);
@@ -163,6 +165,7 @@ impl Polyhedron {
     }
 
     pub fn preset(preset: &PresetMessage) -> Polyhedron {
+        println!("new preset!");
         let shape = Shape::preset(preset);
         let render = Render::new(shape.distance.len());
         Polyhedron {

@@ -10,9 +10,14 @@ use crate::{
 };
 
 use iced::{time::Duration, Color};
-use std::{f32::consts::PI, io::Read as _};
+use std::{
+    f32::consts::PI,
+    io::Read as _,
+    thread::{sleep, sleep_ms},
+};
 use ultraviolet::Mat4;
 
+#[derive(Debug)]
 pub struct AppState {
     pub model: ModelState,
     pub render: RenderState,
@@ -114,6 +119,7 @@ impl AppState {
         // Update the polyhedron using the difference in time between this and the previous frame
         let frame_difference = time.duration_since(self.render.frame).as_secs_f32();
         let framerate = 1.0 / 60.0;
+        sleep_ms(300);
         // Fraction of a second since the previous frame rendered
         let second = if frame_difference > 1.0 / 60.0 {
             log::warn!("took more than 1/60th of a second to render that frame");

@@ -23,7 +23,7 @@ impl Render {
     }
 
     pub fn update(&mut self, second: f32) {
-        self.center();
+        //self.center();
         self.resize(second);
     }
 
@@ -56,9 +56,10 @@ impl Render {
     //     }
     // }
     //
+
     pub fn apply_force(&mut self, [v, u]: [VertexId; 2], f: Vec3) {
-        self.speeds[v] += f * SPEED_DAMPENING;
-        self.speeds[u] -= f * SPEED_DAMPENING;
+        self.speeds[v] = (self.speeds[v] + f) * SPEED_DAMPENING;
+        self.speeds[u] = (self.speeds[u] - f) * SPEED_DAMPENING;
         self.positions[v] += self.speeds[v];
         self.positions[u] += self.speeds[u];
     }

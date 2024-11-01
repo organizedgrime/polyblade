@@ -33,7 +33,7 @@ impl Distance {
 #[test_case({ let mut g = Distance::preset(&Prism(4)); g.truncate(None); g.pst(); g} ; "tC")]
 #[test_case({ let mut g = Distance::preset(&Octahedron); g.truncate(None); g.pst(); g} ; "tO")]
 #[test_case({ let mut g = Distance::preset(&Dodecahedron); g.truncate(None); g.pst(); g} ; "tD")]
-fn pst(mut graph: Distance) {
+fn pst(graph: Distance) {
     let mut pst = graph.clone();
     pst.pst();
 

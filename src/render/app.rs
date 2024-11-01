@@ -195,6 +195,7 @@ impl App<'_> {
                     .resize(&self.graphics.device, moments.len());
 
                 let shapes = primitive.model.polyhedron.shape.vertices();
+                log::error!("shapes: {shapes:?}");
                 scene.shape_buf.resize(&self.graphics.device, shapes.len());
                 scene.shape_buf.write_slice(&self.graphics.queue, &shapes);
             }
@@ -322,7 +323,6 @@ impl ApplicationHandler for App<'_> {
                         return;
                     }
 
-                    //self.graphics.update();
                     match self.render() {
                         Ok(_) => {}
                         // Reconfigure the surface if it's lost or outdated
