@@ -60,6 +60,22 @@ impl Distance {
         p
     }
 
+    pub fn dodecahedron() -> Distance {
+        let mut graph = Distance::anti_prism(5);
+        let edges = graph.ambo();
+        graph.contract_edges(edges);
+        let edges = graph.ambo();
+        graph.contract_edges(edges);
+        graph.truncate(Some(5));
+        graph
+    }
+
+    // pub fn icosahedron() -> Distance {
+    //     let mut graph = Distance::anti_prism(5);
+    //     graph.kis(Some(5));
+    //     graph
+    // }
+
     pub fn preset(preset: &PresetMessage) -> Distance {
         use PresetMessage::*;
         match preset {
@@ -67,22 +83,8 @@ impl Distance {
             AntiPrism(n) => Self::anti_prism(*n),
             Pyramid(n) => Self::pyramid(*n),
             Octahedron => Self::octahedron(),
-            Dodecahedron => todo!(),
+            Dodecahedron => Self::dodecahedron(),
             Icosahedron => todo!(),
         }
     }
-
-    // pub fn dodecahedron() -> Distance {
-    //     let mut graph = Distance::anti_prism(5);
-    //     let edges = graph.expand(false);
-    //     graph.contract_edges(edges);
-    //     graph.truncate(Some(5));
-    //     graph
-    // }
-    //
-    // pub fn icosahedron() -> Distance {
-    //     let mut graph = Distance::anti_prism(5);
-    //     graph.kis(Some(5));
-    //     graph
-    // }
 }

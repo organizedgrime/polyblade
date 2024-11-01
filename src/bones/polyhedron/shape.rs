@@ -31,6 +31,7 @@ impl Shape {
             distance: Distance::preset(preset),
             ..Default::default()
         };
+
         shape.recompute();
         shape
     }
@@ -80,5 +81,33 @@ impl Shape {
     pub fn contraction(&mut self, edges: &[[VertexId; 2]]) {
         self.distance.contract_edges(edges.to_vec());
         self.recompute();
+    }
+
+    pub fn kis(&mut self, degree: Option<usize>) -> Vec<[VertexId; 2]> {
+        let edges = self.distance.edges().collect();
+        // let mut cycles = self.cycles.clone();
+        if let Some(degree) = degree {
+            self.cycles
+                .iter()
+                .collect::<Vec<_>>()
+                .retain(|c| c.len() == degree);
+        }
+        for cycle in self.cycles.iter() {
+            let v = self.distance.insert();
+            let mut vpos = Vec3::zero();
+
+            for &u in cycle.iter() {
+                self.distance.connect([v, u]);
+                //vpos += self.positions[&u];
+            }
+
+            //self.positions.insert(v, vpos / cycle.len() as f32);
+        }
+
+        // self.pst();
+        // self.find_cycles();
+        //self.transactions.insert(1, Transaction::Name('k'));
+        self.recompute();
+        edges
     }
 }

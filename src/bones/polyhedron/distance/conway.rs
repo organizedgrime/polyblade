@@ -23,20 +23,14 @@ impl Distance {
     }
 
     pub fn contract_edges(&mut self, mut edges: Vec<[VertexId; 2]>) {
-        let mut removed = 0;
         loop {
-            removed += 1;
-            println!("edges: {edges:?}");
-            self.render(&format!("tests/octahedron_contract_{removed}.svg"));
             if edges.is_empty() {
                 break;
             }
 
-            let removal = edges.remove(0);
-            println!("contracting REALLY: {removal:?}");
-            let v = removal[0].max(removal[1]);
-            let u = removal[0].min(removal[1]);
+            let [v, u] = edges.remove(0);
             self.contract_edge([v, u]);
+            // Decrement the value of every
             for [x, w] in &mut edges {
                 if *x > v {
                     *x -= 1;
@@ -45,6 +39,7 @@ impl Distance {
                     *w -= 1;
                 }
             }
+
             edges = edges.into_iter().filter(|[v, u]| v != u).collect();
         }
 
@@ -90,39 +85,14 @@ impl Distance {
     /// Returns a set of edges to contract
     pub fn ambo(&mut self) -> Vec<[VertexId; 2]> {
         // Truncate
-        self.render("tests/before_truncation.svg");
+        //self.render("tests/before_truncation.svg");
         let new_edges = self.truncate(None);
-        self.render("tests/after_truncation.svg");
+        //self.render("tests/after_truncation.svg");
         // Edges that were already there get contracted
         self.edges()
             .filter(|&[v, u]| !new_edges.contains(&[v, u]) && !new_edges.contains(&[u, v]))
             .collect()
     }
-
-    /// `k` kis
-    // pub fn kis(&mut self, degree: Option<usize>) -> Vec<[VertexId; 2]> {
-    //     let edges = self.edges().collect();
-    //     // let mut cycles = self.cycles.clone();
-    //     if let Some(degree) = degree {
-    //         cycles.retain(|c| c.len() == degree);
-    //     }
-    //     for cycle in cycles {
-    //         let v = self.insert();
-    //         let mut vpos = Vec3::zero();
-    //
-    //         for &u in cycle.iter() {
-    //             self.connect([v, u]);
-    //             //vpos += self.positions[&u];
-    //         }
-    //
-    //         //self.positions.insert(v, vpos / cycle.len() as f32);
-    //     }
-    //
-    //     // self.pst();
-    //     // self.find_cycles();
-    //     //self.transactions.insert(1, Transaction::Name('k'));
-    //     edges
-    // }
 
     /// `t` truncate
     pub fn truncate(&mut self, degree: Option<usize>) -> HashSet<[VertexId; 2]> {
@@ -172,6 +142,13 @@ impl Distance {
     //     ordered_face_indices
     // }
     // //
+
+    pub fn expand(&mut self, snub: bool) -> Vec<[VertexId; 2]> {
+        let edges = self.ambo();
+        self.contract_edges(edges);
+        self.ambo()
+    }
+
     // /// `e` = `aa`
     // pub fn expand(&mut self, snub: bool) -> Vec<[VertexId; 2]> {
     //     let mut new_edges = HashSet::<Edge>::default();
