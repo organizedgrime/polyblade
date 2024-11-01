@@ -4,24 +4,11 @@ use ultraviolet::Vec3;
 use super::{VertexId, SPEED_DAMPENING, TICK_SPEED};
 
 #[derive(Debug, Clone)]
-pub struct Vertex {
-    pub position: Vec3,
-    pub speed: Vec3,
-}
-
-impl Default for Vertex {
-    fn default() -> Self {
-        Self {
-            position: Vec3::new(random(), random(), random()).normalized(),
-            speed: Default::default(),
-        }
-    }
-}
-
-#[derive(Debug, Clone)]
 pub struct Render {
     /// Positions in 3D space
-    pub vertices: Vec<Vertex>,
+    pub positions: Vec<Vec3>,
+    /// Speeds in 3D space
+    pub speeds: Vec<Vec3>,
     /// Edge length
     pub edge_length: f32,
 }
@@ -29,7 +16,8 @@ pub struct Render {
 impl Render {
     pub fn new(n: usize) -> Self {
         Self {
-            vertices: vec![Vertex::default(); n],
+            positions: vec![Vec3::new(random(), random(), random()).normalized(); n],
+            speeds: vec![Vec3::zero(); n],
             edge_length: 1.0,
         }
     }
@@ -40,23 +28,16 @@ impl Render {
     }
 
     fn center(&mut self) {
-        let shift = self
-            .vertices
-            .iter()
-            .fold(Vec3::zero(), |a, b| a + b.position)
-            / self.vertices.len() as f32;
+        let shift =
+            self.positions.iter().fold(Vec3::zero(), |a, &b| a + b) / self.positions.len() as f32;
 
-        for p in self.vertices.iter_mut() {
-            (*p).position -= shift;
+        for p in self.positions.iter_mut() {
+            *p -= shift;
         }
     }
 
     fn resize(&mut self, second: f32) {
-        let mean_length = self
-            .vertices
-            .iter()
-            .map(|v| v.position.mag())
-            .fold(0.0, f32::max);
+        let mean_length = self.positions.iter().map(Vec3::mag).fold(0.0, f32::max);
         let matrixance = mean_length - 1.0;
         self.edge_length -= matrixance / TICK_SPEED * second;
     }
@@ -76,11 +57,9 @@ impl Render {
     // }
     //
     pub fn apply_force(&mut self, [v, u]: [VertexId; 2], f: Vec3) {
-        self.vertices[v].speed += f * SPEED_DAMPENING;
-        self.vertices[u].speed -= f * SPEED_DAMPENING;
-        let sv = self.vertices[v].speed;
-        let su = self.vertices[u].speed;
-        self.vertices[v].position += sv;
-        self.vertices[u].position += su;
+        self.speeds[v] += f * SPEED_DAMPENING;
+        self.speeds[u] -= f * SPEED_DAMPENING;
+        self.positions[v] += self.speeds[v];
+        self.positions[u] += self.speeds[u];
     }
 }

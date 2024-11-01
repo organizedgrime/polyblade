@@ -34,8 +34,7 @@ impl Polyhedron {
             match transaction {
                 Contraction(edges) => {
                     if !edges.iter().any(|&[v, u]| {
-                        (self.render.vertices[v].position - self.render.vertices[u].position).mag()
-                            > 0.08
+                        (self.render.positions[v] - self.render.positions[u]).mag() > 0.08
                     }) {
                         // Contract them in the graph
                         self.shape.contraction(&edges);
@@ -136,7 +135,7 @@ impl Polyhedron {
     }
 
     fn apply_spring_forces(&mut self, second: f32) {
-        println!("pos: {:?}", self.render.vertices);
+        println!("pos: {:?}", self.render.positions);
         let diameter = self.shape.distance.diameter();
         let diameter_spring_length = self.render.edge_length * 2.0;
         let (edges, contracting): (std::slice::Iter<[VertexId; 2]>, bool) =
@@ -147,16 +146,14 @@ impl Polyhedron {
             };
 
         for &[v, u] in edges {
-            let diff = self.render.vertices[v].position - self.render.vertices[u].position;
+            let diff = self.render.positions[v] - self.render.positions[u];
             let spring_length = diff.mag();
             if contracting {
                 let f = ((self.render.edge_length / TICK_SPEED * second) * 10.0) / spring_length;
-                self.render.vertices[v].position = self.render.vertices[v]
-                    .position
-                    .lerp(self.render.vertices[u].position, f);
-                self.render.vertices[u].position = self.render.vertices[u]
-                    .position
-                    .lerp(self.render.vertices[v].position, f);
+                self.render.positions[v] =
+                    self.render.positions[v].lerp(self.render.positions[u], f);
+                self.render.positions[u] =
+                    self.render.positions[u].lerp(self.render.positions[v], f);
             } else {
                 let target_length =
                     diameter_spring_length * (self.shape.distance[[v, u]] as f32 / diameter as f32);
@@ -182,7 +179,7 @@ impl Polyhedron {
         // All vertices associated with this face
         self.shape.cycles[face_index]
             .iter()
-            .map(|&v| self.render.vertices[v].position)
+            .map(|&v| self.render.positions[v])
             .fold(Vec3::zero(), |a, b| a + b)
             / self.shape.cycles[face_index].len() as f32
     }

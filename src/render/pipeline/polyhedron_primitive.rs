@@ -65,7 +65,7 @@ impl PolyhedronPrimitive {
                         let color = *color_map.get(&cycle.len()).unwrap();
                         let positions: Vec<Vec3> = cycle
                             .iter()
-                            .map(|&c| polyhedron.render.vertices[c].position)
+                            .map(|&c| polyhedron.render.positions[c])
                             .collect();
 
                         match cycle.len() {
