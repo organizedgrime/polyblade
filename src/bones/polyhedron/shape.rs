@@ -26,9 +26,13 @@ impl Shape {
         self.springs = self.distance.springs();
     }
 
-    pub fn preset(&mut self, preset: &PresetMessage) {
-        self.distance = Distance::preset(preset);
-        self.recompute();
+    pub fn preset(preset: &PresetMessage) -> Shape {
+        let mut shape = Shape {
+            distance: Distance::preset(preset),
+            ..Default::default()
+        };
+        shape.recompute();
+        shape
     }
 
     pub fn vertices(&self) -> Vec<ShapeVertex> {
@@ -64,5 +68,17 @@ impl Shape {
             })
             .collect::<Vec<Vec<ShapeVertex>>>()
             .concat()
+    }
+
+    pub fn release(&mut self, edges: &[[VertexId; 2]]) {
+        for &edge in edges {
+            self.distance.disconnect(edge);
+        }
+        self.recompute();
+    }
+
+    pub fn contraction(&mut self, edges: &[[VertexId; 2]]) {
+        self.distance.contract_edges(edges.to_vec());
+        self.recompute();
     }
 }

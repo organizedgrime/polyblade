@@ -1,6 +1,5 @@
+use crate::bones::VertexId;
 use std::ops::{Index, IndexMut};
-
-use crate::bones::{polyhedron::Distance, VertexId};
 
 #[derive(Default, Debug, Clone)]
 pub struct Cycle(Vec<VertexId>);

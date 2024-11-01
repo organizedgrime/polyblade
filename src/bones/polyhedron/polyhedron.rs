@@ -1,14 +1,21 @@
+use std::time::{Duration, Instant};
+
 use crate::{
     bones::*,
-    render::{message::PresetMessage, pipeline::ShapeVertex},
+    render::{
+        message::{ConwayMessage, PresetMessage},
+        pipeline::ShapeVertex,
+    },
 };
 use rand::random;
 use rustc_hash::{FxHashMap as HashMap, FxHashSet as HashSet};
-use ultraviolet::Vec3;
+use ultraviolet::{Lerp, Vec3};
 type VertMap<T> = HashMap<VertexId, T>;
 pub type VertexId = usize;
+pub const TICK_SPEED: f32 = 10.0;
+pub const SPEED_DAMPENING: f32 = 0.92;
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone)]
 pub struct Polyhedron {
     /// Conway Polyhedron Notation
     pub name: String,
@@ -21,22 +28,179 @@ pub struct Polyhedron {
 }
 
 impl Polyhedron {
-    pub fn preset(&mut self, preset: &PresetMessage) {
-        self.shape.preset(preset);
-        self.render = Render::new(self.shape.distance.len());
+    pub fn process_transactions(&mut self) {
+        if let Some(transaction) = self.transactions.first().cloned() {
+            use Transaction::*;
+            match transaction {
+                Contraction(edges) => {
+                    if !edges.iter().any(|&[v, u]| {
+                        (self.render.vertices[v].position - self.render.vertices[u].position).mag()
+                            > 0.08
+                    }) {
+                        // Contract them in the graph
+                        self.shape.contraction(&edges);
+                        self.transactions.remove(0);
+                    }
+                }
+                Release(edges) => {
+                    self.shape.release(&edges);
+                    self.transactions.remove(0);
+                }
+                Conway(conway) => {
+                    self.transactions.remove(0);
+                    // use ConwayMessage::*;
+                    // use Transaction::*;
+                    // let new_transactions = match conway {
+                    //     Dual => {
+                    //         let edges = self.graph.expand(false);
+                    //         vec![
+                    //             Wait(Instant::now() + Duration::from_millis(650)),
+                    //             Contraction(edges),
+                    //             Name('d'),
+                    //         ]
+                    //     }
+                    //     Join => {
+                    //         let edges = self.graph.kis(Option::None);
+                    //         vec![
+                    //             //Wait(Instant::now() + Duration::from_secs(1)),
+                    //             Release(edges),
+                    //             Name('j'),
+                    //         ]
+                    //     }
+                    //     Ambo => {
+                    //         let edges = self.graph.ambo();
+                    //         vec![Contraction(edges), Name('a')]
+                    //     }
+                    //     Kis => {
+                    //         self.graph.kis(Option::None);
+                    //         vec![Name('k')]
+                    //     }
+                    //     Truncate => {
+                    //         self.graph.truncate(Option::None);
+                    //         vec![Name('t')]
+                    //     }
+                    //     Expand => {
+                    //         self.graph.expand(false);
+                    //         vec![Name('e')]
+                    //     }
+                    //     Snub => {
+                    //         self.graph.expand(true);
+                    //         vec![Name('s')]
+                    //     }
+                    //     Bevel => {
+                    //         vec![
+                    //             Conway(Truncate),
+                    //             Wait(Instant::now() + Duration::from_millis(500)),
+                    //             Conway(Ambo),
+                    //             Name('b'),
+                    //         ]
+                    //     }
+                    // };
+                    // //self.graph.cycles.sort_by_key(|c| usize::MAX - c.len());
+                    // self.transactions = [new_transactions, self.transactions.clone()].concat();
+                    // self.graph.pst();
+                    // self.graph.find_cycles();
+                    // println!("cycles {:?}", self.graph.cycles);
+                    // println!("verts {:?}", self.graph.vertices());
+                    // self.springs();
+                }
+                Name(c) => {
+                    if c == 'b' {
+                        self.name = self.name[2..].to_string();
+                    }
+                    if c == 'd' && &self.name[0..1] == "d" {
+                        self.name = self.name[1..].to_string();
+                    } else {
+                        self.name = format!("{c}{}", self.name);
+                    }
+                    self.transactions.remove(0);
+                }
+                ShortenName(n) => {
+                    self.name = self.name[n..].to_string();
+                    self.transactions.remove(0);
+                }
+                Wait(instant) => {
+                    if Instant::now() > instant {
+                        self.transactions.remove(0);
+                    }
+                }
+                None => {}
+            }
+        }
     }
 
-    fn face_positions(&self, face_index: usize) -> Vec<Vec3> {
+    pub fn update(&mut self, second: f32) {
+        self.render.update(second);
+        self.apply_spring_forces(second);
+        self.process_transactions();
+    }
+
+    fn apply_spring_forces(&mut self, second: f32) {
+        println!("pos: {:?}", self.render.vertices);
+        let diameter = self.shape.distance.diameter();
+        let diameter_spring_length = self.render.edge_length * 2.0;
+        let (edges, contracting): (std::slice::Iter<[VertexId; 2]>, bool) =
+            if let Some(Transaction::Contraction(edges)) = self.transactions.first() {
+                (edges.iter(), true)
+            } else {
+                (self.shape.springs.iter(), false)
+            };
+
+        for &[v, u] in edges {
+            let diff = self.render.vertices[v].position - self.render.vertices[u].position;
+            let spring_length = diff.mag();
+            if contracting {
+                let f = ((self.render.edge_length / TICK_SPEED * second) * 10.0) / spring_length;
+                self.render.vertices[v].position = self.render.vertices[v]
+                    .position
+                    .lerp(self.render.vertices[u].position, f);
+                self.render.vertices[u].position = self.render.vertices[u]
+                    .position
+                    .lerp(self.render.vertices[v].position, f);
+            } else {
+                let target_length =
+                    diameter_spring_length * (self.shape.distance[[v, u]] as f32 / diameter as f32);
+                let f = diff * (target_length - spring_length) / TICK_SPEED * second;
+                {
+                    self.render.vertices[v].speed =
+                        (self.render.vertices[v].speed + f) * SPEED_DAMPENING;
+                    self.render.vertices[u].speed =
+                        (self.render.vertices[u].speed - f) * SPEED_DAMPENING;
+                }
+                let sv = self.render.vertices[v].speed;
+                let su = self.render.vertices[u].speed;
+                self.render.vertices[v].position += sv;
+                self.render.vertices[u].position += su;
+            }
+        }
+    }
+
+    pub fn preset(preset: &PresetMessage) -> Polyhedron {
+        let shape = Shape::preset(preset);
+        let render = Render::new(shape.distance.len());
+        Polyhedron {
+            name: "".into(),
+            shape,
+            render,
+            transactions: vec![],
+        }
+    }
+
+    pub fn face_centroid(&self, face_index: usize) -> Vec3 {
+        // All vertices associated with this face
         self.shape.cycles[face_index]
             .iter()
             .map(|&v| self.render.vertices[v].position)
-            .collect()
+            .fold(Vec3::zero(), |a, b| a + b)
+            / self.shape.cycles[face_index].len() as f32
     }
-    pub fn face_centroid(&self, face_index: usize) -> Vec3 {
-        // All vertices associated with this face
-        let vertices: Vec<_> = self.face_positions(face_index);
-        vertices.iter().fold(Vec3::zero(), |a, &b| a + b) / vertices.len() as f32
-    }
+
+    // fn face_positions(&self, face_index: usize) -> Vec<Vec3> {
+    //     self.shape.cycles[face_index]
+    //         .iter()
+    //         .map(|&v| self.render.vertices[v].position)
+    //         .collect()
+    // }
     // Use a Fibonacci Lattice to spread the points evenly around a sphere
     // pub fn connect(&mut self, [v, u]: [VertexId; 2]) {
     //     self.graph.connect([v, u]);

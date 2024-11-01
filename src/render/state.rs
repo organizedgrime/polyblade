@@ -82,11 +82,7 @@ impl Default for ModelState {
     fn default() -> Self {
         let x = Self {
             //polyhedron: PolyGraph::dodecahedron(),
-            polyhedron: {
-                let mut p = Polyhedron::default();
-                p.preset(&PresetMessage::Octahedron);
-                p
-            },
+            polyhedron: { Polyhedron::preset(&PresetMessage::Octahedron) },
             transform: Mat4::identity(),
         };
         // x.polyhedron.springs();
@@ -106,12 +102,12 @@ pub fn load_polydex() -> Result<Polydex, Box<dyn std::error::Error>> {
 
 impl Default for AppState {
     fn default() -> Self {
-        let info = Polyhedron::default().polydex_entry(&vec![]);
+        // let info = Polyhedron::default().polydex_entry(&vec![]);
         Self {
             model: ModelState::default(),
             render: RenderState::default(),
-            polydex: load_polydex().unwrap_or_default(),
-            info,
+            polydex: Default::default(),
+            info: Default::default(),
         }
     }
 }
@@ -129,7 +125,7 @@ impl AppState {
             frame_difference
         };
 
-        //self.model.polyhedron.update(second);
+        self.model.polyhedron.update(second);
         self.render.frame = time;
 
         let time = if self.render.rotating {

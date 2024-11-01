@@ -1,6 +1,8 @@
 use rand::random;
 use ultraviolet::Vec3;
 
+use super::TICK_SPEED;
+
 #[derive(Debug, Clone)]
 pub struct Vertex {
     pub position: Vec3,
@@ -16,7 +18,7 @@ impl Default for Vertex {
     }
 }
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone)]
 pub struct Render {
     /// Positions in 3D space
     pub vertices: Vec<Vertex>,
@@ -30,6 +32,33 @@ impl Render {
             vertices: vec![Vertex::default(); n],
             edge_length: 1.0,
         }
+    }
+
+    pub fn update(&mut self, second: f32) {
+        self.center();
+        self.resize(second);
+    }
+
+    fn center(&mut self) {
+        let shift = self
+            .vertices
+            .iter()
+            .fold(Vec3::zero(), |a, b| a + b.position)
+            / self.vertices.len() as f32;
+
+        for p in self.vertices.iter_mut() {
+            (*p).position -= shift;
+        }
+    }
+
+    fn resize(&mut self, second: f32) {
+        let mean_length = self
+            .vertices
+            .iter()
+            .map(|v| v.position.mag())
+            .fold(0.0, f32::max);
+        let matrixance = mean_length - 1.0;
+        self.edge_length -= matrixance / TICK_SPEED * second;
     }
 
     // pub fn lattice(&mut self) {

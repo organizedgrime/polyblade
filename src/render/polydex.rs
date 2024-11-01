@@ -11,6 +11,7 @@ pub struct Entry {
     pub wiki: String,
 }
 
+#[derive(Debug, Default)]
 pub struct InfoBox {
     pub conway: String,
     pub faces: usize,
