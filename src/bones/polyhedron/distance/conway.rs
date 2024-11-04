@@ -18,29 +18,40 @@ impl Distance {
 
         // Delete v
         self.delete(v);
-
-        println!("replaced {v} with {u} in contraction");
     }
 
     pub fn contract_edges(&mut self, mut edges: Vec<[VertexId; 2]>) {
+        let mut n = 0;
+        let mut transformed = vec![];
         loop {
+            n += 1;
             if edges.is_empty() {
                 break;
             }
 
             let [v, u] = edges.remove(0);
-            self.contract_edge([v, u]);
-            // Decrement the value of every
-            for [x, w] in &mut edges {
-                if *x > v {
-                    *x -= 1;
+            if !(transformed.contains(&v) && transformed.contains(&u)) {
+                println!("now contracting [{v},{u}], edges are {edges:?}");
+                self.contract_edge([v, u]);
+                transformed.push(v);
+                // Decrement the value of every
+                for [x, w] in &mut edges {
+                    if *x > v {
+                        *x -= 1;
+                    }
+                    if *w > v {
+                        *w -= 1;
+                    }
                 }
-                if *w > v {
-                    *w -= 1;
-                }
-            }
 
-            edges = edges.into_iter().filter(|[v, u]| v != u).collect();
+                edges = edges.into_iter().filter(|[v, u]| v != u).collect();
+
+                #[cfg(test)]
+                self.render(
+                    "tests/split_vertex_contract/",
+                    &format!("contract_edges_{n}.svg"),
+                );
+            }
         }
 
         // self.cycles = self
@@ -50,6 +61,19 @@ impl Distance {
         //     .filter(|c| c.len() > 2)
         //     .collect();
     }
+
+    // pub fn contract_edges(&mut self, mut edges: Vec<[VertexId; 2]>) {
+    //     let mut map = HashMap::<VertexId, VertexId>::default();
+    //     for [v, u] in edges.into_iter() {
+    //         let u = *map.get(&u).unwrap_or(&u);
+    //         let v = *map.get(&v).unwrap_or(&v);
+    //         if v != u {
+    //             //self.contract_edge([v, u]);
+    //             map.insert(v, u);
+    //         }
+    //     }
+    //     println!("map: {map:?}");
+    // }
 
     pub fn split_vertex(&mut self, v: VertexId) -> Vec<[VertexId; 2]> {
         // neighbors
