@@ -86,7 +86,7 @@ pub struct ModelState {
 impl Default for ModelState {
     fn default() -> Self {
         let x = Self {
-            polyhedron: { Polyhedron::preset(&PresetMessage::Pyramid(3)) },
+            polyhedron: { Polyhedron::preset(&PresetMessage::Dodecahedron) },
             transform: Mat4::identity(),
         };
         log::error!("poly: {:?}", x.polyhedron);
@@ -119,7 +119,7 @@ impl AppState {
         // Update the polyhedron using the difference in time between this and the previous frame
         let frame_difference = time.duration_since(self.render.frame).as_secs_f32();
         let framerate = 1.0 / 60.0;
-        sleep_ms(300);
+        //sleep_ms(800);
         // Fraction of a second since the previous frame rendered
         let second = if frame_difference > 1.0 / 60.0 {
             log::warn!("took more than 1/60th of a second to render that frame");

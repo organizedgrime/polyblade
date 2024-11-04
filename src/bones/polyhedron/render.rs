@@ -28,17 +28,18 @@ impl Render {
     }
 
     pub fn update(&mut self, second: f32) {
-        //self.center();
+        self.center();
         self.resize(second);
     }
 
     fn center(&mut self) {
         let shift =
             self.positions.iter().fold(Vec3::zero(), |a, &b| a + b) / self.positions.len() as f32;
+        log::debug!("shifting all positions by {shift:?}");
 
-        for p in self.positions.iter_mut() {
-            *p -= shift;
-        }
+        // for p in self.positions.iter_mut() {
+        //     *p -= shift;
+        // }
     }
 
     fn resize(&mut self, second: f32) {
