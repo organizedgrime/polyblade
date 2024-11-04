@@ -1,4 +1,3 @@
-use ultraviolet::Vec3;
 
 use crate::bones::{Shape, VertexId};
 

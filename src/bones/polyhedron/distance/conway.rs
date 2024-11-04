@@ -1,6 +1,4 @@
-use rustc_hash::{FxHashMap as HashMap, FxHashSet as HashSet};
-use std::collections::VecDeque;
-use ultraviolet::Vec3;
+use rustc_hash::FxHashSet as HashSet;
 
 use crate::bones::*;
 
@@ -72,7 +70,7 @@ impl Distance {
         // Remove the vertex
         let new_face: Vec<(usize, usize)> = vec![v]
             .into_iter()
-            .chain((1..connections.len()).into_iter().map(|_| self.insert()))
+            .chain((1..connections.len()).map(|_| self.insert()))
             .zip(connections.clone())
             .collect();
 

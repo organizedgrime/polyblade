@@ -1,5 +1,6 @@
 mod conway;
 mod platonic;
+mod svg;
 #[cfg(test)]
 mod test;
 
@@ -31,7 +32,6 @@ impl Distance {
     pub fn new(n: usize) -> Self {
         Distance {
             distance: (0..n)
-                .into_iter()
                 .map(|m| [vec![usize::MAX; m], vec![0]].concat())
                 .collect(),
         }
@@ -80,8 +80,7 @@ impl Distance {
 
     /// All possible compbinations of vertices
     pub fn vertex_pairs(&self) -> impl Iterator<Item = [VertexId; 2]> {
-        self.vertices()
-            .flat_map(|v| (0..v).into_iter().map(move |u| [v, u]))
+        self.vertices().flat_map(|v| (0..v).map(move |u| [v, u]))
     }
 
     /// All actual edges of the graph (D_{ij} = 1)

@@ -1,13 +1,11 @@
 use crate::{
-    bones::{Distance, Polyhedron, Transaction},
+    bones::{Polyhedron, Transaction},
     render::camera::Camera,
     Instant,
 };
 use iced::{Color, Task};
-use rand::random;
 use std::fmt::Display;
 use strum_macros::{Display, EnumIter};
-use ultraviolet::Vec3;
 
 use crate::render::state::{AppState, ColorPickerState, ModelState, RenderState};
 
@@ -154,6 +152,7 @@ pub trait ProcessMessage<T> {
 impl ProcessMessage<ModelState> for PresetMessage {
     fn process(&self, state: &mut ModelState) -> Task<PolybladeMessage> {
         state.polyhedron = Polyhedron::preset(self);
+        state.polyhedron.shape.distance.render("", "current.svg");
         Task::none()
     }
 }

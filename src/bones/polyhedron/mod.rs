@@ -10,4 +10,3 @@ pub use distance::*;
 pub use polyhedron::*;
 pub use render::*;
 pub use shape::*;
-pub use vertex::*;

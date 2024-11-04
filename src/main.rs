@@ -24,13 +24,16 @@ pub async fn run() -> Result<(), winit::error::EventLoopError> {
     }
 
     let event_loop = EventLoop::new()?;
-    let window = Arc::new(
+    //let target = event_loop.tar
+    let mut window = Arc::new(
         // winit has diverged from WebGPU standards on window creation
         #[allow(deprecated)]
         event_loop
             .create_window(WindowAttributes::default())
             .expect("Create window"),
     );
+
+    window.request_redraw();
 
     #[cfg(target_arch = "wasm32")]
     {

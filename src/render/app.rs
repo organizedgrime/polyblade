@@ -197,7 +197,7 @@ impl App<'_> {
                     .resize(&self.graphics.device, moments.len());
 
                 let shapes = primitive.model.polyhedron.shape.vertices();
-                log::error!("shapes: {shapes:?}");
+                //log::error!("shapes: {shapes:?}");
                 scene.shape_buf.resize(&self.graphics.device, shapes.len());
                 scene.shape_buf.write_slice(&self.graphics.queue, &shapes);
             }
@@ -228,7 +228,9 @@ impl App<'_> {
             self.graphics.window.request_redraw();
         }
 
-        let output = self.graphics.surface.get_current_texture()?;
+        let output = self.graphics.surface.get_current_texture();
+        log::info!("output: {output:?}");
+        let output = output.unwrap();
         let view = output
             .texture
             .create_view(&wgpu::TextureViewDescriptor::default());

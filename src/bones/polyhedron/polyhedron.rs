@@ -2,13 +2,9 @@ use std::time::{Duration, Instant};
 
 use crate::{
     bones::*,
-    render::{
-        message::{ConwayMessage, PresetMessage},
-        pipeline::ShapeVertex,
-    },
+    render::message::{ConwayMessage, PresetMessage},
 };
-use rand::random;
-use rustc_hash::{FxHashMap as HashMap, FxHashSet as HashSet};
+use rustc_hash::FxHashMap as HashMap;
 use ultraviolet::{Lerp, Vec3};
 type VertMap<T> = HashMap<VertexId, T>;
 pub type VertexId = usize;
@@ -46,6 +42,7 @@ impl Polyhedron {
                     self.transactions.remove(0);
                 }
                 Conway(conway) => {
+                    self.shape.distance.render("", "current.svg");
                     self.transactions.remove(0);
                     use ConwayMessage::*;
                     use Transaction::*;

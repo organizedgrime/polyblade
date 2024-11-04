@@ -13,7 +13,7 @@ pub struct Cycles {
 impl Cycles {
     pub fn new(cycles: Vec<Vec<VertexId>>) -> Self {
         Self {
-            cycles: cycles.into_iter().map(|cycle| Cycle(cycle)).collect(),
+            cycles: cycles.into_iter().map(Cycle).collect(),
         }
     }
 
@@ -54,24 +54,23 @@ impl Cycle {
     }
 
     pub fn delete(&mut self, v: VertexId) {
-        (*self).0 = self
+        self.0 = self
             .0
             .clone()
             .into_iter()
             .filter_map(|u| {
-                if v == u {
-                    None
-                } else if u > v {
-                    Some(u - 1)
-                } else {
-                    Some(u)
+                use std::cmp::Ordering::*;
+                match v.cmp(&u) {
+                    Equal => None,
+                    Less => Some(u - 1),
+                    Greater => Some(u),
                 }
             })
             .collect::<Vec<_>>();
     }
 
     pub fn replace(&mut self, old: VertexId, new: VertexId) {
-        (*self).0 = self
+        self.0 = self
             .0
             .clone()
             .into_iter()

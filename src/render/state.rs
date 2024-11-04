@@ -1,8 +1,8 @@
 use crate::{
-    bones::{Distance, Polyhedron},
+    bones::Polyhedron,
     render::{
         camera::Camera,
-        message::{ColorMethodMessage, PresetMessage, ProcessMessage},
+        message::{ColorMethodMessage, PresetMessage},
         palette::Palette,
         polydex::{Entry, InfoBox, Polydex},
     },
@@ -10,14 +10,10 @@ use crate::{
 };
 
 use iced::{time::Duration, Color};
-use std::{
-    f32::consts::PI,
-    io::Read as _,
-    thread::{sleep, sleep_ms},
-};
+use std::{f32::consts::PI, io::Read as _};
 use ultraviolet::Mat4;
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct AppState {
     pub model: ModelState,
     pub render: RenderState,
@@ -89,7 +85,7 @@ impl Default for ModelState {
             polyhedron: { Polyhedron::preset(&PresetMessage::Dodecahedron) },
             transform: Mat4::identity(),
         };
-        log::error!("poly: {:?}", x.polyhedron);
+        //log::error!("poly: {:?}", x.polyhedron);
         x
     }
 }
@@ -100,18 +96,6 @@ pub fn load_polydex() -> Result<Polydex, Box<dyn std::error::Error>> {
     polydex.read_to_string(&mut polydex_str)?;
     let polydex: Vec<Entry> = ron::from_str(&polydex_str).map_err(|_| "Ron parsing error")?;
     Ok(polydex)
-}
-
-impl Default for AppState {
-    fn default() -> Self {
-        // let info = Polyhedron::default().polydex_entry(&vec![]);
-        Self {
-            model: ModelState::default(),
-            render: RenderState::default(),
-            polydex: Default::default(),
-            info: Default::default(),
-        }
-    }
 }
 
 impl AppState {

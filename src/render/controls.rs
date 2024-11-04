@@ -71,11 +71,14 @@ impl Program for Controls {
         ]
         .spacing(10.0);
 
+        let svg = iced::widget::svg("current.svg");
+
         container(
             column![
                 menu_bar.align_y(Vertical::Top),
                 button_row,
                 iced_widget::Space::new(Length::Fill, Length::Fill),
+                svg,
                 button(text(self.state.info.name())).on_press(self.state.info.wiki_message()),
                 container(
                     row![

@@ -24,15 +24,15 @@ serde = { version = "^1.0.0", features = ["derive"] }
 ron = { version = "0.8" }
 #ckmeans = { version = "1.0.6" }
 webbrowser = { version = "1.0.2" }
-iced_winit = { version = "0.13" }
+iced_winit = { version = "0.13", default-features = false, features = ["x11"] }
 iced_widget = { version = "0.13", features = ["wgpu"] }
 iced_wgpu = { version = "0.13", features = ["webgl"] }
 log = { version = "0.4.22" }
 rustc-hash = { version = "2.0.0" }
+graphviz-rust = { version = "0.9.3" }
 
 [dev-dependencies]
 test-case = { version = "^3.3.0" }
-graphviz-rust = { version = "0.9.3" }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 iced = { version = "0.13", features = ["debug", "advanced", "svg"] }
