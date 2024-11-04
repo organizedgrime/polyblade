@@ -47,7 +47,7 @@ impl<'a> Graphics<'a> {
             backends: if cfg!(target_arch = "wasm32") {
                 wgpu::Backends::GL
             } else {
-                wgpu::Backends::PRIMARY
+                wgpu::Backends::GL
             },
             ..Default::default()
         });

@@ -24,7 +24,7 @@ serde = { version = "^1.0.0", features = ["derive"] }
 ron = { version = "0.8" }
 #ckmeans = { version = "1.0.6" }
 webbrowser = { version = "1.0.2" }
-iced_winit = { version = "0.13", default-features = false, features = ["x11"] }
+iced_winit = { version = "0.13" }
 iced_widget = { version = "0.13", features = ["wgpu"] }
 iced_wgpu = { version = "0.13", features = ["webgl"] }
 log = { version = "0.4.22" }
