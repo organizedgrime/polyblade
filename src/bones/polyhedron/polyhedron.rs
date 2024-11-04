@@ -47,61 +47,62 @@ impl Polyhedron {
                 }
                 Conway(conway) => {
                     self.transactions.remove(0);
-                    // use ConwayMessage::*;
-                    // use Transaction::*;
-                    // let new_transactions = match conway {
-                    //     Dual => {
-                    //         let edges = self.graph.expand(false);
-                    //         vec![
-                    //             Wait(Instant::now() + Duration::from_millis(650)),
-                    //             Contraction(edges),
-                    //             Name('d'),
-                    //         ]
-                    //     }
-                    //     Join => {
-                    //         let edges = self.graph.kis(Option::None);
-                    //         vec![
-                    //             //Wait(Instant::now() + Duration::from_secs(1)),
-                    //             Release(edges),
-                    //             Name('j'),
-                    //         ]
-                    //     }
-                    //     Ambo => {
-                    //         let edges = self.graph.ambo();
-                    //         vec![Contraction(edges), Name('a')]
-                    //     }
-                    //     Kis => {
-                    //         self.graph.kis(Option::None);
-                    //         vec![Name('k')]
-                    //     }
-                    //     Truncate => {
-                    //         self.graph.truncate(Option::None);
-                    //         vec![Name('t')]
-                    //     }
-                    //     Expand => {
-                    //         self.graph.expand(false);
-                    //         vec![Name('e')]
-                    //     }
-                    //     Snub => {
-                    //         self.graph.expand(true);
-                    //         vec![Name('s')]
-                    //     }
-                    //     Bevel => {
-                    //         vec![
-                    //             Conway(Truncate),
-                    //             Wait(Instant::now() + Duration::from_millis(500)),
-                    //             Conway(Ambo),
-                    //             Name('b'),
-                    //         ]
-                    //     }
-                    // };
-                    // //self.graph.cycles.sort_by_key(|c| usize::MAX - c.len());
-                    // self.transactions = [new_transactions, self.transactions.clone()].concat();
-                    // self.graph.pst();
-                    // self.graph.find_cycles();
-                    // println!("cycles {:?}", self.graph.cycles);
-                    // println!("verts {:?}", self.graph.vertices());
-                    // self.springs();
+                    use ConwayMessage::*;
+                    use Transaction::*;
+                    let new_transactions = match conway {
+                        Dual => {
+                            // let edges = self.shape.expand(false);
+                            // vec![
+                            //     Wait(Instant::now() + Duration::from_millis(650)),
+                            //     Contraction(edges),
+                            //     Name('d'),
+                            // ]
+                            todo!()
+                        }
+                        Join => {
+                            // let edges = self.graph.kis(Option::None);
+                            // vec![
+                            //     //Wait(Instant::now() + Duration::from_secs(1)),
+                            //     Release(edges),
+                            //     Name('j'),
+                            // ]
+                            todo!()
+                        }
+                        Ambo => {
+                            let edges = self.shape.ambo();
+                            vec![Contraction(edges), Name('a')]
+                        }
+                        Kis => {
+                            // self.graph.kis(Option::None);
+                            // vec![Name('k')]
+                            todo!()
+                        }
+                        Truncate => {
+                            self.shape.truncate(Option::None);
+                            vec![Name('t')]
+                        }
+                        Expand => {
+                            // self.shape.expand(false);
+                            // vec![Name('e')]
+                            todo!()
+                        }
+                        Snub => {
+                            // self.graph.expand(true);
+                            // vec![Name('s')]
+                            todo!()
+                        }
+                        Bevel => {
+                            vec![
+                                Conway(Truncate),
+                                Wait(Instant::now() + Duration::from_millis(500)),
+                                Conway(Ambo),
+                                Name('b'),
+                            ]
+                        }
+                    };
+                    //self.graph.cycles.sort_by_key(|c| usize::MAX - c.len());
+                    self.render.new_capacity(self.shape.len());
+                    self.transactions = [new_transactions, self.transactions.clone()].concat();
                 }
                 Name(c) => {
                     if c == 'b' {
@@ -135,7 +136,7 @@ impl Polyhedron {
     }
 
     fn apply_spring_forces(&mut self, second: f32) {
-        println!("self: {:?}", self);
+        //println!("self: {:?}", self);
         let diameter = self.shape.distance.diameter();
         let diameter_spring_length = self.render.edge_length * 2.0;
         let (edges, contracting): (std::slice::Iter<[VertexId; 2]>, bool) =
@@ -165,11 +166,10 @@ impl Polyhedron {
     }
 
     pub fn preset(preset: &PresetMessage) -> Polyhedron {
-        println!("new preset!");
         let shape = Shape::preset(preset);
         let render = Render::new(shape.distance.len());
         Polyhedron {
-            name: "".into(),
+            name: preset.to_string(),
             shape,
             render,
             transactions: vec![],

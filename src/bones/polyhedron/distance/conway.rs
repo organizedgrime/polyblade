@@ -5,7 +5,7 @@ use ultraviolet::Vec3;
 use crate::bones::*;
 
 impl Distance {
-    pub fn contract_edge(&mut self, [v, u]: [VertexId; 2]) {
+    pub(super) fn contract_edge(&mut self, [v, u]: [VertexId; 2]) {
         // Give u all the same connections as v
         for w in self.connections(v).into_iter() {
             self.connect([w, u]);
@@ -108,6 +108,13 @@ impl Distance {
             .collect()
     }
 
+    pub fn ambod(&self) -> Self {
+        let mut g = self.clone();
+        let edges = g.ambo();
+        g.contract_edges(edges);
+        g
+    }
+
     /// `t` truncate
     pub fn truncate(&mut self, degree: Option<usize>) -> Vec<[VertexId; 2]> {
         let mut new_edges = Vec::default();
@@ -157,12 +164,6 @@ impl Distance {
     //     ordered_face_indices
     // }
     // //
-
-    pub fn expand(&mut self, snub: bool) -> Vec<[VertexId; 2]> {
-        let edges = self.ambo();
-        self.contract_edges(edges);
-        self.ambo()
-    }
 
     // /// `e` = `aa`
     // pub fn expand(&mut self, snub: bool) -> Vec<[VertexId; 2]> {

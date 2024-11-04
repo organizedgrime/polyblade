@@ -13,10 +13,15 @@ pub struct Render {
     pub edge_length: f32,
 }
 
+//impl rand::
+pub fn random_positions(n: usize) -> Vec<Vec3> {
+    vec![Vec3::new(random(), random(), random()).normalized(); n]
+}
+
 impl Render {
     pub fn new(n: usize) -> Self {
         Self {
-            positions: vec![Vec3::new(random(), random(), random()).normalized(); n],
+            positions: random_positions(n),
             speeds: vec![Vec3::zero(); n],
             edge_length: 1.0,
         }
@@ -40,6 +45,14 @@ impl Render {
         let mean_length = self.positions.iter().map(Vec3::mag).fold(0.0, f32::max);
         let matrixance = mean_length - 1.0;
         self.edge_length -= matrixance / TICK_SPEED * second;
+    }
+
+    pub fn new_capacity(&mut self, n: usize) {
+        if n > self.positions.len() {
+            let difference = n - self.positions.len();
+            self.positions.extend(random_positions(difference));
+            self.speeds.extend(vec![Vec3::zero(); difference]);
+        }
     }
 
     // pub fn lattice(&mut self) {

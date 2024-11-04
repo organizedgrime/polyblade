@@ -186,6 +186,8 @@ impl App<'_> {
         {
             let primitive =
                 PolyhedronPrimitive::new(program_state.model.clone(), program_state.render.clone());
+            log::info!("shape: {:?}", primitive.model.polyhedron.shape);
+            log::info!("render: {:?}", primitive.model.polyhedron.render);
             let moments = primitive.moment_vertices();
 
             // Write barycentric and side data if a change in structure occurred
