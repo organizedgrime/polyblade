@@ -1,7 +1,12 @@
 use std::fs::create_dir_all;
 
 use super::*;
-use crate::{bones::Cycle, render::message::PresetMessage::*};
+use crate::render::message::PresetMessage::*;
+use graphviz_rust::{
+    cmd::{CommandArg, Format},
+    exec, parse,
+    printer::PrinterContext,
+};
 use test_case::test_case;
 
 impl Distance {
@@ -36,6 +41,44 @@ impl Distance {
         tetra.connect([1, 3]);
         tetra.connect([2, 3]);
         tetra
+    }
+
+    pub fn graphviz(&self) -> String {
+        let mut dot = format!("graph G{{\nlayout=neato\n");
+
+        let colors = vec!["red", "green", "blue"];
+
+        for v in self.vertices() {
+            dot.push_str(&format!(
+                "\tV{v} [color=\"{}\"];\n",
+                colors[self.connections(v).len() % colors.len()]
+            ));
+        }
+
+        for [v, u] in self.edges() {
+            dot.push_str(&format!("\tV{v} -- V{u};\n"));
+        }
+        dot.push_str("}");
+        dot
+    }
+
+    pub fn render(&self, filename: &str) {
+        let Ok(graph) = parse(&self.graphviz()) else {
+            log::warn!("failed to parse Graphviz");
+            return;
+        };
+        match exec(
+            graph,
+            &mut PrinterContext::default(),
+            vec![Format::Svg.into(), CommandArg::Output(filename.to_string())],
+        ) {
+            Ok(_) => {
+                log::info!("wrote graphviz svg for {filename}");
+            }
+            Err(_) => {
+                log::error!("failed to write graph to svg!");
+            }
+        }
     }
 }
 
@@ -115,12 +158,10 @@ fn truncate_contract() {
 fn contract_edge() {
     println!("contract edge");
     let mut graph = Distance::preset(&Prism(4));
-    graph.render("tests/contract_edge_0.svg");
     assert_eq!(graph.len(), 8);
     assert_eq!(graph.edges().count(), 12);
     println!("{graph}");
     graph.contract_edge([0, 1]);
-    graph.render("tests/contract_edge_1.svg");
     println!("{graph}");
     assert_eq!(graph.len(), 7);
     assert_eq!(graph.edges().count(), 11);

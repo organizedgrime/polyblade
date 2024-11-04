@@ -2,9 +2,6 @@ mod conway;
 mod platonic;
 #[cfg(test)]
 mod test;
-use layout::backends::svg::SVGWriter;
-use layout::core::utils::save_to_file;
-use layout::gv::{self, GraphBuilder};
 
 use crate::bones::VertexId;
 use std::collections::HashSet;
@@ -303,56 +300,5 @@ impl Display for Distance {
             f.write_fmt(format_args!("\n"))?;
         }
         Ok(())
-    }
-}
-
-impl Distance {
-    pub fn graphviz(&self) -> String {
-        let mut dot = format!("graph G{{\nlayout=neato\n");
-
-        let colors = vec!["red", "green", "blue"];
-
-        for v in self.vertices() {
-            dot.push_str(&format!(
-                "\tV{v} [color=\"{}\"];\n",
-                colors[self.connections(v).len() % colors.len()]
-            ));
-        }
-
-        for [v, u] in self.edges() {
-            dot.push_str(&format!("\tV{v} -- V{u};\n"));
-        }
-        dot.push_str("}");
-        dot
-    }
-
-    pub fn render(&self, filename: &str) {
-        let mut parser = gv::DotParser::new(&self.graphviz());
-        let tree = parser.process();
-        match tree {
-            Err(err) => {
-                parser.print_error();
-                log::error!("Error: {}", err);
-            }
-            Ok(g) => {
-                // if dump_ast {
-                // }
-                //gv::dump_ast(&g);
-                let mut gb = GraphBuilder::new();
-                gb.visit_graph(&g);
-                let mut vg = gb.get();
-                let mut svg = SVGWriter::new();
-                vg.do_it(false, false, true, &mut svg);
-                let content = svg.finalize();
-
-                let res = save_to_file(filename, &content);
-                if let Result::Err(err) = res {
-                    log::error!("Could not write the file {filename}");
-                    log::error!("Error {}", err);
-                    return;
-                }
-                log::info!("Wrote {filename}");
-            }
-        }
     }
 }
