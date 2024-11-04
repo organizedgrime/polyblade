@@ -21,20 +21,18 @@ impl Distance {
     }
 
     pub fn contract_edges(&mut self, mut edges: Vec<[VertexId; 2]>) {
-        let mut n = 0;
-        let mut transformed = vec![];
-        loop {
-            n += 1;
-            if edges.is_empty() {
-                break;
-            }
-
+        let mut transformed = HashSet::default();
+        while !edges.is_empty() {
+            // Pop an edge
             let [v, u] = edges.remove(0);
+
+            // If this is not a redundant edge
             if !(transformed.contains(&v) && transformed.contains(&u)) {
-                println!("now contracting [{v},{u}], edges are {edges:?}");
+                // Contract [v, u], deleting v
                 self.contract_edge([v, u]);
-                transformed.push(v);
-                // Decrement the value of every
+                // Mark that this vertex has been transformed
+                transformed.insert(v);
+                // Decrement the value of every vertex
                 for [x, w] in &mut edges {
                     if *x > v {
                         *x -= 1;
@@ -43,14 +41,6 @@ impl Distance {
                         *w -= 1;
                     }
                 }
-
-                edges = edges.into_iter().filter(|[v, u]| v != u).collect();
-
-                #[cfg(test)]
-                self.render(
-                    "tests/split_vertex_contract/",
-                    &format!("contract_edges_{n}.svg"),
-                );
             }
         }
 
