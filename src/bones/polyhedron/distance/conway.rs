@@ -95,8 +95,8 @@ impl Distance {
     }
 
     /// `t` truncate
-    pub fn truncate(&mut self, degree: Option<usize>) -> HashSet<[VertexId; 2]> {
-        let mut new_edges = HashSet::default();
+    pub fn truncate(&mut self, degree: Option<usize>) -> Vec<[VertexId; 2]> {
+        let mut new_edges = Vec::default();
         let mut vertices = self.vertices().clone().collect::<Vec<_>>();
 
         if let Some(degree) = degree {
@@ -105,8 +105,9 @@ impl Distance {
 
         for v in vertices {
             new_edges.extend(self.split_vertex(v));
-            self.render(&format!("tests/truncate_split_{v}.svg"));
+            //self.render(&format!("tests/truncate_split_{v}.svg"));
         }
+        println!("new_edges: {new_edges:?}");
         new_edges
     }
 

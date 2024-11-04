@@ -308,7 +308,7 @@ impl Display for Distance {
 
 impl Distance {
     pub fn graphviz(&self) -> String {
-        let mut dot = format!("graph G{{\nlayout=fdp\n");
+        let mut dot = format!("graph G{{\nlayout=neato\n");
 
         let colors = vec!["red", "green", "blue"];
 

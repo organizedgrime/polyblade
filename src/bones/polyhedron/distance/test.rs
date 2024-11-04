@@ -1,3 +1,5 @@
+use std::fs::create_dir_all;
+
 use super::*;
 use crate::{bones::Cycle, render::message::PresetMessage::*};
 use test_case::test_case;
@@ -22,6 +24,18 @@ impl Distance {
             }
         }
         *self = graph;
+    }
+
+    /// Hardcoded Tetrahedron construction to isolate testing
+    pub fn tetrahedron() -> Self {
+        let mut tetra = Distance::new(4);
+        tetra.connect([0, 1]);
+        tetra.connect([0, 2]);
+        tetra.connect([0, 3]);
+        tetra.connect([1, 2]);
+        tetra.connect([1, 3]);
+        tetra.connect([2, 3]);
+        tetra
     }
 }
 
@@ -85,9 +99,16 @@ fn chordless_cycles() {
 }
 
 #[test]
-fn truncate() {
-    let mut shape = Distance::preset(&Icosahedron);
-    shape.truncate(None);
+fn truncate_contract() {
+    let prefix = "tests/truncate_contract/";
+    create_dir_all(prefix).unwrap();
+    let mut shape = Distance::tetrahedron();
+    shape.render(&(prefix.to_owned() + "tetrahedron.svg"));
+    let edges = shape.truncate(None);
+    shape.render(&(prefix.to_owned() + "truncated_tetrahedron.svg"));
+    shape.contract_edges(edges);
+    shape.render(&(prefix.to_owned() + "contracted_truncated_tetrahedron.svg"));
+    assert_eq!(shape, Distance::tetrahedron());
 }
 
 #[test]
