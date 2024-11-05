@@ -1,7 +1,9 @@
+use std::io::Read;
+
 use iced::{alignment::Vertical, Length};
 use iced_aw::{menu::Item, menu_bar};
 use iced_wgpu::Renderer;
-use iced_widget::{button, column, container, row, text, Row};
+use iced_widget::{button, column, container, pick_list::Handle, row, text, Row};
 use iced_winit::{
     core::{Color, Element, Theme},
     runtime::{Program, Task},
@@ -71,7 +73,15 @@ impl Program for Controls {
         ]
         .spacing(10.0);
 
-        let svg = iced::widget::svg("current.svg");
+        let mut svg = String::new();
+        let mut data = vec![];
+        std::fs::File::open("current.svg")
+            .unwrap()
+            //.read_to_string(&mut svg)
+            .read_to_end(&mut data)
+            .unwrap();
+        log::info!("svg:\n{svg}");
+        let svg = iced::widget::svg(iced::widget::svg::Handle::from_memory(data));
 
         container(
             column![

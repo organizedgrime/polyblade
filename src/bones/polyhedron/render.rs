@@ -15,7 +15,7 @@ pub struct Render {
 
 //impl rand::
 pub fn random_positions(n: usize) -> Vec<Vec3> {
-    vec![Vec3::new(random(), random(), random()).normalized(); n]
+    vec![Vec3::new(random(), random(), random()).normalized() * 4.0; n]
 }
 
 impl Render {
