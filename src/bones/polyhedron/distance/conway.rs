@@ -68,24 +68,25 @@ impl Distance {
         let connections = self.connections(v);
 
         // Remove the vertex
-        let new_face: Vec<(usize, usize)> = vec![v]
-            .into_iter()
-            .chain((1..connections.len()).map(|_| self.insert()))
-            .zip(connections.clone())
-            .collect();
+        let new_cycle: Cycle = Cycle::from(
+            vec![v]
+                .into_iter()
+                .chain((1..connections.len()).map(|_| self.insert()))
+                .collect(),
+        );
 
-        for c in connections {
-            self.disconnect([v, c]);
+        for c in &connections {
+            self.disconnect([v, *c]);
         }
 
-        for &(vertex, connection) in new_face.iter() {
-            self.connect([vertex, connection]);
+        for i in 0..new_cycle.len() {
+            self.connect([new_cycle[i], connections[i]]);
         }
 
         // track the edges that will compose the new face
         let mut new_edges = vec![];
-        for i in 0..new_face.len() {
-            let edge = [new_face[i].0, new_face[(i + 1) % new_face.len()].0];
+        for i in 0..new_cycle.len() {
+            let edge = [new_cycle[i], new_cycle[i + 1]];
             self.connect(edge);
             new_edges.push(edge);
         }

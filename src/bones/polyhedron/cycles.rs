@@ -49,6 +49,10 @@ impl IndexMut<usize> for Cycle {
 }
 
 impl Cycle {
+    pub fn from(vertices: Vec<VertexId>) -> Self {
+        Self(vertices)
+    }
+
     pub fn len(&self) -> usize {
         self.0.len()
     }
@@ -88,6 +92,38 @@ impl Cycle {
 
     pub fn iter(&self) -> std::slice::Iter<'_, usize> {
         self.0.iter()
+    }
+
+    pub fn contains(&self, v: &VertexId) -> bool {
+        self.0.contains(v)
+    }
+}
+
+impl From<Vec<[VertexId; 2]>> for Cycle {
+    fn from(mut edges: Vec<[VertexId; 2]>) -> Self {
+        let mut first = false;
+        let mut face = vec![edges[0][0]];
+        while !edges.is_empty() {
+            let v = if first {
+                *face.first().unwrap()
+            } else {
+                *face.last().unwrap()
+            };
+            if let Some(i) = edges.iter().position(|e| e.contains(&v)) {
+                let next = if edges[i][0] == v {
+                    edges[i][1]
+                } else {
+                    edges[i][0]
+                };
+                if !face.contains(&next) {
+                    face.push(next);
+                }
+                edges.remove(i);
+            } else {
+                first ^= true;
+            }
+        }
+        Self(face)
     }
 }
 impl Cycles {
