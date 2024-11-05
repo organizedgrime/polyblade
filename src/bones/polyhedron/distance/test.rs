@@ -1,7 +1,7 @@
 use std::fs::create_dir_all;
 
 use super::*;
-use crate::render::message::PresetMessage::*;
+use crate::render::message::PresetMessage::{self, *};
 use test_case::test_case;
 
 impl Distance {
@@ -168,4 +168,15 @@ fn split_vertex_contract() {
     test.contract_edges(edges);
     test.render(prefix, "contracted.svg");
     assert_eq!(test.distance, Distance::tetrahedron().distance);
+}
+
+#[test]
+fn ambo() {
+    let prefix = "tests/ambo/";
+    create_dir_all(prefix).unwrap();
+    let tetrahedron = Distance::tetrahedron();
+    assert_eq!(
+        tetrahedron.ambod(),
+        Distance::preset(&PresetMessage::Octahedron)
+    );
 }

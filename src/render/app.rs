@@ -186,10 +186,7 @@ impl App<'_> {
         {
             let primitive =
                 PolyhedronPrimitive::new(program_state.model.clone(), program_state.render.clone());
-            log::info!("shape: {:?}", primitive.model.polyhedron.shape);
-            log::info!("render: {:?}", primitive.model.polyhedron.render);
             let moments = primitive.moment_vertices();
-            log::info!("moments: {:?}", moments);
 
             // Write barycentric and side data if a change in structure occurred
             if scene.moment_buf.len() != moments.len() {
@@ -225,9 +222,7 @@ impl App<'_> {
             self.graphics.window.request_redraw();
         }
 
-        let output = self.graphics.surface.get_current_texture();
-        log::info!("output: {output:?}");
-        let output = output.unwrap();
+        let output = self.graphics.surface.get_current_texture()?;
         let view = output
             .texture
             .create_view(&wgpu::TextureViewDescriptor::default());

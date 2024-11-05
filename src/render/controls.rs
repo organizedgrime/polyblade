@@ -73,22 +73,19 @@ impl Program for Controls {
         ]
         .spacing(10.0);
 
-        // let mut svg = String::new();
-        // let mut data = vec![];
-        // std::fs::File::open("current.svg")
-        //     .unwrap()
-        //     //.read_to_string(&mut svg)
-        //     .read_to_end(&mut data)
-        //     .unwrap();
-        // log::info!("svg:\n{svg}");
-        // let svg = iced::widget::svg(iced::widget::svg::Handle::from_memory(data));
+        let mut data = vec![];
+        std::fs::File::open("current.svg")
+            .unwrap()
+            .read_to_end(&mut data)
+            .unwrap();
+        let svg = iced::widget::svg(iced::widget::svg::Handle::from_memory(data));
 
         container(
             column![
                 menu_bar.align_y(Vertical::Top),
                 button_row,
                 iced_widget::Space::new(Length::Fill, Length::Fill),
-                //svg,
+                svg,
                 button(text(self.state.info.name())).on_press(self.state.info.wiki_message()),
                 container(
                     row![

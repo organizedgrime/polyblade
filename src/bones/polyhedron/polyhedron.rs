@@ -27,7 +27,7 @@ impl Polyhedron {
     pub fn process_transactions(&mut self) {
         if let Some(transaction) = self.transactions.first().cloned() {
             use Transaction::*;
-            match transaction {
+            let result = match transaction {
                 Contraction(edges) => {
                     if !edges.iter().any(|&[v, u]| {
                         (self.render.positions[v] - self.render.positions[u]).mag() > 0.08
@@ -42,7 +42,6 @@ impl Polyhedron {
                     self.transactions.remove(0);
                 }
                 Conway(conway) => {
-                    self.shape.distance.render("", "current.svg");
                     self.transactions.remove(0);
                     use ConwayMessage::*;
                     use Transaction::*;
@@ -66,8 +65,10 @@ impl Polyhedron {
                             todo!()
                         }
                         Ambo => {
-                            let edges = self.shape.ambo();
-                            vec![Contraction(edges), Name('a')]
+                            self.shape.distance = self.shape.distance.ambod();
+                            self.shape.recompute();
+                            //vec![Contraction(edges), Name('a')]
+                            vec![]
                         }
                         Kis => {
                             // self.graph.kis(Option::None);
@@ -122,7 +123,9 @@ impl Polyhedron {
                     }
                 }
                 None => {}
-            }
+            };
+            self.shape.distance.render("", "current.svg");
+            result
         }
     }
 
@@ -150,47 +153,17 @@ impl Polyhedron {
             let diff = self.render.positions[v] - self.render.positions[u];
             let spring_length = diff.mag();
             if contracting {
-                println!("CONTRACTING");
+                log::warn!("CONTRACTING");
                 let f = ((self.render.edge_length / TICK_SPEED * second) * 10.0) / spring_length;
                 self.render.positions[v] =
                     self.render.positions[v].lerp(self.render.positions[u], f);
                 self.render.positions[u] =
                     self.render.positions[u].lerp(self.render.positions[v], f);
             } else {
-                // let target_length =
-                //     diameter_spring_length * (self.shape.distance[[v, u]] as f32 / diameter as f32);
-                // let f100 = diff * (target_length - spring_length);
-                // let f = f100 / TICK_SPEED * second;
-                // log::info!(
-                //     "[v,u]:\t[{v}, {u}], matrix_d:\t{}, target_length:\t{}, spring_length:\t{}, f100:\t{:?}, f:\t{:?}",
-                //     self.shape.distance[[v, u]],
-                //     target_length,
-                //     spring_length,
-                //     f100,
-                //     f
-                // );
-                //
-                // self.render.apply_force([v, u], f);
-                let d = self.shape.distance[[v, u]] as f32;
-                let l = diameter_spring_length * (d / diameter as f32);
-                let k = 1.0 / d;
-                let diff = self.render.positions[v] - self.render.positions[u];
-                let dist = diff.mag();
-                let distention = l - dist;
-                let restorative_force = k / 2.0 * distention;
-                let f = diff * restorative_force / TICK_SPEED;
-
-                log::info!("f: {f:?}");
-
-                let v_speed = self.render.speeds.get_mut(v).unwrap();
-                *v_speed += f;
-                *v_speed *= 0.92;
-                *self.render.positions.get_mut(v).unwrap() += *v_speed;
-
-                let u_speed = self.render.speeds.get_mut(u).unwrap();
-                *u_speed -= f;
-                *u_speed *= 0.92;
-                *self.render.positions.get_mut(u).unwrap() += *u_speed;
+                let target_length =
+                    diameter_spring_length * (self.shape.distance[[v, u]] as f32 / diameter as f32);
+                let f = diff * (target_length - spring_length) / TICK_SPEED * second;
+                self.render.apply_force([v, u], f);
             }
         }
     }

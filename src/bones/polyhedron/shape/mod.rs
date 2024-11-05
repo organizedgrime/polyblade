@@ -24,10 +24,10 @@ impl Shape {
         self.distance.len()
     }
     pub fn recompute(&mut self) {
-        // Find and save cycles
-        self.cycles = self.distance.simple_cycles();
         // Update the distance matrix in place
         self.distance.pst();
+        // Find and save cycles
+        self.cycles = self.distance.simple_cycles();
         // Find and save springs
         self.springs = self.distance.springs();
     }

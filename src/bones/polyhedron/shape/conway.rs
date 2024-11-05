@@ -1,4 +1,3 @@
-
 use crate::bones::{Shape, VertexId};
 
 impl Shape {
