@@ -47,7 +47,7 @@ impl<'a> Graphics<'a> {
             backends: if cfg!(target_arch = "wasm32") {
                 wgpu::Backends::GL
             } else {
-                wgpu::Backends::GL
+                wgpu::Backends::PRIMARY
             },
             ..Default::default()
         });
@@ -189,6 +189,7 @@ impl App<'_> {
             log::info!("shape: {:?}", primitive.model.polyhedron.shape);
             log::info!("render: {:?}", primitive.model.polyhedron.render);
             let moments = primitive.moment_vertices();
+            log::info!("moments: {:?}", moments);
 
             // Write barycentric and side data if a change in structure occurred
             if scene.moment_buf.len() != moments.len() {
@@ -219,11 +220,7 @@ impl App<'_> {
             // Write Frag Uniforms
             scene.frag_buf.write_data(
                 &self.graphics.queue,
-                &FragUniforms {
-                    line_thickness: primitive.render.line_thickness,
-                    line_mode: 1.0,
-                    ..Default::default()
-                },
+                &FragUniforms::new(primitive.render.line_thickness, 1.0),
             );
             self.graphics.window.request_redraw();
         }

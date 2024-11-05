@@ -15,7 +15,10 @@ pub struct Render {
 
 //impl rand::
 pub fn random_positions(n: usize) -> Vec<Vec3> {
-    vec![Vec3::new(random(), random(), random()).normalized() * 4.0; n]
+    (0..n)
+        .into_iter()
+        .map(|_| Vec3::new(random(), random(), random()).normalized())
+        .collect()
 }
 
 impl Render {
@@ -37,9 +40,9 @@ impl Render {
             self.positions.iter().fold(Vec3::zero(), |a, &b| a + b) / self.positions.len() as f32;
         log::debug!("shifting all positions by {shift:?}");
 
-        // for p in self.positions.iter_mut() {
-        //     *p -= shift;
-        // }
+        for p in self.positions.iter_mut() {
+            *p -= shift;
+        }
     }
 
     fn resize(&mut self, second: f32) {

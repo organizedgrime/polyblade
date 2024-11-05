@@ -33,7 +33,7 @@ pub async fn run() -> Result<(), winit::error::EventLoopError> {
             .expect("Create window"),
     );
 
-    window.request_redraw();
+    //window.request_redraw();
 
     #[cfg(target_arch = "wasm32")]
     {

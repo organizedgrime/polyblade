@@ -128,7 +128,7 @@ impl Polyhedron {
 
     pub fn update(&mut self, second: f32) {
         self.render.update(second);
-        //self.apply_spring_forces(second);
+        self.apply_spring_forces(second);
         self.process_transactions();
     }
 
