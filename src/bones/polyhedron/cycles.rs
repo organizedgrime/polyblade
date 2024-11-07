@@ -24,13 +24,16 @@ impl Cycles {
     pub fn iter(&self) -> std::slice::Iter<'_, Cycle> {
         self.cycles.iter()
     }
+    pub fn into_iter(&self) -> std::vec::IntoIter<Cycle> {
+        self.cycles.clone().into_iter()
+    }
 }
 
 impl Index<usize> for Cycle {
     type Output = VertexId;
 
     fn index(&self, index: usize) -> &Self::Output {
-        &self.0[index % self.0.len()]
+        &self.0[index.rem_euclid(self.0.len())]
     }
 }
 
@@ -38,12 +41,12 @@ impl Index<usize> for Cycles {
     type Output = Cycle;
 
     fn index(&self, index: usize) -> &Self::Output {
-        &self.cycles[index % self.cycles.len()]
+        &self.cycles[index.rem_euclid(self.cycles.len())]
     }
 }
 impl IndexMut<usize> for Cycle {
     fn index_mut(&mut self, index: usize) -> &mut Self::Output {
-        let i = index % self.0.len();
+        let i = index.rem_euclid(self.0.len());
         &mut self.0[i]
     }
 }

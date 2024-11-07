@@ -1,9 +1,7 @@
-use std::io::Read;
-
 use iced::{alignment::Vertical, Length};
 use iced_aw::{menu::Item, menu_bar};
 use iced_wgpu::Renderer;
-use iced_widget::{button, column, container, pick_list::Handle, row, text, Row};
+use iced_widget::{button, column, container, row, svg, svg::Handle, text, Row};
 use iced_winit::{
     core::{Color, Element, Theme},
     runtime::{Program, Task},
@@ -73,12 +71,9 @@ impl Program for Controls {
         ]
         .spacing(10.0);
 
-        let mut data = vec![];
-        std::fs::File::open("current.svg")
-            .unwrap()
-            .read_to_end(&mut data)
-            .unwrap();
-        let svg = iced::widget::svg(iced::widget::svg::Handle::from_memory(data));
+        let svg = svg(Handle::from_memory(
+            self.state.model.polyhedron.shape.svg.clone(),
+        ));
 
         container(
             column![

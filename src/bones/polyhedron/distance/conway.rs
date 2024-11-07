@@ -63,10 +63,7 @@ impl Distance {
     //     println!("map: {map:?}");
     // }
 
-    pub fn split_vertex(&mut self, v: VertexId) -> Vec<[VertexId; 2]> {
-        // neighbors
-        let connections = self.connections(v);
-
+    pub fn split_vertex(&mut self, v: VertexId, connections: Vec<VertexId>) -> Vec<[VertexId; 2]> {
         // Remove the vertex
         let new_cycle: Cycle = Cycle::from(
             vec![v]
@@ -91,37 +88,6 @@ impl Distance {
             new_edges.push(edge);
         }
 
-        new_edges
-    }
-
-    /// `a` ambo
-    /// Returns a set of edges to contract
-    pub fn ambo(&mut self) -> Vec<[VertexId; 2]> {
-        // Truncate
-        let new_edges = self.truncate(None);
-        // Edges that were already there get contracted
-        self.edges()
-            .filter(|&[v, u]| !new_edges.contains(&[v, u]) && !new_edges.contains(&[u, v]))
-            .collect()
-    }
-
-    pub fn ambod(&self) -> Self {
-        let mut g = self.clone();
-        let edges = g.ambo();
-        g.contract_edges(edges);
-        g
-    }
-
-    /// `t` truncate
-    pub fn truncate(&mut self, degree: Option<usize>) -> Vec<[VertexId; 2]> {
-        let mut new_edges = Vec::default();
-        let mut vertices = self.vertices().clone().collect::<Vec<_>>();
-        if let Some(degree) = degree {
-            vertices.retain(|&v| self.connections(v).len() == degree);
-        }
-        for v in vertices {
-            new_edges.extend(self.split_vertex(v));
-        }
         new_edges
     }
 

@@ -23,25 +23,19 @@ impl Distance {
         dot
     }
 
-    pub fn render(&self, prefix: &str, filename: &str) {
+    pub(in crate::bones::polyhedron) fn svg(&self) -> Option<Vec<u8>> {
         let Ok(graph) = parse(&self.graphviz()) else {
             log::warn!("failed to parse Graphviz");
-            return;
+            return None;
         };
-        match exec(
+        exec(
             graph,
             &mut PrinterContext::default(),
             vec![
                 Format::Svg.into(),
-                CommandArg::Output(format!("{}{}", prefix, filename)),
+                //CommandArg::Output(format!("{}{}", prefix, filename)),
             ],
-        ) {
-            Ok(_) => {
-                log::info!("wrote graphviz svg for {filename}");
-            }
-            Err(_) => {
-                log::error!("failed to write graph to svg!");
-            }
-        }
+        )
+        .ok()
     }
 }

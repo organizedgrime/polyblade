@@ -65,10 +65,9 @@ impl Polyhedron {
                             todo!()
                         }
                         Ambo => {
-                            self.shape.distance = self.shape.distance.ambod();
+                            let edges = self.shape.ambo();
                             self.shape.recompute();
-                            //vec![Contraction(edges), Name('a')]
-                            vec![]
+                            vec![Contraction(edges), Name('a')]
                         }
                         Kis => {
                             // self.graph.kis(Option::None);
@@ -77,6 +76,8 @@ impl Polyhedron {
                         }
                         Truncate => {
                             self.shape.truncate(Option::None);
+                            self.shape.recompute();
+
                             vec![Name('t')]
                         }
                         Expand => {
@@ -124,7 +125,7 @@ impl Polyhedron {
                 }
                 None => {}
             };
-            self.shape.distance.render("", "current.svg");
+            self.shape.compute_graph_svg();
             result
         }
     }

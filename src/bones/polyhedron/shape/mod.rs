@@ -1,4 +1,5 @@
 mod conway;
+mod platonic;
 #[cfg(test)]
 mod tests;
 use ultraviolet::{Vec3, Vec4};
@@ -17,12 +18,15 @@ pub struct Shape {
     pub cycles: Cycles,
     /// Faces / chordless cycles
     pub springs: Vec<[VertexId; 2]>,
+    /// SVG string of graph representation
+    pub svg: Vec<u8>,
 }
 
 impl Shape {
     pub fn len(&self) -> usize {
         self.distance.len()
     }
+
     pub fn recompute(&mut self) {
         // Update the distance matrix in place
         self.distance.pst();
@@ -32,14 +36,27 @@ impl Shape {
         self.springs = self.distance.springs();
     }
 
-    pub fn preset(preset: &PresetMessage) -> Shape {
+    pub fn from(distance: Distance) -> Shape {
         let mut shape = Shape {
-            distance: Distance::preset(preset),
+            distance,
             ..Default::default()
         };
         shape.recompute();
         shape
     }
+
+    pub fn compute_graph_svg(&mut self) {
+        self.svg = self.distance.svg().unwrap_or(vec![]);
+    }
+
+    // pub fn preset(preset: &PresetMessage) -> Shape {
+    //     let mut shape = Shape {
+    //         distance: Distance::preset(preset),
+    //         ..Default::default()
+    //     };
+    //     shape.recompute();
+    //     shape
+    // }
 
     pub fn vertices(&self) -> Vec<ShapeVertex> {
         let barycentric = [Vec3::unit_x(), Vec3::unit_y(), Vec3::unit_z()];
