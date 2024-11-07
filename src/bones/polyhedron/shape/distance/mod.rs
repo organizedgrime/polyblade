@@ -1,6 +1,10 @@
 mod conway;
 mod platonic;
 mod svg;
+pub use conway::*;
+pub use platonic::*;
+pub use svg::*;
+
 #[cfg(test)]
 mod test;
 
@@ -11,8 +15,6 @@ use std::{
     fmt::Display,
     ops::{Index, IndexMut, Range},
 };
-
-use super::Cycles;
 
 /// Jagged array which represents the symmetrix distance matrix of a given Graph
 /// usize::MAX    ->   disconnected
@@ -202,7 +204,7 @@ impl Distance {
         *self = dist;
     }
 
-    pub fn simple_cycles(&self) -> Cycles {
+    pub fn simple_cycles(&self) -> super::Cycles {
         let mut triplets: Vec<Vec<_>> = Default::default();
         let mut cycles: HashSet<Vec<_>> = Default::default();
 
@@ -245,7 +247,7 @@ impl Distance {
             }
         }
 
-        Cycles::new(cycles.into_iter().collect::<Vec<_>>())
+        super::Cycles::new(cycles.into_iter().collect::<Vec<_>>())
     }
 
     pub fn springs(&self) -> Vec<[VertexId; 2]> {

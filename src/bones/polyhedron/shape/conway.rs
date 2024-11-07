@@ -1,6 +1,6 @@
-use std::collections::{HashMap, HashSet};
+use super::{Shape, VertexId};
 
-use crate::bones::{Cycle, Shape, VertexId};
+//use crate::bones::{Cycle, Shape, VertexId};
 
 impl Shape {
     pub fn split_vertex(&mut self, v: VertexId) -> Vec<[usize; 2]> {

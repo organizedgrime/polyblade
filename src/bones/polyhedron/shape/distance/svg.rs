@@ -1,9 +1,5 @@
-use crate::bones::Distance;
-use graphviz_rust::{
-    cmd::{CommandArg, Format},
-    exec, parse,
-    printer::PrinterContext,
-};
+use super::Distance;
+use graphviz_rust::{cmd::Format, exec, parse, printer::PrinterContext};
 
 impl Distance {
     pub fn graphviz(&self) -> String {
@@ -23,7 +19,7 @@ impl Distance {
         dot
     }
 
-    pub(in crate::bones::polyhedron) fn svg(&self) -> Option<Vec<u8>> {
+    pub fn svg(&self) -> Option<Vec<u8>> {
         let Ok(graph) = parse(&self.graphviz()) else {
             log::warn!("failed to parse Graphviz");
             return None;
