@@ -1,5 +1,7 @@
 mod conway;
+mod distance;
 mod platonic;
+pub use distance::*;
 #[cfg(test)]
 mod test;
 use ultraviolet::{Vec3, Vec4};

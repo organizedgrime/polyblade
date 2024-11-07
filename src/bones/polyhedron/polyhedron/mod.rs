@@ -1,4 +1,7 @@
 mod conway;
+mod shape;
+pub use shape::*;
+
 use std::time::{Duration, Instant};
 
 use crate::{
