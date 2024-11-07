@@ -1,7 +1,7 @@
-use rustc_hash::FxHashSet as HashSet;
-
-use super::{Distance};
+use super::Distance;
+use crate::polyhedron::shape::Cycle;
 use crate::polyhedron::VertexId;
+use rustc_hash::FxHashSet as HashSet;
 
 impl Distance {
     pub(super) fn contract_edge(&mut self, [v, u]: [VertexId; 2]) {
@@ -66,14 +66,12 @@ impl Distance {
 
     pub fn split_vertex(&mut self, v: VertexId, connections: Vec<VertexId>) -> Vec<[VertexId; 2]> {
         // Remove the vertex
-        let new_cycle: Vec<usize> = 
-            // Cycle::from(
+        let new_cycle: Cycle = Cycle::from(
             vec![v]
                 .into_iter()
                 .chain((1..connections.len()).map(|_| self.insert()))
-                .collect();
-
-        // );
+                .collect(),
+        );
 
         for c in &connections {
             self.disconnect([v, *c]);

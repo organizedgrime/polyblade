@@ -2,20 +2,20 @@ use super::Shape;
 use crate::polyhedron::{Polyhedron, VertexId};
 
 impl Polyhedron {
-    pub fn truncate(&mut self) -> Vec<[VertexId; 2]> {
+    pub fn split_vertex(&mut self, v: usize) -> Vec<[usize; 2]> {
         let Polyhedron { shape, render, .. } = self;
-        // let Shape {
-        //     distance, cycles, ..
-        // } = shape;
+        let edges = shape.split_vertex(v);
+        render.extend(edges.len() - 1, render.positions[v]);
+        edges
+    }
 
+    pub fn truncate(&mut self) -> Vec<[VertexId; 2]> {
+        // let Polyhedron { shape, render, .. } = self;
         let mut new_edges = Vec::default();
-        // for v in distance.vertices() {
-        //     let connections = cycles.sorted_connections(v);
-        //     render.extend(connections.len() - 1, render.positions[v]);
-        //     new_edges.extend(distance.split_vertex(v, connections));
-        //     *cycles = distance.simple_cycles();
-        // }
-        // self.shape.recompute();
+        for v in self.shape.distance.vertices() {
+            new_edges.extend(self.split_vertex(v));
+        }
+        self.shape.recompute();
         new_edges
     }
 }

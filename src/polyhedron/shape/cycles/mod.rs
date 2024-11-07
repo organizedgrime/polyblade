@@ -1,6 +1,6 @@
 mod cycle;
 use crate::polyhedron::VertexId;
-use cycle::*;
+pub use cycle::*;
 use std::{collections::HashSet, ops::Index};
 
 use super::Distance;

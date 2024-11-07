@@ -6,11 +6,9 @@ use crate::polyhedron::VertexId;
 impl Shape {
     pub fn split_vertex(&mut self, v: VertexId) -> Vec<[usize; 2]> {
         let sorted_connections = self.cycles.sorted_connections(v);
-        println!("connections_sorted : {sorted_connections:?}");
-        //
-        // let connections = self.distance.connections(v);
-        // println!("connections : {connections:?}");
-        self.distance.split_vertex(v, sorted_connections)
+        let edges = self.distance.split_vertex(v, sorted_connections);
+        self.cycles = Cycles::from(&self.distance);
+        edges
     }
 
     // pub fn ordered_face_indices(&self, v: VertexId) -> Vec<usize> {

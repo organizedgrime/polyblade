@@ -140,34 +140,38 @@ impl Polyhedron {
     }
 
     fn apply_spring_forces(&mut self, second: f32) {
+        let Polyhedron {
+            shape,
+            render,
+            transactions,
+            ..
+        } = self;
         //println!("self: {:?}", self);
-        let diameter = self.shape.distance.diameter();
-        let diameter_spring_length = self.render.edge_length * 2.0;
+        let diameter = shape.distance.diameter();
+        let diameter_spring_length = render.edge_length * 2.0;
         let (edges, contracting): (std::slice::Iter<[VertexId; 2]>, bool) =
-            if let Some(Transaction::Contraction(edges)) = self.transactions.first() {
+            if let Some(Transaction::Contraction(edges)) = transactions.first() {
                 (edges.iter(), true)
             } else {
-                (self.shape.springs.iter(), false)
+                (shape.springs.iter(), false)
             };
 
         for &[w, x] in edges {
             let v = x.min(w);
             let u = x.max(w);
 
-            let diff = self.render.positions[v] - self.render.positions[u];
+            let diff = render.positions[v] - render.positions[u];
             let spring_length = diff.mag();
             if contracting {
                 log::warn!("CONTRACTING");
-                let f = ((self.render.edge_length / TICK_SPEED * second) * 10.0) / spring_length;
-                self.render.positions[v] =
-                    self.render.positions[v].lerp(self.render.positions[u], f);
-                self.render.positions[u] =
-                    self.render.positions[u].lerp(self.render.positions[v], f);
+                let f = ((render.edge_length / TICK_SPEED * second) * 10.0) / spring_length;
+                render.positions[v] = render.positions[v].lerp(render.positions[u], f);
+                render.positions[u] = render.positions[u].lerp(render.positions[v], f);
             } else {
                 let target_length =
-                    diameter_spring_length * (self.shape.distance[[v, u]] as f32 / diameter as f32);
+                    diameter_spring_length * (shape.distance[[v, u]] as f32 / diameter as f32);
                 let f = diff * (target_length - spring_length) / TICK_SPEED * second;
-                self.render.apply_force([v, u], f);
+                render.apply_force([v, u], f);
             }
         }
     }
