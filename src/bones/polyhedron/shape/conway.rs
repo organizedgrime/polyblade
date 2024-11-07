@@ -3,48 +3,8 @@ use std::collections::{HashMap, HashSet};
 use crate::bones::{Cycle, Shape, VertexId};
 
 impl Shape {
-    /// Returns the
-    pub fn sorted_connections(&self, v: VertexId) -> Vec<VertexId> {
-        log::info!("cycles: {:?}", self.cycles);
-        log::info!("hunting for {v}");
-        // We only care about cycles that contain the vertex
-        let mut relevant = self
-            .cycles
-            .iter()
-            .filter_map(move |cycle| {
-                if let Some(p) = cycle.iter().position(|&x| x == v) {
-                    log::info!("finding {p}");
-                    Some([cycle[p + cycle.len() - 1], cycle[p + 1]])
-                } else {
-                    None
-                }
-            })
-            .collect::<Vec<[VertexId; 2]>>();
-        //.collect::<HashMap<VertexId, VertexId>>();
-
-        log::info!("RELEVANT: {relevant:?}");
-        let mut sorted_connections = vec![relevant[0][0]];
-        loop {
-            let previous = sorted_connections.last().unwrap();
-            match relevant
-                .iter()
-                .position(|[v, u]| v == previous || u == previous)
-            {
-                Some(i) => {
-                    let [v, u] = relevant.remove(i);
-                    let next = if v == *previous { u } else { v };
-                    sorted_connections.push(next);
-                }
-                None => {
-                    break;
-                }
-            }
-        }
-        sorted_connections[1..].to_vec()
-    }
-
     pub fn split_vertex(&mut self, v: VertexId) -> Vec<[usize; 2]> {
-        let sorted_connections = self.sorted_connections(v);
+        let sorted_connections = self.cycles.sorted_connections(v);
         println!("connections_sorted : {sorted_connections:?}");
         //
         // let connections = self.distance.connections(v);
