@@ -1,7 +1,7 @@
 mod conway;
 mod platonic;
 #[cfg(test)]
-mod tests;
+mod test;
 use ultraviolet::{Vec3, Vec4};
 
 use crate::{

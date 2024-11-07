@@ -1,3 +1,4 @@
+mod conway;
 use std::time::{Duration, Instant};
 
 use crate::{
@@ -75,9 +76,7 @@ impl Polyhedron {
                             todo!()
                         }
                         Truncate => {
-                            self.shape.truncate(Option::None);
-                            self.shape.recompute();
-
+                            self.truncate();
                             vec![Name('t')]
                         }
                         Expand => {

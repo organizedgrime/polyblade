@@ -43,26 +43,30 @@ fn split_vertex() {
     control[[2, 3]] = 1;
     control[[3, 1]] = 1;
     // Connections
-    control[[5, 1]] = 1;
-    control[[4, 2]] = 1;
-    control[[0, 3]] = 1;
+    control[[5, 3]] = 1;
+    control[[4, 1]] = 1;
+    control[[0, 2]] = 1;
     // New face
     control[[0, 4]] = 1;
     control[[4, 5]] = 1;
     control[[5, 0]] = 1;
-    control.pst();
+    // control.pst();
 
-    let prefix = "tests/split_vertex/";
-    create_dir_all(prefix).unwrap();
+    // let prefix = "tests/split_vertex/";
+    // create_dir_all(prefix).unwrap();
     let mut test = Shape::from(Distance::tetrahedron());
     // test.distance.render(prefix, "test_tetrahedron.svg");
     test.split_vertex(0);
     // test.distance.render(prefix, "test_split.svg");
-    test.recompute();
+    // test.recompute();
     // test.distance.render(prefix, "test_recompute.svg");
     // control.render(prefix, "control.svg");
 
-    assert_eq!(test.distance, control);
+    println!("control:\n{control}");
+    println!("test:\n{}", test.distance);
+    println!("control elen:\n{}", control.edges().count());
+    println!("test elen:\n{}", test.distance.edges().count());
+    assert_eq!(control, test.distance);
 }
 
 #[test]

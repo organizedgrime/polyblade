@@ -59,6 +59,11 @@ impl Render {
         }
     }
 
+    pub fn extend(&mut self, n: usize, position: Vec3) {
+        self.positions.extend(vec![position; n]);
+        self.speeds.extend(vec![Vec3::zero(); n]);
+    }
+
     // pub fn lattice(&mut self) {
     //     self.vertices = vec![];
     //     // Use a Fibonacci Lattice to evently distribute starting points on a sphere
