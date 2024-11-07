@@ -204,52 +204,6 @@ impl Distance {
         *self = dist;
     }
 
-    pub fn simple_cycles(&self) -> super::Cycles {
-        let mut triplets: Vec<Vec<_>> = Default::default();
-        let mut cycles: HashSet<Vec<_>> = Default::default();
-
-        // find all the triplets
-        for u in self.vertices() {
-            let adj: Vec<VertexId> = self.connections(u);
-            for &x in adj.iter() {
-                for &y in adj.iter() {
-                    if x != y && u < x && x < y {
-                        let new_face = vec![x, u, y];
-                        if self[[x, y]] == 1 {
-                            cycles.insert(new_face);
-                        } else {
-                            triplets.push(new_face);
-                        }
-                    }
-                }
-            }
-        }
-
-        // while there are unparsed triplets
-        while !triplets.is_empty() && (cycles.len() as i64) < self.face_count() {
-            let p = triplets.remove(0);
-            // for each v adjacent to u_t
-            for v in self.connections(p[p.len() - 1]) {
-                if v > p[1] {
-                    let c = self.connections(v);
-                    // if v is not a neighbor of u_2..u_t-1
-                    if !p[1..p.len() - 1].iter().any(|vi| c.contains(vi)) {
-                        let mut new_face = p.clone();
-                        new_face.push(v);
-                        if self.connections(p[0]).contains(&v) {
-                            //cycles.remo
-                            cycles.insert(new_face);
-                        } else {
-                            triplets.push(new_face);
-                        }
-                    }
-                }
-            }
-        }
-
-        super::Cycles::new(cycles.into_iter().collect::<Vec<_>>())
-    }
-
     pub fn springs(&self) -> Vec<[VertexId; 2]> {
         let diameter = self.diameter();
         self.vertex_pairs()

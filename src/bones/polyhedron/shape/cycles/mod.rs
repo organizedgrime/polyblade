@@ -1,7 +1,9 @@
 mod cycle;
 use crate::bones::VertexId;
 use cycle::*;
-use std::ops::Index;
+use std::{collections::HashSet, ops::Index};
+
+use super::Distance;
 
 #[derive(Default, Debug, Clone)]
 pub struct Cycles {
@@ -86,5 +88,53 @@ impl Cycles {
         for cycle in &mut self.cycles {
             cycle.replace(old, new);
         }
+    }
+}
+
+impl From<&Distance> for Cycles {
+    fn from(value: &Distance) -> Self {
+        let mut triplets: Vec<Vec<_>> = Default::default();
+        let mut cycles: HashSet<Vec<_>> = Default::default();
+
+        // find all the triplets
+        for u in value.vertices() {
+            let adj: Vec<VertexId> = value.connections(u);
+            for &x in adj.iter() {
+                for &y in adj.iter() {
+                    if x != y && u < x && x < y {
+                        let new_face = vec![x, u, y];
+                        if value[[x, y]] == 1 {
+                            cycles.insert(new_face);
+                        } else {
+                            triplets.push(new_face);
+                        }
+                    }
+                }
+            }
+        }
+
+        // while there are unparsed triplets
+        while !triplets.is_empty() && (cycles.len() as i64) < value.face_count() {
+            let p = triplets.remove(0);
+            // for each v adjacent to u_t
+            for v in value.connections(p[p.len() - 1]) {
+                if v > p[1] {
+                    let c = value.connections(v);
+                    // if v is not a neighbor of u_2..u_t-1
+                    if !p[1..p.len() - 1].iter().any(|vi| c.contains(vi)) {
+                        let mut new_face = p.clone();
+                        new_face.push(v);
+                        if value.connections(p[0]).contains(&v) {
+                            //cycles.remo
+                            cycles.insert(new_face);
+                        } else {
+                            triplets.push(new_face);
+                        }
+                    }
+                }
+            }
+        }
+
+        Cycles::new(cycles.into_iter().collect::<Vec<_>>())
     }
 }

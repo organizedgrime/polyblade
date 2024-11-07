@@ -11,7 +11,7 @@ use super::*;
 
 // Platonic Solids
 impl Distance {
-    pub(in super::super) fn prism(n: usize) -> Distance {
+    pub fn prism(n: usize) -> Distance {
         let mut graph = Distance::new(n * 2);
         //p.name = format!("P{n}");
         for i in 0..n {
@@ -26,7 +26,7 @@ impl Distance {
         graph
     }
 
-    pub(in super::super) fn anti_prism(n: usize) -> Distance {
+    pub fn anti_prism(n: usize) -> Distance {
         let mut graph = Distance::new(n * 2);
         //p.name = format!("A{n}");
         for i in 0..n {
@@ -43,7 +43,7 @@ impl Distance {
         graph
     }
 
-    pub(in super::super) fn pyramid(n: usize) -> Distance {
+    pub fn pyramid(n: usize) -> Distance {
         let mut graph = Distance::new(n + 1);
         //graph.name = format!("Y{n}");
         for i in 0..n {

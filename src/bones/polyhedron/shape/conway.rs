@@ -1,4 +1,4 @@
-use super::{Shape, VertexId};
+use super::{Cycles, Shape, VertexId};
 
 //use crate::bones::{Cycle, Shape, VertexId};
 
@@ -51,7 +51,8 @@ impl Shape {
         }
         for v in vertices {
             new_edges.extend(self.split_vertex(v));
-            self.cycles = self.distance.simple_cycles();
+            self.cycles = Cycles::from(&self.distance);
+            // (&self.distance).into();
         }
         new_edges
     }
