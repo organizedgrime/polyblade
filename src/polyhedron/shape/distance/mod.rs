@@ -8,7 +8,7 @@ pub use svg::*;
 #[cfg(test)]
 mod test;
 
-use crate::bones::VertexId;
+use crate::polyhedron::VertexId;
 use std::collections::HashSet;
 use std::{
     collections::VecDeque,

@@ -1,5 +1,5 @@
 use crate::{
-    bones::{Polyhedron, Transaction},
+    polyhedron::{Polyhedron, Transaction},
     render::camera::Camera,
     Instant,
 };

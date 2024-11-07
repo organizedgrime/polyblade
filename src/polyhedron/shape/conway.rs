@@ -1,4 +1,5 @@
-use super::{Cycles, Shape, VertexId};
+use super::{Cycles, Shape};
+use crate::polyhedron::VertexId;
 
 //use crate::bones::{Cycle, Shape, VertexId};
 

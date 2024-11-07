@@ -1,7 +1,7 @@
 use rustc_hash::FxHashSet as HashSet;
 
 use super::{Distance};
-use crate::bones::VertexId;
+use crate::polyhedron::VertexId;
 
 impl Distance {
     pub(super) fn contract_edge(&mut self, [v, u]: [VertexId; 2]) {

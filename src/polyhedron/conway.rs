@@ -1,6 +1,5 @@
-use crate::bones::{Polyhedron, VertexId};
-
 use super::Shape;
+use crate::polyhedron::{Polyhedron, VertexId};
 
 impl Polyhedron {
     pub fn truncate(&mut self) -> Vec<[VertexId; 2]> {

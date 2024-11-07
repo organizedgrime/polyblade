@@ -1,5 +1,5 @@
 use crate::{
-    bones::Polyhedron,
+    polyhedron::Polyhedron,
     render::{
         camera::Camera,
         message::{ColorMethodMessage, PresetMessage},

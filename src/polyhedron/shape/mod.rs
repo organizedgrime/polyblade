@@ -2,20 +2,15 @@ mod conway;
 mod cycles;
 mod distance;
 mod platonic;
-use conway::*;
 use cycles::*;
 use distance::*;
-use distance::*;
-use platonic::*;
 
 #[cfg(test)]
 mod test;
 use ultraviolet::{Vec3, Vec4};
 
-use crate::{
-    bones::polyhedron::*,
-    render::{message::PresetMessage, pipeline::ShapeVertex},
-};
+use crate::polyhedron::*;
+use crate::render::{message::PresetMessage, pipeline::ShapeVertex};
 
 /// Contains all properties that need to be computed iff the structure of the graph changes
 #[derive(Default, Debug, Clone)]

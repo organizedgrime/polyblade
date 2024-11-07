@@ -1,5 +1,5 @@
 mod cycle;
-use crate::bones::VertexId;
+use crate::polyhedron::VertexId;
 use cycle::*;
 use std::{collections::HashSet, ops::Index};
 

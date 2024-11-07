@@ -1,20 +1,18 @@
 mod conway;
 mod render;
 mod shape;
-use conway::*;
+mod transaction;
 use render::*;
 use shape::*;
+pub use transaction::*;
 
 use std::time::{Duration, Instant};
 
-use crate::{
-    bones::*,
-    render::message::{ConwayMessage, PresetMessage},
-};
-use rustc_hash::FxHashMap as HashMap;
+use crate::render::message::{ConwayMessage, PresetMessage};
 use ultraviolet::{Lerp, Vec3};
-type VertMap<T> = HashMap<VertexId, T>;
+
 pub type VertexId = usize;
+
 pub const TICK_SPEED: f32 = 10.0;
 pub const SPEED_DAMPENING: f32 = 0.92;
 
