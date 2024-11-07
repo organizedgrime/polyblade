@@ -1,6 +1,6 @@
 use rustc_hash::FxHashSet as HashSet;
 
-use super::{super::Cycle, Distance};
+use super::{Distance};
 use crate::bones::VertexId;
 
 impl Distance {
@@ -66,12 +66,14 @@ impl Distance {
 
     pub fn split_vertex(&mut self, v: VertexId, connections: Vec<VertexId>) -> Vec<[VertexId; 2]> {
         // Remove the vertex
-        let new_cycle: Cycle = Cycle::from(
+        let new_cycle: Vec<usize> = 
+            // Cycle::from(
             vec![v]
                 .into_iter()
                 .chain((1..connections.len()).map(|_| self.insert()))
-                .collect(),
-        );
+                .collect();
+
+        // );
 
         for c in &connections {
             self.disconnect([v, *c]);
