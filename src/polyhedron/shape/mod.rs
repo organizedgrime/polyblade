@@ -2,18 +2,18 @@ mod conway;
 mod cycles;
 mod distance;
 mod platonic;
-use std::ops::Range;
+use std::{fmt::Display, ops::Range};
 
 use cycles::*;
 use distance::*;
 
-// #[cfg(test)]
-// mod test;
+#[cfg(test)]
+mod test;
 
 use crate::polyhedron::*;
 
 /// Contains all properties that need to be computed iff the structure of the graph changes
-#[derive(Default, Debug, Clone)]
+#[derive(Default, Clone)]
 pub(super) struct Shape {
     /// Graph, represented as Distance matrix
     distance: Distance,
@@ -23,6 +23,24 @@ pub(super) struct Shape {
     pub springs: Vec<[VertexId; 2]>,
     /// SVG string of graph representation
     pub svg: Vec<u8>,
+}
+
+impl PartialEq for Shape {
+    fn eq(&self, other: &Self) -> bool {
+        self.distance == other.distance
+    }
+}
+
+impl std::fmt::Debug for Shape {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(&self.distance.to_string())
+    }
+}
+
+impl Display for Shape {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(&self.distance.to_string())
+    }
 }
 
 impl Shape {
