@@ -47,8 +47,8 @@ impl Polyhedron {
         InfoBox {
             conway: self.name.clone(),
             faces: self.shape.cycles.len(),
-            edges: self.shape.distance.edges().count(),
-            vertices: self.shape.distance.len(),
+            edges: self.shape.edges().count(),
+            vertices: self.shape.len(),
             name: entry.map(|e| e.name.clone()),
             bowers: entry.map(|e| e.bowers.clone()),
             wiki: entry.map(|e| e.wiki.clone()),

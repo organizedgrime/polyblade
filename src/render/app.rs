@@ -194,7 +194,7 @@ impl App<'_> {
                     .moment_buf
                     .resize(&self.graphics.device, moments.len());
 
-                let shapes = primitive.model.polyhedron.shape.vertices();
+                let shapes = primitive.model.polyhedron.shape.shape_vertices();
                 //log::error!("shapes: {shapes:?}");
                 scene.shape_buf.resize(&self.graphics.device, shapes.len());
                 scene.shape_buf.write_slice(&self.graphics.queue, &shapes);

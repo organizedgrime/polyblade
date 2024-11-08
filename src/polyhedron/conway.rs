@@ -12,7 +12,7 @@ impl Polyhedron {
     pub fn truncate(&mut self) -> Vec<[VertexId; 2]> {
         // let Polyhedron { shape, render, .. } = self;
         let mut new_edges = Vec::default();
-        for v in self.shape.distance.vertices() {
+        for v in self.shape.vertices() {
             new_edges.extend(self.split_vertex(v));
         }
         self.shape.recompute();
@@ -26,7 +26,6 @@ impl Polyhedron {
         let new_edges = self.truncate();
         // Edges that were already there get contracted
         self.shape
-            .distance
             .edges()
             .filter(|&[v, u]| !new_edges.contains(&[v, u]) && !new_edges.contains(&[u, v]))
             .collect()
@@ -35,7 +34,7 @@ impl Polyhedron {
     pub fn ambod(&self) -> Self {
         let mut g = self.clone();
         let edges = g.ambo();
-        g.shape.distance.contract_edges(edges);
+        //g.shape.contract_edges(edges);
         g.shape.recompute();
         g
     }

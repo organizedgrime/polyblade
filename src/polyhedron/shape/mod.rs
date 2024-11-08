@@ -2,6 +2,8 @@ mod conway;
 mod cycles;
 mod distance;
 mod platonic;
+use std::ops::Range;
+
 use cycles::*;
 use distance::*;
 
@@ -30,12 +32,19 @@ impl Shape {
         self.distance.len()
     }
 
+    pub fn edges(&self) -> impl Iterator<Item = [VertexId; 2]> + use<'_> {
+        self.distance.edges()
+    }
+
+    pub fn vertices(&self) -> Range<VertexId> {
+        self.distance.vertices()
+    }
+
     pub fn recompute(&mut self) {
         // Update the distance matrix in place
         self.distance.pst();
         // Find and save cycles
         self.cycles = Cycles::from(&self.distance);
-
         // Find and save springs
         self.springs = self.distance.springs();
     }
@@ -62,7 +71,7 @@ impl Shape {
     //     shape
     // }
 
-    pub fn vertices(&self) -> Vec<ShapeVertex> {
+    pub fn shape_vertices(&self) -> Vec<ShapeVertex> {
         let barycentric = [Vec3::unit_x(), Vec3::unit_y(), Vec3::unit_z()];
         self.cycles
             .iter()
@@ -107,5 +116,10 @@ impl Shape {
     pub fn contraction(&mut self, edges: &[[VertexId; 2]]) {
         self.distance.contract_edges(edges.to_vec());
         self.recompute();
+    }
+
+    /// Given a vertex pairing, what is their distance in G divided by the diameter of G
+    pub fn diameter_percent(&self, [v, u]: [VertexId; 2]) -> f32 {
+        self.distance[[v, u]] as f32 / self.distance.diameter() as f32
     }
 }

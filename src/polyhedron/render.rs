@@ -88,9 +88,11 @@ impl Render {
     // }
     //
 
-    pub fn apply_force(&mut self, [v, u]: [VertexId; 2], f: Vec3) {
-        self.speeds[v] = (self.speeds[v] + f) * SPEED_DAMPENING;
-        self.speeds[u] = (self.speeds[u] - f) * SPEED_DAMPENING;
+    pub fn apply_scalar(&mut self, [v, u]: [VertexId; 2], scalar: f32) {
+        let diff = self.positions[v] - self.positions[u];
+        let delta = diff * scalar;
+        self.speeds[v] = (self.speeds[v] + delta) * SPEED_DAMPENING;
+        self.speeds[u] = (self.speeds[u] - delta) * SPEED_DAMPENING;
         self.positions[v] += self.speeds[v];
         self.positions[u] += self.speeds[u];
     }

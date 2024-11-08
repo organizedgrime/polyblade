@@ -1,9 +1,6 @@
 mod conway;
 mod platonic;
 mod svg;
-pub use conway::*;
-pub use platonic::*;
-pub use svg::*;
 
 #[cfg(test)]
 mod test;
@@ -21,7 +18,7 @@ use std::{
 /// 0             ->   identity
 /// n             ->   actual distance
 #[derive(Debug, Default, Clone, PartialEq)]
-pub struct Distance {
+pub(super) struct Distance {
     distance: Vec<Vec<usize>>,
 }
 

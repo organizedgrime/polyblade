@@ -156,7 +156,7 @@ impl Polyhedron {
             transactions,
             ..
         } = self;
-        let diameter = shape.distance.diameter();
+        //let diameter = shape.diameter();
         let diameter_spring_length = render.edge_length * 2.0;
 
         // If we're contracting, we end up working with a more narrow set of edges
@@ -173,18 +173,17 @@ impl Polyhedron {
                 let f = ((render.edge_length / TICK_SPEED * second) * 10.0) / spring_length;
                 render.lerp([v, u], f);
             } else {
-                let diff = render.positions[v] - render.positions[u];
-                let target_length =
-                    diameter_spring_length * (shape.distance[[v, u]] as f32 / diameter as f32);
-                let f = diff * (target_length - spring_length) / TICK_SPEED * second;
-                render.apply_force([v, u], f);
+                //let diff = render.positions[v] - render.positions[u];
+                let target_length = diameter_spring_length * shape.diameter_percent([v, u]);
+                let f = (target_length - spring_length) / TICK_SPEED * second;
+                render.apply_scalar([v, u], f);
             }
         }
     }
 
     pub fn preset(preset: &PresetMessage) -> Polyhedron {
         let shape = Shape::preset(preset);
-        let render = Render::new(shape.distance.len());
+        let render = Render::new(shape.len());
         Polyhedron {
             name: preset.to_string(),
             shape,
