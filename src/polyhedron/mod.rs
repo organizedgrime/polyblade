@@ -15,6 +15,10 @@ use crate::render::{
     message::{ConwayMessage, PresetMessage},
     pipeline::{MomentVertex, ShapeVertex},
 };
+use iced_widget::{
+    svg,
+    svg::{Catalog, Handle},
+};
 use ultraviolet::{Lerp, Vec3, Vec4};
 
 pub type VertexId = usize;
@@ -265,13 +269,8 @@ impl Polyhedron {
             .concat()
     }
 
-    pub fn svg<'a, T>(&self) -> iced_widget::Svg<'a, T>
-    where
-        T: iced_widget::svg::Catalog,
-    {
-        iced_widget::svg(iced::widget::svg::Handle::from_memory(
-            self.shape.svg.clone(),
-        ))
+    pub fn svg<'a, T: Catalog>(&self) -> iced_widget::Svg<'a, T> {
+        svg(Handle::from_memory(self.shape.svg.clone()))
     }
     // fn face_positions(&self, face_index: usize) -> Vec<Vec3> {
     //     self.shape.cycles[face_index]
