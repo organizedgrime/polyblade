@@ -7,7 +7,7 @@ use ultraviolet::{Vec3, Vec4};
 use super::Distance;
 
 #[derive(Default, Debug, Clone)]
-pub struct Cycles {
+pub(in super::super) struct Cycles {
     // Circular lists of Vertex Ids representing faces
     cycles: Vec<Cycle>,
 }

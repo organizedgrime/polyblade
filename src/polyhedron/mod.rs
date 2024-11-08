@@ -31,7 +31,7 @@ pub struct Polyhedron {
     /// Conway Polyhedron Notation
     pub name: String,
     /// The shape we're rendering
-    pub shape: Shape,
+    shape: Shape,
     /// Position data
     pub render: Render,
     /// Transaction queue
@@ -223,50 +223,51 @@ impl Polyhedron {
     }
 
     pub fn moment_vertices(&self, colors: &[crate::render::color::RGBA]) -> Vec<MomentVertex> {
+        let Polyhedron { shape, render, .. } = self;
+
         // Polygon side count -> color
         let color_map: HashMap<usize, Vec4> =
-            self.shape.cycles.iter().fold(HashMap::new(), |mut acc, c| {
+            shape.cycles.iter().fold(HashMap::new(), |mut acc, c| {
                 if !acc.contains_key(&c.len()) {
                     acc.insert(c.len(), colors[acc.len() % colors.len()].into());
                 }
                 acc
             });
 
-        self.shape
+        shape
             .cycles
             .iter()
-            .map(|cycle| {
-                let color = *color_map.get(&cycle.len()).unwrap();
-                let positions: Vec<Vec3> =
-                    cycle.iter().map(|&c| self.render.positions[c]).collect();
-
-                match cycle.len() {
-                    3 => positions
+            // map into positions
+            .flat_map(|cycle| {
+                let positions: Vec<Vec3> = cycle.iter().map(|&c| render.positions[c]).collect();
+                let positions: Vec<Vec3> = match cycle.len() {
+                    3 => positions.into_iter().collect(),
+                    4 => [0, 1, 2, 2, 3, 0]
                         .iter()
-                        .map(|&position| MomentVertex::new(position, color))
-                        .collect(),
-                    4 => [0usize, 1, 2, 2, 3, 0]
-                        .iter()
-                        .map(|&i| positions[i])
-                        .map(|position| MomentVertex::new(position, color))
+                        .map(move |&i| positions[i])
                         .collect(),
                     _ => {
-                        let centroid: Vec3 = positions.iter().fold(Vec3::zero(), |a, &b| a + b)
+                        let centroid: Vec3 = positions
+                            .iter()
+                            .cloned()
+                            .fold(Vec3::zero(), std::ops::Add::add)
                             / positions.len() as f32;
+
                         (0..cycle.len())
-                            .map(|i| {
+                            .flat_map(move |i| {
                                 vec![positions[i], centroid, positions[(i + 1) % positions.len()]]
                                     .into_iter()
-                                    .map(|position| MomentVertex::new(position, color))
-                                    .collect()
                             })
-                            .collect::<Vec<Vec<MomentVertex>>>()
-                            .concat()
+                            .collect()
                     }
-                }
+                };
+
+                let color = color_map[&cycle.len()];
+                positions
+                    .into_iter()
+                    .map(move |position| MomentVertex::new(position, color))
             })
-            .collect::<Vec<Vec<MomentVertex>>>()
-            .concat()
+            .collect()
     }
 
     pub fn svg<'a, T: Catalog>(&self) -> iced_widget::Svg<'a, T> {
