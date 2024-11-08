@@ -71,16 +71,12 @@ impl Program for Controls {
         ]
         .spacing(10.0);
 
-        let svg = svg(Handle::from_memory(
-            self.state.model.polyhedron.shape.svg.clone(),
-        ));
-
         container(
             column![
                 menu_bar.align_y(Vertical::Top),
                 button_row,
                 Space::new(Length::Fill, Length::Fill),
-                svg,
+                self.state.model.polyhedron.svg(),
                 Space::new(Length::Fill, Length::Fill),
                 button(text(self.state.info.name())).on_press(self.state.info.wiki_message()),
                 container(

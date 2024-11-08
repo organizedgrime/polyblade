@@ -152,7 +152,6 @@ pub trait ProcessMessage<T> {
 impl ProcessMessage<ModelState> for PresetMessage {
     fn process(&self, state: &mut ModelState) -> Task<PolybladeMessage> {
         state.polyhedron = Polyhedron::preset(self);
-        state.polyhedron.shape.compute_graph_svg();
         Task::none()
     }
 }

@@ -16,9 +16,9 @@ use crate::render::{message::PresetMessage, pipeline::ShapeVertex};
 
 /// Contains all properties that need to be computed iff the structure of the graph changes
 #[derive(Default, Debug, Clone)]
-pub struct Shape {
+pub(super) struct Shape {
     /// Graph, represented as Distance matrix
-    pub distance: Distance,
+    distance: Distance,
     /// Cycles in the graph
     pub cycles: Cycles,
     /// Faces / chordless cycles
@@ -70,41 +70,6 @@ impl Shape {
     //     shape.recompute();
     //     shape
     // }
-
-    pub fn shape_vertices(&self) -> Vec<ShapeVertex> {
-        let barycentric = [Vec3::unit_x(), Vec3::unit_y(), Vec3::unit_z()];
-        self.cycles
-            .iter()
-            .map(|cycle| {
-                let sides: Vec4 = match cycle.len() {
-                    3 => Vec3::new(1.0, 1.0, 1.0),
-                    4 => Vec3::new(1.0, 0.0, 1.0),
-                    _ => Vec3::new(0.0, 1.0, 0.0),
-                }
-                .into();
-
-                let b_shapes: Vec<ShapeVertex> = barycentric
-                    .iter()
-                    .map(|&b| ShapeVertex {
-                        barycentric: b.into(),
-                        sides,
-                    })
-                    .collect();
-
-                match cycle.len() {
-                    3 => b_shapes.clone(),
-                    4 => (0..6)
-                        .map(|i| ShapeVertex {
-                            barycentric: barycentric[i % 3].into(),
-                            sides,
-                        })
-                        .collect(),
-                    _ => vec![b_shapes; cycle.len()].concat(),
-                }
-            })
-            .collect::<Vec<Vec<ShapeVertex>>>()
-            .concat()
-    }
 
     pub fn release(&mut self, edges: &[[VertexId; 2]]) {
         for &edge in edges {

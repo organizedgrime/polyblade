@@ -194,7 +194,7 @@ impl App<'_> {
                     .moment_buf
                     .resize(&self.graphics.device, moments.len());
 
-                let shapes = primitive.model.polyhedron.shape.shape_vertices();
+                let shapes = primitive.model.polyhedron.shape_vertices();
                 //log::error!("shapes: {shapes:?}");
                 scene.shape_buf.resize(&self.graphics.device, shapes.len());
                 scene.shape_buf.write_slice(&self.graphics.queue, &shapes);
@@ -241,11 +241,7 @@ impl App<'_> {
             // Ignore the whole first polygon if we're in schlegel mode
             let starting_vertex = if program.state.render.schlegel {
                 // Determines how many vertices are actually used to render the polygon
-                match program.state.model.polyhedron.shape.cycles[0].len() {
-                    3 => 3,
-                    4 => 6,
-                    n => n * 3,
-                }
+                program.state.model.polyhedron.starting_vertex()
             } else {
                 0
             } as u32;

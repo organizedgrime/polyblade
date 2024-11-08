@@ -46,9 +46,9 @@ impl Polyhedron {
         let entry = polydex.iter().find(|entry| entry.conway == self.name);
         InfoBox {
             conway: self.name.clone(),
-            faces: self.shape.cycles.len(),
-            edges: self.shape.edges().count(),
-            vertices: self.shape.len(),
+            faces: 0,    //self.shape.cycles.len(),
+            edges: 0,    //self.shape.edges().count(),
+            vertices: 0, //self.shape.len(),
             name: entry.map(|e| e.name.clone()),
             bowers: entry.map(|e| e.bowers.clone()),
             wiki: entry.map(|e| e.wiki.clone()),
