@@ -9,10 +9,9 @@ use distance::*;
 
 #[cfg(test)]
 mod test;
-use ultraviolet::{Vec3, Vec4};
 
 use crate::polyhedron::*;
-use crate::render::{message::PresetMessage, pipeline::ShapeVertex};
+use crate::render::message::PresetMessage;
 
 /// Contains all properties that need to be computed iff the structure of the graph changes
 #[derive(Default, Debug, Clone)]
@@ -59,7 +58,7 @@ impl Shape {
     }
 
     pub fn compute_graph_svg(&mut self) {
-        self.svg = self.distance.svg().unwrap_or(vec![]);
+        self.svg = self.distance.svg().unwrap_or_default();
     }
 
     // pub fn preset(preset: &PresetMessage) -> Shape {

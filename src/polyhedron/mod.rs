@@ -53,7 +53,7 @@ impl Polyhedron {
     pub fn process_transactions(&mut self) {
         if let Some(transaction) = self.transactions.first().cloned() {
             use Transaction::*;
-            let result = match transaction {
+            match transaction {
                 Contraction(edges) => {
                     let Polyhedron {
                         shape,
@@ -160,7 +160,7 @@ impl Polyhedron {
                 None => {}
             };
             self.shape.compute_graph_svg();
-            result
+            
         }
     }
 
@@ -252,7 +252,6 @@ impl Polyhedron {
                             / cycle.len() as f32;
 
                         (0..cycle.len())
-                            .into_iter()
                             .flat_map(move |i| {
                                 vec![
                                     render.positions[cycle[i]],

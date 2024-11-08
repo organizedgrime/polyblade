@@ -1,4 +1,3 @@
-use super::Shape;
 use crate::polyhedron::{Polyhedron, VertexId};
 
 impl Polyhedron {

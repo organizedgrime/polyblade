@@ -16,7 +16,6 @@ pub struct Render {
 //impl rand::
 pub fn random_positions(n: usize) -> Vec<Vec3> {
     (0..n)
-        .into_iter()
         .map(|_| Vec3::new(random(), random(), random()).normalized())
         .collect()
 }

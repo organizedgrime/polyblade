@@ -1,7 +1,7 @@
 use iced::{alignment::Vertical, Length};
 use iced_aw::{menu::Item, menu_bar};
 use iced_wgpu::Renderer;
-use iced_widget::{button, column, container, row, svg, svg::Handle, text, Row, Space};
+use iced_widget::{button, column, container, row, text, Row, Space};
 use iced_winit::{
     core::{Color, Element, Theme},
     runtime::{Program, Task},

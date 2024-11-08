@@ -34,7 +34,7 @@ impl Distance {
             layout.push_str(&format!("\tV{v} -- V{u};\n"));
         }
 
-        layout.push_str("}");
+        layout.push('}');
         println!("graphviz:\n{layout}");
         layout
     }

@@ -1,4 +1,4 @@
-use crate::polyhedron::{shape::Distance, VertexId};
+use crate::polyhedron::VertexId;
 use std::ops::{Index, IndexMut};
 
 #[derive(Default, Debug, Clone)]

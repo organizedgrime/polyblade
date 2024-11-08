@@ -81,12 +81,12 @@ pub struct ModelState {
 
 impl Default for ModelState {
     fn default() -> Self {
-        let x = Self {
+        
+        //log::error!("poly: {:?}", x.polyhedron);
+        Self {
             polyhedron: { Polyhedron::preset(&PresetMessage::Pyramid(3)) },
             transform: Mat4::identity(),
-        };
-        //log::error!("poly: {:?}", x.polyhedron);
-        x
+        }
     }
 }
 
