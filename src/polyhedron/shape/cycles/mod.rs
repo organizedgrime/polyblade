@@ -135,6 +135,8 @@ impl From<&Distance> for Cycles {
             }
         }
 
-        Cycles::new(cycles.into_iter().collect::<Vec<_>>())
+        let mut cycles = cycles.into_iter().collect::<Vec<_>>();
+        cycles.sort_by_key(|c| usize::MAX - c.len());
+        Cycles::new(cycles)
     }
 }

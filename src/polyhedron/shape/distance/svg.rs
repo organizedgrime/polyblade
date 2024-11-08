@@ -1,22 +1,42 @@
 use super::Distance;
 use graphviz_rust::{cmd::Format, exec, parse, printer::PrinterContext};
 
+const LAYOUT_PREFIX: &str = r#"
+    graph G {
+        node [
+            penwidth=2 
+            label="" 
+            style=filled
+            fillcolor=lightblue
+            color=black
+            shape=circle
+            width=0.25
+            fixedsize=true
+            fontsize=10
+        ];
+        edge [penwidth=2];
+        overlap="scale";
+        layout="neato";
+        normalize=0;
+        bgcolor="transparent";
+"#;
+
 impl Distance {
     pub fn graphviz(&self) -> String {
-        let mut dot = format!("graph G{{\nlayout=neato\n");
-        let colors = vec!["red", "green", "blue"];
+        let mut layout = LAYOUT_PREFIX.to_string();
+
+        #[cfg(test)]
         for v in self.vertices() {
-            dot.push_str(&format!(
-                "\tV{v} [color=\"{}\"];\n",
-                colors[self.connections(v).len() % colors.len()]
-            ));
+            layout.push_str(&format!("\tV{v} [label=\"{}\"];\n", v));
         }
 
         for [v, u] in self.edges() {
-            dot.push_str(&format!("\tV{v} -- V{u};\n"));
+            layout.push_str(&format!("\tV{v} -- V{u};\n"));
         }
-        dot.push_str("}");
-        dot
+
+        layout.push_str("}");
+        println!("graphviz:\n{layout}");
+        layout
     }
 
     pub fn svg(&self) -> Option<Vec<u8>> {

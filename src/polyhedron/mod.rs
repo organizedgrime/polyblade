@@ -22,7 +22,7 @@ pub struct Polyhedron {
     pub name: String,
     /// The shape we're rendering
     pub shape: Shape,
-    /// The properties
+    /// Position data
     pub render: Render,
     /// Transaction queue
     pub transactions: Vec<Transaction>,
@@ -70,8 +70,9 @@ impl Polyhedron {
                             todo!()
                         }
                         Ambo => {
-                            let edges = self.shape.ambo();
-                            self.shape.recompute();
+                            // let edges = self.shape.ambo();
+                            // self.shape.recompute();
+                            let edges = self.ambo();
                             vec![Contraction(edges), Name('a')]
                         }
                         Kis => {
@@ -102,7 +103,6 @@ impl Polyhedron {
                             ]
                         }
                     };
-                    //self.graph.cycles.sort_by_key(|c| usize::MAX - c.len());
                     self.render.new_capacity(self.shape.len());
                     self.transactions = [new_transactions, self.transactions.clone()].concat();
                 }

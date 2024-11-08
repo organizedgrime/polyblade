@@ -35,6 +35,7 @@ impl Shape {
         self.distance.pst();
         // Find and save cycles
         self.cycles = Cycles::from(&self.distance);
+
         // Find and save springs
         self.springs = self.distance.springs();
     }

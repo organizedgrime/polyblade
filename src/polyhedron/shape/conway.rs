@@ -44,37 +44,14 @@ impl Shape {
     /// `t` truncate
     pub fn truncate(&mut self, degree: Option<usize>) -> Vec<[VertexId; 2]> {
         let mut new_edges = Vec::default();
-        let mut vertices = self.distance.vertices().clone().collect::<Vec<_>>();
-        if let Some(degree) = degree {
-            vertices.retain(|&v| self.distance.connections(v).len() == degree);
-        }
-        for v in vertices {
-            new_edges.extend(self.split_vertex(v));
-            self.cycles = Cycles::from(&self.distance);
-            // (&self.distance).into();
-        }
+        // let mut vertices = self.distance.vertices().clone().collect::<Vec<_>>();
+        // if let Some(degree) = degree {
+        //     vertices.retain(|&v| self.distance.connections(v).len() == degree);
+        // }
+        // for v in vertices {
+        //     new_edges.extend(self.split_vertex(v));
+        // }
         new_edges
-    }
-
-    /// `a` ambo
-    /// Returns a set of edges to contract
-    pub fn ambo(&mut self) -> Vec<[VertexId; 2]> {
-        // Truncate
-        let new_edges = self.truncate(None);
-        self.recompute();
-        // Edges that were already there get contracted
-        self.distance
-            .edges()
-            .filter(|&[v, u]| !new_edges.contains(&[v, u]) && !new_edges.contains(&[u, v]))
-            .collect()
-    }
-
-    pub fn ambod(&self) -> Self {
-        let mut g = self.clone();
-        let edges = g.ambo();
-        g.distance.contract_edges(edges);
-        g.recompute();
-        g
     }
 
     // pub fn truncate(&mut self, degree: Option<usize>) -> Vec<[VertexId; 2]> {

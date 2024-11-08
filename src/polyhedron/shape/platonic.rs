@@ -7,8 +7,8 @@ impl Shape {
             Prism(n) => Self::from(Distance::prism(*n)),
             AntiPrism(n) => Self::from(Distance::anti_prism(*n)),
             Pyramid(n) => Self::from(Distance::pyramid(*n)),
-            Octahedron => Self::octahedron(),
-            Dodecahedron => Self::dodecahedron(),
+            // Octahedron => Self::octahedron(),
+            // Dodecahedron => Self::dodecahedron(),
             // Icosahedron => Self::icosahedron(),
             _ => todo!(),
         };
@@ -16,20 +16,20 @@ impl Shape {
         preset
     }
 
-    fn octahedron() -> Shape {
-        let mut p = Shape::from(Distance::pyramid(3));
-        let edges = p.ambo();
-        p.distance.contract_edges(edges);
-        p.recompute();
-        p
-    }
-
-    fn dodecahedron() -> Shape {
-        let mut graph = Shape::from(Distance::anti_prism(5));
-        graph.ambod().ambod();
-        graph.truncate(Some(5));
-        graph
-    }
+    // fn octahedron() -> Shape {
+    //     let mut p = Shape::from(Distance::pyramid(3));
+    //     let edges = p.ambo();
+    //     p.distance.contract_edges(edges);
+    //     p.recompute();
+    //     p
+    // }
+    //
+    // fn dodecahedron() -> Shape {
+    //     let mut graph = Shape::from(Distance::anti_prism(5));
+    //     graph.ambod().ambod();
+    //     graph.truncate(Some(5));
+    //     graph
+    // }
 
     //
     // pub fn icosahedron() -> Distance {

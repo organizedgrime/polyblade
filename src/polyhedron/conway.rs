@@ -18,4 +18,25 @@ impl Polyhedron {
         self.shape.recompute();
         new_edges
     }
+
+    /// `a` ambo
+    /// Returns a set of edges to contract
+    pub fn ambo(&mut self) -> Vec<[VertexId; 2]> {
+        // Truncate
+        let new_edges = self.truncate();
+        // Edges that were already there get contracted
+        self.shape
+            .distance
+            .edges()
+            .filter(|&[v, u]| !new_edges.contains(&[v, u]) && !new_edges.contains(&[u, v]))
+            .collect()
+    }
+
+    pub fn ambod(&self) -> Self {
+        let mut g = self.clone();
+        let edges = g.ambo();
+        g.shape.distance.contract_edges(edges);
+        g.shape.recompute();
+        g
+    }
 }
