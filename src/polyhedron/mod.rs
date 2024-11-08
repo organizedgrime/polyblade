@@ -34,12 +34,22 @@ impl Polyhedron {
             use Transaction::*;
             let result = match transaction {
                 Contraction(edges) => {
-                    if !edges.iter().any(|&[v, u]| {
-                        (self.render.positions[v] - self.render.positions[u]).mag() > 0.08
-                    }) {
+                    let Polyhedron {
+                        shape,
+                        render,
+                        transactions,
+                        ..
+                    } = self;
+
+                    let all_completed = !edges
+                        .iter()
+                        .map(|&[v, u]| render.spring_length([v, u]))
+                        .any(|l| l > 0.1);
+
+                    if all_completed {
                         // Contract them in the graph
-                        self.shape.contraction(&edges);
-                        self.transactions.remove(0);
+                        shape.contraction(&edges);
+                        transactions.remove(0);
                     }
                 }
                 Release(edges) => {
@@ -146,9 +156,10 @@ impl Polyhedron {
             transactions,
             ..
         } = self;
-        //println!("self: {:?}", self);
         let diameter = shape.distance.diameter();
         let diameter_spring_length = render.edge_length * 2.0;
+
+        // If we're contracting, we end up working with a more narrow set of edges
         let (edges, contracting): (std::slice::Iter<[VertexId; 2]>, bool) =
             if let Some(Transaction::Contraction(edges)) = transactions.first() {
                 (edges.iter(), true)
@@ -156,18 +167,13 @@ impl Polyhedron {
                 (shape.springs.iter(), false)
             };
 
-        for &[w, x] in edges {
-            let v = x.min(w);
-            let u = x.max(w);
-
-            let diff = render.positions[v] - render.positions[u];
-            let spring_length = diff.mag();
-            if contracting {
-                log::warn!("CONTRACTING");
+        for &[v, u] in edges {
+            let spring_length = render.spring_length([v, u]);
+            if contracting && spring_length > 0.1 {
                 let f = ((render.edge_length / TICK_SPEED * second) * 10.0) / spring_length;
-                render.positions[v] = render.positions[v].lerp(render.positions[u], f);
-                render.positions[u] = render.positions[u].lerp(render.positions[v], f);
+                render.lerp([v, u], f);
             } else {
+                let diff = render.positions[v] - render.positions[u];
                 let target_length =
                     diameter_spring_length * (shape.distance[[v, u]] as f32 / diameter as f32);
                 let f = diff * (target_length - spring_length) / TICK_SPEED * second;

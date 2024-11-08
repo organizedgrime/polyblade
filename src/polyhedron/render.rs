@@ -1,5 +1,5 @@
 use rand::random;
-use ultraviolet::Vec3;
+use ultraviolet::{Lerp as _, Vec3};
 
 use super::{VertexId, SPEED_DAMPENING, TICK_SPEED};
 
@@ -62,6 +62,15 @@ impl Render {
     pub fn extend(&mut self, n: usize, position: Vec3) {
         self.positions.extend(vec![position; n]);
         self.speeds.extend(vec![Vec3::zero(); n]);
+    }
+
+    pub fn spring_length(&self, [v, u]: [VertexId; 2]) -> f32 {
+        (self.positions[v] - self.positions[u]).mag()
+    }
+
+    pub fn lerp(&mut self, [v, u]: [VertexId; 2], f: f32) {
+        self.positions[v] = self.positions[v].lerp(self.positions[u], f);
+        self.positions[u] = self.positions[u].lerp(self.positions[v], f);
     }
 
     // pub fn lattice(&mut self) {
