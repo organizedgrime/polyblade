@@ -43,7 +43,6 @@ impl Shape {
 
     /// `t` truncate
     pub fn truncate(&mut self, degree: Option<usize>) -> Vec<[VertexId; 2]> {
-        
         // let mut vertices = self.distance.vertices().clone().collect::<Vec<_>>();
         // if let Some(degree) = degree {
         //     vertices.retain(|&v| self.distance.connections(v).len() == degree);
@@ -52,6 +51,11 @@ impl Shape {
         //     new_edges.extend(self.split_vertex(v));
         // }
         Vec::default()
+    }
+
+    pub fn contract_edges(&mut self, edges: Vec<[VertexId; 2]>) {
+        self.distance.contract_edges(edges);
+        self.recompute();
     }
 
     // pub fn truncate(&mut self, degree: Option<usize>) -> Vec<[VertexId; 2]> {

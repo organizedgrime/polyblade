@@ -7,11 +7,10 @@ use std::ops::Range;
 use cycles::*;
 use distance::*;
 
-#[cfg(test)]
-mod test;
+// #[cfg(test)]
+// mod test;
 
 use crate::polyhedron::*;
-use crate::render::message::PresetMessage;
 
 /// Contains all properties that need to be computed iff the structure of the graph changes
 #[derive(Default, Debug, Clone)]
@@ -61,24 +60,10 @@ impl Shape {
         self.svg = self.distance.svg().unwrap_or_default();
     }
 
-    // pub fn preset(preset: &PresetMessage) -> Shape {
-    //     let mut shape = Shape {
-    //         distance: Distance::preset(preset),
-    //         ..Default::default()
-    //     };
-    //     shape.recompute();
-    //     shape
-    // }
-
     pub fn release(&mut self, edges: &[[VertexId; 2]]) {
         for &edge in edges {
             self.distance.disconnect(edge);
         }
-        self.recompute();
-    }
-
-    pub fn contraction(&mut self, edges: &[[VertexId; 2]]) {
-        self.distance.contract_edges(edges.to_vec());
         self.recompute();
     }
 

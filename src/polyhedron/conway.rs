@@ -30,11 +30,9 @@ impl Polyhedron {
             .collect()
     }
 
-    pub fn ambod(&self) -> Self {
-        let mut g = self.clone();
-        let edges = g.ambo();
-        //g.shape.contract_edges(edges);
-        g.shape.recompute();
-        g
+    pub fn ambo_contract(&mut self) {
+        let edges = self.ambo();
+        self.shape.contract_edges(edges);
+        self.shape.recompute();
     }
 }

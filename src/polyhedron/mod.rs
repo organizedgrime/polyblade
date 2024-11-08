@@ -1,4 +1,5 @@
 mod conway;
+mod platonic;
 mod render;
 mod shape;
 mod transaction;
@@ -19,7 +20,7 @@ use iced_widget::{
     svg,
     svg::{Catalog, Handle},
 };
-use ultraviolet::{Lerp, Vec3, Vec4};
+use ultraviolet::{Vec3, Vec4};
 
 pub type VertexId = usize;
 
@@ -69,7 +70,7 @@ impl Polyhedron {
 
                     if all_completed {
                         // Contract them in the graph
-                        shape.contraction(&edges);
+                        shape.contract_edges(edges);
                         transactions.remove(0);
                     }
                 }
@@ -160,7 +161,6 @@ impl Polyhedron {
                 None => {}
             };
             self.shape.compute_graph_svg();
-            
         }
     }
 
@@ -202,16 +202,16 @@ impl Polyhedron {
         }
     }
 
-    pub fn preset(preset: &PresetMessage) -> Polyhedron {
-        let shape = Shape::preset(preset);
-        let render = Render::new(shape.len());
-        Polyhedron {
-            name: preset.to_string(),
-            shape,
-            render,
-            transactions: vec![],
-        }
-    }
+    // pub fn preset(preset: &PresetMessage) -> Polyhedron {
+    //     let shape = Shape::preset(preset);
+    //     let render = Render::new(shape.len());
+    //     Polyhedron {
+    //         name: preset.to_string(),
+    //         shape,
+    //         render,
+    //         transactions: vec![],
+    //     }
+    // }
 
     pub fn face_centroid(&self, face_index: usize) -> Vec3 {
         // All vertices associated with this face
