@@ -237,32 +237,36 @@ impl Polyhedron {
         shape
             .cycles
             .iter()
-            // map into positions
             .flat_map(|cycle| {
-                let positions: Vec<Vec3> = cycle.iter().map(|&c| render.positions[c]).collect();
                 let positions: Vec<Vec3> = match cycle.len() {
-                    3 => positions.into_iter().collect(),
+                    3 => cycle.iter().map(|&i| render.positions[i]).collect(),
                     4 => [0, 1, 2, 2, 3, 0]
                         .iter()
-                        .map(move |&i| positions[i])
+                        .map(move |&i| render.positions[cycle[i]])
                         .collect(),
                     _ => {
-                        let centroid: Vec3 = positions
+                        let centroid: Vec3 = cycle
                             .iter()
-                            .cloned()
+                            .map(|&c| render.positions[c])
                             .fold(Vec3::zero(), std::ops::Add::add)
-                            / positions.len() as f32;
+                            / cycle.len() as f32;
 
                         (0..cycle.len())
+                            .into_iter()
                             .flat_map(move |i| {
-                                vec![positions[i], centroid, positions[(i + 1) % positions.len()]]
-                                    .into_iter()
+                                vec![
+                                    render.positions[cycle[i]],
+                                    centroid,
+                                    render.positions[cycle[i + 1]],
+                                ]
                             })
                             .collect()
                     }
                 };
 
+                // Colors are determined by cycle length
                 let color = color_map[&cycle.len()];
+                // Map into MomentVertices
                 positions
                     .into_iter()
                     .map(move |position| MomentVertex::new(position, color))
