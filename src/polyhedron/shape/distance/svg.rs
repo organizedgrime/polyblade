@@ -29,7 +29,7 @@ impl Distance {
     pub fn graphviz(&self) -> String {
         let mut layout = LAYOUT_PREFIX.to_string();
 
-        #[cfg(test)]
+        // #[cfg(test)]
         for v in self.vertices() {
             layout.push_str(&format!("\tV{v} [label=\"{}\"];\n", v));
         }
@@ -39,7 +39,7 @@ impl Distance {
         }
 
         layout.push('}');
-        println!("graphviz:\n{layout}");
+        // println!("graphviz:\n{layout}");
         layout
     }
 
@@ -56,7 +56,7 @@ impl Distance {
         .ok()
     }
 
-    #[cfg(test)]
+    // #[cfg(test)]
     pub fn png(&self) -> Option<Vec<u8>> {
         let Ok(graph) = parse(&self.graphviz()) else {
             log::warn!("failed to parse Graphviz");

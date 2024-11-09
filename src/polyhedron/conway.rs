@@ -9,10 +9,16 @@ impl Polyhedron {
     }
 
     pub fn truncate(&mut self) -> Vec<[VertexId; 2]> {
+        // log::info!("before truncation:");
+        // self.shape.png();
         // let Polyhedron { shape, render, .. } = self;
         let mut new_edges = Vec::default();
+        log::info!("there are {:?} vertices", self.shape.vertices());
         for v in self.shape.vertices() {
             new_edges.extend(self.split_vertex(v));
+            self.shape.recompute();
+            // log::info!("after splitting {v}:");
+            // self.shape.png();
         }
         self.shape.recompute();
         new_edges
@@ -32,7 +38,12 @@ impl Polyhedron {
 
     pub fn ambo_contract(&mut self) {
         let edges = self.ambo();
-        self.shape.contract_edges(edges);
-        self.shape.recompute();
+        self.shape.contract_edges(edges.clone());
+        self.render.contract_edges(edges);
+        log::info!(
+            "p: {}, d: {}",
+            self.render.positions.len(),
+            self.shape.len()
+        );
     }
 }

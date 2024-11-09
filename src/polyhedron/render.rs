@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use rand::random;
 use ultraviolet::{Lerp as _, Vec3};
 
@@ -94,5 +96,29 @@ impl Render {
         self.speeds[u] = (self.speeds[u] - delta) * SPEED_DAMPENING;
         self.positions[v] += self.speeds[v];
         self.positions[u] += self.speeds[u];
+    }
+
+    pub fn contract_edges(&mut self, mut edges: Vec<[VertexId; 2]>) {
+        // let mut transformed = HashSet::default();
+        while !edges.is_empty() {
+            // Pop an edge
+            let [w, x] = edges.remove(0);
+            let v = w.max(x);
+            let u = w.min(x);
+            // if transformed.contains(&v) && transformed.contains(&u) {}
+
+            self.positions.remove(v);
+            self.speeds.remove(v);
+            // transformed.insert(v);
+
+            for [x, w] in &mut edges {
+                if *x > v {
+                    *x -= 1;
+                }
+                if *w > v {
+                    *w -= 1;
+                }
+            }
+        }
     }
 }

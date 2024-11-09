@@ -8,6 +8,7 @@ impl Distance {
         // Give u all the same connections as v
         for w in self.connections(v).into_iter() {
             self.connect([w, u]);
+            self.disconnect([w, v]);
         }
 
         // // Delete a
@@ -20,35 +21,32 @@ impl Distance {
     }
 
     pub fn contract_edges(&mut self, mut edges: Vec<[VertexId; 2]>) {
-        let mut transformed = HashSet::default();
+        // let mut transformed = HashSet::default();
         while !edges.is_empty() {
             // Pop an edge
-            let [v, u] = edges.remove(0);
+            let [w, x] = edges.remove(0);
+            let v = w.max(x);
+            let u = w.min(x);
 
-            // If this is not a redundant edge
-            if !(transformed.contains(&v) && transformed.contains(&u)) {
-                // Contract [v, u], deleting v
-                self.contract_edge([v, u]);
-                // Mark that this vertex has been transformed
-                transformed.insert(v);
-                // Decrement the value of every vertex
-                for [x, w] in &mut edges {
-                    if *x > v {
-                        *x -= 1;
-                    }
-                    if *w > v {
-                        *w -= 1;
-                    }
+            // // If this is not a redundant edge
+            // if !(transformed.contains(&v) && transformed.contains(&u)) {
+
+            // Contract [v, u], deleting v
+            self.contract_edge([v, u]);
+
+            // // Mark that this vertex has been transformed
+            // transformed.insert(v);
+
+            // Decrement the value of every vertex
+            for [x, w] in &mut edges {
+                if *x > v {
+                    *x -= 1;
+                }
+                if *w > v {
+                    *w -= 1;
                 }
             }
         }
-
-        // self.cycles = self
-        //     .cycles
-        //     .clone()
-        //     .into_iter()
-        //     .filter(|c| c.len() > 2)
-        //     .collect();
     }
 
     // pub fn contract_edges(&mut self, mut edges: Vec<[VertexId; 2]>) {

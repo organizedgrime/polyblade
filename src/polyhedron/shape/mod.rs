@@ -57,10 +57,12 @@ impl Shape {
     }
 
     pub fn recompute(&mut self) {
+        log::info!("new distance:\n{}", self.distance);
         // Update the distance matrix in place
         self.distance.pst();
         // Find and save cycles
         self.cycles = Cycles::from(&self.distance);
+        log::info!("new cycles:\n{:?}", self.cycles);
         // Find and save springs
         self.springs = self.distance.springs();
     }
@@ -88,5 +90,26 @@ impl Shape {
     /// Given a vertex pairing, what is their distance in G divided by the diameter of G
     pub fn diameter_percent(&self, [v, u]: [VertexId; 2]) -> f32 {
         self.distance[[v, u]] as f32 / self.distance.diameter() as f32
+    }
+
+    pub fn png(&self) {
+        use image::{ImageError, ImageReader, RgbaImage};
+        use std::io::Cursor;
+        use viuer::{print, Config};
+        if let Some(bytes) = self.distance.png() {
+            let mut reader = ImageReader::new(Cursor::new(bytes));
+            reader.set_format(image::ImageFormat::Png);
+            let img = reader.decode().unwrap();
+            let cfg = Config {
+                width: Some(20),
+                height: Some(20),
+                use_kitty: true,
+                ..Default::default()
+            };
+            print(&img, &cfg).unwrap();
+            for i in 0..40 {
+                println!("\n");
+            }
+        }
     }
 }

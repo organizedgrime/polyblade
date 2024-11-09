@@ -73,7 +73,8 @@ impl Polyhedron {
 
                     if all_completed {
                         // Contract them in the graph
-                        shape.contract_edges(edges);
+                        shape.contract_edges(edges.clone());
+                        render.contract_edges(edges);
                         transactions.remove(0);
                     }
                 }
@@ -115,9 +116,20 @@ impl Polyhedron {
                             // vec![Name('k')]
                             todo!()
                         }
+                        SplitVertex(n) => {
+                            self.split_vertex(n);
+                            self.shape.recompute();
+                            vec![]
+                        }
                         Truncate => {
-                            self.truncate();
-                            vec![Name('t')]
+                            let mut operations = vec![];
+                            for v in self.shape.vertices() {
+                                operations.extend(vec![
+                                    Wait(Instant::now() + Duration::from_millis(1000) * v as u32),
+                                    Conway(SplitVertex(v)),
+                                ]);
+                            }
+                            [operations, vec![Name('t')]].concat()
                         }
                         Expand => {
                             // self.shape.expand(false);

@@ -5,8 +5,9 @@ use crate::polyhedron::VertexId;
 
 impl Shape {
     pub fn split_vertex(&mut self, v: VertexId) -> Vec<[usize; 2]> {
-        let sorted_connections = self.cycles.sorted_connections(v);
-        let edges = self.distance.split_vertex(v, sorted_connections);
+        let sc = self.cycles.sorted_connections(v);
+        log::info!("sc_{v}: {sc:?}");
+        let edges = self.distance.split_vertex(v, sc);
         self.cycles = Cycles::from(&self.distance);
         edges
     }
@@ -42,16 +43,16 @@ impl Shape {
     // }
 
     /// `t` truncate
-    pub fn truncate(&mut self, degree: Option<usize>) -> Vec<[VertexId; 2]> {
-        // let mut vertices = self.distance.vertices().clone().collect::<Vec<_>>();
-        // if let Some(degree) = degree {
-        //     vertices.retain(|&v| self.distance.connections(v).len() == degree);
-        // }
-        // for v in vertices {
-        //     new_edges.extend(self.split_vertex(v));
-        // }
-        Vec::default()
-    }
+    // pub fn truncate(&mut self, degree: Option<usize>) -> Vec<[VertexId; 2]> {
+    //     // let mut vertices = self.distance.vertices().clone().collect::<Vec<_>>();
+    //     // if let Some(degree) = degree {
+    //     //     vertices.retain(|&v| self.distance.connections(v).len() == degree);
+    //     // }
+    //     // for v in vertices {
+    //     //     new_edges.extend(self.split_vertex(v));
+    //     // }
+    //     Vec::default()
+    // }
 
     pub fn contract_edges(&mut self, edges: Vec<[VertexId; 2]>) {
         self.distance.contract_edges(edges);

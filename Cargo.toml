@@ -30,11 +30,11 @@ iced_wgpu = { version = "0.13", features = ["webgl"] }
 log = { version = "0.4.22" }
 rustc-hash = { version = "2.0.0" }
 graphviz-rust = { version = "0.9.3" }
+viuer = { version = "0.9.0" }
+image = { version = "0.25", default-features = false, features = ["png"] }
 
 [dev-dependencies]
 test-case = { version = "^3.3.0" }
-viuer = { version = "0.9.0" }
-image = { version = "0.25", default-features = false, features = ["png"] }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 iced = { version = "0.13", features = ["debug", "advanced", "svg"] }

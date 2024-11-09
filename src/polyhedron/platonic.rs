@@ -34,6 +34,7 @@ impl Polyhedron {
     fn octahedron() -> Polyhedron {
         let mut polyhedron = Polyhedron::preset(&PresetMessage::Pyramid(3));
         polyhedron.ambo_contract();
+        polyhedron.shape.png();
         polyhedron
     }
 

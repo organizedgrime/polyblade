@@ -31,23 +31,18 @@ impl Cycles {
     }
     /// Returns the
     pub fn sorted_connections(&self, v: VertexId) -> Vec<VertexId> {
-        log::info!("cycles: {:?}", self.cycles);
-        log::info!("hunting for {v}");
         // We only care about cycles that contain the vertex
         let mut relevant = self
             .iter()
             .filter_map(move |cycle| {
                 if let Some(p) = cycle.iter().position(|&x| x == v) {
-                    log::info!("finding {p}");
                     Some([cycle[p + cycle.len() - 1], cycle[p + 1]])
                 } else {
                     None
                 }
             })
             .collect::<Vec<[VertexId; 2]>>();
-        //.collect::<HashMap<VertexId, VertexId>>();
 
-        log::info!("RELEVANT: {relevant:?}");
         let mut sorted_connections = vec![relevant[0][0]];
         loop {
             let previous = sorted_connections.last().unwrap();
@@ -65,6 +60,7 @@ impl Cycles {
                 }
             }
         }
+
         sorted_connections[1..].to_vec()
     }
 
@@ -127,43 +123,80 @@ impl Cycles {
 }
 
 impl From<&Distance> for Cycles {
-    fn from(value: &Distance) -> Self {
+    fn from(distance: &Distance) -> Self {
         let mut triplets: Vec<Vec<_>> = Default::default();
         let mut cycles: HashSet<Vec<_>> = Default::default();
+        let mut edge_incidents: Distance = distance.clone();
+        for [v, u] in edge_incidents.vertex_pairs() {
+            if edge_incidents[[v, u]] == 1 {
+                edge_incidents[[v, u]] = 0;
+            } else {
+                edge_incidents[[v, u]] = usize::MAX;
+            }
+        }
+        println!("distance:\n{distance}");
+        println!("edge_incidents_starting:\n{edge_incidents}");
 
         // find all the triplets
-        for u in value.vertices() {
-            let adj: Vec<VertexId> = value.connections(u);
-            for &x in adj.iter() {
-                for &y in adj.iter() {
-                    if x != y && u < x && x < y {
-                        let new_face = vec![x, u, y];
-                        if value[[x, y]] == 1 {
-                            cycles.insert(new_face);
+        for u in 0..distance.len() {
+            for x in (u + 1)..distance.len() {
+                for y in (x + 1)..distance.len() {
+                    if distance[[u, x]] == 1 && distance[[u, y]] == 1 {
+                        if distance[[x, y]] == 1 {
+                            cycles.insert(vec![x, u, y]);
+                            edge_incidents[[x, u]] += 1;
+                            edge_incidents[[u, y]] += 1;
+                            edge_incidents[[y, x]] += 1;
                         } else {
-                            triplets.push(new_face);
+                            triplets.push(vec![x, u, y]);
                         }
                     }
                 }
             }
         }
+        // find all the triplets
+        // for u in distance.vertices() {
+        //     let adj: Vec<VertexId> = distance.connections(u);
+        //     for &x in adj.iter() {
+        //         for &y in adj.iter() {
+        //             if u < x && x < y {
+        //                 let new_face = vec![x, u, y];
+        //                 if distance[[x, y]] == 1 {
+        //                     cycles.insert(new_face);
+        //                 } else {
+        //                     triplets.push(new_face);
+        //                 }
+        //             }
+        //         }
+        //     }
+        // }
+        println!("triplets:\n{triplets:?}");
+        println!("cycles:\n{cycles:?}");
 
         // while there are unparsed triplets
-        while !triplets.is_empty() && (cycles.len() as i64) < value.face_count() {
+        while !triplets.is_empty() {
             let p = triplets.remove(0);
+
             // for each v adjacent to u_t
-            for v in value.connections(p[p.len() - 1]) {
+            for v in distance.connections(p[p.len() - 1]) {
                 if v > p[1] {
-                    let c = value.connections(v);
+                    let adj_v = distance.connections(v);
                     // if v is not a neighbor of u_2..u_t-1
-                    if !p[1..p.len() - 1].iter().any(|vi| c.contains(vi)) {
-                        let mut new_face = p.clone();
-                        new_face.push(v);
-                        if value.connections(p[0]).contains(&v) {
-                            //cycles.remo
-                            cycles.insert(new_face);
+                    if !p[1..p.len() - 1].iter().any(|i| adj_v.contains(i)) {
+                        // let mut new_face = p.clone();
+                        // new_face.push(v);
+                        let new = [p.clone(), vec![v]].concat();
+                        if distance.connections(p[0]).contains(&v) {
+                            if edge_incidents[[p[0], v]] >= 2 {
+                                log::info!("i was about to send {new:?} but [{}, {}] is already greater than 2", p[0], v)
+                            } else {
+                                for i in 0..new.len() {
+                                    edge_incidents[[new[i], new[(i + 1) % new.len()]]] += 1;
+                                }
+                                cycles.insert(new);
+                            }
                         } else {
-                            triplets.push(new_face);
+                            triplets.push(new);
                         }
                     }
                 }
@@ -171,7 +204,10 @@ impl From<&Distance> for Cycles {
         }
 
         let mut cycles = cycles.into_iter().collect::<Vec<_>>();
-        cycles.sort_by_key(|c| usize::MAX - c.len());
+        cycles.sort_by_key(|c| c.len());
+        println!("done_cycles:\n{cycles:?}");
+        //let mut cycles = cycles[0..distance.face_count() as usize].to_vec();
+        println!("done_cycles_filterd:\n{cycles:?}");
         Cycles::new(cycles)
     }
 }

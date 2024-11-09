@@ -98,6 +98,11 @@ impl Distance {
     }
 
     pub fn pst(&mut self) {
+        for x in self.vertex_pairs() {
+            if self[x] != 1 {
+                self[x] = usize::MAX;
+            }
+        }
         // if self.edges.is_empty() {
         //     return;
         // }

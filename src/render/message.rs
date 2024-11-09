@@ -77,6 +77,7 @@ pub enum ConwayMessage {
     Kis,
     // Needle,
     // Zip,
+    SplitVertex(usize),
     Truncate,
     // 4
     //Ortho,
