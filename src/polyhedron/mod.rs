@@ -122,14 +122,16 @@ impl Polyhedron {
                             vec![]
                         }
                         Truncate => {
-                            let mut operations = vec![];
-                            for v in self.shape.vertices() {
-                                operations.extend(vec![
-                                    Wait(Instant::now() + Duration::from_millis(1000) * v as u32),
-                                    Conway(SplitVertex(v)),
-                                ]);
-                            }
-                            [operations, vec![Name('t')]].concat()
+                            // let mut operations = vec![];
+                            // for v in self.shape.vertices() {
+                            //     operations.extend(vec![
+                            //         Wait(Instant::now() + Duration::from_millis(1000) * v as u32),
+                            //         Conway(SplitVertex(v)),
+                            //     ]);
+                            // }
+                            // [operations, vec![Name('t')]].concat()
+                            self.truncate();
+                            vec![Name('t')]
                         }
                         Expand => {
                             // self.shape.expand(false);

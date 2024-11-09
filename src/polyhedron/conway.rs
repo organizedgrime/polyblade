@@ -20,7 +20,6 @@ impl Polyhedron {
             // log::info!("after splitting {v}:");
             // self.shape.png();
         }
-        self.shape.recompute();
         new_edges
     }
 
