@@ -90,6 +90,20 @@ impl Distance {
         new_edges
     }
 
+    pub fn cycle_is_face(&self, mut cycle: Vec<VertexId>) -> bool {
+        let mut dupe = self.clone();
+        while !cycle.is_empty() {
+            let v = cycle.remove(0);
+            dupe.delete(v);
+            for u in &mut cycle {
+                if *u > v {
+                    *u -= 1;
+                }
+            }
+        }
+        dupe.pst().is_some()
+    }
+
     // //
     // pub fn ordered_face_indices(&self, v: VertexId) -> Vec<usize> {
     //     let relevant = (0..self.cycles.len())

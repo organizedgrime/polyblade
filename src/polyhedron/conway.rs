@@ -14,7 +14,7 @@ impl Polyhedron {
         // let Polyhedron { shape, render, .. } = self;
         let mut new_edges = Vec::default();
         log::info!("there are {:?} vertices", self.shape.vertices());
-        for v in self.shape.vertices() {
+        for v in self.shape.vertices().rev() {
             new_edges.extend(self.split_vertex(v));
             self.shape.recompute();
             // log::info!("after splitting {v}:");

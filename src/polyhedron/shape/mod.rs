@@ -67,6 +67,10 @@ impl Shape {
         self.springs = self.distance.springs();
     }
 
+    pub fn compute_springs(&mut self) {
+        self.springs = self.distance.springs();
+    }
+
     pub fn from(distance: Distance) -> Shape {
         let mut shape = Shape {
             distance,

@@ -97,7 +97,7 @@ impl Distance {
         self.vertex_pairs().map(|e| self[e]).max().unwrap_or(0)
     }
 
-    pub fn pst(&mut self) {
+    pub fn pst(&mut self) -> Option<()> {
         for x in self.vertex_pairs() {
             if self[x] != 1 {
                 self[x] = usize::MAX;
@@ -199,11 +199,12 @@ impl Distance {
             if !removed {
                 *self = dist;
                 log::error!("failed distance computation");
-                return;
+                return None;
             }
         }
 
         *self = dist;
+        Some(())
     }
 
     pub fn springs(&self) -> Vec<[VertexId; 2]> {
