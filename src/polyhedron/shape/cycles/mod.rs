@@ -134,7 +134,7 @@ impl From<&Distance> for Cycles {
         //         edge_incidents[[v, u]] = usize::MAX;
         //     }
         // }
-        println!("distance:\n{distance}");
+        // println!("distance:\n{distance}");
         // println!("edge_incidents_starting:\n{edge_incidents}");
 
         // find all the triplets
@@ -170,13 +170,11 @@ impl From<&Distance> for Cycles {
         //         }
         //     }
         // }
-        println!("triplets:\n{triplets:?}");
-        println!("cycles:\n{cycles:?}");
+        // println!("triplets:\n{triplets:?}");
+        // println!("cycles:\n{cycles:?}");
 
         // while there are unparsed triplets
-        while !triplets.is_empty()
-            && cycles.len() < 2 + distance.edges().count() - distance.vertices().len()
-        {
+        while !triplets.is_empty() && (cycles.len() as i64) < distance.face_count() {
             let p = triplets.remove(0);
 
             // for each v adjacent to u_t

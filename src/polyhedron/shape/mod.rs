@@ -57,12 +57,12 @@ impl Shape {
     }
 
     pub fn recompute(&mut self) {
-        log::info!("new distance:\n{}", self.distance);
+        // log::info!("new distance:\n{}", self.distance);
         // Update the distance matrix in place
         self.distance.pst();
         // Find and save cycles
         self.cycles = Cycles::from(&self.distance);
-        log::info!("new cycles:\n{:?}", self.cycles);
+        // log::info!("new cycles:\n{:?}", self.cycles);
         // Find and save springs
         self.springs = self.distance.springs();
     }

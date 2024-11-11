@@ -91,6 +91,9 @@ impl Distance {
     }
 
     pub fn cycle_is_face(&self, mut cycle: Vec<VertexId>) -> bool {
+        println!("cycle: {cycle:?}");
+        let F = self.face_count();
+        let n = cycle.len();
         let mut dupe = self.clone();
         while !cycle.is_empty() {
             let v = cycle.remove(0);
@@ -101,7 +104,20 @@ impl Distance {
                 }
             }
         }
-        dupe.pst().is_some()
+        // let pstsays = dupe.pst().is_some();
+        let eulersays = dupe.face_count() > self.face_count() - 2 * n as i64;
+        // println!(
+        //     "pst says {pstsays}, eulersays {eulersays}; cycle_len: {}\nself:\t[f: {}, e: {}, v: {}]\ndupe:\t[f: {}, e: {}, v: {}]\n\n",
+        //     n,
+        //     self.face_count(),
+        //     self.edges().count(),
+        //     self.len(),
+        //     dupe.face_count(),
+        //     dupe.edges().count(),
+        //     dupe.len(),
+        // );
+        //pstsays
+        eulersays
     }
 
     // //
