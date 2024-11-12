@@ -196,7 +196,7 @@ impl From<&Distance> for Cycles {
                             if distance.cycle_is_face(new.clone()) {
                                 cycles.insert(new);
                             } else {
-                                println!("i was going to insert {new:?} but it's not a valid face");
+                                // println!("i was going to insert {new:?} but it's not a valid face");
                             }
                             // }
                         } else {
@@ -208,10 +208,7 @@ impl From<&Distance> for Cycles {
         }
 
         let mut cycles = cycles.into_iter().collect::<Vec<_>>();
-        cycles.sort_by_key(|c| c.len());
-        println!("done_cycles:\n{cycles:?}");
-        //let mut cycles = cycles[0..distance.face_count() as usize].to_vec();
-        println!("done_cycles_filterd:\n{cycles:?}");
+        cycles.sort_by_key(|c| usize::MAX - c.len());
         Cycles::new(cycles)
     }
 }

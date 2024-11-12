@@ -48,6 +48,10 @@ impl Shape {
         self.distance.len()
     }
 
+    pub fn degree(&self, v: usize) -> usize {
+        self.distance.connections(v).len()
+    }
+
     pub fn edges(&self) -> impl Iterator<Item = [VertexId; 2]> + use<'_> {
         self.distance.edges()
     }

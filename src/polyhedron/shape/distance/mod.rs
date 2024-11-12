@@ -97,6 +97,21 @@ impl Distance {
         self.vertex_pairs().map(|e| self[e]).max().unwrap_or(0)
     }
 
+    fn dfs(&self, visited: &mut HashSet<usize>, v: usize) {
+        visited.insert(v);
+        for u in self.connections(v) {
+            if !visited.contains(&u) {
+                self.dfs(visited, u);
+            }
+        }
+    }
+
+    pub fn is_connected(&self) -> bool {
+        let mut visited = HashSet::new();
+        self.dfs(&mut visited, 0);
+        visited.len() == self.len()
+    }
+
     pub fn pst(&mut self) -> Option<()> {
         for x in self.vertex_pairs() {
             if self[x] != 1 {

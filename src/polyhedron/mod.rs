@@ -69,7 +69,7 @@ impl Polyhedron {
                     let all_completed = !edges
                         .iter()
                         .map(|&[v, u]| render.spring_length([v, u]))
-                        .any(|l| l > 0.1);
+                        .any(|l| l > 0.05);
 
                     if all_completed {
                         // Contract them in the graph
@@ -122,16 +122,16 @@ impl Polyhedron {
                             vec![]
                         }
                         Truncate => {
-                            let mut operations = vec![];
-                            for v in self.shape.vertices() {
-                                operations.extend(vec![
-                                    Wait(Instant::now() + Duration::from_millis(1000) * v as u32),
-                                    Conway(SplitVertex(v)),
-                                ]);
-                            }
-                            [operations, vec![Name('t')]].concat()
-                            // self.truncate();
-                            // vec![Name('t')]
+                            // let mut operations = vec![];
+                            // for v in self.shape.vertices() {
+                            //     operations.extend(vec![
+                            //         Wait(Instant::now() + Duration::from_millis(1000) * v as u32),
+                            //         Conway(SplitVertex(v)),
+                            //     ]);
+                            // }
+                            // [operations, vec![Name('t')]].concat()
+                            self.truncate(0);
+                            vec![Name('t')]
                         }
                         Expand => {
                             // self.shape.expand(false);
@@ -207,7 +207,7 @@ impl Polyhedron {
 
         for &[v, u] in edges {
             let spring_length = render.spring_length([v, u]);
-            if contracting && spring_length > 0.1 {
+            if contracting && spring_length > 0.05 {
                 let f = ((render.edge_length / TICK_SPEED * second) * 10.0) / spring_length;
                 render.lerp([v, u], f);
             } else {

@@ -6,7 +6,7 @@ use crate::polyhedron::VertexId;
 impl Shape {
     pub fn split_vertex(&mut self, v: VertexId) -> Vec<[usize; 2]> {
         let sc = self.cycles.sorted_connections(v);
-        log::info!("sc_{v}: {sc:?}");
+        // log::info!("sc_{v}: {sc:?}");
         let edges = self.distance.split_vertex(v, sc);
         self.cycles = Cycles::from(&self.distance);
         edges
