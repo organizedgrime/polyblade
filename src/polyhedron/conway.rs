@@ -49,4 +49,8 @@ impl Polyhedron {
             self.shape.len()
         );
     }
+
+    pub fn chamfer(&mut self) {
+        self.shape.chamfer();
+    }
 }

@@ -88,6 +88,10 @@ pub enum ConwayMessage {
     // // 6
     // Meta,
     Bevel,
+
+    ///////
+    ///
+    Chamfer,
 }
 
 #[derive(Debug, Clone)]

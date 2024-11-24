@@ -97,4 +97,24 @@ impl Shape {
         self.recompute();
         edges
     }
+
+    pub fn chamfer(&mut self) {
+        let originals = self.edges().collect::<Vec<_>>();
+        for cycle in self.cycles.iter() {
+            let mut new_face = vec![];
+            for &v in cycle.iter() {
+                let u = self.distance.insert();
+                new_face.push(u);
+                self.distance.connect([v, u]);
+            }
+            for i in 0..new_face.len() {
+                self.distance
+                    .connect([new_face[i], new_face[(i + 1) % new_face.len()]]);
+            }
+        }
+        for edge in originals {
+            self.distance.disconnect(edge);
+        }
+        self.recompute();
+    }
 }

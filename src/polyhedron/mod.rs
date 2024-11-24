@@ -111,6 +111,10 @@ impl Polyhedron {
                             let edges = self.ambo();
                             vec![Contraction(edges), Name('a')]
                         }
+                        Chamfer => {
+                            self.chamfer();
+                            vec![Name('c')]
+                        }
                         Kis => {
                             // self.graph.kis(Option::None);
                             // vec![Name('k')]

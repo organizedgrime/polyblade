@@ -373,6 +373,7 @@ impl ApplicationHandler for App<'_> {
                                 "a" => Some(Ambo),
                                 "t" => Some(Truncate),
                                 "b" => Some(Bevel),
+                                "c" => Some(Chamfer),
                                 _ => None,
                             }
                             .map(PolybladeMessage::Conway)
