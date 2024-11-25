@@ -14,85 +14,52 @@ impl Shape {
         edges
     }
 
-    pub fn ordered_face_indices(&self, v: VertexId) -> Vec<usize> {
-        let relevant = (0..self.cycles.len())
-            .filter(|&i| self.cycles[i].contains(&v))
-            .collect::<Vec<usize>>();
-
-        let mut edges: HashMap<[usize; 2], usize> = HashMap::default();
-
-        for &i in relevant.iter() {
-            let ui = self.cycles[i].iter().position(|&x| x == v).unwrap();
-            // Find the values that came before and after in the face
-            let a = self.cycles[i][ui + self.cycles[i].len() - 1];
-            let b = self.cycles[i][ui + 1];
-            edges.insert([a, b], i);
-        }
-
-        log::info!("edges::: {edges:?}");
-        let f: Cycle = edges.keys().cloned().collect::<Vec<_>>().into();
-
-        let mut ordered_face_indices = vec![];
-        for i in 0..f.len() {
-            let v = f[i];
-            let u = f[i + 1];
-            log::info!("e::: [{v}, {u}]");
-            let fi = edges.get(&[v, u]).or_else(|| edges.get(&[u, v])).unwrap();
-            ordered_face_indices.push(*fi);
-        }
-
-        ordered_face_indices
-    }
-    //
     pub fn expand(&mut self, snub: bool) -> Vec<[VertexId; 2]> {
         let mut new_edges = HashSet::<[VertexId; 2]>::default();
         let mut face_edges = HashSet::<[VertexId; 2]>::default();
 
-        let ordered_face_indices: HashMap<usize, Vec<usize>> = self
+        let all_connections: HashMap<usize, Cycle> = self
             .vertices()
-            .map(|v| (v, self.ordered_face_indices(v)))
+            .map(|v| (v, Cycle::from(self.cycles.sorted_connections(v))))
             .collect();
 
+        let removers: Vec<_> = self.vertices().collect();
         // For every vertex
         for v in self.vertices() {
             //let original_position = self.positions[&v];
             let mut new_face = Cycle::default();
-            // For every face which contains the vertex
-            for &i in ordered_face_indices.get(&v).unwrap() {
-                // Create a new vertex
+
+            // For each connection
+            for i in all_connections[&v].iter() {
                 let u = self.distance.insert();
-                // Replace it in the face
-                self.cycles[i].replace(v, u);
-                // Now replace
-                let ui = self.cycles[i].iter().position(|&x| x == u).unwrap();
-                let flen = self.cycles[i].len();
-                // Find the values that came before and after in the face
-                let a = self.cycles[i][(ui + flen - 1) % flen];
-                let b = self.cycles[i][(ui + 1) % flen];
-                // Remove existing edges which may no longer be accurate
-                new_edges.remove(&[a, v]);
-                new_edges.remove(&[b, v]);
-                // Add the new edges which are so yass
-                new_edges.insert([a, u]);
-                new_edges.insert([b, u]);
-                // Add u to the new face being formed
+                let ui = all_connections[i].iter().position(|&x| x == v).unwrap();
+                let flen = all_connections[i].len();
+                let a = all_connections[i][ui + flen - 1];
+                let b = all_connections[i][ui + 1];
+                self.distance.disconnect([a, v]);
+                self.distance.disconnect([b, v]);
+                self.distance.connect([a, u]);
+                self.distance.connect([b, u]);
                 new_face.push(u);
-                // pos
-                //self.positions.insert(u, original_position);
             }
             for i in 0..new_face.len() {
-                face_edges.insert((new_face[i], new_face[(i + 1) % new_face.len()]).into());
+                self.distance.connect([new_face[i], new_face[i + 1]]);
+                // face_edges.insert((new_face[i], new_face[(i + 1) % new_face.len()]).into());
             }
             //self.recompute();
-            self.distance.delete(v);
+            //self.cycles = Cycles::from(&self.distance);
         }
 
-        for &e in new_edges.iter() {
-            self.distance.connect(e);
+        // for &e in new_edges.iter() {
+        //     self.distance.connect(e);
+        // }
+        // for f in face_edges {
+        //     self.distance.connect(f);
+        // }
+        for v in removers {
+            self.distance.delete(v);
         }
-        for f in face_edges {
-            self.distance.connect(f);
-        }
+        self.recompute();
         new_edges.into_iter().collect()
     }
 
