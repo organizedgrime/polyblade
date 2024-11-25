@@ -68,6 +68,10 @@ impl Cycle {
     pub fn contains(&self, v: &VertexId) -> bool {
         self.0.contains(v)
     }
+
+    pub fn push(&mut self, v: VertexId) {
+        self.0.push(v);
+    }
 }
 
 impl From<Vec<[VertexId; 2]>> for Cycle {

@@ -1,7 +1,10 @@
 mod cycle;
 use crate::{polyhedron::VertexId, render::pipeline::ShapeVertex};
 pub use cycle::*;
-use std::{collections::HashSet, ops::Index};
+use std::{
+    collections::HashSet,
+    ops::{Index, IndexMut},
+};
 use ultraviolet::{Vec3, Vec4};
 
 use super::Distance;
@@ -63,7 +66,6 @@ impl Cycles {
 
         sorted_connections[1..].to_vec()
     }
-
     pub fn shape_vertices(&self) -> Vec<ShapeVertex> {
         let barycentric = [Vec3::unit_x(), Vec3::unit_y(), Vec3::unit_z()];
         self.iter()
@@ -104,6 +106,13 @@ impl Index<usize> for Cycles {
 
     fn index(&self, index: usize) -> &Self::Output {
         &self.cycles[index.rem_euclid(self.cycles.len())]
+    }
+}
+
+impl IndexMut<usize> for Cycles {
+    fn index_mut(&mut self, index: usize) -> &mut Self::Output {
+        let len = self.cycles.len();
+        &mut self.cycles[index.rem_euclid(len)]
     }
 }
 

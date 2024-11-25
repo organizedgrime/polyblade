@@ -138,9 +138,9 @@ impl Polyhedron {
                             vec![Name('t')]
                         }
                         Expand => {
+                            self.expand();
                             // self.shape.expand(false);
-                            // vec![Name('e')]
-                            todo!()
+                            vec![Name('e')]
                         }
                         Snub => {
                             // self.graph.expand(true);

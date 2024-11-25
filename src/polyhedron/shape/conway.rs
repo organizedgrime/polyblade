@@ -1,5 +1,7 @@
+use std::collections::{HashMap, HashSet};
+
 use super::{Cycles, Shape};
-use crate::polyhedron::VertexId;
+use crate::polyhedron::{shape::Cycle, VertexId};
 
 //use crate::bones::{Cycle, Shape, VertexId};
 
@@ -12,35 +14,87 @@ impl Shape {
         edges
     }
 
-    // pub fn ordered_face_indices(&self, v: VertexId) -> Vec<usize> {
-    //     let relevant = (0..self.cycles.len())
-    //         .filter(|&i| self.cycles[i].contains(&v))
-    //         .collect::<Vec<usize>>();
+    pub fn ordered_face_indices(&self, v: VertexId) -> Vec<usize> {
+        let relevant = (0..self.cycles.len())
+            .filter(|&i| self.cycles[i].contains(&v))
+            .collect::<Vec<usize>>();
+
+        let mut edges: HashMap<[usize; 2], usize> = HashMap::default();
+
+        for &i in relevant.iter() {
+            let ui = self.cycles[i].iter().position(|&x| x == v).unwrap();
+            // Find the values that came before and after in the face
+            let a = self.cycles[i][ui + self.cycles[i].len() - 1];
+            let b = self.cycles[i][ui + 1];
+            edges.insert([a, b], i);
+        }
+
+        log::info!("edges::: {edges:?}");
+        let f: Cycle = edges.keys().cloned().collect::<Vec<_>>().into();
+
+        let mut ordered_face_indices = vec![];
+        for i in 0..f.len() {
+            let v = f[i];
+            let u = f[i + 1];
+            log::info!("e::: [{v}, {u}]");
+            let fi = edges.get(&[v, u]).or_else(|| edges.get(&[u, v])).unwrap();
+            ordered_face_indices.push(*fi);
+        }
+
+        ordered_face_indices
+    }
     //
-    //     let mut edges: HashMap<[usize; 2], usize> = HashMap::default();
-    //
-    //     for &i in relevant.iter() {
-    //         let ui = self.cycles[i].iter().position(|&x| x == v).unwrap();
-    //         // Find the values that came before and after in the face
-    //         let a = self.cycles[i][ui - 1];
-    //         let b = self.cycles[i][ui + 1];
-    //         edges.insert([a, b], i);
-    //     }
-    //
-    //     log::info!("edges::: {edges:?}");
-    //     let f: Cycle = edges.keys().cloned().collect::<Vec<_>>().into();
-    //
-    //     let mut ordered_face_indices = vec![];
-    //     for i in 0..f.len() {
-    //         let v = f[i];
-    //         let u = f[i + 1];
-    //         log::info!("e::: [{v}, {u}]");
-    //         let fi = edges.get(&[v, u]).or_else(|| edges.get(&[u, v])).unwrap();
-    //         ordered_face_indices.push(*fi);
-    //     }
-    //
-    //     ordered_face_indices
-    // }
+    pub fn expand(&mut self, snub: bool) -> Vec<[VertexId; 2]> {
+        let mut new_edges = HashSet::<[VertexId; 2]>::default();
+        let mut face_edges = HashSet::<[VertexId; 2]>::default();
+
+        let ordered_face_indices: HashMap<usize, Vec<usize>> = self
+            .vertices()
+            .map(|v| (v, self.ordered_face_indices(v)))
+            .collect();
+
+        // For every vertex
+        for v in self.vertices() {
+            //let original_position = self.positions[&v];
+            let mut new_face = Cycle::default();
+            // For every face which contains the vertex
+            for &i in ordered_face_indices.get(&v).unwrap() {
+                // Create a new vertex
+                let u = self.distance.insert();
+                // Replace it in the face
+                self.cycles[i].replace(v, u);
+                // Now replace
+                let ui = self.cycles[i].iter().position(|&x| x == u).unwrap();
+                let flen = self.cycles[i].len();
+                // Find the values that came before and after in the face
+                let a = self.cycles[i][(ui + flen - 1) % flen];
+                let b = self.cycles[i][(ui + 1) % flen];
+                // Remove existing edges which may no longer be accurate
+                new_edges.remove(&[a, v]);
+                new_edges.remove(&[b, v]);
+                // Add the new edges which are so yass
+                new_edges.insert([a, u]);
+                new_edges.insert([b, u]);
+                // Add u to the new face being formed
+                new_face.push(u);
+                // pos
+                //self.positions.insert(u, original_position);
+            }
+            for i in 0..new_face.len() {
+                face_edges.insert((new_face[i], new_face[(i + 1) % new_face.len()]).into());
+            }
+            //self.recompute();
+            self.distance.delete(v);
+        }
+
+        for &e in new_edges.iter() {
+            self.distance.connect(e);
+        }
+        for f in face_edges {
+            self.distance.connect(f);
+        }
+        new_edges.into_iter().collect()
+    }
 
     /// `t` truncate
     // pub fn truncate(&mut self, degree: Option<usize>) -> Vec<[VertexId; 2]> {

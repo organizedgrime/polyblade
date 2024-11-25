@@ -53,4 +53,10 @@ impl Polyhedron {
     pub fn chamfer(&mut self) {
         self.shape.chamfer();
     }
+
+    pub fn expand(&mut self) -> Vec<[VertexId; 2]> {
+        let edges = self.shape.expand(false);
+        self.shape.recompute();
+        edges
+    }
 }
