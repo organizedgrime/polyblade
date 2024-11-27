@@ -31,7 +31,6 @@ pub async fn run() -> Result<(), winit::error::EventLoopError> {
             .create_window(WindowAttributes::default())
             .expect("Create window"),
     );
-    println!("mewo");
 
     #[cfg(target_arch = "wasm32")]
     {

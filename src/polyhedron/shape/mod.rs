@@ -91,28 +91,6 @@ impl Shape {
     pub fn diameter_percent(&self, [v, u]: [VertexId; 2]) -> f32 {
         self.distance[[v, u]] as f32 / self.distance.diameter() as f32
     }
-
-    #[allow(dead_code)]
-    pub fn png(&self) {
-        use image::ImageReader;
-        use std::io::Cursor;
-        use viuer::{print, Config};
-        if let Some(bytes) = self.distance.png() {
-            let mut reader = ImageReader::new(Cursor::new(bytes));
-            reader.set_format(image::ImageFormat::Png);
-            let img = reader.decode().unwrap();
-            let cfg = Config {
-                width: Some(20),
-                height: Some(20),
-                use_kitty: true,
-                ..Default::default()
-            };
-            print(&img, &cfg).unwrap();
-            for _ in 0..40 {
-                println!("\n");
-            }
-        }
-    }
 }
 
 impl From<Distance> for Shape {

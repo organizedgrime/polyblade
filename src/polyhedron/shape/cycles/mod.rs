@@ -32,8 +32,8 @@ impl Cycles {
     }
 
     #[allow(dead_code)]
-    pub fn into_iter(&self) -> std::vec::IntoIter<Cycle> {
-        self.cycles.clone().into_iter()
+    pub fn into_iter(self) -> std::vec::IntoIter<Cycle> {
+        self.cycles.into_iter()
     }
     /// Returns the
     pub fn sorted_connections(&self, v: VertexId) -> Vec<VertexId> {

@@ -89,8 +89,6 @@ pub enum ConwayMessage {
     // Meta,
     Bevel,
 
-    ///////
-    ///
     Chamfer,
 }
 
