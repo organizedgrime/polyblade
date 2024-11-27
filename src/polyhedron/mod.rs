@@ -138,9 +138,10 @@ impl Polyhedron {
                             vec![Name('t')]
                         }
                         Expand => {
-                            self.expand();
+                            self.ambo_contract();
+                            let edges = self.ambo();
                             // self.shape.expand(false);
-                            vec![Name('e')]
+                            vec![Contraction(edges), Name('e')]
                         }
                         Snub => {
                             // self.graph.expand(true);

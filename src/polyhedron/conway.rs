@@ -9,11 +9,7 @@ impl Polyhedron {
     }
 
     pub fn truncate(&mut self, d: usize) -> Vec<[VertexId; 2]> {
-        // log::info!("before truncation:");
-        // self.shape.png();
-        // let Polyhedron { shape, render, .. } = self;
         let mut new_edges = Vec::default();
-        log::info!("there are {:?} vertices", self.shape.vertices());
         for v in self.shape.vertices().rev() {
             if d == 0 || self.shape.degree(v) == d {
                 new_edges.extend(self.split_vertex(v));
@@ -52,11 +48,5 @@ impl Polyhedron {
 
     pub fn chamfer(&mut self) {
         self.shape.chamfer();
-    }
-
-    pub fn expand(&mut self) -> Vec<[VertexId; 2]> {
-        let edges = self.shape.expand(false);
-        self.shape.recompute();
-        edges
     }
 }
