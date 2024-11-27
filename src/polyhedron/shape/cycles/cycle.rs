@@ -28,6 +28,7 @@ impl Cycle {
         self.0.len()
     }
 
+    #[allow(dead_code)]
     pub fn delete(&mut self, v: VertexId) {
         self.0 = self
             .0
@@ -44,6 +45,7 @@ impl Cycle {
             .collect::<Vec<_>>();
     }
 
+    #[allow(dead_code)]
     pub fn replace(&mut self, old: VertexId, new: VertexId) {
         self.0 = self
             .0
@@ -65,10 +67,12 @@ impl Cycle {
         self.0.iter()
     }
 
+    #[allow(dead_code)]
     pub fn contains(&self, v: &VertexId) -> bool {
         self.0.contains(v)
     }
 
+    #[allow(dead_code)]
     pub fn push(&mut self, v: VertexId) {
         self.0.push(v);
     }

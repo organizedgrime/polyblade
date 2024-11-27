@@ -1,9 +1,5 @@
 use super::Distance;
-use graphviz_rust::{
-    cmd::Format,
-    exec, parse,
-    printer::PrinterContext,
-};
+use graphviz_rust::{cmd::Format, exec, parse, printer::PrinterContext};
 
 const LAYOUT_PREFIX: &str = r#"
     graph G {
@@ -57,6 +53,7 @@ impl Distance {
     }
 
     // #[cfg(test)]
+    #[allow(dead_code)]
     pub fn png(&self) -> Option<Vec<u8>> {
         let Ok(graph) = parse(&self.graphviz()) else {
             log::warn!("failed to parse Graphviz");

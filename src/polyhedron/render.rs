@@ -1,4 +1,3 @@
-
 use rand::random;
 use ultraviolet::{Lerp as _, Vec3};
 
@@ -103,7 +102,7 @@ impl Render {
             // Pop an edge
             let [w, x] = edges.remove(0);
             let v = w.max(x);
-            let u = w.min(x);
+            let _u = w.min(x);
             // if transformed.contains(&v) && transformed.contains(&u) {}
 
             self.positions.remove(v);

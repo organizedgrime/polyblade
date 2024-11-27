@@ -22,6 +22,7 @@ impl Cycles {
         }
     }
 
+    #[allow(dead_code)]
     pub fn len(&self) -> usize {
         self.cycles.len()
     }
@@ -29,6 +30,8 @@ impl Cycles {
     pub fn iter(&self) -> std::slice::Iter<'_, Cycle> {
         self.cycles.iter()
     }
+
+    #[allow(dead_code)]
     pub fn into_iter(&self) -> std::vec::IntoIter<Cycle> {
         self.cycles.clone().into_iter()
     }
@@ -38,7 +41,10 @@ impl Cycles {
         let mut relevant = self
             .iter()
             .filter_map(move |cycle| {
-                cycle.iter().position(|&x| x == v).map(|p| [cycle[p + cycle.len() - 1], cycle[p + 1]])
+                cycle
+                    .iter()
+                    .position(|&x| x == v)
+                    .map(|p| [cycle[p + cycle.len() - 1], cycle[p + 1]])
             })
             .collect::<Vec<[VertexId; 2]>>();
 
@@ -113,6 +119,7 @@ impl IndexMut<usize> for Cycles {
 }
 
 impl Cycles {
+    #[allow(dead_code)]
     pub fn delete(&mut self, v: VertexId) {
         for cycle in &mut self.cycles {
             cycle.delete(v);
@@ -120,6 +127,7 @@ impl Cycles {
     }
 
     /// Replace all occurrence of one vertex with another
+    #[allow(dead_code)]
     pub fn replace(&mut self, old: VertexId, new: VertexId) {
         for cycle in &mut self.cycles {
             cycle.replace(old, new);

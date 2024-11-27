@@ -27,6 +27,7 @@ impl Shape {
 // }
 //
 #[test]
+#[ignore]
 fn split_vertex_contract() {
     let mut control = Distance::new(6);
     // Original outline

@@ -1,4 +1,3 @@
-
 use super::{Cycles, Shape};
 use crate::polyhedron::VertexId;
 
@@ -15,6 +14,7 @@ impl Shape {
         self.recompute();
     }
 
+    #[allow(dead_code)]
     pub fn kis(&mut self, degree: Option<usize>) -> Vec<[VertexId; 2]> {
         let edges = self.distance.edges().collect();
         // let mut cycles = self.cycles.clone();

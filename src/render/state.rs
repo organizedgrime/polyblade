@@ -90,6 +90,7 @@ impl Default for ModelState {
     }
 }
 
+#[allow(dead_code)]
 pub fn load_polydex() -> Result<Polydex, Box<dyn std::error::Error>> {
     let mut polydex = std::fs::File::open("assets/polydex.ron")?;
     let mut polydex_str = String::new();

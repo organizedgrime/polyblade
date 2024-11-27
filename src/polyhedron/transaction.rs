@@ -6,6 +6,7 @@ use super::VertexId;
 #[derive(Debug, Clone)]
 pub enum Transaction {
     Contraction(Vec<[VertexId; 2]>),
+    #[allow(dead_code)]
     Release(Vec<[VertexId; 2]>),
     Conway(ConwayMessage),
     #[allow(dead_code)]

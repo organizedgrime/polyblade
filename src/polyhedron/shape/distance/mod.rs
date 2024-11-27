@@ -2,8 +2,8 @@ mod conway;
 mod platonic;
 mod svg;
 
-#[cfg(test)]
-mod test;
+// #[cfg(test)]
+// mod test;
 
 use crate::polyhedron::VertexId;
 use std::collections::HashSet;

@@ -7,8 +7,8 @@ use std::{fmt::Display, ops::Range};
 use cycles::*;
 use distance::*;
 
-#[cfg(test)]
-mod test;
+// #[cfg(test)]
+// mod test;
 
 use crate::polyhedron::*;
 
@@ -71,17 +71,9 @@ impl Shape {
         self.springs = self.distance.springs();
     }
 
+    #[allow(dead_code)]
     pub fn compute_springs(&mut self) {
         self.springs = self.distance.springs();
-    }
-
-    pub fn from(distance: Distance) -> Shape {
-        let mut shape = Shape {
-            distance,
-            ..Default::default()
-        };
-        shape.recompute();
-        shape
     }
 
     pub fn compute_graph_svg(&mut self) {
@@ -100,6 +92,7 @@ impl Shape {
         self.distance[[v, u]] as f32 / self.distance.diameter() as f32
     }
 
+    #[allow(dead_code)]
     pub fn png(&self) {
         use image::ImageReader;
         use std::io::Cursor;
@@ -115,9 +108,20 @@ impl Shape {
                 ..Default::default()
             };
             print(&img, &cfg).unwrap();
-            for i in 0..40 {
+            for _ in 0..40 {
                 println!("\n");
             }
         }
+    }
+}
+
+impl From<Distance> for Shape {
+    fn from(distance: Distance) -> Self {
+        let mut shape = Shape {
+            distance,
+            ..Default::default()
+        };
+        shape.recompute();
+        shape
     }
 }

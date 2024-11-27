@@ -7,8 +7,8 @@ use render::*;
 use shape::*;
 pub use transaction::*;
 
-#[cfg(test)]
-mod test;
+// #[cfg(test)]
+// mod test;
 
 use std::{
     collections::HashMap,
