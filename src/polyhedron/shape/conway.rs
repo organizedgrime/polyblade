@@ -1,7 +1,6 @@
-use std::collections::{HashMap, HashSet};
 
 use super::{Cycles, Shape};
-use crate::polyhedron::{shape::Cycle, VertexId};
+use crate::polyhedron::VertexId;
 
 impl Shape {
     pub fn split_vertex(&mut self, v: VertexId) -> Vec<[usize; 2]> {

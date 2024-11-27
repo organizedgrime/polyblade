@@ -36,12 +36,12 @@ impl Polyhedron {
     }
 
     fn dodecahedron() -> Polyhedron {
-        let mut polyhedron = Polyhedron::preset(&PresetMessage::AntiPrism(5));
+        
         // polyhedron.ambo_contract();
         // let edges = polyhedron.truncate(0);
         //polyhedron.contract(edges);
         // polyhedron.truncate(5);
-        polyhedron
+        Polyhedron::preset(&PresetMessage::AntiPrism(5))
     }
 
     //

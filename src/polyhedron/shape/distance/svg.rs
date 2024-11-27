@@ -1,6 +1,6 @@
 use super::Distance;
 use graphviz_rust::{
-    cmd::{CommandArg, Format},
+    cmd::Format,
     exec, parse,
     printer::PrinterContext,
 };

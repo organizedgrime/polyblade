@@ -1,4 +1,3 @@
-use std::collections::HashSet;
 
 use rand::random;
 use ultraviolet::{Lerp as _, Vec3};

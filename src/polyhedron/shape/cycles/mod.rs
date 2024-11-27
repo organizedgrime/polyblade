@@ -38,11 +38,7 @@ impl Cycles {
         let mut relevant = self
             .iter()
             .filter_map(move |cycle| {
-                if let Some(p) = cycle.iter().position(|&x| x == v) {
-                    Some([cycle[p + cycle.len() - 1], cycle[p + 1]])
-                } else {
-                    None
-                }
+                cycle.iter().position(|&x| x == v).map(|p| [cycle[p + cycle.len() - 1], cycle[p + 1]])
             })
             .collect::<Vec<[VertexId; 2]>>();
 

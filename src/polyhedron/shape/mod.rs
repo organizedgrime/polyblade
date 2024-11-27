@@ -101,7 +101,7 @@ impl Shape {
     }
 
     pub fn png(&self) {
-        use image::{ImageError, ImageReader, RgbaImage};
+        use image::ImageReader;
         use std::io::Cursor;
         use viuer::{print, Config};
         if let Some(bytes) = self.distance.png() {
