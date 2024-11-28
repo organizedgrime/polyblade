@@ -24,6 +24,7 @@ pub struct AppState {
 pub struct RenderState {
     pub camera: Camera,
     pub zoom: f32,
+    pub speed: f32,
     pub start: Instant,
     pub frame: Instant,
     pub rotation_duration: Duration,
@@ -48,6 +49,7 @@ impl Default for RenderState {
         Self {
             camera: Camera::default(),
             zoom: 1.0,
+            speed: 10.0,
             start: Instant::now(),
             frame: Instant::now(),
             rotation_duration: Duration::from_secs(0),
@@ -120,7 +122,7 @@ impl AppState {
             frame_difference
         };
 
-        self.model.polyhedron.update(second);
+        self.model.polyhedron.update(self.render.speed, second);
         self.render.frame = time;
 
         let time = if self.render.rotating {
