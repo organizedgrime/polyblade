@@ -3,6 +3,17 @@ name = "polyblade"
 version = "0.1.0"
 edition = "2021"
 license = "AGPL-3.0-only"
+description = "Make shapes dance."
+repository = "https://github.com/organizedgrime/polyblade"
+readme = "README.md"
+keywords = ["polyhedra", "graphics", "graphs", "WebGPU"]
+categories = [
+	"graphics",
+	"mathematics",
+	"visualization",
+	"wasm",
+	"web-programming",
+]
 
 [dependencies]
 bytemuck = { version = "1.0", features = [
