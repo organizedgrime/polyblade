@@ -1,7 +1,7 @@
 use rand::random;
 use ultraviolet::{Lerp as _, Vec3};
 
-use super::{VertexId, SPEED_DAMPENING, TICK_SPEED};
+use super::{VertexId, SPEED_DAMPENING};
 
 #[derive(Debug, Clone)]
 pub struct Render {
@@ -29,9 +29,9 @@ impl Render {
         }
     }
 
-    pub fn update(&mut self, second: f32) {
+    pub fn update(&mut self, speed: f32, second: f32) {
         self.center();
-        self.resize(second);
+        self.resize(speed, second);
     }
 
     fn center(&mut self) {
@@ -44,10 +44,10 @@ impl Render {
         }
     }
 
-    fn resize(&mut self, second: f32) {
+    fn resize(&mut self, speed: f32, second: f32) {
         let mean_length = self.positions.iter().map(Vec3::mag).fold(0.0, f32::max);
         let matrixance = mean_length - 1.0;
-        self.edge_length -= matrixance / TICK_SPEED * second;
+        self.edge_length -= matrixance / speed * second;
     }
 
     pub fn new_capacity(&mut self, n: usize) {

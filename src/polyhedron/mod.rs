@@ -27,7 +27,6 @@ use ultraviolet::{Vec3, Vec4};
 
 pub type VertexId = usize;
 
-pub const TICK_SPEED: f32 = 10.0;
 pub const SPEED_DAMPENING: f32 = 0.92;
 
 #[derive(Debug, Clone)]
@@ -54,7 +53,7 @@ impl Polyhedron {
         }
     }
 
-    pub fn process_transactions(&mut self) {
+    pub fn process_transactions(&mut self, _speed: f32) {
         if let Some(transaction) = self.transactions.first().cloned() {
             use Transaction::*;
             match transaction {
@@ -88,9 +87,9 @@ impl Polyhedron {
                     use Transaction::*;
                     let new_transactions = match conway {
                         Dual => {
-                            // let edges = self.shape.expand(false);
+                            // let edges = self.expand(false);
                             // vec![
-                            //     Wait(Instant::now() + Duration::from_millis(650)),
+                            //     Wait(Instant::now() + Duration::from_millis((65.0 * speed) as u64)),
                             //     Contraction(edges),
                             //     Name('d'),
                             // ]
@@ -186,13 +185,13 @@ impl Polyhedron {
         }
     }
 
-    pub fn update(&mut self, second: f32) {
-        self.render.update(second);
-        self.apply_spring_forces(second);
-        self.process_transactions();
+    pub fn update(&mut self, speed: f32, second: f32) {
+        self.render.update(speed, second);
+        self.apply_spring_forces(speed, second);
+        self.process_transactions(speed);
     }
 
-    fn apply_spring_forces(&mut self, second: f32) {
+    fn apply_spring_forces(&mut self, speed: f32, second: f32) {
         let Polyhedron {
             shape,
             render,
@@ -213,12 +212,12 @@ impl Polyhedron {
         for &[v, u] in edges {
             let spring_length = render.spring_length([v, u]);
             if contracting && spring_length > 0.05 {
-                let f = ((render.edge_length / TICK_SPEED * second) * 10.0) / spring_length;
+                let f = ((render.edge_length / speed * second) * 10.0) / spring_length;
                 render.lerp([v, u], f);
             } else {
                 //let diff = render.positions[v] - render.positions[u];
                 let target_length = diameter_spring_length * shape.diameter_percent([v, u]);
-                let f = (target_length - spring_length) / TICK_SPEED * second;
+                let f = (target_length - spring_length) / speed * second;
                 render.apply_scalar([v, u], f);
             }
         }
