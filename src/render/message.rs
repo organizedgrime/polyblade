@@ -98,6 +98,7 @@ pub enum RenderMessage {
     Rotating(bool),
     FovChanged(f32),
     ZoomChanged(f32),
+    SpeedChanged(f32),
     LineThickness(f32),
     ColorMethod(ColorMethodMessage),
     ColorPicker(ColorPickerMessage),
@@ -198,6 +199,10 @@ impl ProcessMessage<RenderState> for RenderMessage {
             }
             ZoomChanged(zoom) => {
                 state.zoom = *zoom;
+                Task::none()
+            }
+            SpeedChanged(speed) => {
+                state.speed = *speed;
                 Task::none()
             }
             LineThickness(thickness) => {

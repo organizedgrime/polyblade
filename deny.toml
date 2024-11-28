@@ -2,7 +2,8 @@
 all-features = true
 
 [advisories]
-ignore = []
+# for `instant` crate
+ignore = ["RUSTSEC-2024-0384"]
 
 [licenses]
 allow = [
