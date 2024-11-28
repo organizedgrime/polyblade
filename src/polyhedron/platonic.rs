@@ -36,7 +36,6 @@ impl Polyhedron {
     }
 
     fn dodecahedron() -> Polyhedron {
-        
         // polyhedron.ambo_contract();
         // let edges = polyhedron.truncate(0);
         //polyhedron.contract(edges);
