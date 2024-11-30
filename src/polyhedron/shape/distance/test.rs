@@ -47,23 +47,23 @@ fn basics() {
     graph.connect([0, 1]);
     graph.connect([0, 2]);
     graph.connect([1, 2]);
-    assert_eq!(graph.connections(0), vec![1, 2]);
-    assert_eq!(graph.connections(1), vec![0, 2]);
-    assert_eq!(graph.connections(2), vec![0, 1]);
-    assert_eq!(graph.connections(3), vec![]);
+    assert_eq!(graph.neighbors(0), vec![1, 2]);
+    assert_eq!(graph.neighbors(1), vec![0, 2]);
+    assert_eq!(graph.neighbors(2), vec![0, 1]);
+    assert_eq!(graph.neighbors(3), vec![]);
 
     // Disconnect
     graph.disconnect([0, 1]);
-    assert_eq!(graph.connections(0), vec![2]);
-    assert_eq!(graph.connections(1), vec![2]);
+    assert_eq!(graph.neighbors(0), vec![2]);
+    assert_eq!(graph.neighbors(1), vec![2]);
 
     // Delete
     println!("graph: {graph}");
     graph.delete(1);
     println!("graph: {graph}");
-    assert_eq!(graph.connections(0), vec![1]);
-    assert_eq!(graph.connections(2), vec![]);
-    assert_eq!(graph.connections(1), vec![0]);
+    assert_eq!(graph.neighbors(0), vec![1]);
+    assert_eq!(graph.neighbors(2), vec![]);
+    assert_eq!(graph.neighbors(1), vec![0]);
 }
 
 #[test]
@@ -76,7 +76,7 @@ fn chordless_cycles() {
 
     println!("chordless_cycles:");
     println!("{graph}");
-    graph.pst();
+    graph.bfs_apsp();
     println!("{graph}");
 
     graph.connect([2, 0]);
@@ -91,4 +91,26 @@ fn contract_edge() {
     triangle[[1, 2]] = 1;
     triangle[[2, 0]] = 1;
     assert_eq!(graph, triangle);
+}
+
+#[test]
+fn bfs_apsp() {
+    let mut distance = Distance::new(4);
+    distance.connect([0, 1]);
+    distance.connect([1, 2]);
+    distance.connect([2, 3]);
+    distance.bfs_apsp();
+    assert_eq!(distance[[0, 2]], 2);
+    assert_eq!(distance[[1, 3]], 2);
+    assert_eq!(distance[[0, 3]], 3);
+
+    /*
+         *
+    [
+        [0, 1, -1, -1],
+        [1, 0, 1, -1],
+        [-1, 1, 0, 1],
+        [-1, -1, 1, 0],
+    ]
+         */
 }

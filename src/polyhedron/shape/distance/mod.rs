@@ -79,7 +79,7 @@ impl Distance {
     }
 
     /// Enumerates the vertices connected to v
-    pub fn connections(&self, v: VertexId) -> Vec<VertexId> {
+    pub fn neighbors(&self, v: VertexId) -> Vec<VertexId> {
         self.vertices().filter(|&u| self[[v, u]] == 1).collect()
     }
 
@@ -108,129 +108,22 @@ impl Distance {
         self.vertex_pairs().map(|e| self[e]).max().unwrap_or(0)
     }
 
-    fn dfs(&self, visited: &mut HashSet<usize>, v: usize) {
-        visited.insert(v);
-        for u in self.connections(v) {
-            if !visited.contains(&u) {
-                self.dfs(visited, u);
-            }
-        }
-    }
-
-    pub fn is_connected(&self) -> bool {
-        let mut visited = HashSet::new();
-        self.dfs(&mut visited, 0);
-        visited.len() == self.order()
-    }
-
-    pub fn pst(&mut self) -> Option<()> {
-        for x in self.vertex_pairs() {
-            if self[x] != 1 {
-                self[x] = usize::MAX;
-            }
-        }
-        // if self.edges.is_empty() {
-        //     return;
-        // }
-
-        let n = self.order();
-        // Vertex
-        //
-        // d-queues associated w each vertex
-        // maps from v -> ( maps from d -> u )
-        let mut dqueue: Vec<VecDeque<(VertexId, usize)>> = vec![Default::default(); self.order()];
-        //
-        let mut children: Vec<Vec<VertexId>> = vec![Default::default(); self.order()];
-
-        // Counters for vertices whos shortest paths have already been obtained
-        let mut counters: Vec<usize> = vec![n - 1; self.order()];
-
-        // The element D[i, j] represents the distance from v_i to vj.
-        let mut dist: Distance = Distance::new(self.order());
-
-        // d = 0
-        let mut depth = 1;
-        // while 0 < |V|
-        loop {
-            let verts: HashSet<VertexId> = counters
-                .iter()
-                .enumerate()
-                .filter_map(|(v, c)| if *c == 0 { None } else { Some(v) })
-                .collect();
-
-            if verts.is_empty() {
-                break;
-            }
-
-            let mut removed = false;
-
-            for v in verts.into_iter() {
-                // for v in V
-                // START EXTEND(v, d, D, S)
-                if depth == 1 {
-                    //
-                    for w in self.connections(v) {
-                        // Connected node
-                        // D[w.id, v.id] = d
-                        dist[[v, w]] = 1;
-                        // add w' to v'.children
-                        children[v].push(w);
-                        // v.que.enque(w', 1)
-                        dqueue[v].push_back((w, 1));
-                        dqueue[w].push_back((v, 1));
-                        // v.c = v.c + 1
-                        counters[v] -= 1;
-                        removed = true;
-                    }
-                } else {
-                    // w = v.que.deque(d - 1)
-                    // while w is not None:
-                    'dq: loop {
-                        // let vqueue = dqueue[v];
-                        let Some((w, d)) = dqueue[v].pop_front() else {
-                            break;
-                        };
-                        if d != depth - 1 {
-                            dqueue[v].push_back((w, d));
-                            break;
-                        }
-                        // for x in w.children
-                        for x in children[w].clone() {
-                            //let e: Edge = (x, v).into();
-                            if x != v && dist[[x, v]] == usize::MAX {
-                                // D[x.id, v.id] = d;
-                                dist[[x, v]] = depth;
-                                // add x' to w' children
-                                children[w].push(x);
-                                // v.que.enque(x', d)
-                                dqueue[v].push_back((x, depth));
-                                dqueue[x].push_back((v, depth));
-                                // v.c = v.c + 1
-                                removed = true;
-                                counters[v] -= 1;
-                                counters[x] -= 1;
-                                // if v.c == n: return
-                                if counters[x] == 0 && counters[w] == 0 && counters[v] == 0 {
-                                    break 'dq;
-                                }
-                            }
-                        }
+    pub fn bfs_apsp(&mut self) {
+        for source in self.vertices() {
+            let mut visited = vec![false; self.order()];
+            let mut queue = vec![source];
+            visited[source] = true;
+            while !queue.is_empty() {
+                let current = queue.remove(0);
+                for neighbor in self.neighbors(current) {
+                    if !visited[neighbor] {
+                        self[[source, neighbor]] = self[[source, current]] + 1;
+                        queue.push(neighbor);
+                        visited[neighbor] = true;
                     }
                 }
             }
-            // END EXTEND
-            // d = d + 1
-            depth += 1;
-
-            if !removed {
-                *self = dist;
-                log::error!("failed distance computation");
-                return None;
-            }
         }
-
-        *self = dist;
-        Some(())
     }
 
     pub fn springs(&self) -> Vec<[VertexId; 2]> {

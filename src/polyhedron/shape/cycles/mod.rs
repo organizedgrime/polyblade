@@ -154,39 +154,21 @@ impl From<&Distance> for Cycles {
                 }
             }
         }
-        // find all the triplets
-        // for u in distance.vertices() {
-        //     let adj: Vec<VertexId> = distance.connections(u);
-        //     for &x in adj.iter() {
-        //         for &y in adj.iter() {
-        //             if u < x && x < y {
-        //                 let new_face = vec![x, u, y];
-        //                 if distance[[x, y]] == 1 {
-        //                     cycles.insert(new_face);
-        //                 } else {
-        //                     triplets.push(new_face);
-        //                 }
-        //             }
-        //         }
-        //     }
-        // }
-        // println!("triplets:\n{triplets:?}");
-        // println!("cycles:\n{cycles:?}");
 
         // while there are unparsed triplets
         while !triplets.is_empty() && (cycles.len() as i64) < distance.face_count() {
             let p = triplets.remove(0);
 
             // for each v adjacent to u_t
-            for v in distance.connections(p[p.len() - 1]) {
+            for v in distance.neighbors(p[p.len() - 1]) {
                 if v > p[1] {
-                    let adj_v = distance.connections(v);
+                    let adj_v = distance.neighbors(v);
                     // if v is not a neighbor of u_2..u_t-1
                     if !p[1..p.len() - 1].iter().any(|i| adj_v.contains(i)) {
                         // let mut new_face = p.clone();
                         // new_face.push(v);
                         let new = [p.clone(), vec![v]].concat();
-                        if distance.connections(p[0]).contains(&v) {
+                        if distance.neighbors(p[0]).contains(&v) {
                             cycles.insert(new);
                         } else {
                             triplets.push(new);

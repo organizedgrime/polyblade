@@ -49,7 +49,7 @@ impl Shape {
     }
 
     pub fn degree(&self, v: usize) -> usize {
-        self.distance.connections(v).len()
+        self.distance.neighbors(v).len()
     }
 
     pub fn edges(&self) -> impl Iterator<Item = [VertexId; 2]> + use<'_> {
@@ -63,7 +63,7 @@ impl Shape {
     pub fn recompute(&mut self) {
         // log::info!("new distance:\n{}", self.distance);
         // Update the distance matrix in place
-        self.distance.pst();
+        self.distance.bfs_apsp();
         // Find and save cycles
         self.cycles = Cycles::from(&self.distance);
         // log::info!("new cycles:\n{:?}", self.cycles);

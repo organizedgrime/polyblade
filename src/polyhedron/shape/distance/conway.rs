@@ -5,7 +5,7 @@ use crate::polyhedron::VertexId;
 impl Distance {
     pub(super) fn contract_edge(&mut self, [v, u]: [VertexId; 2]) {
         // Give u all the same connections as v
-        for w in self.connections(v).into_iter() {
+        for w in self.neighbors(v).into_iter() {
             self.connect([w, u]);
             self.disconnect([w, v]);
         }
@@ -88,53 +88,6 @@ impl Distance {
 
         new_edges
     }
-
-    pub fn cycle_is_face(&self, mut cycle: Vec<VertexId>) -> bool {
-        let mut dupe = self.clone();
-        while !cycle.is_empty() {
-            let v = cycle.remove(0);
-            dupe.delete(v);
-            for u in &mut cycle {
-                if *u > v {
-                    *u -= 1;
-                }
-            }
-        }
-        dupe.is_connected()
-    }
-
-    // //
-    // pub fn ordered_face_indices(&self, v: VertexId) -> Vec<usize> {
-    //     let relevant = (0..self.cycles.len())
-    //         .filter(|&i| self.cycles[i].containz(&v))
-    //         .collect::<Vec<usize>>();
-    //
-    //     let mut edges = HashMap::default();
-    //
-    //     for &i in relevant.iter() {
-    //         let ui = self.cycles[i].iter().position(|&x| x == v).unwrap();
-    //         let flen = self.cycles[i].len();
-    //         // Find the values that came before and after in the face
-    //         let a = self.cycles[i][(ui + flen - 1) % flen];
-    //         let b = self.cycles[i][(ui + 1) % flen];
-    //         edges.insert((a, b).into(), i);
-    //     }
-    //
-    //     let f: Cycle = edges.keys().cloned().collect::<Vec<_>>().into();
-    //
-    //     let mut ordered_face_indices = vec![];
-    //     for i in 0..f.len() {
-    //         let ev = f[i];
-    //         let eu = f[(i + 1) % f.len()];
-    //         let fi = edges
-    //             .get(&[ev, eu])
-    //             .unwrap_or(edges.get(&[eu, ev]).unwrap());
-    //         ordered_face_indices.push(*fi);
-    //     }
-    //
-    //     ordered_face_indices
-    // }
-    // //
 
     // /// `e` = `aa`
 
