@@ -6,7 +6,7 @@ impl Polyhedron {
         use PresetMessage::*;
         let mut poly = match preset {
             Octahedron => Self::octahedron(),
-            Dodecahedron => Self::dodecahedron(),
+            Dodecahedron => todo!(),
             Icosahedron => Self::icosahedron(),
             _ => {
                 let shape = match preset {
@@ -36,14 +36,16 @@ impl Polyhedron {
         polyhedron
     }
 
-    fn dodecahedron() -> Polyhedron {
-        let mut polyhedron = Polyhedron::preset(&AntiPrism(5));
-        polyhedron.ambo_contract();
-        // let edges = polyhedron.truncate(0);
-        // polyhedron.contract(edges);
-        polyhedron.truncate(5);
-        polyhedron
-    }
+    /* pub fn dodecahedron() -> Polyhedron {
+        let mut p = Polyhedron::preset(&AntiPrism(5));
+        let edges = p.expand(false);
+        p.contract_edges(edges);
+        p.truncate(Some(5));
+        p.pst();
+        p.springs();
+        p.name = "D".into();
+        p
+    } */
 
     pub fn icosahedron() -> Polyhedron {
         let mut graph = Polyhedron::preset(&AntiPrism(5));
@@ -51,13 +53,4 @@ impl Polyhedron {
         graph.render.new_capacity(graph.shape.order());
         graph
     }
-    //
-    // pub fn icosahedron() -> Distance {
-    //     let dodecahedron = Self::dodecahedron();
-    //     //let edges = dodecahedron.ambo();
-    //     //dodecahedron.contract_edges(edges);
-    //     #[cfg(test)]
-    //     dodecahedron.render("tests/", "icosahedron.svg");
-    //     dodecahedron
-    // }
 }
