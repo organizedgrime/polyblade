@@ -8,6 +8,10 @@ impl Shape {
     pub fn tetrahedron() -> Shape {
         Shape::from(Distance::tetrahedron())
     }
+
+    pub fn floyd(&mut self) {
+        self.distance.floyd();
+    }
 }
 
 // #[test]

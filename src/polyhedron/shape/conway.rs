@@ -11,6 +11,11 @@ impl Shape {
 
     pub fn contract_edges(&mut self, edges: Vec<[VertexId; 2]>) {
         self.distance.contract_edges(edges);
+        // Delete a
+        // for
+        // for i in 0..self.cycles.len() {
+        //     self.cycles[i].replace(v, u);
+        // }
         self.recompute();
     }
 

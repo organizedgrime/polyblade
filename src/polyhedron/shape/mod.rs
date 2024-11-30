@@ -7,8 +7,8 @@ use std::{fmt::Display, ops::Range};
 use cycles::*;
 use distance::*;
 
-// #[cfg(test)]
-// mod test;
+#[cfg(test)]
+mod test;
 
 use crate::polyhedron::*;
 

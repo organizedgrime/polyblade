@@ -7,7 +7,7 @@ use test_case::test_case;
 impl Distance {
     pub fn floyd(&mut self) {
         // let dist be a |V| × |V| array of minimum distances initialized to ∞ (infinity)
-        let mut graph: Distance = Distance::new(self.distance.len());
+        let mut graph: Distance = Distance::new(self.order);
         for e in self.edges() {
             graph[e] = 1;
         }
@@ -75,9 +75,7 @@ fn chordless_cycles() {
     graph.connect([2, 3]);
 
     println!("chordless_cycles:");
-    println!("{graph}");
     graph.bfs_apsp();
-    println!("{graph}");
 
     graph.connect([2, 0]);
 }
@@ -85,11 +83,15 @@ fn chordless_cycles() {
 #[test]
 fn contract_edge() {
     let mut graph = Distance::tetrahedron();
+    println!("tetrahedron: {graph}");
+    println!("contracting [0, 2]......");
     graph.contract_edge([0, 2]);
+    println!("contracted: {graph}");
     let mut triangle = Distance::new(3);
     triangle[[0, 1]] = 1;
     triangle[[1, 2]] = 1;
     triangle[[2, 0]] = 1;
+    println!("expectation: {triangle}");
     assert_eq!(graph, triangle);
 }
 

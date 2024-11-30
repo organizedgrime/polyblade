@@ -66,16 +66,17 @@ impl Distance {
 
     /// Deletes a vertex from the matrix
     pub fn delete(&mut self, v: VertexId) {
-        let mut distance = vec![];
+        let mut distance = Distance::new(self.order - 1);
         for i in 0..self.order {
             for j in i..self.order {
                 if i != v && j != v {
-                    distance.push(self[[i, j]]);
+                    let x = if i > v { i - 1 } else { i };
+                    let y = if j > v { j - 1 } else { j };
+                    distance[[x, y]] = self[[i, j]];
                 }
             }
         }
-        self.order -= 1;
-        self.distance = distance;
+        *self = distance;
     }
 
     /// Enumerates the vertices connected to v
