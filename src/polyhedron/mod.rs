@@ -223,17 +223,6 @@ impl Polyhedron {
         }
     }
 
-    // pub fn preset(preset: &PresetMessage) -> Polyhedron {
-    //     let shape = Shape::preset(preset);
-    //     let render = Render::new(shape.len());
-    //     Polyhedron {
-    //         name: preset.to_string(),
-    //         shape,
-    //         render,
-    //         transactions: vec![],
-    //     }
-    // }
-
     pub fn face_centroid(&self, face_index: usize) -> Vec3 {
         // All vertices associated with this face
         self.shape.cycles[face_index]

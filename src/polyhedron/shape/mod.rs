@@ -69,11 +69,6 @@ impl Shape {
         self.springs = self.distance.springs();
     }
 
-    #[allow(dead_code)]
-    pub fn compute_springs(&mut self) {
-        self.springs = self.distance.springs();
-    }
-
     pub fn compute_graph_svg(&mut self) {
         self.svg = self.distance.svg().unwrap_or_default();
     }

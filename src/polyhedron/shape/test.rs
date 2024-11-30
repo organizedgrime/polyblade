@@ -1,8 +1,4 @@
 use super::*;
-use crate::render::message::PresetMessage::{self, *};
-use std::fs::create_dir_all;
-
-use test_case::test_case;
 
 impl Shape {
     pub fn tetrahedron() -> Shape {
@@ -14,22 +10,6 @@ impl Shape {
     }
 }
 
-// #[test]
-// fn truncate_contract() {
-//     let prefix = "tests/truncate_contract/";
-//     create_dir_all(prefix).unwrap();
-//     let mut shape = Shape::from(Distance::tetrahedron());
-//     //shape.distance.render(prefix, "tetrahedron.svg");
-//     let edges = shape.truncate(None);
-//     println!("edges: {edges:?}");
-//     //shape.distance.render(prefix, "truncated_tetrahedron.svg");
-//     shape.distance.contract_edges(edges);
-//     // shape
-//     //     .distance
-//     //     .render(prefix, "contracted_truncated_tetrahedron.svg");
-//     assert_eq!(Distance::tetrahedron(), shape.distance);
-// }
-//
 #[test]
 #[ignore]
 fn split_vertex_contract() {

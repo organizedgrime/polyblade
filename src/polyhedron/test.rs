@@ -2,6 +2,9 @@ use super::*;
 use crate::render::message::PresetMessage::{self, *};
 use std::fs::create_dir_all;
 //
+
+impl Polyhedron {}
+
 use test_case::test_case;
 #[test_case(Polyhedron::preset(&Pyramid(3)); "T")]
 #[test_case(Polyhedron::preset(&Prism(4)); "C")]
@@ -18,6 +21,14 @@ fn polytope_apsp(poly: Polyhedron) {
     floyd.shape.floyd();
     assert_eq!(bfs.shape, poly.shape);
     assert_eq!(bfs.shape, floyd.shape);
+}
+
+#[test]
+fn truncate_contract() {
+    let mut shape = Polyhedron::preset(&Pyramid(3));
+    let edges = shape.truncate(0);
+    shape.contract(edges);
+    assert_eq!(Polyhedron::preset(&Pyramid(3)).shape, shape.shape);
 }
 
 #[test]

@@ -1,4 +1,5 @@
 use super::*;
+use PresetMessage::*;
 
 impl Polyhedron {
     pub fn preset(preset: &PresetMessage) -> Polyhedron {
@@ -6,7 +7,7 @@ impl Polyhedron {
         let mut poly = match preset {
             Octahedron => Self::octahedron(),
             Dodecahedron => Self::dodecahedron(),
-            Icosahedron => todo!(),
+            Icosahedron => Self::icosahedron(),
             _ => {
                 let shape = match preset {
                     Prism(n) => Shape::prism(*n),
@@ -30,25 +31,26 @@ impl Polyhedron {
     }
 
     fn octahedron() -> Polyhedron {
-        let mut polyhedron = Polyhedron::preset(&PresetMessage::Pyramid(3));
+        let mut polyhedron = Polyhedron::preset(&Pyramid(3));
         polyhedron.ambo_contract();
         polyhedron
     }
 
     fn dodecahedron() -> Polyhedron {
-        // polyhedron.ambo_contract();
+        let mut polyhedron = Polyhedron::preset(&AntiPrism(5));
+        polyhedron.ambo_contract();
         // let edges = polyhedron.truncate(0);
-        //polyhedron.contract(edges);
-        // polyhedron.truncate(5);
-        Polyhedron::preset(&PresetMessage::AntiPrism(5))
+        // polyhedron.contract(edges);
+        polyhedron.truncate(5);
+        polyhedron
     }
 
-    //
-    // pub fn icosahedron() -> Distance {
-    //     let mut graph = Distance::anti_prism(5);
-    //     graph.kis(Some(5));
-    //     graph
-    // }
+    pub fn icosahedron() -> Polyhedron {
+        let mut graph = Polyhedron::preset(&AntiPrism(5));
+        graph.shape.kis(Some(5));
+        graph.render.new_capacity(graph.shape.order());
+        graph
+    }
     //
     // pub fn icosahedron() -> Distance {
     //     let dodecahedron = Self::dodecahedron();
