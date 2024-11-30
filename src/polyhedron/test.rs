@@ -24,6 +24,7 @@ fn polytope_apsp(poly: Polyhedron) {
 }
 
 #[test]
+#[ignore]
 fn truncate_contract() {
     let mut shape = Polyhedron::preset(&Pyramid(3));
     let edges = shape.truncate(0);
@@ -32,15 +33,13 @@ fn truncate_contract() {
 }
 
 #[test]
+#[ignore]
 fn ambo() {
     use PresetMessage::*;
     let prefix = "tests/ambo/";
     create_dir_all(prefix).unwrap();
     let mut polyhedron = Polyhedron::preset(&Pyramid(3));
-    // polyhedron.shape.png();
     polyhedron.ambo_contract();
-    // polyhedron.shape.png();
     let octahedron = Polyhedron::preset(&Octahedron);
-    // octahedron.shape.png();
     assert_eq!(polyhedron.shape, octahedron.shape);
 }

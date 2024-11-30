@@ -24,15 +24,11 @@ impl Shape {
         let cycles: Vec<&Cycle> = self
             .cycles
             .iter()
-            .filter_map(move |cycle| {
+            .filter(move |cycle| {
                 if let Some(degree) = degree {
-                    if cycle.len() == degree {
-                        Some(cycle)
-                    } else {
-                        None
-                    }
+                    cycle.len() == degree
                 } else {
-                    Some(cycle)
+                    true
                 }
             })
             .collect();

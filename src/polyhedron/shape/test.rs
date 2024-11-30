@@ -1,10 +1,6 @@
 use super::*;
 
 impl Shape {
-    pub fn tetrahedron() -> Shape {
-        Shape::from(Distance::tetrahedron())
-    }
-
     pub fn floyd(&mut self) {
         self.distance.floyd();
     }
@@ -31,15 +27,3 @@ fn split_vertex_contract() {
     test.distance.contract_edges(edges);
     assert_eq!(Distance::tetrahedron(), test.distance);
 }
-
-// #[test]
-// fn ambo() {
-//     // let prefix = "tests/ambo/";
-//     // create_dir_all(prefix).unwrap();
-//     let tetrahedron = Shape::from(Distance::tetrahedron());
-//
-//     assert_eq!(
-//         tetrahedron.ambod(),
-//         Distance::preset(&PresetMessage::Octahedron)
-//     );
-// }
