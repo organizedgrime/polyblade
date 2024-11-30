@@ -139,27 +139,14 @@ impl From<&Distance> for Cycles {
     fn from(distance: &Distance) -> Self {
         let mut triplets: Vec<Vec<_>> = Default::default();
         let mut cycles: HashSet<Vec<_>> = Default::default();
-        // let mut edge_incidents: Distance = distance.clone();
-        // for [v, u] in edge_incidents.vertex_pairs() {
-        //     if edge_incidents[[v, u]] == 1 {
-        //         edge_incidents[[v, u]] = 0;
-        //     } else {
-        //         edge_incidents[[v, u]] = usize::MAX;
-        //     }
-        // }
-        // println!("distance:\n{distance}");
-        // println!("edge_incidents_starting:\n{edge_incidents}");
 
         // find all the triplets
-        for u in 0..distance.len() {
-            for x in (u + 1)..distance.len() {
-                for y in (x + 1)..distance.len() {
+        for u in 0..distance.order() {
+            for x in (u + 1)..distance.order() {
+                for y in (x + 1)..distance.order() {
                     if distance[[u, x]] == 1 && distance[[u, y]] == 1 {
                         if distance[[x, y]] == 1 {
                             cycles.insert(vec![x, u, y]);
-                            // edge_incidents[[x, u]] += 1;
-                            // edge_incidents[[u, y]] += 1;
-                            // edge_incidents[[y, x]] += 1;
                         } else {
                             triplets.push(vec![x, u, y]);
                         }
@@ -200,18 +187,7 @@ impl From<&Distance> for Cycles {
                         // new_face.push(v);
                         let new = [p.clone(), vec![v]].concat();
                         if distance.connections(p[0]).contains(&v) {
-                            // if edge_incidents[[p[0], v]] >= 2 {
-                            //     log::info!("i was about to send {new:?} but [{}, {}] is already greater than 2", p[0], v)
-                            // } else {
-                            // for i in 0..new.len() {
-                            //     edge_incidents[[new[i], new[(i + 1) % new.len()]]] += 1;
-                            // }
-                            if distance.cycle_is_face(new.clone()) {
-                                cycles.insert(new);
-                            } else {
-                                // println!("i was going to insert {new:?} but it's not a valid face");
-                            }
-                            // }
+                            cycles.insert(new);
                         } else {
                             triplets.push(new);
                         }

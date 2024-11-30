@@ -44,8 +44,8 @@ impl Display for Shape {
 }
 
 impl Shape {
-    pub fn len(&self) -> usize {
-        self.distance.len()
+    pub fn order(&self) -> usize {
+        self.distance.order()
     }
 
     pub fn degree(&self, v: usize) -> usize {
@@ -69,6 +69,8 @@ impl Shape {
         // log::info!("new cycles:\n{:?}", self.cycles);
         // Find and save springs
         self.springs = self.distance.springs();
+        log::info!("shape: {self}");
+        log::info!("cycles: {:?}", self.cycles);
     }
 
     #[allow(dead_code)]

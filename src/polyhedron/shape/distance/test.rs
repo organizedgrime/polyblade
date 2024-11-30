@@ -58,7 +58,9 @@ fn basics() {
     assert_eq!(graph.connections(1), vec![2]);
 
     // Delete
+    println!("graph: {graph}");
     graph.delete(1);
+    println!("graph: {graph}");
     assert_eq!(graph.connections(0), vec![1]);
     assert_eq!(graph.connections(2), vec![]);
     assert_eq!(graph.connections(1), vec![0]);

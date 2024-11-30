@@ -156,7 +156,7 @@ impl Polyhedron {
                             ]
                         }
                     };
-                    self.render.new_capacity(self.shape.len());
+                    self.render.new_capacity(self.shape.order());
                     self.transactions = [new_transactions, self.transactions.clone()].concat();
                 }
                 Name(c) => {

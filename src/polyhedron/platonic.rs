@@ -15,7 +15,7 @@ impl Polyhedron {
                     _ => todo!(),
                 };
 
-                let render = Render::new(shape.len());
+                let render = Render::new(shape.order());
 
                 Polyhedron {
                     name: preset.to_string(),

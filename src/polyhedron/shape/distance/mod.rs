@@ -2,8 +2,8 @@ mod conway;
 mod platonic;
 mod svg;
 
-// #[cfg(test)]
-// mod test;
+#[cfg(test)]
+mod test;
 
 use crate::polyhedron::VertexId;
 use std::collections::HashSet;
@@ -19,7 +19,9 @@ use std::{
 /// n             ->   actual distance
 #[derive(Debug, Default, Clone, PartialEq)]
 pub(super) struct Distance {
-    distance: Vec<Vec<usize>>,
+    /// The order is the number of vertices
+    order: usize,
+    distance: Vec<usize>,
 }
 
 impl Distance {
@@ -30,8 +32,10 @@ impl Distance {
     /// [ M | M | M | ... | M | M | M | 0 ]
     pub fn new(n: usize) -> Self {
         Distance {
+            order: n,
             distance: (0..n)
                 .map(|m| [vec![usize::MAX; m], vec![0]].concat())
+                .flatten()
                 .collect(),
         }
     }
@@ -55,16 +59,23 @@ impl Distance {
     /// Inserts a new vertex in the matrix
     pub fn insert(&mut self) -> VertexId {
         self.distance
-            .push([vec![usize::MAX; self.len()], vec![0]].concat());
-        self.len() - 1
+            .extend([vec![usize::MAX; self.order], vec![0]].concat());
+        self.order += 1;
+        self.order - 1
     }
 
     /// Deletes a vertex from the matrix
     pub fn delete(&mut self, v: VertexId) {
-        for row in &mut self.distance[v..] {
-            row.remove(v);
+        let mut distance = vec![];
+        for i in 0..self.order {
+            for j in i..self.order {
+                if i != v && j != v {
+                    distance.push(self[[i, j]]);
+                }
+            }
         }
-        self.distance.remove(v);
+        self.order -= 1;
+        self.distance = distance;
     }
 
     /// Enumerates the vertices connected to v
@@ -74,7 +85,7 @@ impl Distance {
 
     /// Iterable Range representing vertex IDs
     pub fn vertices(&self) -> Range<VertexId> {
-        0..self.distance.len()
+        0..self.order
     }
 
     /// All possible compbinations of vertices
@@ -88,8 +99,8 @@ impl Distance {
     }
 
     /// Vertex Count
-    pub fn len(&self) -> usize {
-        self.distance.len()
+    pub fn order(&self) -> usize {
+        self.order
     }
 
     /// Maximum distance value
@@ -109,7 +120,7 @@ impl Distance {
     pub fn is_connected(&self) -> bool {
         let mut visited = HashSet::new();
         self.dfs(&mut visited, 0);
-        visited.len() == self.len()
+        visited.len() == self.order()
     }
 
     pub fn pst(&mut self) -> Option<()> {
@@ -122,20 +133,20 @@ impl Distance {
         //     return;
         // }
 
-        let n = self.len();
+        let n = self.order();
         // Vertex
         //
         // d-queues associated w each vertex
         // maps from v -> ( maps from d -> u )
-        let mut dqueue: Vec<VecDeque<(VertexId, usize)>> = vec![Default::default(); self.len()];
+        let mut dqueue: Vec<VecDeque<(VertexId, usize)>> = vec![Default::default(); self.order()];
         //
-        let mut children: Vec<Vec<VertexId>> = vec![Default::default(); self.len()];
+        let mut children: Vec<Vec<VertexId>> = vec![Default::default(); self.order()];
 
         // Counters for vertices whos shortest paths have already been obtained
-        let mut counters: Vec<usize> = vec![n - 1; self.len()];
+        let mut counters: Vec<usize> = vec![n - 1; self.order()];
 
         // The element D[i, j] represents the distance from v_i to vj.
-        let mut dist: Distance = Distance::new(self.len());
+        let mut dist: Distance = Distance::new(self.order());
 
         // d = 0
         let mut depth = 1;
@@ -231,7 +242,7 @@ impl Distance {
 
     /// Number of faces
     pub fn face_count(&self) -> i64 {
-        2 + self.edges().count() as i64 - self.len() as i64
+        2 + self.edges().count() as i64 - self.order() as i64
     }
 }
 
@@ -239,24 +250,28 @@ impl Index<[VertexId; 2]> for Distance {
     type Output = usize;
 
     fn index(&self, index: [VertexId; 2]) -> &Self::Output {
-        &self.distance[index[0].max(index[1])][index[0].min(index[1])]
+        let x = index[0].max(index[1]);
+        let y = index[0].min(index[1]);
+        &self.distance[(x * (x + 1)) / 2 + y]
     }
 }
 
 impl IndexMut<[VertexId; 2]> for Distance {
     fn index_mut(&mut self, index: [VertexId; 2]) -> &mut Self::Output {
-        &mut self.distance[index[0].max(index[1])][index[0].min(index[1])]
+        let x = index[0].max(index[1]);
+        let y = index[0].min(index[1]);
+        &mut self.distance[(x * (x + 1)) / 2 + y]
     }
 }
 
 impl Display for Distance {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_fmt(format_args!("\t|"))?;
-        for i in 0..self.len() {
+        for i in 0..self.order() {
             f.write_fmt(format_args!(" {i} |"))?;
         }
         f.write_fmt(format_args!("\n\t"))?;
-        for _ in 0..self.len() {
+        for _ in 0..self.order() {
             f.write_fmt(format_args!("____"))?;
         }
         f.write_fmt(format_args!("\n"))?;
