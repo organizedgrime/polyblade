@@ -21,7 +21,7 @@ jobs:
 
   dispatch:
     needs: [check_version]
-    if: steps.check_version.outputs.changed = 'true'
+    if: needs.check_version.outputs.changed == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Dispatch update to Personal Website
