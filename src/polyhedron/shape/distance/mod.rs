@@ -8,7 +8,6 @@ mod test;
 use crate::polyhedron::VertexId;
 use std::collections::HashSet;
 use std::{
-    collections::VecDeque,
     fmt::Display,
     ops::{Index, IndexMut, Range},
 };
@@ -109,6 +108,38 @@ impl Distance {
         self.vertex_pairs().map(|e| self[e]).max().unwrap_or(0)
     }
 
+    fn dfs(&self, visited: &mut HashSet<usize>, v: usize) {
+        visited.insert(v);
+        for u in self.neighbors(v) {
+            if !visited.contains(&u) {
+                self.dfs(visited, u);
+            }
+        }
+    }
+
+    fn is_connected(&self) -> bool {
+        let mut visited = HashSet::new();
+        self.dfs(&mut visited, 0);
+        visited.len() == self.order()
+    }
+
+    /// This functiona and the helpers it relies on should soon be superceded by
+    /// a proper plane embedding.
+    pub fn cycle_is_face(&self, mut cycle: Vec<VertexId>) -> bool {
+        let mut dupe = self.clone();
+        while !cycle.is_empty() {
+            let v = cycle.remove(0);
+            dupe.delete(v);
+            for u in &mut cycle {
+                if *u > v {
+                    *u -= 1;
+                }
+            }
+        }
+        dupe.is_connected()
+    }
+
+    /// Use a simple BFS to compute the shortest paths for all pairs
     pub fn bfs_apsp(&mut self) {
         for source in self.vertices() {
             let mut visited = vec![false; self.order()];

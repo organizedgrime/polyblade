@@ -165,11 +165,11 @@ impl From<&Distance> for Cycles {
                     let adj_v = distance.neighbors(v);
                     // if v is not a neighbor of u_2..u_t-1
                     if !p[1..p.len() - 1].iter().any(|i| adj_v.contains(i)) {
-                        // let mut new_face = p.clone();
-                        // new_face.push(v);
                         let new = [p.clone(), vec![v]].concat();
                         if distance.neighbors(p[0]).contains(&v) {
-                            cycles.insert(new);
+                            if distance.cycle_is_face(new.clone()) {
+                                cycles.insert(new);
+                            }
                         } else {
                             triplets.push(new);
                         }

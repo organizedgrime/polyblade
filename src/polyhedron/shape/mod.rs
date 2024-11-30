@@ -61,16 +61,12 @@ impl Shape {
     }
 
     pub fn recompute(&mut self) {
-        // log::info!("new distance:\n{}", self.distance);
         // Update the distance matrix in place
         self.distance.bfs_apsp();
         // Find and save cycles
         self.cycles = Cycles::from(&self.distance);
-        // log::info!("new cycles:\n{:?}", self.cycles);
         // Find and save springs
         self.springs = self.distance.springs();
-        log::info!("shape: {self}");
-        log::info!("cycles: {:?}", self.cycles);
     }
 
     #[allow(dead_code)]
