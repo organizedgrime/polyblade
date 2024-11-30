@@ -33,8 +33,7 @@ impl Distance {
         Distance {
             order: n,
             distance: (0..n)
-                .map(|m| [vec![usize::MAX; m], vec![0]].concat())
-                .flatten()
+                .flat_map(|m| [vec![usize::MAX; m], vec![0]].concat())
                 .collect(),
         }
     }
