@@ -31,8 +31,17 @@
     </p>
 </div>
 
+## WARNING
+This software is currently broken. Use the release published on crates.io while I fix it, which can be installed using the method below. The main branch is not as functional as it once was, but this will be remedied soon. 
+
+## Installation
+```cargo install polyblade```
+
+Note that the `webgl` demo is available [here](https://vera.lgbt/software/polyblade/), but is notably less performant than native code.
+
+### Build from source
 To run this software, simply clone the repository and use `cargo run --release`.
-The `webgl` demo is available, but is notably less performant than native code. 
+For the `webgl` build, run `trunk serve --release`. 
         
 #### Conway Roadmap
 - [x] Ambo
