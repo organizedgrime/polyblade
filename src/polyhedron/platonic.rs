@@ -35,18 +35,6 @@ impl Polyhedron {
         polyhedron.ambo_contract();
         polyhedron
     }
-
-    /* pub fn dodecahedron() -> Polyhedron {
-        let mut p = Polyhedron::preset(&AntiPrism(5));
-        let edges = p.expand(false);
-        p.contract_edges(edges);
-        p.truncate(Some(5));
-        p.pst();
-        p.springs();
-        p.name = "D".into();
-        p
-    } */
-
     pub fn icosahedron() -> Polyhedron {
         let mut graph = Polyhedron::preset(&AntiPrism(5));
         graph.shape.kis(Some(5));

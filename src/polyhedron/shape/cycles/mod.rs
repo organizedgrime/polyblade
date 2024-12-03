@@ -139,7 +139,6 @@ impl From<&Distance> for Cycles {
     fn from(distance: &Distance) -> Self {
         let mut triplets: Vec<Vec<_>> = Default::default();
         let mut cycles: HashSet<Vec<_>> = Default::default();
-
         // find all the triplets
         for u in 0..distance.order() {
             for x in (u + 1)..distance.order() {
