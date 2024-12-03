@@ -1,4 +1,4 @@
-use super::{Cycles, Shape};
+use super::{Cycle, Cycles, Shape};
 use crate::polyhedron::VertexId;
 
 impl Shape {
@@ -11,20 +11,29 @@ impl Shape {
 
     pub fn contract_edges(&mut self, edges: Vec<[VertexId; 2]>) {
         self.distance.contract_edges(edges);
+        // Delete a
+        // for
+        // for i in 0..self.cycles.len() {
+        //     self.cycles[i].replace(v, u);
+        // }
         self.recompute();
     }
 
-    #[allow(dead_code)]
     pub fn kis(&mut self, degree: Option<usize>) -> Vec<[VertexId; 2]> {
         let edges = self.distance.edges().collect();
-        // let mut cycles = self.cycles.clone();
-        if let Some(degree) = degree {
-            self.cycles
-                .iter()
-                .collect::<Vec<_>>()
-                .retain(|c| c.len() == degree);
-        }
-        for cycle in self.cycles.iter() {
+        let cycles: Vec<&Cycle> = self
+            .cycles
+            .iter()
+            .filter(move |cycle| {
+                if let Some(degree) = degree {
+                    cycle.len() == degree
+                } else {
+                    true
+                }
+            })
+            .collect();
+
+        for cycle in cycles {
             let v = self.distance.insert();
             // let mut vpos = Vec3::zero();
 

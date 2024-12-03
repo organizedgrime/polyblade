@@ -1,13 +1,10 @@
-use std::fs::create_dir_all;
-
 use super::*;
-use crate::render::message::PresetMessage::{self, *};
-use test_case::test_case;
+
 
 impl Distance {
     pub fn floyd(&mut self) {
         // let dist be a |V| × |V| array of minimum distances initialized to ∞ (infinity)
-        let mut graph: Distance = Distance::new(self.distance.len());
+        let mut graph: Distance = Distance::new(self.order);
         for e in self.edges() {
             graph[e] = 1;
         }
@@ -47,21 +44,23 @@ fn basics() {
     graph.connect([0, 1]);
     graph.connect([0, 2]);
     graph.connect([1, 2]);
-    assert_eq!(graph.connections(0), vec![1, 2]);
-    assert_eq!(graph.connections(1), vec![0, 2]);
-    assert_eq!(graph.connections(2), vec![0, 1]);
-    assert_eq!(graph.connections(3), vec![]);
+    assert_eq!(graph.neighbors(0), vec![1, 2]);
+    assert_eq!(graph.neighbors(1), vec![0, 2]);
+    assert_eq!(graph.neighbors(2), vec![0, 1]);
+    assert_eq!(graph.neighbors(3), vec![]);
 
     // Disconnect
     graph.disconnect([0, 1]);
-    assert_eq!(graph.connections(0), vec![2]);
-    assert_eq!(graph.connections(1), vec![2]);
+    assert_eq!(graph.neighbors(0), vec![2]);
+    assert_eq!(graph.neighbors(1), vec![2]);
 
     // Delete
+    println!("graph: {graph}");
     graph.delete(1);
-    assert_eq!(graph.connections(0), vec![1]);
-    assert_eq!(graph.connections(2), vec![]);
-    assert_eq!(graph.connections(1), vec![0]);
+    println!("graph: {graph}");
+    assert_eq!(graph.neighbors(0), vec![1]);
+    assert_eq!(graph.neighbors(2), vec![]);
+    assert_eq!(graph.neighbors(1), vec![0]);
 }
 
 #[test]
@@ -73,20 +72,43 @@ fn chordless_cycles() {
     graph.connect([2, 3]);
 
     println!("chordless_cycles:");
-    println!("{graph}");
-    graph.pst();
-    println!("{graph}");
-
+    graph.bfs_apsp();
     graph.connect([2, 0]);
 }
 
 #[test]
 fn contract_edge() {
     let mut graph = Distance::tetrahedron();
+    println!("tetrahedron: {graph}");
+    println!("contracting [0, 2]......");
     graph.contract_edge([0, 2]);
+    println!("contracted: {graph}");
     let mut triangle = Distance::new(3);
     triangle[[0, 1]] = 1;
     triangle[[1, 2]] = 1;
     triangle[[2, 0]] = 1;
+    println!("expectation: {triangle}");
     assert_eq!(graph, triangle);
+}
+
+#[test]
+fn bfs_apsp() {
+    let mut distance = Distance::new(4);
+    distance.connect([0, 1]);
+    distance.connect([1, 2]);
+    distance.connect([2, 3]);
+    distance.bfs_apsp();
+    assert_eq!(distance[[0, 2]], 2);
+    assert_eq!(distance[[1, 3]], 2);
+    assert_eq!(distance[[0, 3]], 3);
+
+    /*
+         *
+    [
+        [0, 1, -1, -1],
+        [1, 0, 1, -1],
+        [-1, 1, 0, 1],
+        [-1, -1, 1, 0],
+    ]
+         */
 }

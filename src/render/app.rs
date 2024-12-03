@@ -367,7 +367,7 @@ impl ApplicationHandler for App<'_> {
                                 // Operations
                                 "e" => Some(Expand),
                                 "d" => Some(Dual),
-                                "s" => Some(Snub),
+                                "s" => Some(SplitVertex(0)),
                                 "k" => Some(Kis),
                                 "j" => Some(Join),
                                 "a" => Some(Ambo),

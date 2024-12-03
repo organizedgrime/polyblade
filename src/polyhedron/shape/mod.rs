@@ -7,8 +7,8 @@ use std::{fmt::Display, ops::Range};
 use cycles::*;
 use distance::*;
 
-// #[cfg(test)]
-// mod test;
+#[cfg(test)]
+mod test;
 
 use crate::polyhedron::*;
 
@@ -44,12 +44,12 @@ impl Display for Shape {
 }
 
 impl Shape {
-    pub fn len(&self) -> usize {
-        self.distance.len()
+    pub fn order(&self) -> usize {
+        self.distance.order()
     }
 
     pub fn degree(&self, v: usize) -> usize {
-        self.distance.connections(v).len()
+        self.distance.neighbors(v).len()
     }
 
     pub fn edges(&self) -> impl Iterator<Item = [VertexId; 2]> + use<'_> {
@@ -61,18 +61,11 @@ impl Shape {
     }
 
     pub fn recompute(&mut self) {
-        // log::info!("new distance:\n{}", self.distance);
         // Update the distance matrix in place
-        self.distance.pst();
+        self.distance.bfs_apsp();
         // Find and save cycles
         self.cycles = Cycles::from(&self.distance);
-        // log::info!("new cycles:\n{:?}", self.cycles);
         // Find and save springs
-        self.springs = self.distance.springs();
-    }
-
-    #[allow(dead_code)]
-    pub fn compute_springs(&mut self) {
         self.springs = self.distance.springs();
     }
 

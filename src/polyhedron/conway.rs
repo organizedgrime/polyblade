@@ -42,7 +42,7 @@ impl Polyhedron {
         log::info!(
             "p: {}, d: {}",
             self.render.positions.len(),
-            self.shape.len()
+            self.shape.order()
         );
     }
 

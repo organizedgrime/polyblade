@@ -7,8 +7,8 @@ use render::*;
 use shape::*;
 pub use transaction::*;
 
-// #[cfg(test)]
-// mod test;
+#[cfg(test)]
+mod test;
 
 use std::{
     collections::HashMap,
@@ -156,7 +156,7 @@ impl Polyhedron {
                             ]
                         }
                     };
-                    self.render.new_capacity(self.shape.len());
+                    self.render.new_capacity(self.shape.order());
                     self.transactions = [new_transactions, self.transactions.clone()].concat();
                 }
                 Name(c) => {
@@ -222,17 +222,6 @@ impl Polyhedron {
             }
         }
     }
-
-    // pub fn preset(preset: &PresetMessage) -> Polyhedron {
-    //     let shape = Shape::preset(preset);
-    //     let render = Render::new(shape.len());
-    //     Polyhedron {
-    //         name: preset.to_string(),
-    //         shape,
-    //         render,
-    //         transactions: vec![],
-    //     }
-    // }
 
     pub fn face_centroid(&self, face_index: usize) -> Vec3 {
         // All vertices associated with this face
