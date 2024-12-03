@@ -222,7 +222,7 @@ impl Polyhedron {
             }
         }
     }
-  
+
     pub fn face_centroid(&self, face_index: usize) -> Vec3 {
         // All vertices associated with this face
         self.shape.cycles[face_index]

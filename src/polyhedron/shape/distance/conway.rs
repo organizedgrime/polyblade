@@ -33,7 +33,7 @@ impl Distance {
             }
         }
     }
-  
+
     pub fn split_vertex(&mut self, v: VertexId, connections: Vec<VertexId>) -> Vec<[VertexId; 2]> {
         // Remove the vertex
         let new_cycle: Cycle = Cycle::from(
@@ -60,20 +60,6 @@ impl Distance {
         }
 
         new_edges
-    }
-
-    pub fn cycle_is_face(&self, mut cycle: Vec<VertexId>) -> bool {
-        let mut dupe = self.clone();
-        while !cycle.is_empty() {
-            let v = cycle.remove(0);
-            dupe.delete(v);
-            for u in &mut cycle {
-                if *u > v {
-                    *u -= 1;
-                }
-            }
-        }
-        dupe.is_connected()
     }
 
     //
