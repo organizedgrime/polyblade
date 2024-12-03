@@ -31,8 +31,14 @@
     </p>
 </div>
 
+## Installation
+```cargo install polyblade```
+
+Note that the `webgl` demo is available [here](https://vera.lgbt/software/polyblade/), but is notably less performant than native code.
+
+### Build from source
 To run this software, simply clone the repository and use `cargo run --release`.
-The `webgl` demo is available, but is notably less performant than native code. 
+For the `webgl` build, run `trunk serve --release`. 
         
 #### Conway Roadmap
 - [x] Ambo
