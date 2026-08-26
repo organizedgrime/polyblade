@@ -25,10 +25,23 @@
           overlays = [ rust-overlay.overlays.default ];
         };
 
-        # wasm-bindgen's CLI version must match the `wasm-bindgen` crate version
-        # resolved in Cargo.lock exactly, or `dx` fails at build time with a
-        # "schema version mismatch" error.
-        wasmBindgenCli = pkgs.wasm-bindgen-cli_0_2_126;
+        # wasm-bindgen-cli must match the `wasm-bindgen` crate version in Cargo.lock
+        # exactly. nixpkgs tops out at 0.2.126, so 0.2.127 is built the same way
+        # nixpkgs itself builds pinned versions, once it catches up switch back to:
+        # wasmBindgenCli = pkgs.wasm-bindgen-cli_0_2_127;
+        wasmBindgenCli = pkgs.buildWasmBindgenCli rec {
+          src = pkgs.fetchCrate {
+            pname = "wasm-bindgen-cli";
+            version = "0.2.127";
+            hash = "sha256-di+qBAdd7pENLiIB9CoZoab+W5xeDoByMREcCGTSzWo=";
+          };
+
+          cargoDeps = pkgs.rustPlatform.fetchCargoVendor {
+            inherit src;
+            inherit (src) pname version;
+            hash = "sha256-FTv2GZIAQs0ePdIZXIXil7JbZ6kIT05VG6vqC1qNFxQ=";
+          };
+        };
 
         rustToolchain = pkgs.rust-bin.stable.latest.default.override {
           extensions = [
@@ -44,31 +57,37 @@
         # even when you only ever target `--platform web`.
         # Per https://dioxuslabs.com/learn/0.7/getting_started/#linux these are required to build (and run) `dx` on Linux at all.
         # macOS uses its native WebKit.framework instead, so these are Linux-only (webkitgtk is marked broken on Darwin in nixpkgs).
-        webviewLibs = pkgs.lib.optionals pkgs.stdenv.isLinux (with pkgs; [
-          webkitgtk_4_1
-          glib
-          gtk3
-          libsoup_3
-          xdotool
-          librsvg
-          libayatana-appindicator
-        ]);
+        webviewLibs = pkgs.lib.optionals pkgs.stdenv.isLinux (
+          with pkgs;
+          [
+            webkitgtk_4_1
+            glib
+            gtk3
+            libsoup_3
+            xdotool
+            librsvg
+            libayatana-appindicator
+          ]
+        );
 
         # Runtime libraries for the winit/wgpu native renderer (dx serve --native). Linux-only (X11/Wayland/Vulkan).
-        runtimeLibs = pkgs.lib.optionals pkgs.stdenv.isLinux (with pkgs; [
-          wayland
-          wayland-protocols
-          libxkbcommon
-          vulkan-loader
-          libGL
-          fontconfig
-          libx11
-          libxcb
-          libxcursor
-          libxi
-          libxrandr
-          libxxf86vm
-        ]);
+        runtimeLibs = pkgs.lib.optionals pkgs.stdenv.isLinux (
+          with pkgs;
+          [
+            wayland
+            wayland-protocols
+            libxkbcommon
+            vulkan-loader
+            libGL
+            fontconfig
+            libx11
+            libxcb
+            libxcursor
+            libxi
+            libxrandr
+            libxxf86vm
+          ]
+        );
 
         # `dx bundle --package-types appimage` needs `linuxdeploy`, but nixpkgs' `dioxus-cli` is
         # built with the `no-downloads` feature (Nix's model forbids silent runtime network
