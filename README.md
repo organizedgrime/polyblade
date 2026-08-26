@@ -55,10 +55,11 @@ Rest assured that in due time we will conquer all shapes.
 - [x] Bevel
 - [x] Expand
 - [x] Dual
-- [ ] Snub
-- [ ] Join
+- [x] Chamfer
+- [x] Snub
+- [x] Join
 - [ ] Zip
-- [ ] Gyro
+- [x] Gyro
 - [ ] Meta
 - [ ] Needle
 
