@@ -153,6 +153,49 @@ fn chamfer_cube_counts_and_ids() {
 }
 
 #[test]
+fn snub_cube_counts_and_ids() {
+    let mut cube = Shape::prism(4);
+    let old_ids: Vec<FaceId> = cube.cycles.ids().to_vec();
+
+    cube.snub();
+
+    // Snub cube: V=24, E=60 (24 ring + 24 rung + 12 diagonal), F=38 (6 squares + 32 triangles).
+    assert_eq!(cube.order(), 24, "vertex count");
+    assert_eq!(cube.edges().count(), 60, "edge count");
+    assert_eq!(cube.cycles.len(), 38, "face count");
+    for v in cube.vertices() {
+        assert_eq!(cube.degree(v), 5, "vertex {v} degree");
+    }
+    let tris = cube.cycles.iter().filter(|c| c.len() == 3).count();
+    let quads = cube.cycles.iter().filter(|c| c.len() == 4).count();
+    assert_eq!(tris, 32, "triangle faces");
+    assert_eq!(quads, 6, "square faces");
+    // Original faces persist as their corner copies, keeping their ids.
+    for id in old_ids {
+        let i = cube.cycles.ids().iter().position(|&x| x == id).unwrap();
+        assert_eq!(cube.cycles[i].len(), 4, "corner copy keeps side count");
+    }
+}
+
+#[test]
+fn snub_antiprism_counts() {
+    // A pentagon-bearing seed guards the discovery oracle against spurious long chordless cycles.
+    let mut shape = Shape::anti_prism(5);
+    let (v, e, f) = (shape.order(), shape.edges().count(), shape.cycles.len());
+
+    shape.snub();
+
+    // Snub counts: V'=2E, E'=5E, F'=F+V+2E.
+    assert_eq!(shape.order(), 2 * e, "vertex count");
+    assert_eq!(shape.edges().count(), 5 * e, "edge count");
+    assert_eq!(shape.cycles.len(), f + v + 2 * e, "face count");
+    let quads = shape.cycles.iter().filter(|c| c.len() == 4).count();
+    let pents = shape.cycles.iter().filter(|c| c.len() == 5).count();
+    assert_eq!(quads, 10, "one quad vertex figure per degree-4 vertex");
+    assert_eq!(pents, 2, "pentagon corner copies persist");
+}
+
+#[test]
 fn kis_children_record_their_parent() {
     let mut tetra = Shape::pyramid(3);
     let old_ids: Vec<FaceId> = tetra.cycles.ids().to_vec();

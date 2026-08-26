@@ -140,6 +140,17 @@ impl Shape {
     /// `e` expand / cantellation: one new vertex per original vertex-face corner.
     /// Returns each new vertex's origin (for render re-seeding) and the face-figure edges to contract for the dual.
     pub fn expand(&mut self) -> (Vec<VertexId>, Vec<[VertexId; 2]>) {
+        self.cantellate(false)
+    }
+
+    /// `s` snub: expand, then split each edge quad along a winding-consistent diagonal.
+    /// Chirality is uniform because winding is global; the enantiomer follows the handedness bit.
+    pub fn snub(&mut self) -> Vec<VertexId> {
+        self.cantellate(true).0
+    }
+
+    /// Shared scaffold for expand and snub, differing only in the per-edge faces.
+    fn cantellate(&mut self, snub: bool) -> (Vec<VertexId>, Vec<[VertexId; 2]>) {
         let topo = FaceTopology::snapshot(&self.cycles);
 
         // Index every (face, corner) incidence; `c[f][i]` is the new vertex at face `f`'s i-th corner.
@@ -174,6 +185,9 @@ impl Shape {
         topo.for_each_edge(|f, a, b, g| {
             distance.connect([corner(f, a), corner(g, a)]);
             distance.connect([corner(f, b), corner(g, b)]);
+            if snub {
+                distance.connect([corner(f, a), corner(g, b)]);
+            }
         });
 
         // Each original face persists as its corner-copy n-gon, keeping its id.
@@ -181,9 +195,17 @@ impl Shape {
         let mut new_ids: Vec<FaceId> = topo.ids.clone();
         // Each original edge spawns a quad, interleaved so each face's copy pair stays adjacent.
         // Wound opposite to f's a -> b so the quad opposes both persisted corner copies.
+        // Snub splits the quad into two triangles along the diagonal, once each way.
         topo.for_each_edge(|f, a, b, g| {
-            new_cycles.push(vec![corner(f, b), corner(f, a), corner(g, a), corner(g, b)]);
-            new_ids.push(self.fresh_face_id());
+            if snub {
+                new_cycles.push(vec![corner(f, b), corner(f, a), corner(g, b)]);
+                new_ids.push(self.fresh_face_id());
+                new_cycles.push(vec![corner(f, a), corner(g, a), corner(g, b)]);
+                new_ids.push(self.fresh_face_id());
+            } else {
+                new_cycles.push(vec![corner(f, b), corner(f, a), corner(g, a), corner(g, b)]);
+                new_ids.push(self.fresh_face_id());
+            }
         });
         // Each original vertex spawns its vertex-figure by walking the faces around v.
         for v in 0..self.order() {

@@ -117,7 +117,7 @@ pub enum ConwayMessage {
     //Ortho,
     Expand,
     // 5
-    // Gyro,
+    Gyro,
     Snub,
     // // 6
     // Meta,

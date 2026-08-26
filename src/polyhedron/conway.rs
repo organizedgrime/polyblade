@@ -63,6 +63,11 @@ impl Polyhedron {
         self.render.rebuild_from_parents(&parents);
     }
 
+    pub fn snub(&mut self) {
+        let parents = self.shape.snub();
+        self.render.rebuild_from_parents(&parents);
+    }
+
     /// Expands, then returns the face-figure edges to contract for the dual.
     /// The animated `Dual` transaction drives the contraction; call `dual` to apply it immediately.
     pub fn begin_dual(&mut self) -> Vec<[VertexId; 2]> {

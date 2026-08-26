@@ -131,10 +131,6 @@ impl Polyhedron {
                         self.finalize_face_colors();
                     }
                 }
-                Release(edges) => {
-                    self.shape.release(&edges);
-                    self.transactions.remove(0);
-                }
                 Conway(conway) => {
                     self.transactions.remove(0);
                     use ConwayMessage::*;
@@ -151,7 +147,8 @@ impl Polyhedron {
                             ]
                         }
                         Join => {
-                            todo!()
+                            // Join is the dual of ambo, composed like Bevel.
+                            vec![Conway(Ambo), Conway(Dual), Name('j')]
                         }
                         Ambo => {
                             let edges = self.ambo();
@@ -179,7 +176,17 @@ impl Polyhedron {
                             vec![Name('e')]
                         }
                         Snub => {
-                            todo!()
+                            self.snub();
+                            vec![Name('s')]
+                        }
+                        Gyro => {
+                            // Gyro is the dual of snub; contracting snub's own face figures would give the plain dual instead.
+                            vec![
+                                Conway(Snub),
+                                Wait(Instant::now() + Duration::from_millis(500)),
+                                Conway(Dual),
+                                Name('g'),
+                            ]
                         }
                         Bevel => {
                             vec![
@@ -197,7 +204,8 @@ impl Polyhedron {
                     self.finalize_face_colors();
                 }
                 Name(c) => {
-                    if c == 'b' {
+                    // Composed ops replace the two-letter prefix their parts just wrote.
+                    if matches!(c, 'b' | 'g' | 'j') {
                         self.name = self.name[2..].to_string();
                     }
                     if c == 'd' && &self.name[0..1] == "d" {

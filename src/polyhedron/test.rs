@@ -535,7 +535,7 @@ fn run_transactions(polyhedron: &mut Polyhedron) {
 fn transaction_loop_end_to_end() {
     use ConwayMessage::*;
     // Each operation exercised through the animated transaction machinery on a fresh cube.
-    for conway in [Truncate, Dual, Expand, Ambo, Kis, Chamfer] {
+    for conway in [Truncate, Dual, Expand, Ambo, Kis, Chamfer, Snub] {
         let mut polyhedron = Polyhedron::preset(&Prism(4));
         polyhedron.face_coloring.set_palette_len(9);
         polyhedron
@@ -571,5 +571,35 @@ fn transaction_loop_end_to_end() {
     // Bevel here queues truncate then ambo: V = E(tC) = 36, F = F(tC) + V(tC) = 38.
     assert_eq!(polyhedron.shape.order(), 36, "bevel vertex count");
     assert_eq!(polyhedron.shape.cycles.len(), 38, "bevel face count");
+    assert_uniform_colors_per_facetype(&polyhedron);
+
+    // Gyro composes snub + dual: gyro cube is the pentagonal icositetrahedron.
+    let mut polyhedron = Polyhedron::preset(&Prism(4));
+    polyhedron.face_coloring.set_palette_len(9);
+    polyhedron
+        .transactions
+        .push(Transaction::Conway(ConwayMessage::Gyro));
+    run_transactions(&mut polyhedron);
+    assert_eq!(polyhedron.shape.order(), 38, "gyro vertex count");
+    assert_eq!(polyhedron.shape.cycles.len(), 24, "gyro face count");
+    for c in polyhedron.shape.cycles.iter() {
+        assert_eq!(c.len(), 5, "all gyro cube faces are pentagons");
+    }
+    assert_eq!(polyhedron.name, "gCube", "gyro name");
+    assert_uniform_colors_per_facetype(&polyhedron);
+
+    // Join composes ambo + dual: join cube is the rhombic dodecahedron.
+    let mut polyhedron = Polyhedron::preset(&Prism(4));
+    polyhedron.face_coloring.set_palette_len(9);
+    polyhedron
+        .transactions
+        .push(Transaction::Conway(ConwayMessage::Join));
+    run_transactions(&mut polyhedron);
+    assert_eq!(polyhedron.shape.order(), 14, "join vertex count");
+    assert_eq!(polyhedron.shape.cycles.len(), 12, "join face count");
+    for c in polyhedron.shape.cycles.iter() {
+        assert_eq!(c.len(), 4, "all join cube faces are rhombi");
+    }
+    assert_eq!(polyhedron.name, "jCube", "join name");
     assert_uniform_colors_per_facetype(&polyhedron);
 }

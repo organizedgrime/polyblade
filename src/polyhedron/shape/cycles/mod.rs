@@ -81,7 +81,7 @@ impl Cycles {
     }
 
     /// Rediscovers faces from the distance matrix, minting fresh ids.
-    /// Only seed construction and the `release` fallback use this, operations build their cycles explicitly.
+    /// Only seed construction uses this, operations build their cycles explicitly.
     /// Orientation is made consistent and canonically handed here, see `orient_faces`.
     pub(super) fn discover(distance: &Distance, next_face_id: &mut FaceId) -> Self {
         let mut raw = chordless_cycles(distance);
