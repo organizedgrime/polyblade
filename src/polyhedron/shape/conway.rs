@@ -1,4 +1,4 @@
-use super::topology::{FaceTopology, undirected};
+use super::topology::FaceTopology;
 use super::{Cycles, Distance, Shape};
 use crate::polyhedron::{FaceId, VertexId};
 use std::collections::HashMap;
@@ -171,7 +171,7 @@ impl Shape {
             }
         }
         // Vertex-figure rungs: link the two faces' copies of each shared endpoint.
-        topo.for_each_interior_edge(|f, a, b, g| {
+        topo.for_each_edge(|f, a, b, g| {
             distance.connect([corner(f, a), corner(g, a)]);
             distance.connect([corner(f, b), corner(g, b)]);
         });
@@ -181,7 +181,7 @@ impl Shape {
         let mut new_ids: Vec<FaceId> = topo.ids.clone();
         // Each original edge spawns a quad, interleaved so each face's copy pair stays adjacent.
         // Wound opposite to f's a -> b so the quad opposes both persisted corner copies.
-        topo.for_each_interior_edge(|f, a, b, g| {
+        topo.for_each_edge(|f, a, b, g| {
             new_cycles.push(vec![corner(f, b), corner(f, a), corner(g, a), corner(g, b)]);
             new_ids.push(self.fresh_face_id());
         });
@@ -192,29 +192,13 @@ impl Shape {
                 .expect("vertex belongs to no face");
             let mut figure = Vec::new();
             let mut f = f0;
-            // Enter f0 via its edge (v, next); the walk exits via v's other edge each step.
-            // Entering each face through its next-edge keeps the figure opposing the quads.
-            let mut entry = {
-                let cyc = &topo.cycles[f0];
-                let k = topo.pos(f0, v);
-                undirected(cyc[(k + 1) % cyc.len()], v)
-            };
+            // Crossing each face's (prev, v) edge walks the faces in the order opposing the quads.
             loop {
                 figure.push(corner(f, v));
                 let cyc = &topo.cycles[f];
                 let k = topo.pos(f, v);
-                let next = cyc[(k + 1) % cyc.len()];
                 let prev = cyc[(k + cyc.len() - 1) % cyc.len()];
-                // Exit via whichever of v's two edges in f we didn't enter through.
-                let exit = if undirected(next, v) == entry {
-                    undirected(prev, v)
-                } else {
-                    undirected(next, v)
-                };
-                f = topo
-                    .other_face(f, exit[0], exit[1])
-                    .expect("open edge at vertex figure");
-                entry = exit;
+                f = topo.face_across(prev, v);
                 if f == f0 {
                     break;
                 }
@@ -260,7 +244,7 @@ impl Shape {
         let mut new_ids: Vec<FaceId> = topo.ids.clone();
         // Each original edge spawns a hexagon through both faces' shrunk copies.
         // Wound opposite to f's a -> b so the hexagon opposes both shrunk faces.
-        topo.for_each_interior_edge(|f, a, b, g| {
+        topo.for_each_edge(|f, a, b, g| {
             new_cycles.push(vec![
                 a,
                 corner(g, a),

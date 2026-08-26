@@ -206,28 +206,15 @@ impl Cycles {
 
 /// For each face, the sorted multiset of adjacent side-counts; shared by the sort key below and `Cycles::neighbor_signatures`.
 fn neighbor_type_signatures(cycles: &[Vec<VertexId>]) -> Vec<Vec<usize>> {
-    let mut edge_faces: HashMap<[VertexId; 2], Vec<usize>> = HashMap::new();
-    for (i, cycle) in cycles.iter().enumerate() {
-        let n = cycle.len();
-        for k in 0..n {
-            let (a, b) = (cycle[k], cycle[(k + 1) % n]);
-            let edge = if a < b { [a, b] } else { [b, a] };
-            edge_faces.entry(edge).or_default().push(i);
-        }
-    }
+    let directed = super::topology::directed_edge_faces(cycles);
     cycles
         .iter()
-        .enumerate()
-        .map(|(i, cycle)| {
+        .map(|cycle| {
             let n = cycle.len();
             let mut sides: Vec<usize> = (0..n)
-                .filter_map(|k| {
+                .map(|k| {
                     let (a, b) = (cycle[k], cycle[(k + 1) % n]);
-                    let edge = if a < b { [a, b] } else { [b, a] };
-                    edge_faces[&edge]
-                        .iter()
-                        .find(|&&j| j != i)
-                        .map(|&j| cycles[j].len())
+                    cycles[directed[&(b, a)]].len()
                 })
                 .collect();
             sides.sort_unstable();
