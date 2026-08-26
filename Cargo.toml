@@ -1,6 +1,6 @@
 [package]
 name = "polyblade"
-version = "0.4.0"
+version = "0.4.1"
 edition = "2024"
 description = "Make shapes dance."
 readme = "README.md"
@@ -38,13 +38,16 @@ tokio = { version = "1", features = ["time"] }
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 console_log = { version = "1", features = ["color"] }
 getrandom = { version = "0.2", features = ["js"] }
-web-sys = { version = "0.3.77", features = [
-  "CanvasRenderingContext2d",
-  "Document",
-  "Element",
-  "HtmlCanvasElement",
-  "Window",
-] }
+web-sys = {
+  version = "0.3.77",
+  features = [
+    "CanvasRenderingContext2d",
+    "Document",
+    "Element",
+    "HtmlCanvasElement",
+    "Window",
+  ]
+}
 web-time = { version = "1" }
 
 [features]

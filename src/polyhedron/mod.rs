@@ -131,10 +131,6 @@ impl Polyhedron {
                         self.finalize_face_colors();
                     }
                 }
-                Release(edges) => {
-                    self.shape.release(&edges);
-                    self.transactions.remove(0);
-                }
                 Conway(conway) => {
                     self.transactions.remove(0);
                     use ConwayMessage::*;
@@ -151,7 +147,8 @@ impl Polyhedron {
                             ]
                         }
                         Join => {
-                            todo!()
+                            // Join is the dual of ambo, composed like Bevel.
+                            vec![Conway(Ambo), Conway(Dual), Name('j')]
                         }
                         Ambo => {
                             let edges = self.ambo();
@@ -179,7 +176,17 @@ impl Polyhedron {
                             vec![Name('e')]
                         }
                         Snub => {
-                            todo!()
+                            self.snub();
+                            vec![Name('s')]
+                        }
+                        Gyro => {
+                            // Gyro is the dual of snub; contracting snub's own face figures would give the plain dual instead.
+                            vec![
+                                Conway(Snub),
+                                Wait(Instant::now() + Duration::from_millis(500)),
+                                Conway(Dual),
+                                Name('g'),
+                            ]
                         }
                         Bevel => {
                             vec![
@@ -197,7 +204,8 @@ impl Polyhedron {
                     self.finalize_face_colors();
                 }
                 Name(c) => {
-                    if c == 'b' {
+                    // Composed ops replace the two-letter prefix their parts just wrote.
+                    if matches!(c, 'b' | 'g' | 'j') {
                         self.name = self.name[2..].to_string();
                     }
                     if c == 'd' && &self.name[0..1] == "d" {
@@ -268,9 +276,8 @@ impl Polyhedron {
             / self.shape.cycles[face_index].len() as f32
     }
 
-    /// Outward-pointing unit normal of a face, via Newell's method.
-    /// Sign is corrected against the face centroid, since cycles have no winding-order guarantee.
-    pub fn face_normal(&self, face_index: usize) -> Vec3 {
+    /// Unnormalized Newell area vector following the face's winding.
+    fn newell(&self, face_index: usize) -> Vec3 {
         let cycle = &self.shape.cycles[face_index];
         let n = cycle.len();
         let mut normal = Vec3::zero();
@@ -281,13 +288,21 @@ impl Polyhedron {
             normal.y += (current.z - next.z) * (current.x + next.x);
             normal.z += (current.x - next.x) * (current.y + next.y);
         }
-        let normal = normal.normalized();
-        let centroid = self.face_centroid(face_index);
-        if normal.dot(centroid) < 0.0 {
-            -normal
-        } else {
-            normal
-        }
+        normal
+    }
+
+    /// +1.0 if the consistent winding points outward, else -1.0, via total signed volume.
+    /// The mesh recenters every tick, so the centroid-dot sum is well defined.
+    fn orientation_sign(&self) -> f32 {
+        (0..self.shape.cycles.len())
+            .map(|i| self.face_centroid(i).dot(self.newell(i)))
+            .sum::<f32>()
+            .signum()
+    }
+
+    /// Outward-pointing unit normal of a face, from its winding and the mesh's global sign.
+    pub fn face_normal(&self, face_index: usize) -> Vec3 {
+        (self.newell(face_index) * self.orientation_sign()).normalized()
     }
 
     /// Inscribed-circle radius of a face: the distance from its centroid to its nearest edge.

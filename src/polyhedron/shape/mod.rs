@@ -117,15 +117,6 @@ impl Shape {
         }
     }
 
-    /// Edge removal still falls back to full rediscovery, so face ids and colors reset here.
-    /// Only the unfinished Join operation uses it; switch to explicit cycle splicing when Join lands.
-    pub fn release(&mut self, edges: &[[VertexId; 2]]) {
-        for &edge in edges {
-            self.distance.disconnect(edge);
-        }
-        self.recompute();
-    }
-
     /// Given a vertex pairing, what is their distance in G divided by the diameter of G
     pub fn diameter_percent(&self, [v, u]: [VertexId; 2]) -> f32 {
         self.distance[[v, u]] as f32 / self.distance.diameter() as f32

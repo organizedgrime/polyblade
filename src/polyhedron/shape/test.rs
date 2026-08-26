@@ -86,6 +86,53 @@ fn op_chains_match_discovery() {
 }
 
 #[test]
+fn seeds_are_oriented() {
+    // Discovery orients every seed; sort's debug assert would fire otherwise.
+    // Pin the double-cover invariant explicitly so the intent survives refactors.
+    for seed in [
+        Shape::pyramid(3),
+        Shape::pyramid(5),
+        Shape::prism(4),
+        Shape::prism(6),
+        Shape::anti_prism(3),
+        Shape::anti_prism(5),
+    ] {
+        let mut directed = std::collections::HashSet::new();
+        for cycle in seed.cycles.iter() {
+            for k in 0..cycle.len() {
+                assert!(
+                    directed.insert((cycle[k], cycle[k + 1])),
+                    "duplicate traversal"
+                );
+            }
+        }
+        for &(a, b) in &directed {
+            assert!(
+                directed.contains(&(b, a)),
+                "edge missing opposite traversal"
+            );
+        }
+    }
+}
+
+#[test]
+fn sorted_connections_matches_face_winding() {
+    // Each face traversing (a, v, b) must see a immediately follow b in the ring at v.
+    let cube = Shape::prism(4);
+    for v in cube.vertices() {
+        let ring = cube.cycles.sorted_connections(v);
+        for cycle in cube.cycles.iter() {
+            if let Some(p) = cycle.iter().position(|&x| x == v) {
+                let a = cycle[p + cycle.len() - 1];
+                let b = cycle[p + 1];
+                let i = ring.iter().position(|&x| x == b).unwrap();
+                assert_eq!(ring[(i + 1) % ring.len()], a, "ring order at vertex {v}");
+            }
+        }
+    }
+}
+
+#[test]
 fn chamfer_cube_counts_and_ids() {
     let mut cube = Shape::prism(4);
     let old_ids: Vec<FaceId> = cube.cycles.ids().to_vec();
@@ -103,6 +150,49 @@ fn chamfer_cube_counts_and_ids() {
     }
     let hexes = cube.cycles.iter().filter(|c| c.len() == 6).count();
     assert_eq!(hexes, 12, "one hexagon per original edge");
+}
+
+#[test]
+fn snub_cube_counts_and_ids() {
+    let mut cube = Shape::prism(4);
+    let old_ids: Vec<FaceId> = cube.cycles.ids().to_vec();
+
+    cube.snub();
+
+    // Snub cube: V=24, E=60 (24 ring + 24 rung + 12 diagonal), F=38 (6 squares + 32 triangles).
+    assert_eq!(cube.order(), 24, "vertex count");
+    assert_eq!(cube.edges().count(), 60, "edge count");
+    assert_eq!(cube.cycles.len(), 38, "face count");
+    for v in cube.vertices() {
+        assert_eq!(cube.degree(v), 5, "vertex {v} degree");
+    }
+    let tris = cube.cycles.iter().filter(|c| c.len() == 3).count();
+    let quads = cube.cycles.iter().filter(|c| c.len() == 4).count();
+    assert_eq!(tris, 32, "triangle faces");
+    assert_eq!(quads, 6, "square faces");
+    // Original faces persist as their corner copies, keeping their ids.
+    for id in old_ids {
+        let i = cube.cycles.ids().iter().position(|&x| x == id).unwrap();
+        assert_eq!(cube.cycles[i].len(), 4, "corner copy keeps side count");
+    }
+}
+
+#[test]
+fn snub_antiprism_counts() {
+    // A pentagon-bearing seed guards the discovery oracle against spurious long chordless cycles.
+    let mut shape = Shape::anti_prism(5);
+    let (v, e, f) = (shape.order(), shape.edges().count(), shape.cycles.len());
+
+    shape.snub();
+
+    // Snub counts: V'=2E, E'=5E, F'=F+V+2E.
+    assert_eq!(shape.order(), 2 * e, "vertex count");
+    assert_eq!(shape.edges().count(), 5 * e, "edge count");
+    assert_eq!(shape.cycles.len(), f + v + 2 * e, "face count");
+    let quads = shape.cycles.iter().filter(|c| c.len() == 4).count();
+    let pents = shape.cycles.iter().filter(|c| c.len() == 5).count();
+    assert_eq!(quads, 10, "one quad vertex figure per degree-4 vertex");
+    assert_eq!(pents, 2, "pentagon corner copies persist");
 }
 
 #[test]

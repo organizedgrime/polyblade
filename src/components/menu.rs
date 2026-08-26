@@ -27,6 +27,7 @@ fn conway_shortcut(op: &ConwayMessage) -> Option<&'static str> {
         Kis => Some("K"),
         Truncate => Some("T"),
         Expand => Some("E"),
+        Gyro => Some("G"),
         Snub => Some("S"),
         Bevel => Some("B"),
         Chamfer => Some("C"),

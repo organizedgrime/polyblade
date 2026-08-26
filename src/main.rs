@@ -111,6 +111,7 @@ fn handle_key(evt: Event<KeyboardData>, schlegel: &mut Signal<bool>) {
             "k" => Some(PolybladeMessage::Conway(Kis)),
             "t" => Some(PolybladeMessage::Conway(Truncate)),
             "e" => Some(PolybladeMessage::Conway(Expand)),
+            "g" => Some(PolybladeMessage::Conway(Gyro)),
             "s" => Some(PolybladeMessage::Conway(Snub)),
             "b" => Some(PolybladeMessage::Conway(Bevel)),
             "c" => Some(PolybladeMessage::Conway(Chamfer)),
