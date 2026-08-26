@@ -86,6 +86,53 @@ fn op_chains_match_discovery() {
 }
 
 #[test]
+fn seeds_are_oriented() {
+    // Discovery orients every seed; sort's debug assert would fire otherwise.
+    // Pin the double-cover invariant explicitly so the intent survives refactors.
+    for seed in [
+        Shape::pyramid(3),
+        Shape::pyramid(5),
+        Shape::prism(4),
+        Shape::prism(6),
+        Shape::anti_prism(3),
+        Shape::anti_prism(5),
+    ] {
+        let mut directed = std::collections::HashSet::new();
+        for cycle in seed.cycles.iter() {
+            for k in 0..cycle.len() {
+                assert!(
+                    directed.insert((cycle[k], cycle[k + 1])),
+                    "duplicate traversal"
+                );
+            }
+        }
+        for &(a, b) in &directed {
+            assert!(
+                directed.contains(&(b, a)),
+                "edge missing opposite traversal"
+            );
+        }
+    }
+}
+
+#[test]
+fn sorted_connections_matches_face_winding() {
+    // Each face traversing (a, v, b) must see a immediately follow b in the ring at v.
+    let cube = Shape::prism(4);
+    for v in cube.vertices() {
+        let ring = cube.cycles.sorted_connections(v);
+        for cycle in cube.cycles.iter() {
+            if let Some(p) = cycle.iter().position(|&x| x == v) {
+                let a = cycle[p + cycle.len() - 1];
+                let b = cycle[p + 1];
+                let i = ring.iter().position(|&x| x == b).unwrap();
+                assert_eq!(ring[(i + 1) % ring.len()], a, "ring order at vertex {v}");
+            }
+        }
+    }
+}
+
+#[test]
 fn chamfer_cube_counts_and_ids() {
     let mut cube = Shape::prism(4);
     let old_ids: Vec<FaceId> = cube.cycles.ids().to_vec();

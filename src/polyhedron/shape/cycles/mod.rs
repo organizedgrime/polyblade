@@ -9,6 +9,7 @@ use std::{
 use ultraviolet::{Vec3, Vec4};
 
 use super::Distance;
+use super::topology::undirected;
 
 #[derive(Default, Debug, Clone)]
 pub(in super::super) struct Cycles {
@@ -55,12 +56,36 @@ impl Cycles {
             self.cycles.push(c);
             self.ids.push(id);
         }
+        #[cfg(debug_assertions)]
+        self.assert_oriented();
+    }
+
+    /// Debug invariant: every undirected edge is traversed exactly once in each direction.
+    #[cfg(debug_assertions)]
+    fn assert_oriented(&self) {
+        let mut directed: HashSet<(VertexId, VertexId)> = HashSet::new();
+        for cycle in self.iter() {
+            for k in 0..cycle.len() {
+                assert!(
+                    directed.insert((cycle[k], cycle[k + 1])),
+                    "edge traversed twice in the same direction"
+                );
+            }
+        }
+        for &(a, b) in &directed {
+            assert!(
+                directed.contains(&(b, a)),
+                "edge missing its opposite traversal"
+            );
+        }
     }
 
     /// Rediscovers faces from the distance matrix, minting fresh ids.
     /// Only seed construction and the `release` fallback use this, operations build their cycles explicitly.
+    /// Orientation is made consistent and canonically handed here, see `orient_faces`.
     pub(super) fn discover(distance: &Distance, next_face_id: &mut FaceId) -> Self {
-        let raw = chordless_cycles(distance);
+        let mut raw = chordless_cycles(distance);
+        orient_faces(&mut raw);
         let ids = raw
             .iter()
             .map(|_| {
@@ -81,38 +106,28 @@ impl Cycles {
     pub fn iter(&self) -> std::slice::Iter<'_, Cycle> {
         self.cycles.iter()
     }
-    /// Returns the
+    /// Neighbors of `v` in cyclic order, wound opposite to the incident faces.
+    /// Faces built directly from this ring stay consistently oriented.
     pub fn sorted_connections(&self, v: VertexId) -> Vec<VertexId> {
-        // We only care about cycles that contain the vertex
-        let mut relevant = self
+        // A face traversing (a, v, b) forces the ring step b -> a.
+        let steps = self
             .iter()
-            .filter_map(move |cycle| {
+            .filter_map(|cycle| {
                 cycle
                     .iter()
                     .position(|&x| x == v)
-                    .map(|p| [cycle[p + cycle.len() - 1], cycle[p + 1]])
+                    .map(|p| (cycle[p + 1], cycle[p + cycle.len() - 1]))
             })
-            .collect::<Vec<[VertexId; 2]>>();
+            .collect::<Vec<(VertexId, VertexId)>>();
+        let successor: HashMap<VertexId, VertexId> = steps.iter().copied().collect();
 
-        let mut sorted_connections = vec![relevant[0][0]];
-        loop {
-            let previous = sorted_connections.last().unwrap();
-            match relevant
-                .iter()
-                .position(|[v, u]| v == previous || u == previous)
-            {
-                Some(i) => {
-                    let [v, u] = relevant.remove(i);
-                    let next = if v == *previous { u } else { v };
-                    sorted_connections.push(next);
-                }
-                None => {
-                    break;
-                }
-            }
+        let mut ring = Vec::with_capacity(steps.len());
+        let mut next = steps[0].0;
+        for _ in 0..steps.len() {
+            ring.push(next);
+            next = successor[&next];
         }
-
-        sorted_connections[1..].to_vec()
+        ring
     }
     pub fn shape_vertices(&self) -> Vec<ShapeVertex> {
         let barycentric = [Vec3::unit_x(), Vec3::unit_y(), Vec3::unit_z()];
@@ -219,6 +234,66 @@ fn neighbor_type_signatures(cycles: &[Vec<VertexId>]) -> Vec<Vec<usize>> {
             sides
         })
         .collect()
+}
+
+/// Flips faces so every shared edge is traversed once in each direction.
+/// Assumes a connected closed 2-manifold; which global handedness wins is arbitrary.
+fn orient_faces(cycles: &mut [Vec<VertexId>]) {
+    let mut edge_faces: HashMap<[VertexId; 2], Vec<usize>> = HashMap::new();
+    for (f, cycle) in cycles.iter().enumerate() {
+        for k in 0..cycle.len() {
+            let edge = undirected(cycle[k], cycle[(k + 1) % cycle.len()]);
+            edge_faces.entry(edge).or_default().push(f);
+        }
+    }
+    debug_assert!(
+        edge_faces.values().all(|fs| fs.len() == 2),
+        "edge not bordering exactly two faces"
+    );
+
+    let traverses = |cycle: &[VertexId], a: VertexId, b: VertexId| {
+        (0..cycle.len()).any(|k| cycle[k] == a && cycle[(k + 1) % cycle.len()] == b)
+    };
+    let mut visited = vec![false; cycles.len()];
+    let mut queue = std::collections::VecDeque::from([0]);
+    visited[0] = true;
+    while let Some(f) = queue.pop_front() {
+        let cycle = cycles[f].clone();
+        for k in 0..cycle.len() {
+            let (a, b) = (cycle[k], cycle[(k + 1) % cycle.len()]);
+            let g = *edge_faces[&undirected(a, b)]
+                .iter()
+                .find(|&&g| g != f)
+                .expect("edge borders its face twice");
+            if !visited[g] {
+                if traverses(&cycles[g], a, b) {
+                    cycles[g].reverse();
+                }
+                visited[g] = true;
+                queue.push_back(g);
+            } else {
+                debug_assert!(!traverses(&cycles[g], a, b), "nonorientable face pairing");
+            }
+        }
+    }
+    debug_assert!(visited.iter().all(|&v| v), "face adjacency not connected");
+
+    // Canonicalize the one global handedness bit so discovery stays deterministic.
+    // The lexicographically smallest face must step from its least vertex to its lesser neighbor.
+    let f = (0..cycles.len())
+        .min_by_key(|&f| {
+            let mut vs = cycles[f].clone();
+            vs.sort_unstable();
+            vs
+        })
+        .unwrap();
+    let n = cycles[f].len();
+    let m = (0..n).min_by_key(|&k| cycles[f][k]).unwrap();
+    if cycles[f][(m + 1) % n] > cycles[f][(m + n - 1) % n] {
+        for cycle in cycles.iter_mut() {
+            cycle.reverse();
+        }
+    }
 }
 
 /// Chordless-cycle face search over the distance matrix; expensive, unordered output.

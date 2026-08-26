@@ -278,6 +278,20 @@ fn dodecahedron_is_well_formed() {
 }
 
 #[test]
+fn winding_points_outward_after_relaxation() {
+    let mut polyhedron = Polyhedron::preset(&Prism(4));
+    for _ in 0..2000 {
+        polyhedron.update(1.0, 0.016);
+    }
+    for i in 0..polyhedron.shape.cycles.len() {
+        assert!(
+            polyhedron.face_normal(i).dot(polyhedron.face_centroid(i)) > 0.0,
+            "face {i} normal must point outward"
+        );
+    }
+}
+
+#[test]
 fn dual_cube_gives_octahedron() {
     // Dual = expand, then contract the returned face-figure edges.
     let mut polyhedron = Polyhedron::preset(&Prism(4));

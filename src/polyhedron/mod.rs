@@ -268,9 +268,8 @@ impl Polyhedron {
             / self.shape.cycles[face_index].len() as f32
     }
 
-    /// Outward-pointing unit normal of a face, via Newell's method.
-    /// Sign is corrected against the face centroid, since cycles have no winding-order guarantee.
-    pub fn face_normal(&self, face_index: usize) -> Vec3 {
+    /// Unnormalized Newell area vector following the face's winding.
+    fn newell(&self, face_index: usize) -> Vec3 {
         let cycle = &self.shape.cycles[face_index];
         let n = cycle.len();
         let mut normal = Vec3::zero();
@@ -281,13 +280,21 @@ impl Polyhedron {
             normal.y += (current.z - next.z) * (current.x + next.x);
             normal.z += (current.x - next.x) * (current.y + next.y);
         }
-        let normal = normal.normalized();
-        let centroid = self.face_centroid(face_index);
-        if normal.dot(centroid) < 0.0 {
-            -normal
-        } else {
-            normal
-        }
+        normal
+    }
+
+    /// +1.0 if the consistent winding points outward, else -1.0, via total signed volume.
+    /// The mesh recenters every tick, so the centroid-dot sum is well defined.
+    fn orientation_sign(&self) -> f32 {
+        (0..self.shape.cycles.len())
+            .map(|i| self.face_centroid(i).dot(self.newell(i)))
+            .sum::<f32>()
+            .signum()
+    }
+
+    /// Outward-pointing unit normal of a face, from its winding and the mesh's global sign.
+    pub fn face_normal(&self, face_index: usize) -> Vec3 {
+        (self.newell(face_index) * self.orientation_sign()).normalized()
     }
 
     /// Inscribed-circle radius of a face: the distance from its centroid to its nearest edge.

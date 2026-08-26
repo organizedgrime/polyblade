@@ -180,8 +180,9 @@ impl Shape {
         let mut new_cycles: Vec<Vec<VertexId>> = c.clone();
         let mut new_ids: Vec<FaceId> = topo.ids.clone();
         // Each original edge spawns a quad, interleaved so each face's copy pair stays adjacent.
+        // Wound opposite to f's a -> b so the quad opposes both persisted corner copies.
         topo.for_each_interior_edge(|f, a, b, g| {
-            new_cycles.push(vec![corner(f, a), corner(f, b), corner(g, b), corner(g, a)]);
+            new_cycles.push(vec![corner(f, b), corner(f, a), corner(g, a), corner(g, b)]);
             new_ids.push(self.fresh_face_id());
         });
         // Each original vertex spawns its vertex-figure by walking the faces around v.
@@ -191,11 +192,12 @@ impl Shape {
                 .expect("vertex belongs to no face");
             let mut figure = Vec::new();
             let mut f = f0;
-            // Enter f0 via its edge (prev, v); the walk exits via v's other edge each step.
+            // Enter f0 via its edge (v, next); the walk exits via v's other edge each step.
+            // Entering each face through its next-edge keeps the figure opposing the quads.
             let mut entry = {
                 let cyc = &topo.cycles[f0];
                 let k = topo.pos(f0, v);
-                undirected(cyc[(k + cyc.len() - 1) % cyc.len()], v)
+                undirected(cyc[(k + 1) % cyc.len()], v)
             };
             loop {
                 figure.push(corner(f, v));
@@ -257,14 +259,15 @@ impl Shape {
         let mut new_cycles: Vec<Vec<VertexId>> = c.clone();
         let mut new_ids: Vec<FaceId> = topo.ids.clone();
         // Each original edge spawns a hexagon through both faces' shrunk copies.
+        // Wound opposite to f's a -> b so the hexagon opposes both shrunk faces.
         topo.for_each_interior_edge(|f, a, b, g| {
             new_cycles.push(vec![
                 a,
-                corner(f, a),
-                corner(f, b),
-                b,
-                corner(g, b),
                 corner(g, a),
+                corner(g, b),
+                b,
+                corner(f, b),
+                corner(f, a),
             ]);
             new_ids.push(self.fresh_face_id());
         });
