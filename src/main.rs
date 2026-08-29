@@ -140,12 +140,15 @@ pub fn PolyhedronCanvas() -> Element {
     let mut dragging = use_signal(|| false);
     let mut last_pos = use_signal(|| None::<(f32, f32)>);
 
+    // Blitz (native) dispatches classic mouse events only — no pointer/touch support.
+    #[cfg(not(target_arch = "wasm32"))]
     let onmousedown = move |evt: Event<MouseData>| {
         let coords = evt.client_coordinates();
         dragging.set(true);
         last_pos.set(Some((coords.x as f32, coords.y as f32)));
         push_message(PolybladeMessage::Render(RenderMessage::Rotating(false)));
     };
+    #[cfg(not(target_arch = "wasm32"))]
     let onmousemove = move |evt: Event<MouseData>| {
         if dragging() {
             let coords = evt.client_coordinates();
@@ -159,7 +162,40 @@ pub fn PolyhedronCanvas() -> Element {
             last_pos.set(Some((x, y)));
         }
     };
+    #[cfg(not(target_arch = "wasm32"))]
     let stop_dragging = move |_: Event<MouseData>| {
+        if dragging() {
+            dragging.set(false);
+            last_pos.set(None);
+            push_message(PolybladeMessage::Render(RenderMessage::Rotating(true)));
+        }
+    };
+
+    // Pointer events unify mouse, touch, and pen into one event stream on
+    // web (unlike native/Blitz, which has no pointer/touch support at all).
+    #[cfg(target_arch = "wasm32")]
+    let onpointerdown = move |evt: Event<PointerData>| {
+        let coords = evt.client_coordinates();
+        dragging.set(true);
+        last_pos.set(Some((coords.x as f32, coords.y as f32)));
+        push_message(PolybladeMessage::Render(RenderMessage::Rotating(false)));
+    };
+    #[cfg(target_arch = "wasm32")]
+    let onpointermove = move |evt: Event<PointerData>| {
+        if dragging() {
+            let coords = evt.client_coordinates();
+            let (x, y) = (coords.x as f32, coords.y as f32);
+            if let Some((last_x, last_y)) = last_pos() {
+                push_message(PolybladeMessage::Render(RenderMessage::Dragged {
+                    dx: x - last_x,
+                    dy: y - last_y,
+                }));
+            }
+            last_pos.set(Some((x, y)));
+        }
+    };
+    #[cfg(target_arch = "wasm32")]
+    let stop_pointer_dragging = move |_: Event<PointerData>| {
         if dragging() {
             dragging.set(false);
             last_pos.set(None);
@@ -218,10 +254,10 @@ pub fn PolyhedronCanvas() -> Element {
             rsx! {
                 div {
                     class: "canvas-div",
-                    onmousedown,
-                    onmousemove,
-                    onmouseup: stop_dragging,
-                    onmouseleave: stop_dragging,
+                    onpointerdown,
+                    onpointermove,
+                    onpointerup: stop_pointer_dragging,
+                    onpointerleave: stop_pointer_dragging,
                     canvas { id: "wgpu-canvas", width: 1000, height: 1000 }
                     img {
                         id: "error-background",
