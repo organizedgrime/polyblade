@@ -30,6 +30,7 @@ pub struct RenderState {
     pub frame: Instant,
     pub rotation_duration: Duration,
     pub rotating: bool,
+    pub drag_rotation: Mat4,
     pub schlegel: bool,
     /// Smoothed toward the safe eye_offset each tick, to damp single-frame geometry noise.
     pub schlegel_eye_offset: f32,
@@ -61,6 +62,7 @@ impl Default for RenderState {
             frame: Instant::now(),
             rotation_duration: Duration::from_secs(0),
             rotating: true,
+            drag_rotation: Mat4::identity(),
             schlegel: false,
             schlegel_eye_offset: SCHLEGEL_DEFAULT_EYE_OFFSET,
             schlegel_face: None,
@@ -134,6 +136,7 @@ impl AppState {
             self.model.transform = Mat4::identity();
         } else {
             self.model.transform = Mat4::from_scale(self.render.zoom)
+                * self.render.drag_rotation
                 * Mat4::from_rotation_x(time / PI)
                 * Mat4::from_rotation_y(time / PI * 1.1);
         }

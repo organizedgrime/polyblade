@@ -131,6 +131,7 @@ pub enum RenderMessage {
     Schlegel(bool),
     SchlegelFace(FaceTypeSignature),
     Rotating(bool),
+    Dragged { dx: f32, dy: f32 },
     FovChanged(f32),
     ZoomChanged(f32),
     SpeedChanged(f32),
@@ -228,6 +229,12 @@ impl ProcessMessage<RenderState> for RenderMessage {
                 } else {
                     state.start = Instant::now().checked_sub(state.rotation_duration).unwrap();
                 }
+            }
+            Dragged { dx, dy } => {
+                const SENSITIVITY: f32 = 0.005;
+                state.drag_rotation = ultraviolet::Mat4::from_rotation_y(dx * SENSITIVITY)
+                    * ultraviolet::Mat4::from_rotation_x(dy * SENSITIVITY)
+                    * state.drag_rotation;
             }
             FovChanged(fov) => {
                 state.camera.fov_y = *fov;

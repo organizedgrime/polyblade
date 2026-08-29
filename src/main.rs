@@ -133,8 +133,40 @@ fn Home() -> Element {
     }
 }
 
+/// Drag rotates the model (`RenderMessage::Dragged`) and pauses/resumes the
+/// existing time-based auto-spin (`RenderMessage::Rotating`) while dragging.
 #[component]
 pub fn PolyhedronCanvas() -> Element {
+    let mut dragging = use_signal(|| false);
+    let mut last_pos = use_signal(|| None::<(f32, f32)>);
+
+    let onmousedown = move |evt: Event<MouseData>| {
+        let coords = evt.client_coordinates();
+        dragging.set(true);
+        last_pos.set(Some((coords.x as f32, coords.y as f32)));
+        push_message(PolybladeMessage::Render(RenderMessage::Rotating(false)));
+    };
+    let onmousemove = move |evt: Event<MouseData>| {
+        if dragging() {
+            let coords = evt.client_coordinates();
+            let (x, y) = (coords.x as f32, coords.y as f32);
+            if let Some((last_x, last_y)) = last_pos() {
+                push_message(PolybladeMessage::Render(RenderMessage::Dragged {
+                    dx: x - last_x,
+                    dy: y - last_y,
+                }));
+            }
+            last_pos.set(Some((x, y)));
+        }
+    };
+    let stop_dragging = move |_: Event<MouseData>| {
+        if dragging() {
+            dragging.set(false);
+            last_pos.set(None);
+            push_message(PolybladeMessage::Render(RenderMessage::Rotating(true)));
+        }
+    };
+
     cfg_if! {
         if #[cfg(target_arch = "wasm32")] {
             use_effect(move || {
@@ -184,7 +216,12 @@ pub fn PolyhedronCanvas() -> Element {
             });
 
             rsx! {
-                div { class: "canvas-div",
+                div {
+                    class: "canvas-div",
+                    onmousedown,
+                    onmousemove,
+                    onmouseup: stop_dragging,
+                    onmouseleave: stop_dragging,
                     canvas { id: "wgpu-canvas", width: 1000, height: 1000 }
                     img {
                         id: "error-background",
@@ -208,7 +245,12 @@ pub fn PolyhedronCanvas() -> Element {
             });
 
             rsx! {
-                div { class: "canvas-div",
+                div {
+                    class: "canvas-div",
+                    onmousedown,
+                    onmousemove,
+                    onmouseup: stop_dragging,
+                    onmouseleave: stop_dragging,
                     canvas {
                         id: "wgpu-canvas",
                         "src": paint_id,
@@ -227,7 +269,12 @@ pub fn PolyhedronCanvas() -> Element {
         } else {
             // Server/fullstack builds have no GPU surface; render the static shell only.
             rsx! {
-                div { class: "canvas-div",
+                div {
+                    class: "canvas-div",
+                    onmousedown,
+                    onmousemove,
+                    onmouseup: stop_dragging,
+                    onmouseleave: stop_dragging,
                     canvas { id: "wgpu-canvas", width: 1000, height: 1000 }
                     img {
                         id: "error-background",
